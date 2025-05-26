@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import {
   getOptimizedRealTimeMetrics,
@@ -115,7 +116,7 @@ export function useOptimizedRealTimeAnalytics(
             revenue: 0,
             conversionRate: 0
           },
-          'getEventAnalyticsData'
+          'getOptimizedEventAnalyticsData'
         )
       ]);
 

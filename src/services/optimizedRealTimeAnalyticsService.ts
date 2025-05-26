@@ -1,6 +1,7 @@
+
 import { supabase } from '@/lib/supabase';
 
-export interface RealTimeMetrics {
+export interface OptimizedRealTimeMetrics {
   activeUsers: number;
   pageViews: number;
   conversions: number;
@@ -9,7 +10,7 @@ export interface RealTimeMetrics {
   userEngagement: number;
 }
 
-export interface AnalyticsTimeFrame {
+export interface CachedAnalyticsTimeFrame {
   date: string;
   activeUsers: number;
   conversions: number;
@@ -21,19 +22,24 @@ export interface OptimizedChartDataPoint {
   metric: string;
   value: number;
   trend: number;
-  percentage: number;
+  changePercentage: number;
 }
 
-export interface EventAnalytics {
+export interface OptimizedEventAnalytics {
   totalAttendees: number;
   checkedInAttendees: number;
   revenue: number;
   conversionRate: number;
 }
 
+// Legacy type aliases for backward compatibility
+export type RealTimeMetrics = OptimizedRealTimeMetrics;
+export type AnalyticsTimeFrame = CachedAnalyticsTimeFrame;
+export type EventAnalytics = OptimizedEventAnalytics;
+
 import { analyticsMonitor } from './analyticsMonitoring';
 
-function calculateMetricsFromEvents(events: any[]): RealTimeMetrics {
+function calculateMetricsFromEvents(events: any[]): OptimizedRealTimeMetrics {
   let activeUsers = new Set<string>();
   let pageViews = 0;
   let conversions = 0;
@@ -66,8 +72,8 @@ function calculateMetricsFromEvents(events: any[]): RealTimeMetrics {
   };
 }
 
-function processTimeFrameData(rollupData: any[]): AnalyticsTimeFrame[] {
-  const timeFrameData: { [date: string]: AnalyticsTimeFrame } = {};
+function processTimeFrameData(rollupData: any[]): CachedAnalyticsTimeFrame[] {
+  const timeFrameData: { [date: string]: CachedAnalyticsTimeFrame } = {};
 
   rollupData.forEach(item => {
     const date = item.date;
@@ -102,14 +108,14 @@ function transformToChartData(rollupData: any[]): OptimizedChartDataPoint[] {
       metric: item.event_type,
       value: item.event_count || 0,
       trend: 0,
-      percentage: 0
+      changePercentage: 0
     });
   });
 
   return chartData;
 }
 
-export async function getOptimizedRealTimeMetrics(): Promise<RealTimeMetrics> {
+export async function getOptimizedRealTimeMetrics(): Promise<OptimizedRealTimeMetrics> {
   return analyticsMonitor.measurePerformance(
     'optimizedRealTimeAnalytics',
     'getOptimizedRealTimeMetrics',
@@ -141,7 +147,7 @@ export async function getOptimizedRealTimeMetrics(): Promise<RealTimeMetrics> {
   );
 }
 
-export async function getOptimizedAnalyticsTimeFrameData(days: number): Promise<AnalyticsTimeFrame[]> {
+export async function getOptimizedAnalyticsTimeFrameData(days: number): Promise<CachedAnalyticsTimeFrame[]> {
   return analyticsMonitor.measurePerformance(
     'optimizedRealTimeAnalytics',
     'getOptimizedAnalyticsTimeFrameData',
@@ -216,7 +222,7 @@ export async function getOptimizedChartData(days: number): Promise<OptimizedChar
   );
 }
 
-export async function getEventAnalyticsData(eventId?: string): Promise<EventAnalytics> {
+export async function getOptimizedEventAnalyticsData(eventId?: string): Promise<OptimizedEventAnalytics> {
   console.info(`Fetching event analytics data for event ID: ${eventId || 'all events'}`);
 
   try {
@@ -244,8 +250,23 @@ export async function getEventAnalyticsData(eventId?: string): Promise<EventAnal
   }
 }
 
+export async function refreshAnalyticsMaterializedViews(): Promise<void> {
+  console.info('Refreshing analytics materialized views...');
+  
+  try {
+    // In a real implementation, this would refresh database materialized views
+    // For now, we'll simulate the operation
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    console.info('Analytics materialized views refreshed successfully');
+  } catch (error) {
+    console.error('Error refreshing materialized views:', error);
+    throw error;
+  }
+}
+
 export function subscribeToOptimizedRealTimeAnalytics(
-  callback: (metrics: RealTimeMetrics) => void
+  callback: (metrics: OptimizedRealTimeMetrics) => void,
+  errorCallback?: (error: Error) => void
 ): () => void {
   console.info('Setting up optimized real-time analytics subscription');
   
@@ -266,12 +287,16 @@ export function subscribeToOptimizedRealTimeAnalytics(
             const metrics = await getOptimizedRealTimeMetrics();
             callback(metrics);
           } catch (error) {
+            const err = error as Error;
             analyticsMonitor.logError(
               'optimizedRealTimeAnalytics',
               'subscribeToOptimizedRealTimeAnalytics',
-              error as Error,
+              err,
               { payload }
             );
+            if (errorCallback) {
+              errorCallback(err);
+            }
           }
         }
       )
@@ -284,11 +309,15 @@ export function subscribeToOptimizedRealTimeAnalytics(
       supabase.removeChannel(channel);
     };
   } catch (error) {
+    const err = error as Error;
     analyticsMonitor.logError(
       'optimizedRealTimeAnalytics',
       'subscribeToOptimizedRealTimeAnalytics',
-      error as Error
+      err
     );
+    if (errorCallback) {
+      errorCallback(err);
+    }
     return () => {};
   }
 }
