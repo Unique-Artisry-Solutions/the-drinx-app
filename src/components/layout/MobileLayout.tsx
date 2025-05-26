@@ -148,10 +148,10 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
   const mobileUserType = toNonAdminUserType(effectiveNavState.userType);
 
   return (
-    <div className={`flex flex-col min-h-screen w-full max-w-full bg-background transition-colors duration-300`}>
+    <div className="min-h-screen w-full flex flex-col bg-background transition-colors duration-300">
       {renderNavigation()}
       
-      <main className={`flex-1 w-full max-w-full overflow-x-hidden ${getContentPadding()}`}>
+      <main className={`flex-1 w-full ${getContentPadding()}`}>
         {shouldShowBreadcrumbs() && (
           <div className="w-full px-3">
             <Breadcrumbs />

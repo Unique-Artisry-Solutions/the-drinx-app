@@ -3,13 +3,7 @@
 @tailwind components;
 @tailwind utilities;
 
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
-}
-
+/* Remove conflicting root styles - let base.css handle this */
 .logo {
   height: 6em;
   padding: 1.5em;

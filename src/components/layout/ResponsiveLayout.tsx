@@ -67,11 +67,11 @@ const ResponsiveLayout: React.FC<ResponsiveLayoutProps> = (props) => {
   });
   
   return (
-    <>
+    <div className="w-full min-h-screen">
       {isMobile ? <MobileLayout {...props} /> : <DesktopLayout {...props} />}
       {/* Always render DevRoleSwitcher if in development, regardless of admin context */}
       {isDevelopment && isInitialized && <DevRoleSwitcher />}
-    </>
+    </div>
   );
 };
 
