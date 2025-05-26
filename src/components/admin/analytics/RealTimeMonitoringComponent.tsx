@@ -3,23 +3,16 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Activity, Users, TrendingUp, DollarSign } from 'lucide-react';
-import type { RealTimeMetrics } from '@/services/realTimeAnalyticsService';
+import { useRealTimeAnalytics } from '@/hooks/useRealTimeAnalytics';
 
 interface RealTimeMonitoringComponentProps {
-  realTimeData?: RealTimeMetrics;
+  eventId?: string;
 }
 
 const RealTimeMonitoringComponent: React.FC<RealTimeMonitoringComponentProps> = ({ 
-  realTimeData 
+  eventId 
 }) => {
-  const metrics = realTimeData || {
-    activeUsers: 0,
-    pageViews: 0,
-    conversions: 0,
-    revenue: 0,
-    eventCount: 0,
-    userEngagement: 0
-  };
+  const { metrics, isLoading, error } = useRealTimeAnalytics(eventId);
 
   const getStatusColor = (value: number, threshold: number) => {
     if (value >= threshold) return 'bg-green-500';
@@ -34,12 +27,37 @@ const RealTimeMonitoringComponent: React.FC<RealTimeMonitoringComponentProps> = 
     return num.toString();
   };
 
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
+            <p className="mt-2 text-sm text-muted-foreground">Loading real-time data...</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="text-center">
+            <p className="text-red-500">Error loading real-time data: {error}</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Activity className="h-5 w-5" />
+            <Activity className="h-5 w-5 animate-pulse text-blue-500" />
             Real-Time System Monitoring
           </CardTitle>
           <CardDescription>

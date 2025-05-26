@@ -6,21 +6,18 @@ import {
   getChartData, 
   getEventAnalyticsData,
   subscribeToRealTimeAnalytics,
+  subscribeToEventAnalytics,
   type RealTimeMetrics, 
   type AnalyticsTimeFrame, 
-  type ChartDataPoint 
+  type ChartDataPoint,
+  type EventAnalytics
 } from '@/services/realTimeAnalyticsService';
 
 interface UseRealTimeAnalyticsReturn {
   metrics: RealTimeMetrics;
   timeFrameData: AnalyticsTimeFrame[];
   chartData: ChartDataPoint[];
-  eventAnalytics: {
-    totalAttendees: number;
-    checkedInAttendees: number;
-    revenue: number;
-    conversionRate: number;
-  };
+  eventAnalytics: EventAnalytics;
   isLoading: boolean;
   error: string | null;
   refresh: () => void;
@@ -38,7 +35,7 @@ export function useRealTimeAnalytics(eventId?: string): UseRealTimeAnalyticsRetu
 
   const [timeFrameData, setTimeFrameData] = useState<AnalyticsTimeFrame[]>([]);
   const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
-  const [eventAnalytics, setEventAnalytics] = useState({
+  const [eventAnalytics, setEventAnalytics] = useState<EventAnalytics>({
     totalAttendees: 0,
     checkedInAttendees: 0,
     revenue: 0,
@@ -84,16 +81,30 @@ export function useRealTimeAnalytics(eventId?: string): UseRealTimeAnalyticsRetu
   useEffect(() => {
     loadData();
 
-    // Subscribe to real-time updates
-    const unsubscribe = subscribeToRealTimeAnalytics((newMetrics) => {
+    // Subscribe to real-time updates for general analytics
+    const unsubscribeGeneral = subscribeToRealTimeAnalytics((newMetrics) => {
       setMetrics(newMetrics);
     });
 
-    // Refresh data every 5 minutes
-    const interval = setInterval(loadData, 5 * 60 * 1000);
+    // Subscribe to event-specific updates if eventId is provided
+    let unsubscribeEvent: (() => void) | undefined;
+    if (eventId) {
+      unsubscribeEvent = subscribeToEventAnalytics(eventId, (newEventAnalytics) => {
+        setEventAnalytics(newEventAnalytics);
+      });
+    }
+
+    // Refresh data every 5 minutes for chart and timeframe data
+    const interval = setInterval(() => {
+      getAnalyticsTimeFrameData(7).then(setTimeFrameData);
+      getChartData(30).then(setChartData);
+    }, 5 * 60 * 1000);
 
     return () => {
-      unsubscribe();
+      unsubscribeGeneral();
+      if (unsubscribeEvent) {
+        unsubscribeEvent();
+      }
       clearInterval(interval);
     };
   }, [eventId]);

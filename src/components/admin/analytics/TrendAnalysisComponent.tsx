@@ -3,17 +3,17 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
-import type { AnalyticsTimeFrame, ChartDataPoint } from '@/services/realTimeAnalyticsService';
+import { useRealTimeAnalytics } from '@/hooks/useRealTimeAnalytics';
 
 interface TrendAnalysisComponentProps {
-  timeFrameData?: AnalyticsTimeFrame[];
-  chartData?: ChartDataPoint[];
+  eventId?: string;
 }
 
 const TrendAnalysisComponent: React.FC<TrendAnalysisComponentProps> = ({
-  timeFrameData = [],
-  chartData = []
+  eventId
 }) => {
+  const { timeFrameData, chartData, isLoading, error } = useRealTimeAnalytics(eventId);
+
   const getTrendIcon = (trend: 'up' | 'down' | 'stable') => {
     switch (trend) {
       case 'up':
@@ -41,6 +41,31 @@ const TrendAnalysisComponent: React.FC<TrendAnalysisComponentProps> = ({
     const sign = change >= 0 ? '+' : '';
     return `${sign}${absChange.toFixed(1)}%`;
   };
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
+            <p className="mt-2 text-sm text-muted-foreground">Loading trend analysis...</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="text-center">
+            <p className="text-red-500">Error loading trend data: {error}</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-6">
