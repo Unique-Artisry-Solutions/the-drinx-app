@@ -45,7 +45,7 @@ export const createMockChartData = (days: number = 30): OptimizedChartDataPoint[
         metric,
         value: Math.floor(Math.random() * 100) + 50,
         trend: Math.floor(Math.random() * 20) - 10,
-        percentage: Math.floor(Math.random() * 30) - 15
+        changePercentage: Math.floor(Math.random() * 30) - 15
       });
     });
   }
@@ -83,6 +83,6 @@ export const validateChartDataStructure = (data: any[]): data is OptimizedChartD
     typeof item.metric === 'string' &&
     typeof item.value === 'number' &&
     typeof item.trend === 'number' &&
-    typeof item.percentage === 'number'
+    typeof item.changePercentage === 'number'
   );
 };

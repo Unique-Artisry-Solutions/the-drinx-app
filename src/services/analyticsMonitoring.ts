@@ -1,3 +1,4 @@
+
 import { supabase } from '@/lib/supabase';
 
 export interface AnalyticsError {
@@ -6,6 +7,7 @@ export interface AnalyticsError {
   error: string;
   timestamp: string;
   context?: Record<string, any>;
+  [key: string]: any; // Index signature for Supabase Json compatibility
 }
 
 export interface PerformanceMetric {
@@ -14,6 +16,12 @@ export interface PerformanceMetric {
   duration: number;
   timestamp: string;
   success: boolean;
+  [key: string]: any; // Index signature for Supabase Json compatibility
+}
+
+// Type conversion functions to ensure Supabase compatibility
+function toJsonCompatible<T extends Record<string, any>>(obj: T): Record<string, any> {
+  return JSON.parse(JSON.stringify(obj));
 }
 
 class AnalyticsMonitor {
@@ -91,26 +99,40 @@ class AnalyticsMonitor {
       if (this.errorQueue.length > 0) {
         const errorEvents = this.errorQueue.map(error => ({
           event_type: 'analytics_error',
-          event_data: error,
+          event_data: toJsonCompatible(error),
           timestamp: error.timestamp
         }));
 
-        await supabase.from('analytics_events').insert(errorEvents);
-        console.info(`[Analytics Monitor] Flushed ${this.errorQueue.length} error events`);
-        this.errorQueue = [];
+        const { error: insertError } = await supabase
+          .from('analytics_events')
+          .insert(errorEvents);
+
+        if (insertError) {
+          console.error('[Analytics Monitor] Failed to insert error events:', insertError);
+        } else {
+          console.info(`[Analytics Monitor] Flushed ${this.errorQueue.length} error events`);
+          this.errorQueue = [];
+        }
       }
 
       // Log performance metrics
       if (this.performanceQueue.length > 0) {
         const performanceEvents = this.performanceQueue.map(metric => ({
           event_type: 'analytics_performance',
-          event_data: metric,
+          event_data: toJsonCompatible(metric),
           timestamp: metric.timestamp
         }));
 
-        await supabase.from('analytics_events').insert(performanceEvents);
-        console.info(`[Analytics Monitor] Flushed ${this.performanceQueue.length} performance events`);
-        this.performanceQueue = [];
+        const { error: insertError } = await supabase
+          .from('analytics_events')
+          .insert(performanceEvents);
+
+        if (insertError) {
+          console.error('[Analytics Monitor] Failed to insert performance events:', insertError);
+        } else {
+          console.info(`[Analytics Monitor] Flushed ${this.performanceQueue.length} performance events`);
+          this.performanceQueue = [];
+        }
       }
     } catch (error) {
       console.error('[Analytics Monitor] Failed to flush queues:', error);
