@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 export interface OptimizedRealTimeMetrics {
@@ -11,17 +10,18 @@ export interface OptimizedRealTimeMetrics {
 }
 
 export interface CachedAnalyticsTimeFrame {
-  period: string;
+  timeFrame: string;
   value: number;
   change: number;
-  trend: 'up' | 'down' | 'stable';
+  label: string;
 }
 
 export interface OptimizedChartDataPoint {
   date: string;
   value: number;
   metric: string;
-  change?: number;
+  trend?: 'up' | 'down' | 'stable';
+  changePercentage?: number;
 }
 
 export interface OptimizedEventAnalytics {
@@ -34,55 +34,55 @@ export interface OptimizedEventAnalytics {
 // Get real-time metrics from analytics_events table
 export async function getOptimizedRealTimeMetrics(): Promise<OptimizedRealTimeMetrics> {
   try {
-    const now = new Date();
-    const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
-    const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-
-    // Get recent events for active users calculation
-    const { data: recentEvents, error: eventsError } = await supabase
+    console.log('Fetching optimized real-time metrics...');
+    
+    // Get recent events (last hour for active users)
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const { data: recentEvents, error: recentError } = await supabase
       .from('analytics_events')
-      .select('user_id, event_type, timestamp')
-      .gte('timestamp', oneHourAgo.toISOString());
+      .select('*')
+      .gte('timestamp', oneHourAgo);
 
-    if (eventsError) {
-      console.error('Error fetching recent events:', eventsError);
-      throw eventsError;
+    if (recentError) {
+      console.error('Error fetching recent events:', recentError);
     }
 
-    // Get daily rollup data for more comprehensive metrics
-    const { data: dailyData, error: dailyError } = await supabase
-      .from('analytics_daily_rollup')
-      .select('event_type, event_count, unique_users')
-      .gte('date', oneDayAgo.toISOString().split('T')[0])
-      .order('date', { ascending: false });
+    // Get today's events
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const { data: todayEvents, error: todayError } = await supabase
+      .from('analytics_events')
+      .select('*')
+      .gte('timestamp', todayStart.toISOString());
 
-    if (dailyError) {
-      console.warn('Error fetching daily rollup, using fallback:', dailyError);
+    if (todayError) {
+      console.error('Error fetching today events:', todayError);
     }
 
-    // Calculate metrics from available data
-    const activeUsers = new Set(recentEvents?.map(e => e.user_id).filter(Boolean)).size;
-    const pageViews = recentEvents?.filter(e => e.event_type === 'page_view').length || 0;
-    const conversions = recentEvents?.filter(e => e.event_type === 'conversion').length || 0;
-    const eventCount = recentEvents?.length || 0;
+    // Calculate metrics
+    const activeUsers = recentEvents ? new Set(recentEvents.map(e => e.user_id).filter(Boolean)).size : 0;
+    const pageViews = todayEvents ? todayEvents.filter(e => e.event_type === 'page_view').length : 0;
+    const conversions = todayEvents ? todayEvents.filter(e => e.event_type === 'conversion').length : 0;
+    const revenue = todayEvents ? todayEvents
+      .filter(e => e.event_data?.revenue)
+      .reduce((sum, e) => sum + (parseFloat(e.event_data.revenue) || 0), 0) : 0;
+    const eventCount = todayEvents ? todayEvents.length : 0;
+    const userEngagement = todayEvents && todayEvents.length > 0 ? 
+      (todayEvents.filter(e => e.event_type === 'engagement').length / todayEvents.length) * 100 : 0;
 
-    // Calculate user engagement (events per active user)
-    const userEngagement = activeUsers > 0 ? eventCount / activeUsers : 0;
-
-    // Mock revenue calculation (would need actual revenue tracking)
-    const revenue = conversions * 25; // Estimate $25 per conversion
-
-    return {
+    const metrics = {
       activeUsers,
       pageViews,
       conversions,
       revenue,
       eventCount,
-      userEngagement: Math.round(userEngagement * 10) / 10
+      userEngagement
     };
+
+    console.log('Calculated metrics:', metrics);
+    return metrics;
   } catch (error) {
     console.error('Error in getOptimizedRealTimeMetrics:', error);
-    // Return fallback data
     return {
       activeUsers: 0,
       pageViews: 0,
@@ -97,63 +97,61 @@ export async function getOptimizedRealTimeMetrics(): Promise<OptimizedRealTimeMe
 // Get time frame data for analytics dashboard
 export async function getOptimizedAnalyticsTimeFrameData(days: number = 7): Promise<CachedAnalyticsTimeFrame[]> {
   try {
-    const endDate = new Date();
-    const startDate = new Date(endDate.getTime() - days * 24 * 60 * 60 * 1000);
-
-    const { data, error } = await supabase
+    console.log(`Fetching analytics timeframe data for ${days} days...`);
+    
+    // Try to get data from daily rollup first
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+    
+    const { data: rollupData, error: rollupError } = await supabase
       .from('analytics_daily_rollup')
-      .select('date, event_type, event_count, unique_users')
+      .select('*')
       .gte('date', startDate.toISOString().split('T')[0])
-      .lte('date', endDate.toISOString().split('T')[0])
       .order('date', { ascending: true });
 
-    if (error) {
-      console.error('Error fetching timeframe data:', error);
-      throw error;
+    if (rollupError) {
+      console.error('Error fetching rollup data:', rollupError);
     }
 
-    if (!data || data.length === 0) {
-      return [];
-    }
-
-    // Group by date and calculate totals
-    const dailyTotals = data.reduce((acc, row) => {
-      const date = row.date;
-      if (!acc[date]) {
-        acc[date] = { events: 0, users: 0 };
-      }
-      acc[date].events += row.event_count;
-      acc[date].users += row.unique_users;
-      return acc;
-    }, {} as Record<string, { events: number; users: number }>);
-
-    // Convert to time frame format
+    // Generate timeframe data
     const timeFrames: CachedAnalyticsTimeFrame[] = [];
-    const dates = Object.keys(dailyTotals).sort();
-
-    if (dates.length > 0) {
-      const totalEvents = Object.values(dailyTotals).reduce((sum, d) => sum + d.events, 0);
-      const totalUsers = Object.values(dailyTotals).reduce((sum, d) => sum + d.users, 0);
-
-      // Calculate change from previous period (mock calculation)
-      const change = dates.length > 1 ? 
-        ((dailyTotals[dates[dates.length - 1]].events - dailyTotals[dates[0]].events) / dailyTotals[dates[0]].events) * 100 : 0;
-
-      timeFrames.push({
-        period: `Last ${days} days`,
-        value: totalEvents,
-        change: Math.round(change * 10) / 10,
-        trend: change > 0 ? 'up' : change < 0 ? 'down' : 'stable'
+    
+    if (rollupData && rollupData.length > 0) {
+      // Use rollup data
+      rollupData.forEach((day, index) => {
+        const prevDay = rollupData[index - 1];
+        const change = prevDay ? ((day.event_count - prevDay.event_count) / prevDay.event_count) * 100 : 0;
+        
+        timeFrames.push({
+          timeFrame: day.date,
+          value: day.event_count,
+          change,
+          label: new Date(day.date).toLocaleDateString()
+        });
       });
-
-      timeFrames.push({
-        period: 'Active Users',
-        value: totalUsers,
-        change: Math.round(change * 0.8 * 10) / 10, // Mock user change
-        trend: change > 0 ? 'up' : change < 0 ? 'down' : 'stable'
-      });
+    } else {
+      // Fallback to direct analytics_events query
+      for (let i = 0; i < days; i++) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        const dateStr = date.toISOString().split('T')[0];
+        
+        const { data: dayEvents } = await supabase
+          .from('analytics_events')
+          .select('*')
+          .gte('timestamp', `${dateStr}T00:00:00`)
+          .lt('timestamp', `${dateStr}T23:59:59`);
+        
+        timeFrames.unshift({
+          timeFrame: dateStr,
+          value: dayEvents ? dayEvents.length : 0,
+          change: 0, // Calculate later if needed
+          label: date.toLocaleDateString()
+        });
+      }
     }
 
+    console.log('Generated timeframe data:', timeFrames);
     return timeFrames;
   } catch (error) {
     console.error('Error in getOptimizedAnalyticsTimeFrameData:', error);
@@ -164,48 +162,66 @@ export async function getOptimizedAnalyticsTimeFrameData(days: number = 7): Prom
 // Get chart data for visualization
 export async function getOptimizedChartData(days: number = 30): Promise<OptimizedChartDataPoint[]> {
   try {
-    const endDate = new Date();
-    const startDate = new Date(endDate.getTime() - days * 24 * 60 * 60 * 1000);
-
-    const { data, error } = await supabase
+    console.log(`Fetching chart data for ${days} days...`);
+    
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+    
+    // Try rollup data first
+    const { data: rollupData, error: rollupError } = await supabase
       .from('analytics_daily_rollup')
-      .select('date, event_type, event_count')
+      .select('*')
       .gte('date', startDate.toISOString().split('T')[0])
-      .lte('date', endDate.toISOString().split('T')[0])
       .order('date', { ascending: true });
 
-    if (error) {
-      console.error('Error fetching chart data:', error);
-      throw error;
+    if (rollupError) {
+      console.error('Error fetching rollup data for chart:', rollupError);
     }
 
-    if (!data || data.length === 0) {
-      return [];
-    }
+    const chartData: OptimizedChartDataPoint[] = [];
 
-    // Group by date and sum events
-    const dailyTotals = data.reduce((acc, row) => {
-      const date = row.date;
-      if (!acc[date]) {
-        acc[date] = 0;
+    if (rollupData && rollupData.length > 0) {
+      rollupData.forEach((day, index) => {
+        const prevDay = rollupData[index - 1];
+        const changePercentage = prevDay && prevDay.event_count > 0 ? 
+          ((day.event_count - prevDay.event_count) / prevDay.event_count) * 100 : 0;
+        
+        let trend: 'up' | 'down' | 'stable' = 'stable';
+        if (changePercentage > 5) trend = 'up';
+        else if (changePercentage < -5) trend = 'down';
+
+        chartData.push({
+          date: day.date,
+          value: day.event_count,
+          metric: 'events',
+          trend,
+          changePercentage
+        });
+      });
+    } else {
+      // Fallback to direct query
+      for (let i = 0; i < days; i++) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        const dateStr = date.toISOString().split('T')[0];
+        
+        const { data: dayEvents } = await supabase
+          .from('analytics_events')
+          .select('*')
+          .gte('timestamp', `${dateStr}T00:00:00`)
+          .lt('timestamp', `${dateStr}T23:59:59`);
+        
+        chartData.unshift({
+          date: dateStr,
+          value: dayEvents ? dayEvents.length : 0,
+          metric: 'events',
+          trend: 'stable',
+          changePercentage: 0
+        });
       }
-      acc[date] += row.event_count;
-      return acc;
-    }, {} as Record<string, number>);
+    }
 
-    // Convert to chart data points
-    const chartData: OptimizedChartDataPoint[] = Object.entries(dailyTotals).map(([date, value], index, array) => {
-      const previousValue = index > 0 ? array[index - 1][1] : value;
-      const change = previousValue > 0 ? ((value - previousValue) / previousValue) * 100 : 0;
-
-      return {
-        date,
-        value,
-        metric: 'events',
-        change: Math.round(change * 10) / 10
-      };
-    });
-
+    console.log('Generated chart data:', chartData);
     return chartData;
   } catch (error) {
     console.error('Error in getOptimizedChartData:', error);
@@ -214,43 +230,54 @@ export async function getOptimizedChartData(days: number = 30): Promise<Optimize
 }
 
 // Get event-specific analytics
-export async function getOptimizedEventAnalyticsData(eventId?: string): Promise<OptimizedEventAnalytics> {
+export async function getOptimizedEventAnalyticsData(eventId: string): Promise<OptimizedEventAnalytics> {
   try {
-    if (!eventId) {
-      return {
-        totalAttendees: 0,
-        checkedInAttendees: 0,
-        revenue: 0,
-        conversionRate: 0
-      };
-    }
-
+    console.log(`Fetching event analytics for event ${eventId}...`);
+    
     // Get event attendees
     const { data: attendees, error: attendeesError } = await supabase
       .from('event_attendees')
-      .select('id, checked_in_at')
+      .select('*')
       .eq('event_id', eventId);
 
     if (attendeesError) {
       console.error('Error fetching event attendees:', attendeesError);
-      throw attendeesError;
     }
 
-    const totalAttendees = attendees?.length || 0;
-    const checkedInAttendees = attendees?.filter(a => a.checked_in_at).length || 0;
+    // Get check-ins
+    const { data: checkIns, error: checkInsError } = await supabase
+      .from('event_check_ins')
+      .select('*')
+      .eq('event_id', eventId);
 
-    // Mock revenue calculation
-    const revenue = totalAttendees * 50; // Estimate $50 per attendee
+    if (checkInsError) {
+      console.error('Error fetching event check-ins:', checkInsError);
+    }
 
-    // Calculate conversion rate
+    // Get event analytics
+    const { data: analytics, error: analyticsError } = await supabase
+      .from('event_analytics')
+      .select('*')
+      .eq('event_id', eventId);
+
+    if (analyticsError) {
+      console.error('Error fetching event analytics:', analyticsError);
+    }
+
+    const totalAttendees = attendees ? attendees.length : 0;
+    const checkedInAttendees = checkIns ? checkIns.length : 0;
+    const revenue = analytics ? analytics.reduce((sum, a) => sum + (a.revenue || 0), 0) : 0;
     const conversionRate = totalAttendees > 0 ? (checkedInAttendees / totalAttendees) * 100 : 0;
 
-    return {
+    const result = {
       totalAttendees,
       checkedInAttendees,
       revenue,
-      conversionRate: Math.round(conversionRate * 10) / 10
+      conversionRate
     };
+
+    console.log('Event analytics result:', result);
+    return result;
   } catch (error) {
     console.error('Error in getOptimizedEventAnalyticsData:', error);
     return {
@@ -264,13 +291,13 @@ export async function getOptimizedEventAnalyticsData(eventId?: string): Promise<
 
 // Subscribe to real-time analytics updates
 export function subscribeToOptimizedRealTimeAnalytics(
-  onUpdate: (metrics: OptimizedRealTimeMetrics) => void,
-  onError: (error: Error) => void
+  onMetricsUpdate: (metrics: OptimizedRealTimeMetrics) => void,
+  onError?: (error: Error) => void
 ): () => void {
-  console.log('Setting up real-time analytics subscription');
-
+  console.log('Setting up real-time analytics subscription...');
+  
   const channel = supabase
-    .channel('analytics-updates')
+    .channel('analytics-real-time')
     .on(
       'postgres_changes',
       {
@@ -278,27 +305,22 @@ export function subscribeToOptimizedRealTimeAnalytics(
         schema: 'public',
         table: 'analytics_events'
       },
-      async () => {
+      async (payload) => {
+        console.log('Real-time analytics event:', payload);
         try {
-          const metrics = await getOptimizedRealTimeMetrics();
-          onUpdate(metrics);
+          // Recalculate metrics when new events come in
+          const updatedMetrics = await getOptimizedRealTimeMetrics();
+          onMetricsUpdate(updatedMetrics);
         } catch (error) {
           console.error('Error updating real-time metrics:', error);
-          onError(error instanceof Error ? error : new Error('Unknown error'));
+          if (onError) {
+            onError(error instanceof Error ? error : new Error('Unknown error'));
+          }
         }
       }
     )
     .subscribe();
 
-  // Initial load
-  getOptimizedRealTimeMetrics()
-    .then(onUpdate)
-    .catch(error => {
-      console.error('Error in initial metrics load:', error);
-      onError(error instanceof Error ? error : new Error('Unknown error'));
-    });
-
-  // Return cleanup function
   return () => {
     console.log('Cleaning up real-time analytics subscription');
     supabase.removeChannel(channel);
@@ -307,8 +329,42 @@ export function subscribeToOptimizedRealTimeAnalytics(
 
 // Fallback function for materialized view refresh (no-op since we're not using materialized views)
 export async function refreshAnalyticsMaterializedViews(): Promise<void> {
-  console.log('Materialized view refresh requested - using fallback (no-op)');
-  // This is a no-op since we're not using materialized views
-  // In a real implementation, this would refresh cached data
-  return Promise.resolve();
+  try {
+    console.log('Refreshing analytics materialized views...');
+    
+    // Since we don't have materialized views, we'll trigger a manual refresh
+    // by updating the daily rollup for today
+    const today = new Date().toISOString().split('T')[0];
+    
+    const { data: todayEvents } = await supabase
+      .from('analytics_events')
+      .select('*')
+      .gte('timestamp', `${today}T00:00:00`)
+      .lt('timestamp', `${today}T23:59:59`);
+
+    if (todayEvents) {
+      const eventCount = todayEvents.length;
+      const uniqueUsers = new Set(todayEvents.map(e => e.user_id).filter(Boolean)).size;
+
+      // Update or insert today's rollup
+      const { error: upsertError } = await supabase
+        .from('analytics_daily_rollup')
+        .upsert({
+          date: today,
+          event_count: eventCount,
+          unique_users: uniqueUsers,
+          event_type: 'all'
+        });
+
+      if (upsertError) {
+        console.error('Error updating daily rollup:', upsertError);
+        throw upsertError;
+      }
+    }
+
+    console.log('Analytics views refreshed successfully');
+  } catch (error) {
+    console.error('Error refreshing analytics materialized views:', error);
+    throw error;
+  }
 }
