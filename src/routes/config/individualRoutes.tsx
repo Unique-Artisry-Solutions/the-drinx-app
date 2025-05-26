@@ -3,7 +3,7 @@ import { lazy } from 'react';
 import { RouteObject } from 'react-router-dom';
 import RouteProtectionWrapper from '@/hoc/RouteProtectionWrapper';
 
-const PersonalizedExplorePage = lazy(() => import('@/pages/PersonalizedExplorePage'));
+const ExplorePage = lazy(() => import('@/pages/ExplorePage'));
 const ProfilePage = lazy(() => import('@/pages/ProfilePage'));
 const NotificationsPage = lazy(() => import('@/pages/NotificationsPage'));
 
@@ -12,7 +12,7 @@ export const individualRoutes: RouteObject[] = [
     path: '/explore',
     element: (
       <RouteProtectionWrapper requireAuth={false}>
-        <PersonalizedExplorePage />
+        <ExplorePage />
       </RouteProtectionWrapper>
     )
   },
