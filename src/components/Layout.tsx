@@ -1,6 +1,8 @@
 
 import React from 'react';
 import ResponsiveLayout from './layout/ResponsiveLayout';
+import { useDevelopmentMode } from '@/contexts/DevelopmentModeContext';
+import AuthTestPanel from './development/AuthTestPanel';
 
 interface TabOption {
   value: string;
@@ -16,7 +18,14 @@ interface LayoutProps {
 }
 
 const Layout: React.FC<LayoutProps> = (props) => {
-  return <ResponsiveLayout {...props} />;
+  const { isDevelopment } = useDevelopmentMode();
+  
+  return (
+    <>
+      <ResponsiveLayout {...props} />
+      {isDevelopment && <AuthTestPanel />}
+    </>
+  );
 };
 
 export default Layout;

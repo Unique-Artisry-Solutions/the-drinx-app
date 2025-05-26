@@ -31,7 +31,7 @@ const AppRoutes = () => {
             <Route key={route.path} path={route.path} element={route.element} />
           ))}
 
-          {/* Individual User Routes */}
+          {/* Individual User Routes (includes /explore) */}
           {individualRoutes.map((route) => (
             <Route key={route.path} path={route.path} element={route.element} />
           ))}
