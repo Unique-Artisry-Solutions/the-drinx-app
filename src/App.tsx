@@ -15,6 +15,7 @@ import EventDetailsPage from '@/pages/promoter/events/EventDetailsPage';
 import SwigCircuitsPage from '@/pages/SwigCircuitsPage';
 import LoginPage from '@/pages/LoginPage';
 import SignupPage from '@/pages/SignupPage';
+import Explore from '@/pages/Explore';
 import PromoterDashboardPage from '@/pages/promoter/PromoterDashboardPage';
 import EstablishmentDashboardPage from '@/pages/establishment/EstablishmentDashboardPage';
 import CheckoutPage from '@/pages/CheckoutPage';
@@ -47,6 +48,7 @@ function App() {
                     <Routes>
                       <Route path="/" element={<Index />} />
                       <Route path="/landing" element={<LandingPage />} />
+                      <Route path="/explore" element={<Explore />} />
                       <Route path="/events" element={<EventsPage />} />
                       <Route path="/event/:eventId" element={<EventDetailsPage />} />
                       <Route path="/swig-circuits" element={<SwigCircuitsPage />} />
