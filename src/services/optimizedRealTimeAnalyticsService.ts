@@ -34,11 +34,38 @@ export interface OptimizedEventAnalytics {
   conversionRate: number;
 }
 
-// Get real-time metrics from analytics_events table
+// Get real-time metrics from analytics_events table with fallback logic
 export async function getOptimizedRealTimeMetrics(): Promise<OptimizedRealTimeMetrics> {
   try {
-    // Get recent analytics data (last hour)
-    const { data: recentEvents, error } = await supabase
+    // First try to get from materialized view if it exists, otherwise fallback to direct query
+    let recentEvents;
+    
+    try {
+      // Try materialized view first
+      const { data: mvData, error: mvError } = await supabase
+        .from('real_time_analytics_summary')
+        .select('*')
+        .gte('hour', new Date(Date.now() - 60 * 60 * 1000).toISOString())
+        .order('hour', { ascending: false })
+        .limit(1);
+      
+      if (!mvError && mvData && mvData.length > 0) {
+        const summary = mvData[0];
+        return {
+          activeUsers: summary.active_users || 0,
+          pageViews: summary.page_views || 0,
+          conversions: summary.conversions || 0,
+          revenue: Number(summary.revenue) || 0,
+          eventCount: summary.event_count || 0,
+          userEngagement: Number(summary.user_engagement) || 0
+        };
+      }
+    } catch (error) {
+      console.log('Materialized view not available, using fallback query');
+    }
+
+    // Fallback to direct analytics_events query
+    const { data: events, error } = await supabase
       .from('analytics_events')
       .select('*')
       .gte('timestamp', new Date(Date.now() - 60 * 60 * 1000).toISOString());
@@ -48,13 +75,13 @@ export async function getOptimizedRealTimeMetrics(): Promise<OptimizedRealTimeMe
       return getDefaultMetrics();
     }
 
-    const events = recentEvents || [];
+    const eventList = events || [];
     
     // Calculate metrics from events
-    const activeUsers = new Set(events.map(e => e.user_id)).size;
-    const pageViews = events.filter(e => e.event_type === 'page_view').length;
-    const conversions = events.filter(e => e.event_type === 'conversion').length;
-    const revenue = events
+    const activeUsers = new Set(eventList.map(e => e.user_id)).size;
+    const pageViews = eventList.filter(e => e.event_type === 'page_view').length;
+    const conversions = eventList.filter(e => e.event_type === 'conversion').length;
+    const revenue = eventList
       .filter(e => e.event_data && typeof e.event_data === 'object')
       .reduce((sum, e) => {
         const data = e.event_data as any;
@@ -66,8 +93,8 @@ export async function getOptimizedRealTimeMetrics(): Promise<OptimizedRealTimeMe
       pageViews,
       conversions,
       revenue,
-      eventCount: events.length,
-      userEngagement: events.length > 0 ? Math.round((conversions / events.length) * 100) : 0
+      eventCount: eventList.length,
+      userEngagement: eventList.length > 0 ? Math.round((conversions / eventList.length) * 100) : 0
     };
   } catch (error) {
     console.error('Error in getOptimizedRealTimeMetrics:', error);
@@ -75,7 +102,7 @@ export async function getOptimizedRealTimeMetrics(): Promise<OptimizedRealTimeMe
   }
 }
 
-// Get analytics timeframe data
+// Get analytics timeframe data with proper error handling
 export async function getOptimizedAnalyticsTimeFrameData(days: number): Promise<CachedAnalyticsTimeFrame[]> {
   try {
     const startDate = new Date();
@@ -128,7 +155,7 @@ export async function getOptimizedAnalyticsTimeFrameData(days: number): Promise<
   }
 }
 
-// Get chart data with trends
+// Get chart data with trends and change percentages
 export async function getOptimizedChartData(days: number): Promise<OptimizedChartDataPoint[]> {
   try {
     const timeFrameData = await getOptimizedAnalyticsTimeFrameData(days);
@@ -170,7 +197,7 @@ export async function getOptimizedChartData(days: number): Promise<OptimizedChar
   }
 }
 
-// Get event analytics data
+// Get event analytics data with proper error handling
 export async function getOptimizedEventAnalyticsData(eventId?: string): Promise<OptimizedEventAnalytics> {
   try {
     if (!eventId) {
@@ -218,7 +245,7 @@ export async function getOptimizedEventAnalyticsData(eventId?: string): Promise<
   }
 }
 
-// Subscribe to real-time updates
+// Subscribe to real-time updates with proper error handling
 export function subscribeToOptimizedRealTimeAnalytics(
   onUpdate: (metrics: OptimizedRealTimeMetrics) => void,
   onError: (error: Error) => void
@@ -248,18 +275,22 @@ export function subscribeToOptimizedRealTimeAnalytics(
   };
 }
 
-// Refresh materialized views (fallback to manual refresh)
+// Refresh materialized views with proper fallback
 export async function refreshAnalyticsMaterializedViews(): Promise<void> {
   try {
-    // Since the function doesn't exist, we'll just log this for now
-    console.log('Materialized views refresh requested - using fallback data refresh');
+    // Try to call the refresh function if it exists
+    const { error } = await supabase.rpc('refresh_analytics_materialized_views');
     
-    // Could implement cache invalidation or other refresh logic here
-    // For now, just resolve successfully
-    return Promise.resolve();
+    if (error) {
+      // If function doesn't exist, log warning but don't fail
+      console.warn('Materialized view refresh function not available:', error.message);
+      return;
+    }
+    
+    console.log('Materialized views refreshed successfully');
   } catch (error) {
-    console.error('Error refreshing materialized views:', error);
-    throw error;
+    console.warn('Error refreshing materialized views, continuing with direct queries:', error);
+    // Don't throw error, just log warning and continue
   }
 }
 
