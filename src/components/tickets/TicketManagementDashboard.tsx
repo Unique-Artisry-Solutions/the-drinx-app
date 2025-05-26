@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -35,26 +34,6 @@ const TicketManagementDashboard: React.FC<TicketManagementDashboardProps> = ({
       swigCircuitId
     }),
   });
-
-  const handleTransferTicket = (ticket: TicketPurchase) => {
-    setSelectedTicket(ticket);
-    setTransferModalOpen(true);
-  };
-
-  const handleRefundTicket = (ticket: TicketPurchase) => {
-    setSelectedTicket(ticket);
-    setRefundModalOpen(true);
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed': return 'default';
-      case 'pending': return 'secondary';
-      case 'failed': return 'destructive';
-      case 'refunded': return 'outline';
-      default: return 'secondary';
-    }
-  };
 
   if (isLoading) {
     return <div>Loading ticket management dashboard...</div>;
@@ -187,6 +166,26 @@ const TicketManagementDashboard: React.FC<TicketManagementDashboardProps> = ({
       />
     </div>
   );
+
+  function handleTransferTicket(ticket: TicketPurchase) {
+    setSelectedTicket(ticket);
+    setTransferModalOpen(true);
+  }
+
+  function handleRefundTicket(ticket: TicketPurchase) {
+    setSelectedTicket(ticket);
+    setRefundModalOpen(true);
+  }
+
+  function getStatusColor(status: string) {
+    switch (status) {
+      case 'completed': return 'default';
+      case 'pending': return 'secondary';
+      case 'failed': return 'destructive';
+      case 'refunded': return 'outline';
+      default: return 'secondary';
+    }
+  }
 };
 
 export default TicketManagementDashboard;
