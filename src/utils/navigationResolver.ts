@@ -1,3 +1,4 @@
+
 import { UserType } from '@/types/navigation';
 import { NavigationType } from '@/components/navigation/NavigationTypes';
 
@@ -34,11 +35,11 @@ export const resolveNavigationState = (
   const publicPaths = ['/', '/landing', '/login', '/signup', '/mission', '/pricing'];
   const isPublicPath = publicPaths.includes(currentPath) || forceGuestNavigation;
   
-  // Determine effective auth state
+  // Determine effective auth state - prioritize real auth unless dev bypass is active
   let effectiveUserType: UserType | null;
   let effectiveIsAuthenticated: boolean;
   
-  if (isUsingDevBypass) {
+  if (isUsingDevBypass && devUserType && devIsAuthenticated) {
     effectiveUserType = devUserType;
     effectiveIsAuthenticated = devIsAuthenticated;
   } else {
@@ -46,14 +47,19 @@ export const resolveNavigationState = (
     effectiveIsAuthenticated = authIsAuthenticated;
   }
   
-  // Determine navigation type
+  // Determine navigation type with clear precedence
   let navigationType: NavigationType;
   
-  if (effectiveUserType === 'admin' && effectiveIsAuthenticated) {
+  // Admin takes highest precedence when authenticated
+  if (effectiveUserType === 'admin' && effectiveIsAuthenticated && currentPath.startsWith('/admin')) {
     navigationType = NavigationType.ADMIN;
-  } else if (effectiveIsAuthenticated && !isPublicPath) {
+  } 
+  // User navigation for authenticated users on non-public paths
+  else if (effectiveIsAuthenticated && !isPublicPath && effectiveUserType && effectiveUserType !== 'admin') {
     navigationType = NavigationType.USER;
-  } else {
+  } 
+  // Guest navigation for everything else
+  else {
     navigationType = NavigationType.GUEST;
   }
   
@@ -98,7 +104,7 @@ export const getHomePathForUserType = (userType: UserType | null): string => {
     case 'promoter':
       return '/promoter/dashboard';
     case 'admin':
-      return '/admin/system-breakdown'; // Fixed: system-breakdown is now the admin default
+      return '/admin/system-breakdown';
     case 'individual':
     default:
       return '/explore';

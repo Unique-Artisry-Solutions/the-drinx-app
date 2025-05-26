@@ -23,7 +23,7 @@ interface ResponsiveLayoutProps {
 const ResponsiveLayout: React.FC<ResponsiveLayoutProps> = (props) => {
   const isMobile = useIsMobile();
   const location = useLocation();
-  const { isDevelopment, isInitialized, isDevModeActive, devMode } = useDevelopmentMode();
+  const { isDevelopment, isInitialized } = useDevelopmentMode();
   
   // Check if we're in admin context
   const isAdminContext = location.pathname.startsWith('/admin');
@@ -33,44 +33,27 @@ const ResponsiveLayout: React.FC<ResponsiveLayoutProps> = (props) => {
     window.scrollTo(0, 0);
   }, [location.pathname]);
   
-  // Enhanced logging for admin context
+  // Enhanced logging for route navigation
   useEffect(() => {
-    console.log('ResponsiveLayout - Route navigation flow:', {
+    console.log('ResponsiveLayout - Route navigation:', {
       pathname: location.pathname,
       isDevelopment,
       isInitialized,
-      isDevModeActive,
-      devMode,
       isMobile,
       isAdminContext,
       timestamp: new Date().toISOString()
     });
-
-    // Additional admin-specific logging
-    if (isAdminContext) {
-      console.log('ResponsiveLayout - Admin context detected:', {
-        shouldShowDevSwitcher: isDevelopment && isInitialized,
-        adminPath: location.pathname,
-        devSwitcherConditions: {
-          isDevelopment,
-          isInitialized
-        }
-      });
-    }
-  }, [location.pathname, isDevelopment, isInitialized, isDevModeActive, devMode, isMobile, isAdminContext]);
-  
-  console.log('ResponsiveLayout rendering DevRoleSwitcher with development state:', {
-    isDevelopment,
-    isInitialized,
-    isAdminContext,
-    willRender: isDevelopment && isInitialized
-  });
+  }, [location.pathname, isDevelopment, isInitialized, isMobile, isAdminContext]);
   
   return (
     <div className="w-full min-h-screen">
       {isMobile ? <MobileLayout {...props} /> : <DesktopLayout {...props} />}
-      {/* Always render DevRoleSwitcher if in development, regardless of admin context */}
-      {isDevelopment && isInitialized && <DevRoleSwitcher />}
+      {/* Only render DevRoleSwitcher in development mode when initialized */}
+      {isDevelopment && isInitialized && (
+        <div className="fixed top-4 right-4 z-[9999]">
+          <DevRoleSwitcher />
+        </div>
+      )}
     </div>
   );
 };

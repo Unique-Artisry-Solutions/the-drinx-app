@@ -60,7 +60,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
     const navState = resolveNavigationState(
       userType,
       isAuthenticated,
-      userType, // In dev bypass, userType is already the effective type
+      userType,
       isAuthenticated,
       isUsingDevBypass,
       location.pathname,
@@ -82,6 +82,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
   };
 
   const renderNavigation = () => {
+    // Ensure only one navigation type renders
     switch (effectiveNavState.navigationType) {
       case NavigationType.ADMIN:
         return <AdminTopNavigation />;
@@ -95,7 +96,6 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
 
   // Refined shouldShowBreadcrumbs logic
   const shouldShowBreadcrumbs = () => {
-    // List of paths where breadcrumbs should not be shown
     const excludedPaths = [
       '/', 
       '/landing', 
@@ -106,12 +106,10 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
       '/explore'
     ];
     
-    // Don't show breadcrumbs on excluded paths
     if (excludedPaths.includes(location.pathname)) {
       return false;
     }
     
-    // Don't show on landing page or admin login page
     if (isLandingPage || location.pathname === '/admin/login') {
       return false;
     }
@@ -119,22 +117,12 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
     return true;
   };
 
-  // Render the appropriate footer based on the page type
   const renderFooter = () => {
     if (isAdminPage || effectiveNavState.userType === 'admin') {
       return <AdminFooter />;
     }
     return <AppFooter />;
   };
-
-  // Debug navigation state - remove in production
-  useEffect(() => {
-    console.log('DesktopLayout - Current navigation state:', {
-      path: location.pathname,
-      effectiveNavState,
-      isUsingDevBypass
-    });
-  }, [location.pathname, effectiveNavState, isUsingDevBypass]);
 
   return (
     <div className="min-h-screen w-full flex flex-col bg-background transition-colors duration-300">
