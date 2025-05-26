@@ -5,8 +5,12 @@ import Draggable from 'react-draggable';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Wrench, User, Store, Megaphone, Shield, Minimize2, GripVertical } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Wrench, User, Store, Megaphone, Shield, Minimize2, GripVertical, TestTube, Route } from 'lucide-react';
 import { useDevelopmentMode } from '@/contexts/DevelopmentModeContext';
+import { useAuth } from '@/contexts/auth/AuthProvider';
+import { useDevAuthBypass } from '@/hooks/useDevAuthBypass';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 interface Position {
   x: number;
@@ -18,6 +22,23 @@ const DevRoleSwitcher: React.FC = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [position, setPosition] = useState<Position>({ x: 20, y: 20 });
   const nodeRef = useRef<HTMLDivElement>(null);
+  
+  // Auth testing data
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { 
+    user, 
+    session, 
+    isLoading, 
+    authStable, 
+    userType: authUserType 
+  } = useAuth();
+  
+  const { 
+    isAuthenticated: devIsAuthenticated, 
+    userType: devUserType,
+    isUsingDevBypass 
+  } = useDevAuthBypass();
 
   // Show after initialization
   useEffect(() => {
@@ -39,8 +60,8 @@ const DevRoleSwitcher: React.FC = () => {
   }, [isCollapsed, position, isDevelopment, isInitialized]);
 
   const handleDrag = (e: any, data: any) => {
-    const elementWidth = isCollapsed ? 60 : 280;
-    const elementHeight = isCollapsed ? 60 : 200;
+    const elementWidth = isCollapsed ? 60 : 320;
+    const elementHeight = isCollapsed ? 60 : 400;
     
     let newX = Math.max(0, Math.min(data.x, window.innerWidth - elementWidth));
     let newY = Math.max(0, Math.min(data.y, window.innerHeight - elementHeight));
@@ -59,6 +80,14 @@ const DevRoleSwitcher: React.FC = () => {
 
   const currentUserType = userTypes.find(type => type.type === devMode);
 
+  const testRoutes = [
+    { path: '/', label: 'Index' },
+    { path: '/landing', label: 'Landing' },
+    { path: '/explore', label: 'Explore' },
+    { path: '/login', label: 'Login' },
+    { path: '/admin/system-breakdown', label: 'Admin Dashboard' }
+  ];
+
   const DevSwitcherContent = () => (
     <Draggable
       nodeRef={nodeRef}
@@ -70,7 +99,7 @@ const DevRoleSwitcher: React.FC = () => {
       <div
         ref={nodeRef}
         className={`fixed z-[9999] transition-all duration-300 ${
-          isCollapsed ? 'w-15 h-15' : 'w-70 min-h-50'
+          isCollapsed ? 'w-15 h-15' : 'w-80 min-h-96'
         }`}
         style={{
           left: 0,
@@ -104,39 +133,107 @@ const DevRoleSwitcher: React.FC = () => {
                 </Button>
               </div>
 
-              {currentUserType && (
-                <Badge className={`${currentUserType.color} text-white text-xs`}>
-                  Current: {currentUserType.label}
-                </Badge>
-              )}
+              <Tabs defaultValue="roles" className="w-full">
+                <TabsList className="grid w-full grid-cols-2 h-8">
+                  <TabsTrigger value="roles" className="text-xs">
+                    <User className="w-3 h-3 mr-1" />
+                    Roles
+                  </TabsTrigger>
+                  <TabsTrigger value="testing" className="text-xs">
+                    <TestTube className="w-3 h-3 mr-1" />
+                    Debug
+                  </TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="roles" className="space-y-3 mt-3">
+                  {currentUserType && (
+                    <Badge className={`${currentUserType.color} text-white text-xs`}>
+                      Current: {currentUserType.label}
+                    </Badge>
+                  )}
 
-              <div className="grid grid-cols-2 gap-2">
-                {userTypes.map((userType) => (
+                  <div className="grid grid-cols-2 gap-2">
+                    {userTypes.map((userType) => (
+                      <Button
+                        key={userType.type}
+                        variant={devMode === userType.type ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => switchToUserType(userType.type)}
+                        className={`justify-start text-xs h-8 ${
+                          devMode === userType.type 
+                            ? `${userType.color} text-white` 
+                            : 'hover:bg-gray-100'
+                        }`}
+                      >
+                        <userType.icon className="w-3 h-3 mr-1.5" />
+                        {userType.label}
+                      </Button>
+                    ))}
+                  </div>
+
                   <Button
-                    key={userType.type}
-                    variant={devMode === userType.type ? "default" : "outline"}
+                    variant="outline"
                     size="sm"
-                    onClick={() => switchToUserType(userType.type)}
-                    className={`justify-start text-xs h-8 ${
-                      devMode === userType.type 
-                        ? `${userType.color} text-white` 
-                        : 'hover:bg-gray-100'
-                    }`}
+                    onClick={exitDevMode}
+                    className="w-full text-xs h-7 border-red-300 text-red-700 hover:bg-red-50"
                   >
-                    <userType.icon className="w-3 h-3 mr-1.5" />
-                    {userType.label}
+                    Exit Dev Mode
                   </Button>
-                ))}
-              </div>
-
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={exitDevMode}
-                className="w-full text-xs h-7 border-red-300 text-red-700 hover:bg-red-50"
-              >
-                Exit Dev Mode
-              </Button>
+                </TabsContent>
+                
+                <TabsContent value="testing" className="space-y-3 mt-3">
+                  <div className="text-xs space-y-2">
+                    <div className="grid grid-cols-2 gap-1 text-xs">
+                      <div>Path:</div>
+                      <div className="font-mono text-[10px]">{location.pathname}</div>
+                      
+                      <div>Loading:</div>
+                      <div>{isLoading ? '✅' : '❌'}</div>
+                      
+                      <div>Auth Stable:</div>
+                      <div>{authStable ? '✅' : '❌'}</div>
+                      
+                      <div>Has User:</div>
+                      <div>{user ? '✅' : '❌'}</div>
+                      
+                      <div>Has Session:</div>
+                      <div>{session ? '✅' : '❌'}</div>
+                      
+                      <div>Auth Type:</div>
+                      <div className="text-[10px]">{authUserType || 'none'}</div>
+                      
+                      <div>Dev Type:</div>
+                      <div className="text-[10px]">{devUserType || 'none'}</div>
+                      
+                      <div>Dev Bypass:</div>
+                      <div>{isUsingDevBypass ? '✅' : '❌'}</div>
+                      
+                      <div>Dev Auth:</div>
+                      <div>{devIsAuthenticated ? '✅' : '❌'}</div>
+                    </div>
+                    
+                    <div className="border-t pt-2">
+                      <div className="text-xs font-medium mb-1 flex items-center gap-1">
+                        <Route className="w-3 h-3" />
+                        Test Routes:
+                      </div>
+                      <div className="grid grid-cols-1 gap-1">
+                        {testRoutes.map(route => (
+                          <Button
+                            key={route.path}
+                            size="sm"
+                            variant="outline"
+                            className="text-[10px] h-6 justify-start"
+                            onClick={() => navigate(route.path)}
+                          >
+                            {route.label}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </TabsContent>
+              </Tabs>
             </div>
           )}
         </Card>

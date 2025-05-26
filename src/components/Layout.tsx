@@ -2,7 +2,7 @@
 import React from 'react';
 import ResponsiveLayout from './layout/ResponsiveLayout';
 import { useDevelopmentMode } from '@/contexts/DevelopmentModeContext';
-import AuthTestPanel from './development/AuthTestPanel';
+import DevRoleSwitcher from './development/DevRoleSwitcher';
 
 interface TabOption {
   value: string;
@@ -23,7 +23,7 @@ const Layout: React.FC<LayoutProps> = (props) => {
   return (
     <>
       <ResponsiveLayout {...props} />
-      {isDevelopment && <AuthTestPanel />}
+      {isDevelopment && <DevRoleSwitcher />}
     </>
   );
 };
