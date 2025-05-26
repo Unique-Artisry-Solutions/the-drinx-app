@@ -19,8 +19,6 @@ import CheckoutPage from '@/pages/CheckoutPage';
 import PurchaseSuccessPage from '@/pages/PurchaseSuccessPage';
 import MyTicketsPage from '@/pages/MyTicketsPage';
 import NotFound from '@/pages/NotFound';
-import { ProtectedRoute } from '@/components/ProtectedRoute';
-import { AdminRoute } from '@/components/AdminRoute';
 import { PromoterRoute } from '@/components/PromoterRoute';
 import { EstablishmentRoute } from '@/components/EstablishmentRoute';
 
