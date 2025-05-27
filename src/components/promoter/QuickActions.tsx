@@ -1,119 +1,66 @@
 
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { 
-  Plus,
-  DollarSign, 
-  Timer, 
-  TrendingUp, 
+  Plus, 
   Calendar, 
-  Target, 
-  Settings,
-  ArrowRight,
-  Users,
-  Share2,
-  Tag,
-  Zap
+  Route, 
+  Users, 
+  MessageSquare, 
+  Target,
+  BarChart3,
+  Settings
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-
-interface QuickActionCard {
-  title: string;
-  description: string;
-  icon: React.ElementType;
-  path: string;
-  status?: 'active' | 'new' | 'coming-soon';
-  metrics?: string;
-  actionText?: string;
-}
 
 export const QuickActions: React.FC = () => {
   const navigate = useNavigate();
 
-  const quickActions: QuickActionCard[] = [
+  const actions = [
     {
-      title: 'Dynamic Pricing',
-      description: 'Manage pricing rules and automation',
-      icon: DollarSign,
-      path: '/promoter/pricing',
-      status: 'active',
-      metrics: '5 active rules',
-      actionText: 'Manage Pricing'
-    },
-    {
-      title: 'Urgency Tools',
-      description: 'Countdown timers and scarcity indicators',
-      icon: Timer,
-      path: '/promoter/urgency',
-      status: 'active',
-      metrics: '3 campaigns running',
-      actionText: 'Create Campaign'
-    },
-    {
-      title: 'Affiliate Management',
-      description: 'Manage affiliate partners and tracking',
-      icon: Users,
-      path: '/promoter/affiliates',
-      status: 'new',
-      metrics: '12 active partners',
-      actionText: 'Manage Affiliates'
-    },
-    {
-      title: 'Referral Campaigns',
-      description: 'Track and optimize referral programs',
-      icon: Share2,
-      path: '/promoter/referrals',
-      status: 'new',
-      metrics: '8.2% conversion rate',
-      actionText: 'View Campaigns'
-    },
-    {
-      title: 'Real-Time Analytics',
-      description: 'Live monitoring and performance tracking',
-      icon: TrendingUp,
-      path: '/promoter/real-time-analytics',
-      status: 'active',
-      metrics: '147 active visitors',
-      actionText: 'View Live Data'
-    },
-    {
-      title: 'Event Management',
-      description: 'Create and manage your events',
+      title: "Create Event",
+      description: "Set up a new event",
       icon: Calendar,
-      path: '/promoter/events',
-      status: 'active',
-      actionText: 'Create Event'
+      action: () => navigate('/promoter/events'),
+      color: "bg-blue-500 hover:bg-blue-600"
     },
     {
-      title: 'Marketing Analytics',
-      description: 'Track campaign performance',
+      title: "Create Swig Circuit",
+      description: "Design a new circuit",
+      icon: Route,
+      action: () => navigate('/promoter/create-swig-circuit'),
+      color: "bg-purple-500 hover:bg-purple-600"
+    },
+    {
+      title: "Manage Followers",
+      description: "View and engage followers",
+      icon: Users,
+      action: () => navigate('/promoter/dashboard?tab=followers'),
+      color: "bg-green-500 hover:bg-green-600"
+    },
+    {
+      title: "Send Campaign",
+      description: "Launch marketing campaign",
       icon: Target,
-      path: '/promoter/marketing-analytics',
-      status: 'active',
-      actionText: 'View Reports'
+      action: () => navigate('/promoter/marketing-analytics'),
+      color: "bg-orange-500 hover:bg-orange-600"
     },
     {
-      title: 'Settings',
-      description: 'Configure your account preferences',
+      title: "View Analytics",
+      description: "Check performance metrics",
+      icon: BarChart3,
+      action: () => navigate('/promoter/analytics'),
+      color: "bg-cyan-500 hover:bg-cyan-600"
+    },
+    {
+      title: "Settings",
+      description: "Configure preferences",
       icon: Settings,
-      path: '/promoter/settings',
-      status: 'active',
-      actionText: 'Configure'
+      action: () => navigate('/promoter/settings'),
+      color: "bg-gray-500 hover:bg-gray-600"
     }
   ];
-
-  const getStatusBadge = (status?: string) => {
-    switch (status) {
-      case 'new':
-        return <Badge variant="secondary" className="bg-green-100 text-green-800">New</Badge>;
-      case 'coming-soon':
-        return <Badge variant="outline">Coming Soon</Badge>;
-      default:
-        return null;
-    }
-  };
 
   return (
     <Card>
@@ -122,34 +69,21 @@ export const QuickActions: React.FC = () => {
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {quickActions.map((action) => (
-            <div 
-              key={action.path} 
-              className="p-4 border rounded-lg hover:shadow-md transition-all duration-200 group cursor-pointer"
-              onClick={() => navigate(action.path)}
+          {actions.map((action) => (
+            <Button
+              key={action.title}
+              variant="outline"
+              className="h-auto p-4 flex flex-col items-start gap-2 text-left"
+              onClick={action.action}
             >
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <action.icon className="h-5 w-5 text-purple-600" />
-                  <span className="font-medium">{action.title}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  {getStatusBadge(action.status)}
-                  <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-purple-600 transition-colors" />
-                </div>
+              <div className={`p-2 rounded-lg ${action.color} text-white`}>
+                <action.icon className="h-4 w-4" />
               </div>
-              <p className="text-sm text-muted-foreground mb-3">{action.description}</p>
-              {action.metrics && (
-                <p className="text-xs font-medium text-purple-600 mb-3">{action.metrics}</p>
-              )}
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="w-full group-hover:bg-purple-50 group-hover:border-purple-300"
-              >
-                {action.actionText || 'Open'}
-              </Button>
-            </div>
+              <div>
+                <div className="font-semibold">{action.title}</div>
+                <div className="text-sm text-muted-foreground">{action.description}</div>
+              </div>
+            </Button>
           ))}
         </div>
       </CardContent>

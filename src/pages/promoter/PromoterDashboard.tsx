@@ -1,11 +1,11 @@
 
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus } from 'lucide-react';
+import { Plus, Route } from 'lucide-react';
 import { DashboardWidgets } from '@/components/promoter/DashboardWidgets';
 import { QuickActions } from '@/components/promoter/QuickActions';
 import { DashboardOverviewTab } from '@/components/promoter/dashboard/DashboardOverviewTab';
@@ -21,7 +21,8 @@ import { FollowerManagementDashboard } from '@/components/promoter/FollowerManag
 
 const PromoterDashboard = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('overview');
+  const [searchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'overview');
 
   // Mock promoter ID - in real implementation, this would come from auth context
   const promoterId = "promoter-123";
@@ -34,10 +35,16 @@ const PromoterDashboard = () => {
           <h1 className="text-3xl font-bold">Promoter Dashboard</h1>
           <p className="text-muted-foreground">Monitor your events and promotional campaigns in real-time</p>
         </div>
-        <Button onClick={() => navigate('/promoter/events')} className="flex items-center gap-2">
-          <Plus className="h-4 w-4" />
-          Create Event
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={() => navigate('/promoter/create-swig-circuit')} variant="outline" className="flex items-center gap-2">
+            <Route className="h-4 w-4" />
+            Create Swig Circuit
+          </Button>
+          <Button onClick={() => navigate('/promoter/events')} className="flex items-center gap-2">
+            <Plus className="h-4 w-4" />
+            Create Event
+          </Button>
+        </div>
       </div>
 
       {/* Tabbed Interface */}
