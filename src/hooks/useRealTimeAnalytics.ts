@@ -5,12 +5,14 @@ import {
   getAnalyticsTimeFrameData, 
   getChartData, 
   getEventAnalyticsData,
+  getTrendData,
   subscribeToRealTimeAnalytics,
   subscribeToEventAnalytics,
   type RealTimeMetrics, 
   type AnalyticsTimeFrame, 
   type ChartDataPoint,
-  type EventAnalytics
+  type EventAnalytics,
+  type TrendDataPoint
 } from '@/services/realTimeAnalyticsService';
 
 interface UseRealTimeAnalyticsReturn {
@@ -18,6 +20,7 @@ interface UseRealTimeAnalyticsReturn {
   timeFrameData: AnalyticsTimeFrame[];
   chartData: ChartDataPoint[];
   eventAnalytics: EventAnalytics;
+  trendData: TrendDataPoint[];
   isLoading: boolean;
   error: string | null;
   refresh: () => void;
@@ -41,6 +44,7 @@ export function useRealTimeAnalytics(eventId?: string): UseRealTimeAnalyticsRetu
     revenue: 0,
     conversionRate: 0
   });
+  const [trendData, setTrendData] = useState<TrendDataPoint[]>([]);
 
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -54,18 +58,21 @@ export function useRealTimeAnalytics(eventId?: string): UseRealTimeAnalyticsRetu
         metricsData,
         timeFrameResult,
         chartResult,
-        eventAnalyticsResult
+        eventAnalyticsResult,
+        trendResult
       ] = await Promise.all([
         getRealTimeMetrics(),
         getAnalyticsTimeFrameData(7),
         getChartData(30),
-        getEventAnalyticsData(eventId)
+        getEventAnalyticsData(eventId),
+        getTrendData()
       ]);
 
       setMetrics(metricsData);
       setTimeFrameData(timeFrameResult);
       setChartData(chartResult);
       setEventAnalytics(eventAnalyticsResult);
+      setTrendData(trendResult);
     } catch (err) {
       console.error('Error loading analytics data:', err);
       setError(err instanceof Error ? err.message : 'Failed to load analytics data');
@@ -98,6 +105,7 @@ export function useRealTimeAnalytics(eventId?: string): UseRealTimeAnalyticsRetu
     const interval = setInterval(() => {
       getAnalyticsTimeFrameData(7).then(setTimeFrameData);
       getChartData(30).then(setChartData);
+      getTrendData().then(setTrendData);
     }, 5 * 60 * 1000);
 
     return () => {
@@ -114,6 +122,7 @@ export function useRealTimeAnalytics(eventId?: string): UseRealTimeAnalyticsRetu
     timeFrameData,
     chartData,
     eventAnalytics,
+    trendData,
     isLoading,
     error,
     refresh

@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 export interface RealTimeMetrics {
@@ -13,6 +12,13 @@ export interface RealTimeMetrics {
 export interface AnalyticsTimeFrame {
   date: string;
   metrics: RealTimeMetrics;
+}
+
+export interface TrendDataPoint {
+  label: string;
+  value: number;
+  trend: 'up' | 'down' | 'stable';
+  change: number;
 }
 
 export interface ChartDataPoint {
@@ -73,6 +79,49 @@ export async function getAnalyticsTimeFrameData(days: number): Promise<Analytics
     return timeFrameData;
   } catch (error) {
     console.error('Error fetching time frame data:', error);
+    return [];
+  }
+}
+
+export async function getTrendData(): Promise<TrendDataPoint[]> {
+  try {
+    // Mock trend data for the component
+    const trendData: TrendDataPoint[] = [
+      {
+        label: 'Active Users',
+        value: 1250,
+        trend: 'up',
+        change: 12.5
+      },
+      {
+        label: 'Page Views',
+        value: 8450,
+        trend: 'up',
+        change: 8.3
+      },
+      {
+        label: 'Conversion Rate',
+        value: 3.2,
+        trend: 'down',
+        change: -2.1
+      },
+      {
+        label: 'Revenue',
+        value: 15600,
+        trend: 'up',
+        change: 15.7
+      },
+      {
+        label: 'User Engagement',
+        value: 78.5,
+        trend: 'stable',
+        change: 0.2
+      }
+    ];
+
+    return trendData;
+  } catch (error) {
+    console.error('Error fetching trend data:', error);
     return [];
   }
 }
