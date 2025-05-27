@@ -45,3 +45,10 @@ export interface FollowerActionResult {
   data?: any;
   errors?: string[];
 }
+
+// Add the missing interface for FollowerNotificationCenter
+export interface FollowerNotificationCenterProps extends FollowerComponentProps {
+  followerCount?: number;
+  defaultMessage?: string;
+  allowScheduling?: boolean;
+}

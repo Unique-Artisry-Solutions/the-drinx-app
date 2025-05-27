@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/auth';
 import { useToast } from '@/hooks/use-toast';
 import { Notification } from '@/types/notification';
 import { safeJsonToNotificationInterface } from '@/utils/followerTypeUtils';
+import { realTimeFollowerNotificationService } from '@/services/RealTimeFollowerNotificationService';
 
 interface RealTimeNotificationContextType {
   notifications: Notification[];
@@ -94,11 +95,14 @@ export const RealTimeNotificationProvider: React.FC<RealTimeNotificationProvider
         if (status === 'SUBSCRIBED') {
           // Load initial notifications when connected
           loadInitialNotifications();
+          // Initialize follower notification service
+          realTimeFollowerNotificationService.setToast(toast);
         }
       });
 
     return () => {
       supabase.removeChannel(channel);
+      realTimeFollowerNotificationService.cleanup();
     };
   }, [user, toast]);
 
