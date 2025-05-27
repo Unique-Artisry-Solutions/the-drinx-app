@@ -1,6 +1,6 @@
 
 import { UnifiedNavItem } from '@/types/navigation/NavigationTypes';
-import { Home, Search, User, Settings, Bell, Calendar, MapPin, Users, BarChart3, Shield, Target, Route, UserCheck, DollarSign, Timer, TrendingUp } from 'lucide-react';
+import { Home, Search, User, Settings, Bell, Calendar, MapPin, Users, BarChart3, Shield, Target, Route, UserCheck, DollarSign, Timer, TrendingUp, Mail } from 'lucide-react';
 
 export const guestNavItems: UnifiedNavItem[] = [
   {
@@ -12,6 +12,26 @@ export const guestNavItems: UnifiedNavItem[] = [
     label: 'Explore',
     path: '/explore',
     icon: Search
+  },
+  {
+    label: 'Events',
+    path: '/events',
+    icon: Calendar
+  },
+  {
+    label: 'Swig Circuits',
+    path: '/swig-circuits',
+    icon: Route
+  },
+  {
+    label: 'Map',
+    path: '/map',
+    icon: MapPin
+  },
+  {
+    label: 'Contact',
+    path: '/contact',
+    icon: Mail
   }
 ];
 
@@ -20,6 +40,21 @@ export const individualNavItems: UnifiedNavItem[] = [
     label: 'Explore',
     path: '/explore',
     icon: Search
+  },
+  {
+    label: 'Events',
+    path: '/events',
+    icon: Calendar
+  },
+  {
+    label: 'Swig Circuits',
+    path: '/swig-circuits',
+    icon: Route
+  },
+  {
+    label: 'Map',
+    path: '/map',
+    icon: MapPin
   },
   {
     label: 'Profile',

@@ -4,23 +4,17 @@ import { RouteObject } from 'react-router-dom';
 import RouteProtectionWrapper from '@/hoc/RouteProtectionWrapper';
 
 // Lazy loaded components
-const PromoterDashboard = lazy(() => import('@/pages/promoter/PromoterDashboardPage'));
+const PromoterDashboard = lazy(() => import('@/pages/promoter/PromoterDashboard'));
 const PromoterProfile = lazy(() => import('@/pages/promoter/PromoterProfile'));
 const PromoterEvents = lazy(() => import('@/pages/promoter/PromoterEvents'));
-const PromoterAnalyticsPage = lazy(() => import('@/pages/promoter/PromoterAnalyticsPage'));
+const CreateSwigCircuitPage = lazy(() => import('@/pages/promoter/CreateSwigCircuitPage'));
+const PromoterAnalytics = lazy(() => import('@/pages/promoter/PromoterAnalytics'));
 const PromoterMarketingAnalytics = lazy(() => import('@/pages/promoter/PromoterMarketingAnalytics'));
-const CreateSwigCircuitPage = lazy(() => import('@/pages/profile/CreateSwigCircuitPage'));
-const AffiliateDashboard = lazy(() => import('@/components/promoter/affiliate/AffiliateDashboard'));
-
-// Dashboard pages
-const PromoterPricingPage = lazy(() => import('@/pages/promoter/PromoterPricingPage'));
-const PromoterUrgencyPage = lazy(() => import('@/pages/promoter/PromoterUrgencyPage'));
-const PromoterRealTimeAnalyticsPage = lazy(() => import('@/pages/promoter/PromoterRealTimeAnalyticsPage'));
-const PromoterSettingsPage = lazy(() => import('@/pages/promoter/PromoterSettingsPage'));
-
-// New promotional tool pages
-const PromoterAffiliatePage = lazy(() => import('@/pages/promoter/PromoterAffiliatePage'));
-const PromoterReferralPage = lazy(() => import('@/pages/promoter/PromoterReferralPage'));
+const PromoterPricing = lazy(() => import('@/pages/promoter/PromoterPricing'));
+const PromoterUrgency = lazy(() => import('@/pages/promoter/PromoterUrgency'));
+const PromoterRealTimeAnalytics = lazy(() => import('@/pages/promoter/PromoterRealTimeAnalytics'));
+const PromoterAffiliate = lazy(() => import('@/pages/promoter/PromoterAffiliate'));
+const PromoterSettings = lazy(() => import('@/pages/promoter/PromoterSettings'));
 
 export const promoterRoutes: RouteObject[] = [
   {
@@ -72,6 +66,18 @@ export const promoterRoutes: RouteObject[] = [
     )
   },
   {
+    path: '/promoter/create-swig-circuit',
+    element: (
+      <RouteProtectionWrapper 
+        requireAuth={true} 
+        allowedUserTypes={['promoter']}
+        redirectTo="/login"
+      >
+        <CreateSwigCircuitPage />
+      </RouteProtectionWrapper>
+    )
+  },
+  {
     path: '/promoter/analytics',
     element: (
       <RouteProtectionWrapper 
@@ -79,7 +85,7 @@ export const promoterRoutes: RouteObject[] = [
         allowedUserTypes={['promoter']}
         redirectTo="/login"
       >
-        <PromoterAnalyticsPage />
+        <PromoterAnalytics />
       </RouteProtectionWrapper>
     )
   },
@@ -96,31 +102,6 @@ export const promoterRoutes: RouteObject[] = [
     )
   },
   {
-    path: '/promoter/create-swig-circuit',
-    element: (
-      <RouteProtectionWrapper 
-        requireAuth={true} 
-        allowedUserTypes={['promoter']}
-        redirectTo="/login"
-      >
-        <CreateSwigCircuitPage />
-      </RouteProtectionWrapper>
-    )
-  },
-  {
-    path: '/promoter/affiliate',
-    element: (
-      <RouteProtectionWrapper 
-        requireAuth={true} 
-        allowedUserTypes={['promoter']}
-        redirectTo="/login"
-      >
-        <AffiliateDashboard promoterId="" />
-      </RouteProtectionWrapper>
-    )
-  },
-  // Dashboard routes
-  {
     path: '/promoter/pricing',
     element: (
       <RouteProtectionWrapper 
@@ -128,7 +109,7 @@ export const promoterRoutes: RouteObject[] = [
         allowedUserTypes={['promoter']}
         redirectTo="/login"
       >
-        <PromoterPricingPage />
+        <PromoterPricing />
       </RouteProtectionWrapper>
     )
   },
@@ -140,7 +121,7 @@ export const promoterRoutes: RouteObject[] = [
         allowedUserTypes={['promoter']}
         redirectTo="/login"
       >
-        <PromoterUrgencyPage />
+        <PromoterUrgency />
       </RouteProtectionWrapper>
     )
   },
@@ -152,7 +133,19 @@ export const promoterRoutes: RouteObject[] = [
         allowedUserTypes={['promoter']}
         redirectTo="/login"
       >
-        <PromoterRealTimeAnalyticsPage />
+        <PromoterRealTimeAnalytics />
+      </RouteProtectionWrapper>
+    )
+  },
+  {
+    path: '/promoter/affiliate',
+    element: (
+      <RouteProtectionWrapper 
+        requireAuth={true} 
+        allowedUserTypes={['promoter']}
+        redirectTo="/login"
+      >
+        <PromoterAffiliate />
       </RouteProtectionWrapper>
     )
   },
@@ -164,32 +157,7 @@ export const promoterRoutes: RouteObject[] = [
         allowedUserTypes={['promoter']}
         redirectTo="/login"
       >
-        <PromoterSettingsPage />
-      </RouteProtectionWrapper>
-    )
-  },
-  // New promotional tool routes
-  {
-    path: '/promoter/affiliates',
-    element: (
-      <RouteProtectionWrapper 
-        requireAuth={true} 
-        allowedUserTypes={['promoter']}
-        redirectTo="/login"
-      >
-        <PromoterAffiliatePage />
-      </RouteProtectionWrapper>
-    )
-  },
-  {
-    path: '/promoter/referrals',
-    element: (
-      <RouteProtectionWrapper 
-        requireAuth={true} 
-        allowedUserTypes={['promoter']}
-        redirectTo="/login"
-      >
-        <PromoterReferralPage />
+        <PromoterSettings />
       </RouteProtectionWrapper>
     )
   }

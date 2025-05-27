@@ -8,7 +8,6 @@ import {
   Calendar, 
   Route, 
   Users, 
-  MessageSquare, 
   Target,
   BarChart3,
   Settings
@@ -40,18 +39,18 @@ export const QuickActions: React.FC = () => {
       color: "bg-green-500 hover:bg-green-600"
     },
     {
-      title: "Send Campaign",
-      description: "Launch marketing campaign",
-      icon: Target,
-      action: () => navigate('/promoter/marketing-analytics'),
-      color: "bg-orange-500 hover:bg-orange-600"
-    },
-    {
-      title: "View Analytics",
+      title: "Analytics",
       description: "Check performance metrics",
       icon: BarChart3,
       action: () => navigate('/promoter/analytics'),
       color: "bg-cyan-500 hover:bg-cyan-600"
+    },
+    {
+      title: "Marketing",
+      description: "Launch campaigns",
+      icon: Target,
+      action: () => navigate('/promoter/marketing-analytics'),
+      color: "bg-orange-500 hover:bg-orange-600"
     },
     {
       title: "Settings",

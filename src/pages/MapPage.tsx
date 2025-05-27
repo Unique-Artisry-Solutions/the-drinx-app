@@ -1,194 +1,150 @@
-import React, { useState, useEffect } from 'react';
-import { Grid } from 'lucide-react';
-import Layout from '@/components/Layout';
-import SearchFilter from '@/components/SearchFilter';
-import EstablishmentList from '@/components/EstablishmentList';
-import MapView from '@/components/map/MapView';
-import ViewModeToggle from '@/components/ViewModeToggle';
-import { useEstablishments } from '@/hooks/useEstablishments';
-import { useUserLocation } from '@/hooks/useUserLocation';
-import { useIsMobile } from '@/hooks/use-mobile';
-import { useToast } from '@/hooks/use-toast';
-import { EstablishmentWithDistance } from '@/types/establishment';
 
-enum ViewMode {
-  Map = 'map',
-  List = 'list'
-}
+import React, { useState } from 'react';
+import Layout from '@/components/Layout';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { MapPin, Search, Navigation, Star } from 'lucide-react';
 
 const MapPage: React.FC = () => {
-  const isMobile = useIsMobile();
-  const [viewMode, setViewMode] = useState<ViewMode>(isMobile ? ViewMode.List : ViewMode.Map);
-  const [searchTerm, setSearchTerm] = useState('');
-  const { toast } = useToast();
-  
-  const { 
-    userLocation, 
-    isLoading: isLocating, 
-    error: locationError, 
-    refreshLocation 
-  } = useUserLocation();
-  
-  const { 
-    establishments: supabaseEstablishments, 
-    isLoading,
-    error: establishmentsError,
-    filterEstablishments,
-    performSearch 
-  } = useEstablishments({
-    latitude: userLocation?.latitude,
-    longitude: userLocation?.longitude,
-    searchTerm: searchTerm,
-  });
+  const [searchQuery, setSearchQuery] = useState('');
 
-  const establishments: EstablishmentWithDistance[] = supabaseEstablishments.map(est => {
-    const distanceValue = typeof est.distance_in_miles !== 'undefined' ? 
-      est.distance_in_miles : 
-      (typeof est.distanceValue !== 'undefined' ? est.distanceValue : 0);
-
-    return {
-      id: est.id,
-      name: est.name,
-      address: est.address,
-      latitude: est.latitude,
-      longitude: est.longitude,
-      cocktailCount: est.cocktail_count || est.cocktailCount || 0,
-      image: est.image_url || est.image,
-      distanceValue,
-      distance: typeof est.distance === 'string' ? est.distance : `${distanceValue} mi`
-    };
-  });
-
-  useEffect(() => {
-    if (isMobile) {
-      setViewMode(ViewMode.List);
+  // Mock establishments data
+  const establishments = [
+    {
+      id: '1',
+      name: 'The Spiritless Lounge',
+      address: '123 Main St, San Francisco, CA',
+      rating: 4.8,
+      cocktailCount: 45,
+      distance: '0.2 miles',
+      image: '/api/placeholder/300/200'
+    },
+    {
+      id: '2',
+      name: 'Zero Proof Bar',
+      address: '456 Market St, San Francisco, CA',
+      rating: 4.6,
+      cocktailCount: 38,
+      distance: '0.5 miles',
+      image: '/api/placeholder/300/200'
+    },
+    {
+      id: '3',
+      name: 'Mocktail Masters',
+      address: '789 Union St, San Francisco, CA',
+      rating: 4.9,
+      cocktailCount: 52,
+      distance: '0.8 miles',
+      image: '/api/placeholder/300/200'
     }
-  }, [isMobile]);
+  ];
 
-  const handleSearch = (term: string) => {
-    setSearchTerm(term);
-    filterEstablishments(term);
-    performSearch();
-    
-    if (term) {
-      toast({
-        title: "Search results",
-        description: establishments.length > 0 
-          ? `Found ${establishments.length} establishments matching "${term}"` 
-          : `No establishments found matching "${term}"`
-      });
-    }
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Mock search functionality
+    console.log('Searching for:', searchQuery);
   };
-
-  const handleFilterChange = (filters: any) => {
-    console.log('Applied filters:', filters);
-  };
-  
-  const applyFilters = () => {
-    performSearch();
-    
-    toast({
-      title: "Filters Applied",
-      description: `Found ${establishments.length} establishments matching your criteria.`
-    });
-  };
-
-  const toggleViewMode = () => {
-    setViewMode(prevMode => prevMode === ViewMode.Map ? ViewMode.List : ViewMode.Map);
-  };
-
-  useEffect(() => {
-    if (locationError) {
-      console.error('Error getting location:', locationError);
-      toast({
-        title: "Location error",
-        description: "Unable to get your location. Some features may be limited.",
-        variant: "destructive"
-      });
-    }
-    
-    if (establishmentsError) {
-      console.error('Error fetching establishments:', establishmentsError);
-      toast({
-        title: "Data loading error",
-        description: "There was a problem fetching establishments.",
-        variant: "destructive"
-      });
-    }
-  }, [locationError, establishmentsError, toast]);
-
-  if (isLoading) {
-    return (
-      <Layout>
-        <div className="container mx-auto px-4 py-6">
-          <div className="text-center py-12">
-            <div className="animate-pulse flex flex-col items-center">
-              <div className="h-12 w-12 bg-gray-200 rounded-full mb-4"></div>
-              <div className="h-4 w-48 bg-gray-200 rounded mb-4"></div>
-              <div className="h-4 w-64 bg-gray-200 rounded"></div>
-            </div>
-          </div>
-        </div>
-      </Layout>
-    );
-  }
 
   return (
     <Layout>
-      <div className="min-h-[calc(100vh-4rem)] flex flex-col">
-        <div className="p-2 sm:p-4 border-b">
-          <div className="flex flex-col sm:flex-row gap-2 justify-between items-center mb-4">
-            <h1 className="text-xl font-bold">Explore Mocktails</h1>
-            {!isMobile && (
-              <ViewModeToggle 
-                viewMode={viewMode.toLowerCase() as 'map' | 'list'} 
-                onViewModeChange={(mode) => setViewMode(mode === 'map' ? ViewMode.Map : ViewMode.List)} 
-              />
-            )}
-          </div>
-          <SearchFilter 
-            onSearch={handleSearch}
-            onFilterChange={handleFilterChange}
-            onApplyFilters={applyFilters}
-            initialSearchTerm={searchTerm}
-          />
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold mb-4">Find Nearby Establishments</h1>
+          <p className="text-xl text-muted-foreground">
+            Discover the best alcohol-free venues in your area
+          </p>
         </div>
-        
-        <div className="flex-1">
-          {viewMode === ViewMode.Map ? (
-            <div className="h-full">
-              <MapView 
-                establishments={establishments}
-                userLocation={userLocation}
-                onRefreshLocation={refreshLocation}
-                isLoadingLocation={isLocating}
-              />
-            </div>
-          ) : (
-            <div className="p-2 sm:p-4">
-              <EstablishmentList 
-                establishments={establishments} 
-                selectedEstablishment={null}
-                favoriteEstablishments={[]}
-                onToggleFavorite={() => {}}
-                onEstablishmentClick={() => {}}
-                isLoading={isLoading}
-              />
-            </div>
-          )}
-        </div>
-        
-        {isMobile && (
-          <div className="fixed bottom-20 right-4">
-            <button 
-              onClick={toggleViewMode}
-              className="bg-material-primary text-white p-3 rounded-full shadow-lg"
-              aria-label="Toggle view mode"
-            >
-              <Grid size={24} />
-            </button>
+
+        {/* Search Bar */}
+        <Card className="mb-8">
+          <CardContent className="p-6">
+            <form onSubmit={handleSearch} className="flex gap-4">
+              <div className="flex-1">
+                <Input
+                  placeholder="Search by location, establishment name, or drink type..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="text-lg h-12"
+                />
+              </div>
+              <Button type="submit" size="lg" className="px-8">
+                <Search className="h-5 w-5 mr-2" />
+                Search
+              </Button>
+              <Button type="button" variant="outline" size="lg">
+                <Navigation className="h-5 w-5 mr-2" />
+                Use My Location
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Map Placeholder */}
+          <Card className="h-[600px]">
+            <CardHeader>
+              <CardTitle>Map View</CardTitle>
+            </CardHeader>
+            <CardContent className="h-full">
+              <div className="w-full h-full bg-muted rounded-lg flex items-center justify-center">
+                <div className="text-center">
+                  <MapPin className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
+                  <p className="text-lg font-medium">Interactive Map</p>
+                  <p className="text-muted-foreground">Map integration coming soon</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Establishments List */}
+          <div className="space-y-4">
+            <h2 className="text-2xl font-bold">Nearby Establishments</h2>
+            
+            {establishments.map((establishment) => (
+              <Card key={establishment.id} className="hover:shadow-md transition-shadow">
+                <CardContent className="p-4">
+                  <div className="flex gap-4">
+                    <img
+                      src={establishment.image}
+                      alt={establishment.name}
+                      className="w-24 h-24 rounded-lg object-cover"
+                    />
+                    <div className="flex-1">
+                      <div className="flex items-start justify-between mb-2">
+                        <h3 className="text-lg font-semibold">{establishment.name}</h3>
+                        <Badge variant="secondary">{establishment.distance}</Badge>
+                      </div>
+                      
+                      <div className="flex items-center gap-2 mb-2">
+                        <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                        <span className="font-medium">{establishment.rating}</span>
+                        <span className="text-muted-foreground">
+                          • {establishment.cocktailCount} drinks
+                        </span>
+                      </div>
+                      
+                      <p className="text-sm text-muted-foreground mb-3">
+                        {establishment.address}
+                      </p>
+                      
+                      <div className="flex gap-2">
+                        <Button size="sm" variant="outline">
+                          View Details
+                        </Button>
+                        <Button size="sm">
+                          <Navigation className="h-4 w-4 mr-1" />
+                          Directions
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
-        )}
+        </div>
       </div>
     </Layout>
   );
