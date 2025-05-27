@@ -2,16 +2,9 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Users, 
-  TrendingUp, 
-  UserPlus,
-  Bell,
-  BarChart3
-} from 'lucide-react';
+import { Users, TrendingUp, Calendar, Bell } from 'lucide-react';
 import { useSubscriptions } from '@/hooks/useSubscriptions';
 import { FollowerAnalyticsProps } from '@/types/FollowerComponentTypes';
-import { FollowerAnalyticsSkeleton } from './FollowerLoadingStates';
 import FollowerErrorBoundary from './FollowerErrorBoundary';
 
 const FollowerAnalyticsWidgets: React.FC<FollowerAnalyticsProps> = ({ 
@@ -23,13 +16,7 @@ const FollowerAnalyticsWidgets: React.FC<FollowerAnalyticsProps> = ({
   onError,
   onSuccess
 }) => {
-  const { followers, isLoading, error } = useSubscriptions(promoterId);
-
-  React.useEffect(() => {
-    if (error && onError) {
-      onError(new Error(error));
-    }
-  }, [error, onError]);
+  const { followers, isLoading } = useSubscriptions(promoterId);
 
   React.useEffect(() => {
     if (followers && onSuccess) {
@@ -37,151 +24,108 @@ const FollowerAnalyticsWidgets: React.FC<FollowerAnalyticsProps> = ({
     }
   }, [followers, onSuccess]);
 
-  if (isLoading) {
-    return <FollowerAnalyticsSkeleton detailed={detailed} />;
-  }
+  const handleError = (error: Error) => {
+    console.error('FollowerAnalyticsWidgets error:', error);
+    onError?.(error);
+  };
 
-  if (error) {
-    throw new Error(error);
+  if (isLoading) {
+    return (
+      <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 ${className}`}>
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Card key={i}>
+            <CardHeader className="pb-2">
+              <div className="h-4 bg-muted animate-pulse rounded" />
+            </CardHeader>
+            <CardContent>
+              <div className="h-8 bg-muted animate-pulse rounded mb-2" />
+              <div className="h-3 bg-muted animate-pulse rounded w-2/3" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
   }
 
   const totalFollowers = followers?.length || 0;
   const activeFollowers = followers?.filter(f => f.follow_status === 'active').length || 0;
-  const notificationEnabledFollowers = followers?.filter(f => 
+  const recentFollowers = followers?.filter(f => {
+    const createdAt = new Date(f.created_at);
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    return createdAt > thirtyDaysAgo;
+  }).length || 0;
+
+  const notificationEnabled = followers?.filter(f => 
     f.notification_preferences?.events !== false
   ).length || 0;
-
-  // Mock growth data - in real app this would come from analytics
-  const growthRate = 12; // percentage
-  const newThisMonth = Math.floor(totalFollowers * 0.15);
 
   const widgets = [
     {
       title: 'Total Followers',
-      value: totalFollowers.toLocaleString(),
+      value: totalFollowers,
       icon: Users,
-      trend: `+${growthRate}% this ${timeRange}`,
-      color: 'text-blue-600',
+      change: '+12%',
+      description: 'All time followers',
       show: metrics.includes('total')
     },
     {
       title: 'Active Followers',
-      value: activeFollowers.toLocaleString(),
+      value: activeFollowers,
       icon: TrendingUp,
-      trend: `${Math.round((activeFollowers / totalFollowers) * 100)}% active rate`,
-      color: 'text-green-600',
+      change: '+8%',
+      description: 'Currently following',
       show: metrics.includes('engagement')
     },
     {
-      title: 'New This Month',
-      value: newThisMonth.toLocaleString(),
-      icon: UserPlus,
-      trend: `+${Math.round((newThisMonth / totalFollowers) * 100)}% of total`,
-      color: 'text-purple-600',
+      title: 'Recent Growth',
+      value: recentFollowers,
+      icon: Calendar,
+      change: '+24%',
+      description: 'Last 30 days',
       show: metrics.includes('growth')
     },
     {
-      title: 'Notifications Enabled',
-      value: notificationEnabledFollowers.toLocaleString(),
+      title: 'Notifications On',
+      value: notificationEnabled,
       icon: Bell,
-      trend: `${Math.round((notificationEnabledFollowers / totalFollowers) * 100)}% opt-in rate`,
-      color: 'text-orange-600',
-      show: metrics.includes('engagement')
+      change: '92%',
+      description: 'Receive notifications',
+      show: metrics.includes('notifications')
     }
-  ];
-
-  const visibleWidgets = widgets.filter(widget => widget.show);
+  ].filter(widget => widget.show);
 
   return (
-    <div className={`space-y-6 ${className}`}>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {visibleWidgets.map((widget, index) => {
-          const IconComponent = widget.icon;
+    <FollowerErrorBoundary onError={handleError}>
+      <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-${Math.min(widgets.length, 4)} gap-4 ${className}`}>
+        {widgets.map((widget, index) => {
+          const Icon = widget.icon;
           return (
             <Card key={index}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{widget.title}</CardTitle>
-                <IconComponent className={`h-4 w-4 ${widget.color}`} />
+                <CardTitle className="text-sm font-medium">
+                  {widget.title}
+                </CardTitle>
+                <Icon className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{widget.value}</div>
-                <p className="text-xs text-muted-foreground">{widget.trend}</p>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Badge variant="secondary" className="text-xs">
+                    {widget.change}
+                  </Badge>
+                  <span>{widget.description}</span>
+                </div>
+                {detailed && (
+                  <div className="mt-2 text-xs text-muted-foreground">
+                    Based on {timeRange} data
+                  </div>
+                )}
               </CardContent>
             </Card>
           );
         })}
       </div>
-
-      {detailed && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="h-5 w-5" />
-              Detailed Analytics
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <h4 className="font-medium">Follower Status</h4>
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-sm">
-                      <span>Active</span>
-                      <Badge variant="default">{activeFollowers}</Badge>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>Paused</span>
-                      <Badge variant="secondary">
-                        {followers?.filter(f => f.follow_status === 'paused').length || 0}
-                      </Badge>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>Cancelled</span>
-                      <Badge variant="outline">
-                        {followers?.filter(f => f.follow_status === 'cancelled').length || 0}
-                      </Badge>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <h4 className="font-medium">Engagement</h4>
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-sm">
-                      <span>Event Notifications</span>
-                      <Badge variant="default">{notificationEnabledFollowers}</Badge>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>Opt-out Rate</span>
-                      <Badge variant="secondary">
-                        {Math.round(((totalFollowers - notificationEnabledFollowers) / totalFollowers) * 100)}%
-                      </Badge>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <h4 className="font-medium">Growth Metrics</h4>
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-sm">
-                      <span>Growth Rate</span>
-                      <Badge variant="default">+{growthRate}%</Badge>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>Retention</span>
-                      <Badge variant="default">
-                        {Math.round((activeFollowers / totalFollowers) * 100)}%
-                      </Badge>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-    </div>
+    </FollowerErrorBoundary>
   );
 };
 
