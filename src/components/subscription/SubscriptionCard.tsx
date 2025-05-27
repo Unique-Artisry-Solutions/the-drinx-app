@@ -39,8 +39,8 @@ export const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
         // Subscribe to premium tier
         await subscribe.mutateAsync({ promoterId, tierId: tier.id });
       } else {
-        // Free follow
-        await follow.mutateAsync({ promoterId });
+        // Free follow - pass just the promoterId string
+        await follow.mutateAsync(promoterId);
       }
     }
   };
