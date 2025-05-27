@@ -134,9 +134,13 @@ export class AffiliateService {
   }
 
   static async trackClick(trackingCode: string): Promise<void> {
-    const { error } = await supabase.rpc('increment_click_count', {
-      tracking_code: trackingCode
-    });
+    // Update click count directly in the database
+    const { error } = await supabase
+      .from('affiliate_tracking_links')
+      .update({ 
+        click_count: supabase.sql`click_count + 1` 
+      })
+      .eq('tracking_code', trackingCode);
 
     if (error) throw new Error(`Failed to track click: ${error.message}`);
   }

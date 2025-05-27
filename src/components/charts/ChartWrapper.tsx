@@ -70,9 +70,16 @@ export const SmartChart: React.FC<{
   const series = detectSeries();
 
   if (type === 'pie') {
+    // Transform data for pie chart - ensure it has value property
+    const pieData = data.map(item => ({
+      name: item.name,
+      value: item.value || Object.values(item).find(val => typeof val === 'number') || 0,
+      color: item.color
+    }));
+
     return (
       <AnalyticsPieChart
-        data={data}
+        data={pieData}
         title={title}
         description={description}
         height={height}

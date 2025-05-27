@@ -10,7 +10,22 @@ export class PricingService {
   static async createRule(data: Omit<PricingRule, 'id' | 'created_at' | 'updated_at'>): Promise<PricingRule> {
     const { data: rule, error } = await supabase
       .from('pricing_rules')
-      .insert(data)
+      .insert({
+        promoter_id: data.promoter_id,
+        event_id: data.event_id,
+        swig_circuit_id: data.swig_circuit_id,
+        rule_name: data.rule_name,
+        rule_type: data.rule_type,
+        price_adjustment_type: data.price_adjustment_type,
+        price_adjustment_value: data.adjustment_value,
+        min_price: data.min_price,
+        max_price: data.max_price,
+        conditions: data.conditions,
+        effective_from: data.effective_from,
+        effective_until: data.effective_until,
+        is_active: data.is_active,
+        priority: data.priority
+      })
       .select()
       .single();
 
@@ -50,10 +65,31 @@ export class PricingService {
     return filterValidPricingRules(data || []);
   }
 
-  static async updateRule(id: string, updates: Partial<PricingRule>): Promise<PricingRule> {
+  static async getPromoterRules(promoterId: string): Promise<PricingRule[]> {
     const { data, error } = await supabase
       .from('pricing_rules')
-      .update(updates)
+      .select('*')
+      .eq('promoter_id', promoterId)
+      .eq('is_active', true)
+      .order('priority', { ascending: false });
+
+    if (error) throw new Error(`Failed to fetch promoter pricing rules: ${error.message}`);
+    
+    return filterValidPricingRules(data || []);
+  }
+
+  static async updateRule(id: string, updates: Partial<PricingRule>): Promise<PricingRule> {
+    const updateData: any = { ...updates };
+    
+    // Map client-side property names to database column names
+    if (updateData.adjustment_value !== undefined) {
+      updateData.price_adjustment_value = updateData.adjustment_value;
+      delete updateData.adjustment_value;
+    }
+
+    const { data, error } = await supabase
+      .from('pricing_rules')
+      .update(updateData)
       .eq('id', id)
       .select()
       .single();

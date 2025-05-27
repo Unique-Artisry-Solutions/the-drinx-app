@@ -8,8 +8,8 @@ export interface PricingRule {
   rule_name: string;
   rule_type: 'time_based' | 'demand_based' | 'inventory_based' | 'combined';
   conditions: Record<string, any>;
-  price_adjustment_type: 'percentage' | 'fixed';
-  price_adjustment_value: number;
+  price_adjustment_type: 'percentage' | 'fixed_amount' | 'tier_based';
+  adjustment_value: number;
   min_price?: number;
   max_price?: number;
   priority: number;

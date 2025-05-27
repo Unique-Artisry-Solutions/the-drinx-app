@@ -1,6 +1,14 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { CountdownTimer, UrgencyCampaign, ScarcityIndicator } from '@/types/promotional';
+import {
+  convertDatabaseCountdownTimer,
+  convertDatabaseUrgencyCampaign,
+  convertDatabaseScarcityIndicator,
+  filterValidCountdownTimers,
+  filterValidUrgencyCampaigns,
+  filterValidScarcityIndicators
+} from '@/types/promotional/TypeBridge';
 
 export class UrgencyService {
   // Countdown Timers
@@ -12,25 +20,26 @@ export class UrgencyService {
       .single();
 
     if (error) throw new Error(`Failed to create countdown timer: ${error.message}`);
-    return timer;
+    
+    const convertedTimer = convertDatabaseCountdownTimer(timer);
+    if (!convertedTimer) {
+      throw new Error('Failed to convert database timer to valid type');
+    }
+    
+    return convertedTimer;
   }
 
-  static async getEventTimers(eventId?: string, swigCircuitId?: string): Promise<CountdownTimer[]> {
-    let query = supabase
+  static async getEventTimers(eventId: string): Promise<CountdownTimer[]> {
+    const { data, error } = await supabase
       .from('countdown_timers')
       .select('*')
-      .eq('is_active', true);
-
-    if (eventId) {
-      query = query.eq('event_id', eventId);
-    } else if (swigCircuitId) {
-      query = query.eq('swig_circuit_id', swigCircuitId);
-    }
-
-    const { data, error } = await query.order('created_at', { ascending: false });
+      .eq('event_id', eventId)
+      .eq('is_active', true)
+      .order('created_at', { ascending: false });
 
     if (error) throw new Error(`Failed to fetch countdown timers: ${error.message}`);
-    return data || [];
+    
+    return filterValidCountdownTimers(data || []);
   }
 
   static async updateTimer(id: string, updates: Partial<CountdownTimer>): Promise<CountdownTimer> {
@@ -42,18 +51,13 @@ export class UrgencyService {
       .single();
 
     if (error) throw new Error(`Failed to update countdown timer: ${error.message}`);
-    return data;
-  }
-
-  static async getActiveTimers(): Promise<CountdownTimer[]> {
-    const { data, error } = await supabase
-      .from('countdown_timers')
-      .select('*')
-      .eq('is_active', true)
-      .gt('target_datetime', new Date().toISOString());
-
-    if (error) throw new Error(`Failed to fetch active timers: ${error.message}`);
-    return data || [];
+    
+    const convertedTimer = convertDatabaseCountdownTimer(data);
+    if (!convertedTimer) {
+      throw new Error('Failed to convert updated timer to valid type');
+    }
+    
+    return convertedTimer;
   }
 
   // Urgency Campaigns
@@ -65,7 +69,13 @@ export class UrgencyService {
       .single();
 
     if (error) throw new Error(`Failed to create urgency campaign: ${error.message}`);
-    return campaign;
+    
+    const convertedCampaign = convertDatabaseUrgencyCampaign(campaign);
+    if (!convertedCampaign) {
+      throw new Error('Failed to convert database campaign to valid type');
+    }
+    
+    return convertedCampaign;
   }
 
   static async getPromoterCampaigns(promoterId: string): Promise<UrgencyCampaign[]> {
@@ -76,51 +86,8 @@ export class UrgencyService {
       .order('created_at', { ascending: false });
 
     if (error) throw new Error(`Failed to fetch urgency campaigns: ${error.message}`);
-    return data || [];
-  }
-
-  static async getActiveCampaigns(eventId?: string, swigCircuitId?: string): Promise<UrgencyCampaign[]> {
-    let query = supabase
-      .from('urgency_campaigns')
-      .select('*')
-      .eq('is_active', true)
-      .lte('start_date', new Date().toISOString());
-
-    if (eventId) {
-      query = query.eq('event_id', eventId);
-    } else if (swigCircuitId) {
-      query = query.eq('swig_circuit_id', swigCircuitId);
-    }
-
-    // Add end_date filter
-    query = query.or('end_date.is.null,end_date.gt.' + new Date().toISOString());
-
-    const { data, error } = await query;
-
-    if (error) throw new Error(`Failed to fetch active campaigns: ${error.message}`);
-    return data || [];
-  }
-
-  static async recordCampaignDisplay(campaignId: string): Promise<void> {
-    const { error } = await supabase
-      .from('urgency_campaigns')
-      .update({
-        current_displays: supabase.raw('current_displays + 1')
-      })
-      .eq('id', campaignId);
-
-    if (error) throw new Error(`Failed to record campaign display: ${error.message}`);
-  }
-
-  static async recordCampaignConversion(campaignId: string): Promise<void> {
-    const { error } = await supabase
-      .from('urgency_campaigns')
-      .update({
-        conversion_count: supabase.raw('conversion_count + 1')
-      })
-      .eq('id', campaignId);
-
-    if (error) throw new Error(`Failed to record campaign conversion: ${error.message}`);
+    
+    return filterValidUrgencyCampaigns(data || []);
   }
 
   // Scarcity Indicators
@@ -132,101 +99,52 @@ export class UrgencyService {
       .single();
 
     if (error) throw new Error(`Failed to create scarcity indicator: ${error.message}`);
-    return indicator;
+    
+    const convertedIndicator = convertDatabaseScarcityIndicator(indicator);
+    if (!convertedIndicator) {
+      throw new Error('Failed to convert database indicator to valid type');
+    }
+    
+    return convertedIndicator;
   }
 
-  static async getActiveIndicators(campaignId?: string): Promise<ScarcityIndicator[]> {
-    let query = supabase
+  static async getCampaignIndicators(campaignId: string): Promise<ScarcityIndicator[]> {
+    const { data, error } = await supabase
       .from('scarcity_indicators')
       .select('*')
+      .eq('urgency_campaign_id', campaignId)
       .eq('is_active', true)
       .order('priority', { ascending: false });
 
-    if (campaignId) {
-      query = query.eq('urgency_campaign_id', campaignId);
-    }
-
-    const { data, error } = await query;
-
     if (error) throw new Error(`Failed to fetch scarcity indicators: ${error.message}`);
-    return data || [];
+    
+    return filterValidScarcityIndicators(data || []);
   }
 
-  static async evaluateScarcityTriggers(ticketTierId: string): Promise<ScarcityIndicator[]> {
-    // Get current ticket inventory
-    const { data: inventory } = await supabase
-      .from('ticket_inventory')
-      .select('total_quantity, sold_quantity')
-      .eq('ticket_type_id', ticketTierId)
-      .single();
+  static async deleteTimer(id: string): Promise<void> {
+    const { error } = await supabase
+      .from('countdown_timers')
+      .delete()
+      .eq('id', id);
 
-    if (!inventory) return [];
+    if (error) throw new Error(`Failed to delete countdown timer: ${error.message}`);
+  }
 
-    const remainingTickets = inventory.total_quantity - inventory.sold_quantity;
-    const percentageSold = (inventory.sold_quantity / inventory.total_quantity) * 100;
+  static async deleteCampaign(id: string): Promise<void> {
+    const { error } = await supabase
+      .from('urgency_campaigns')
+      .delete()
+      .eq('id', id);
 
-    // Get relevant scarcity indicators
-    const { data: indicators } = await supabase
+    if (error) throw new Error(`Failed to delete urgency campaign: ${error.message}`);
+  }
+
+  static async deleteIndicator(id: string): Promise<void> {
+    const { error } = await supabase
       .from('scarcity_indicators')
-      .select('*')
-      .eq('ticket_pricing_tier_id', ticketTierId)
-      .eq('is_active', true);
+      .delete()
+      .eq('id', id);
 
-    if (!indicators) return [];
-
-    // Filter indicators that should be triggered
-    return indicators.filter(indicator => {
-      switch (indicator.indicator_type) {
-        case 'tickets_remaining':
-          return remainingTickets <= (indicator.threshold_value || 0);
-        case 'percentage_sold':
-          return percentageSold >= (indicator.threshold_value || 0);
-        case 'almost_sold_out':
-          return percentageSold >= 90;
-        case 'high_demand':
-          return percentageSold >= 50 && remainingTickets <= 20;
-        default:
-          return false;
-      }
-    });
-  }
-
-  // Utility functions
-  static formatTimeRemaining(targetDateTime: string): string {
-    const now = new Date();
-    const target = new Date(targetDateTime);
-    const diff = target.getTime() - now.getTime();
-
-    if (diff <= 0) return 'Expired';
-
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-
-    if (days > 0) return `${days}d ${hours}h ${minutes}m`;
-    if (hours > 0) return `${hours}h ${minutes}m`;
-    return `${minutes}m`;
-  }
-
-  static shouldShowUrgencyMessage(campaign: UrgencyCampaign): boolean {
-    const now = new Date();
-    const startDate = new Date(campaign.start_date);
-    const endDate = campaign.end_date ? new Date(campaign.end_date) : null;
-
-    // Check date range
-    if (now < startDate) return false;
-    if (endDate && now > endDate) return false;
-
-    // Check display limits
-    if (campaign.max_displays && campaign.current_displays >= campaign.max_displays) return false;
-
-    // Check trigger conditions
-    const conditions = campaign.trigger_conditions;
-    if (conditions.min_time_remaining) {
-      const timeRemaining = endDate ? endDate.getTime() - now.getTime() : Infinity;
-      if (timeRemaining > conditions.min_time_remaining * 60 * 1000) return false;
-    }
-
-    return true;
+    if (error) throw new Error(`Failed to delete scarcity indicator: ${error.message}`);
   }
 }

@@ -1,6 +1,16 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { ReferralProgram, ReferralTier, UserReferral, ReferralReward } from '@/types/promotional';
+import {
+  convertDatabaseReferralProgram,
+  convertDatabaseReferralTier,
+  convertDatabaseUserReferral,
+  convertDatabaseReferralReward,
+  filterValidReferralPrograms,
+  filterValidReferralTiers,
+  filterValidUserReferrals,
+  filterValidReferralRewards
+} from '@/types/promotional/TypeBridge';
 
 export class ReferralService {
   // Referral Programs
@@ -12,7 +22,13 @@ export class ReferralService {
       .single();
 
     if (error) throw new Error(`Failed to create referral program: ${error.message}`);
-    return program;
+    
+    const convertedProgram = convertDatabaseReferralProgram(program);
+    if (!convertedProgram) {
+      throw new Error('Failed to convert database program to valid type');
+    }
+    
+    return convertedProgram;
   }
 
   static async getPromoterPrograms(promoterId: string): Promise<ReferralProgram[]> {
@@ -23,7 +39,8 @@ export class ReferralService {
       .order('created_at', { ascending: false });
 
     if (error) throw new Error(`Failed to fetch referral programs: ${error.message}`);
-    return data || [];
+    
+    return filterValidReferralPrograms(data || []);
   }
 
   static async updateProgram(id: string, updates: Partial<ReferralProgram>): Promise<ReferralProgram> {
@@ -35,7 +52,13 @@ export class ReferralService {
       .single();
 
     if (error) throw new Error(`Failed to update referral program: ${error.message}`);
-    return data;
+    
+    const convertedProgram = convertDatabaseReferralProgram(data);
+    if (!convertedProgram) {
+      throw new Error('Failed to convert updated program to valid type');
+    }
+    
+    return convertedProgram;
   }
 
   // Referral Tiers
@@ -47,7 +70,13 @@ export class ReferralService {
       .single();
 
     if (error) throw new Error(`Failed to create referral tier: ${error.message}`);
-    return tier;
+    
+    const convertedTier = convertDatabaseReferralTier(tier);
+    if (!convertedTier) {
+      throw new Error('Failed to convert database tier to valid type');
+    }
+    
+    return convertedTier;
   }
 
   static async getProgramTiers(programId: string): Promise<ReferralTier[]> {
@@ -58,7 +87,8 @@ export class ReferralService {
       .order('tier_order', { ascending: true });
 
     if (error) throw new Error(`Failed to fetch referral tiers: ${error.message}`);
-    return data || [];
+    
+    return filterValidReferralTiers(data || []);
   }
 
   // User Referrals
@@ -70,7 +100,13 @@ export class ReferralService {
       .single();
 
     if (error) throw new Error(`Failed to create referral: ${error.message}`);
-    return referral;
+    
+    const convertedReferral = convertDatabaseUserReferral(referral);
+    if (!convertedReferral) {
+      throw new Error('Failed to convert database referral to valid type');
+    }
+    
+    return convertedReferral;
   }
 
   static async getUserReferrals(userId: string): Promise<UserReferral[]> {
@@ -81,7 +117,8 @@ export class ReferralService {
       .order('created_at', { ascending: false });
 
     if (error) throw new Error(`Failed to fetch user referrals: ${error.message}`);
-    return data || [];
+    
+    return filterValidUserReferrals(data || []);
   }
 
   static async completeReferral(referralId: string, conversionData: Record<string, any>): Promise<UserReferral> {
@@ -97,7 +134,13 @@ export class ReferralService {
       .single();
 
     if (error) throw new Error(`Failed to complete referral: ${error.message}`);
-    return data;
+    
+    const convertedReferral = convertDatabaseUserReferral(data);
+    if (!convertedReferral) {
+      throw new Error('Failed to convert completed referral to valid type');
+    }
+    
+    return convertedReferral;
   }
 
   // Referral Rewards
@@ -109,7 +152,13 @@ export class ReferralService {
       .single();
 
     if (error) throw new Error(`Failed to create referral reward: ${error.message}`);
-    return reward;
+    
+    const convertedReward = convertDatabaseReferralReward(reward);
+    if (!convertedReward) {
+      throw new Error('Failed to convert database reward to valid type');
+    }
+    
+    return convertedReward;
   }
 
   static async getUserRewards(userId: string): Promise<ReferralReward[]> {
@@ -120,7 +169,8 @@ export class ReferralService {
       .order('created_at', { ascending: false });
 
     if (error) throw new Error(`Failed to fetch user rewards: ${error.message}`);
-    return data || [];
+    
+    return filterValidReferralRewards(data || []);
   }
 
   static async awardReward(rewardId: string): Promise<ReferralReward> {
@@ -135,7 +185,13 @@ export class ReferralService {
       .single();
 
     if (error) throw new Error(`Failed to award referral reward: ${error.message}`);
-    return data;
+    
+    const convertedReward = convertDatabaseReferralReward(data);
+    if (!convertedReward) {
+      throw new Error('Failed to convert awarded reward to valid type');
+    }
+    
+    return convertedReward;
   }
 
   // Generate unique referral code
