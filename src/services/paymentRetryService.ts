@@ -2,6 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { typedPaymentService } from './typedPaymentService';
 import { enhancedPaymentService } from './enhancedPaymentService';
+import { mapPaymentRetryFromDb } from '@/utils/paymentDataMappers';
 
 export interface PaymentRetryRecord {
   id: string;
@@ -109,7 +110,7 @@ class PaymentRetryService {
       throw error;
     }
 
-    return data || [];
+    return (data || []).map(mapPaymentRetryFromDb);
   }
 }
 

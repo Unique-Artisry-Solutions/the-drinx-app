@@ -68,6 +68,17 @@ export const mapPaymentReceiptFromDb = (dbRow: DbPaymentReceipt): PaymentReceipt
   created_at: dbRow.created_at
 });
 
+export const mapPaymentRetryFromDb = (dbRow: any) => ({
+  id: dbRow.id,
+  transaction_id: dbRow.transaction_id,
+  attempt_number: dbRow.attempt_number,
+  failure_reason: dbRow.failure_reason,
+  retry_scheduled_for: dbRow.retry_scheduled_for,
+  max_retries: dbRow.max_retries,
+  metadata: safeJsonToRecord(dbRow.metadata),
+  created_at: dbRow.created_at
+});
+
 // Helper functions for creating database insert objects
 export const preparePaymentTransactionForDb = (
   userId: string,
