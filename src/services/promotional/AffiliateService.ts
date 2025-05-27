@@ -134,15 +134,24 @@ export class AffiliateService {
   }
 
   static async trackClick(trackingCode: string): Promise<void> {
-    // Update click count directly in the database
-    const { error } = await supabase
+    // First get the current click count
+    const { data: currentLink, error: fetchError } = await supabase
+      .from('affiliate_tracking_links')
+      .select('click_count')
+      .eq('tracking_code', trackingCode)
+      .single();
+
+    if (fetchError) throw new Error(`Failed to fetch tracking link: ${fetchError.message}`);
+
+    // Update with incremented click count
+    const { error: updateError } = await supabase
       .from('affiliate_tracking_links')
       .update({ 
-        click_count: supabase.sql`click_count + 1` 
+        click_count: (currentLink.click_count || 0) + 1 
       })
       .eq('tracking_code', trackingCode);
 
-    if (error) throw new Error(`Failed to track click: ${error.message}`);
+    if (updateError) throw new Error(`Failed to track click: ${updateError.message}`);
   }
 
   // Commissions
