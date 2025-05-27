@@ -1,45 +1,48 @@
-import { useAuth } from '@/contexts/auth';
+
 import { useNotifications } from '../useNotifications';
+import { useAuth } from '@/contexts/auth';
+import { useMemo } from 'react';
 import { Notification } from '@/types/notification';
 
 export const useRoleNotifications = () => {
   const { user } = useAuth();
-  const { notifications, ...notificationUtils } = useNotifications();
+  const {
+    notifications: allNotifications,
+    unreadCount,
+    isLoading,
+    error,
+    markAsRead,
+    markAllAsRead,
+    refetch
+  } = useNotifications();
 
-  const filterNotificationsByRole = (notifications: Notification[]) => {
-    const userType = localStorage.getItem('user_type');
+  // Filter notifications based on user role
+  const notifications = useMemo(() => {
+    if (!user || !allNotifications) return [];
+    
+    // For promoters, filter to relevant notification types
+    const roleRelevantTypes = [
+      'promoter',
+      'event_schedule',
+      'system',
+      'admin',
+      'follower',
+      'campaign'
+    ];
 
-    switch (userType) {
-      case 'establishment':
-        return notifications.filter(notification => 
-          notification.metadata?.type === 'establishment' ||
-          notification.metadata?.type === 'bar_crawl' ||
-          notification.metadata?.type === 'mocktail_suggestion'
-        );
-      case 'promoter':
-        return notifications.filter(notification => 
-          notification.metadata?.type === 'promoter' ||
-          notification.metadata?.type === 'bar_crawl' ||
-          notification.metadata?.type === 'venue_message'
-        );
-      case 'admin':
-        return notifications.filter(notification => 
-          notification.metadata?.type === 'admin' ||
-          notification.metadata?.type === 'moderation' ||
-          notification.metadata?.type === 'system'
-        );
-      default:
-        return notifications.filter(notification => 
-          !notification.metadata?.type || 
-          notification.metadata.type === 'user'
-        );
-    }
-  };
-
-  const filteredNotifications = filterNotificationsByRole(notifications);
+    return allNotifications.filter((notification: Notification) => {
+      const notificationType = notification.metadata?.type;
+      return !notificationType || roleRelevantTypes.includes(notificationType);
+    });
+  }, [allNotifications, user]);
 
   return {
-    ...notificationUtils,
-    notifications: filteredNotifications,
+    notifications,
+    unreadCount,
+    isLoading,
+    error,
+    markAsRead,
+    markAllAsRead,
+    refetch
   };
 };

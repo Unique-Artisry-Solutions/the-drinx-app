@@ -1,9 +1,8 @@
-import React, { useCallback, KeyboardEvent } from 'react';
-import { AlertCircle } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-import NotificationItem from './NotificationItem';
+
+import React from 'react';
 import { Notification } from '@/types/notification';
-import { Skeleton } from '@/components/ui/skeleton';
+import NotificationItem from './NotificationItem';
+import { AlertCircle } from 'lucide-react';
 
 interface EnhancedNotificationsListProps {
   notifications: Notification[];
@@ -12,100 +11,49 @@ interface EnhancedNotificationsListProps {
   onMarkAsRead: (id: string) => void;
 }
 
-const EnhancedNotificationsList = ({
+const EnhancedNotificationsList: React.FC<EnhancedNotificationsListProps> = ({
   notifications,
   isLoading,
   error,
   onMarkAsRead
-}: EnhancedNotificationsListProps) => {
-  const handleKeyNavigation = useCallback((e: KeyboardEvent, index: number) => {
-    const focusableElements = document.querySelectorAll('[role="article"]');
-    
-    if (e.key === 'ArrowDown' && index < focusableElements.length - 1) {
-      e.preventDefault();
-      (focusableElements[index + 1] as HTMLElement).focus();
-    } else if (e.key === 'ArrowUp' && index > 0) {
-      e.preventDefault();
-      (focusableElements[index - 1] as HTMLElement).focus();
-    }
-  }, []);
-
+}) => {
   if (isLoading) {
     return (
-      <div 
-        className="space-y-4" 
-        role="status" 
-        aria-busy="true"
-        aria-label="Loading notifications"
-      >
+      <div className="space-y-4">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="animate-pulse">
-            <Skeleton className="h-24 w-full rounded-lg" />
-          </div>
+          <div key={i} className="h-24 bg-muted animate-pulse rounded-lg" />
         ))}
-        <div className="sr-only" aria-live="polite">Loading notifications</div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div 
-        role="alert" 
-        className="flex items-center gap-2 p-4 bg-red-50 text-red-700 rounded-lg"
-        aria-live="assertive"
-      >
-        <AlertCircle className="h-5 w-5" aria-hidden="true" />
-        <p>{error}</p>
+      <div className="text-center py-8">
+        <AlertCircle className="mx-auto h-8 w-8 text-destructive" />
+        <h3 className="mt-2 text-sm font-medium text-gray-900">Error loading notifications</h3>
+        <p className="mt-1 text-sm text-gray-500">{error}</p>
       </div>
     );
   }
 
-  if (!notifications.length) {
+  if (notifications.length === 0) {
     return (
-      <div 
-        className="text-center py-8 text-gray-500"
-        role="status"
-        aria-label="No notifications"
-        aria-live="polite"
-      >
-        <p>No notifications to display</p>
+      <div className="text-center py-8">
+        <p className="text-sm text-muted-foreground">No notifications to display</p>
       </div>
     );
   }
-
-  const unreadCount = notifications.filter(n => !n.is_read).length;
 
   return (
-    <div 
-      className="space-y-4" 
-      role="log" 
-      aria-label={`Notifications list with ${notifications.length} notifications, ${unreadCount} unread`}
-      aria-live="polite"
-    >
-      <div className="sr-only">
-        Use up and down arrow keys to navigate between notifications. 
-        Press M to mark a notification as read.
-      </div>
-      <AnimatePresence initial={false}>
-        {notifications.map((notification, index) => (
-          <motion.div
-            key={notification.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.2 }}
-            layout
-            onKeyDown={(e) => handleKeyNavigation(e as KeyboardEvent, index)}
-          >
-            <NotificationItem
-              notification={notification}
-              onMarkAsRead={onMarkAsRead}
-              tabIndex={0}
-            />
-          </motion.div>
-        ))}
-      </AnimatePresence>
+    <div className="space-y-4">
+      {notifications.map((notification) => (
+        <NotificationItem
+          key={notification.id}
+          notification={notification}
+          onMarkAsRead={onMarkAsRead}
+        />
+      ))}
     </div>
   );
 };
