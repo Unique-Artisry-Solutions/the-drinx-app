@@ -1,27 +1,25 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus } from 'lucide-react';
 import { DashboardWidgets } from '@/components/promoter/DashboardWidgets';
 import { QuickActions } from '@/components/promoter/QuickActions';
+import { DashboardOverviewTab } from '@/components/promoter/dashboard/DashboardOverviewTab';
+import { DashboardPricingTab } from '@/components/promoter/dashboard/DashboardPricingTab';
+import { DashboardUrgencyTab } from '@/components/promoter/dashboard/DashboardUrgencyTab';
+import { DashboardAnalyticsTab } from '@/components/promoter/dashboard/DashboardAnalyticsTab';
+import { DashboardSettingsTab } from '@/components/promoter/dashboard/DashboardSettingsTab';
 
 const PromoterDashboard = () => {
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState('overview');
 
   // Mock promoter ID - in real implementation, this would come from auth context
   const promoterId = "promoter-123";
-
-  // Mock overview metrics
-  const overviewMetrics = {
-    totalEvents: 12,
-    activeEvents: 5,
-    totalTicketsSold: 1247,
-    totalRevenue: 28540,
-    conversionRate: 12.3
-  };
 
   return (
     <div className="container mx-auto px-4 py-6 space-y-6">
@@ -37,42 +35,36 @@ const PromoterDashboard = () => {
         </Button>
       </div>
 
-      {/* Live Dashboard Widgets */}
-      <DashboardWidgets promoterId={promoterId} />
+      {/* Tabbed Interface */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className="grid grid-cols-2 md:grid-cols-5 gap-2">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="pricing">Dynamic Pricing</TabsTrigger>
+          <TabsTrigger value="urgency">Urgency Features</TabsTrigger>
+          <TabsTrigger value="analytics">Real-Time Analytics</TabsTrigger>
+          <TabsTrigger value="settings">Settings</TabsTrigger>
+        </TabsList>
 
-      {/* Quick Actions Grid */}
-      <QuickActions />
+        <TabsContent value="overview" className="space-y-6">
+          <DashboardOverviewTab promoterId={promoterId} />
+        </TabsContent>
 
-      {/* Performance Summary */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Performance Summary</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-            <div className="text-center p-4 border rounded-lg">
-              <div className="text-2xl font-bold text-blue-600">{overviewMetrics.totalEvents}</div>
-              <div className="text-sm text-muted-foreground">Total Events</div>
-            </div>
-            <div className="text-center p-4 border rounded-lg">
-              <div className="text-2xl font-bold text-green-600">{overviewMetrics.activeEvents}</div>
-              <div className="text-sm text-muted-foreground">Active Events</div>
-            </div>
-            <div className="text-center p-4 border rounded-lg">
-              <div className="text-2xl font-bold text-purple-600">{overviewMetrics.totalTicketsSold}</div>
-              <div className="text-sm text-muted-foreground">Tickets Sold</div>
-            </div>
-            <div className="text-center p-4 border rounded-lg">
-              <div className="text-2xl font-bold text-orange-600">${overviewMetrics.totalRevenue.toLocaleString()}</div>
-              <div className="text-sm text-muted-foreground">Total Revenue</div>
-            </div>
-            <div className="text-center p-4 border rounded-lg">
-              <div className="text-2xl font-bold text-cyan-600">{overviewMetrics.conversionRate}%</div>
-              <div className="text-sm text-muted-foreground">Conversion Rate</div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+        <TabsContent value="pricing" className="space-y-6">
+          <DashboardPricingTab promoterId={promoterId} />
+        </TabsContent>
+
+        <TabsContent value="urgency" className="space-y-6">
+          <DashboardUrgencyTab promoterId={promoterId} />
+        </TabsContent>
+
+        <TabsContent value="analytics" className="space-y-6">
+          <DashboardAnalyticsTab promoterId={promoterId} />
+        </TabsContent>
+
+        <TabsContent value="settings" className="space-y-6">
+          <DashboardSettingsTab promoterId={promoterId} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
