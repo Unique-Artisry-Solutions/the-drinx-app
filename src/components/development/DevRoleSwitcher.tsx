@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -24,7 +23,15 @@ const DevRoleSwitcher: React.FC = () => {
 
   const currentRole = roleOptions.find(role => role.type === devMode);
 
-  const toggleExpanded = () => setIsExpanded(!isExpanded);
+  const toggleExpanded = () => {
+    if (!isExpanded && !isDevModeActive) {
+      // If expanding and not in dev mode, automatically switch to first role
+      setIsExpanded(true);
+      switchToUserType('individual');
+    } else {
+      setIsExpanded(!isExpanded);
+    }
+  };
 
   const getPositionClasses = () => {
     switch (position) {
