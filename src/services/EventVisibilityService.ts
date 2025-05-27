@@ -1,6 +1,5 @@
 
 import { supabase } from '@/lib/supabase';
-import { useEventVisibility } from '@/hooks/events/useEventVisibility';
 
 export interface EventVisibilitySettings {
   isPublic: boolean;
@@ -8,6 +7,17 @@ export interface EventVisibilitySettings {
   allowedTiers?: string[];
   earlyAccessHours?: number;
   accessType: 'public' | 'followers_only' | 'premium_only' | 'tier_specific' | 'early_access';
+  
+  // Additional UI-specific properties
+  followerOnlyAccess: boolean;
+  premiumFollowerAccess: boolean;
+  specificTierAccess: string[];
+  earlyAccess: {
+    enabled: boolean;
+    daysEarly: number;
+    forFollowerTypes: string[];
+    specificTiers: string[];
+  };
 }
 
 export interface EventAccessInfo {
@@ -31,7 +41,16 @@ function isEventVisibilitySettings(obj: any): obj is EventVisibilitySettings {
 const defaultVisibilitySettings: EventVisibilitySettings = {
   isPublic: true,
   requiresFollowing: false,
-  accessType: 'public'
+  accessType: 'public',
+  followerOnlyAccess: false,
+  premiumFollowerAccess: false,
+  specificTierAccess: [],
+  earlyAccess: {
+    enabled: false,
+    daysEarly: 0,
+    forFollowerTypes: [],
+    specificTiers: []
+  }
 };
 
 class EventVisibilityService {
@@ -42,7 +61,7 @@ class EventVisibilityService {
     // Verify user owns the event
     const { data: event } = await supabase
       .from('events')
-      .select('created_by')
+      .select('created_by, custom_settings')
       .eq('id', eventId)
       .single();
 
@@ -63,6 +82,11 @@ class EventVisibilityService {
     if (error) throw error;
   }
 
+  // Alias for backward compatibility
+  async setEventVisibility(eventId: string, settings: EventVisibilitySettings): Promise<void> {
+    return this.updateEventVisibility(eventId, settings);
+  }
+
   async getEventVisibilitySettings(eventId: string): Promise<EventVisibilitySettings> {
     const { data: event, error } = await supabase
       .from('events')
@@ -77,7 +101,10 @@ class EventVisibilityService {
 
     // Safe type conversion with validation
     if (isEventVisibilitySettings(visibilityData)) {
-      return visibilityData;
+      return {
+        ...defaultVisibilitySettings,
+        ...visibilityData
+      };
     }
 
     return defaultVisibilitySettings;
@@ -98,7 +125,7 @@ class EventVisibilityService {
     
     // Use safe type conversion
     const settings: EventVisibilitySettings = isEventVisibilitySettings(visibilitySettings) 
-      ? visibilitySettings 
+      ? { ...defaultVisibilitySettings, ...visibilitySettings }
       : defaultVisibilitySettings;
 
     // If event is public, allow access
