@@ -2,261 +2,247 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
-  Send, 
   Bell, 
   Mail, 
+  Send, 
+  Users, 
   MessageSquare,
-  Calendar,
   Gift,
-  Megaphone
+  Calendar,
+  Star
 } from 'lucide-react';
-import { useSubscriptions } from '@/hooks/useSubscriptions';
 import { useToast } from '@/hooks/use-toast';
+import { promoterNotificationService } from '@/services/PromoterNotificationService';
 
 interface FollowerNotificationCenterProps {
   promoterId: string;
+  followerCount: number;
 }
 
-const FollowerNotificationCenter: React.FC<FollowerNotificationCenterProps> = ({ promoterId }) => {
-  const [notificationTitle, setNotificationTitle] = useState('');
-  const [notificationMessage, setNotificationMessage] = useState('');
+const FollowerNotificationCenter: React.FC<FollowerNotificationCenterProps> = ({
+  promoterId,
+  followerCount
+}) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [message, setMessage] = useState('');
+  const [title, setTitle] = useState('');
+  const [discountCode, setDiscountCode] = useState('');
   const [includeEmail, setIncludeEmail] = useState(true);
   const [includePush, setIncludePush] = useState(true);
   const [priority, setPriority] = useState<'low' | 'medium' | 'high' | 'urgent'>('medium');
+  const [targetType, setTargetType] = useState<'all' | 'tier'>('all');
   
-  const { followers, sendNotification } = useSubscriptions(promoterId);
   const { toast } = useToast();
 
   const handleSendNotification = async () => {
-    if (!notificationTitle.trim() || !notificationMessage.trim()) {
+    if (!title.trim() || !message.trim()) {
       toast({
         title: 'Error',
-        description: 'Please fill in both title and message',
+        description: 'Please provide both title and message',
         variant: 'destructive'
       });
       return;
     }
 
+    setIsLoading(true);
     try {
-      await sendNotification.mutateAsync({
-        promoterId,
-        notification: {
-          title: notificationTitle,
-          message: notificationMessage,
-          includeEmail,
-          includePush,
-          priority,
-          targetType: 'all'
-        }
+      const result = await promoterNotificationService.notifyFollowers(promoterId, {
+        targetType,
+        message: message.trim(),
+        title: title.trim(),
+        discountCode: discountCode.trim() || undefined,
+        includeEmail,
+        includePush,
+        priority
       });
 
-      // Reset form
-      setNotificationTitle('');
-      setNotificationMessage('');
-      
-      toast({
-        title: 'Notification Sent!',
-        description: `Your message has been sent to ${followers.length} followers`,
-      });
+      if (result.success) {
+        toast({
+          title: 'Notifications Sent',
+          description: `Successfully sent to ${result.sentCount} followers`,
+        });
+        
+        // Reset form
+        setMessage('');
+        setTitle('');
+        setDiscountCode('');
+      } else {
+        toast({
+          title: 'Partial Success',
+          description: `Sent to ${result.sentCount} followers. Some notifications failed.`,
+          variant: 'destructive'
+        });
+      }
     } catch (error) {
       toast({
         title: 'Error',
-        description: 'Failed to send notification',
+        description: 'Failed to send notifications',
         variant: 'destructive'
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const notificationTemplates = [
+  const quickMessageTemplates = [
     {
-      title: "New Event Announcement",
       icon: Calendar,
-      template: {
-        title: "🎉 New Event: [Event Name]",
-        message: "We're excited to announce our upcoming event! Join us for an amazing experience. Check out all the details and get your tickets now."
-      }
+      title: 'New Event Announcement',
+      template: 'Exciting news! We have a new event coming up that you won\'t want to miss.'
     },
     {
-      title: "Weekly Update",
-      icon: Megaphone,
-      template: {
-        title: "Weekly Update from [Your Name]",
-        message: "Here's what's happening this week! We have some exciting updates to share with you..."
-      }
-    },
-    {
-      title: "Special Promotion",
       icon: Gift,
-      template: {
-        title: "🎁 Special Offer Just for You!",
-        message: "As one of our valued followers, you get exclusive access to this special promotion. Use code FOLLOWER20 for 20% off!"
-      }
+      title: 'Special Discount',
+      template: 'Exclusive offer just for our followers! Use the discount code below for special savings.'
+    },
+    {
+      icon: Star,
+      title: 'General Update',
+      template: 'We wanted to share some exciting updates with our amazing followers!'
     }
   ];
 
-  const activeFollowers = followers.filter(f => f.notification_preferences?.events).length;
-
   return (
     <div className="space-y-6">
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <Bell className="h-5 w-5 text-blue-500" />
-              <div>
-                <div className="text-2xl font-bold">{activeFollowers}</div>
-                <div className="text-sm text-muted-foreground">Active Subscribers</div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Bell className="h-5 w-5" />
+            Follower Notification Center
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Tabs defaultValue="compose" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="compose">Compose Message</TabsTrigger>
+              <TabsTrigger value="templates">Quick Templates</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="compose" className="space-y-4">
+              <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
+                <div className="flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  <span className="text-sm font-medium">
+                    Sending to {followerCount.toLocaleString()} followers
+                  </span>
+                </div>
+                <Badge variant="outline">{targetType === 'all' ? 'All Followers' : 'Tier Based'}</Badge>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <Mail className="h-5 w-5 text-green-500" />
-              <div>
-                <div className="text-2xl font-bold">92%</div>
-                <div className="text-sm text-muted-foreground">Email Open Rate</div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="title">Notification Title</Label>
+                  <Input
+                    id="title"
+                    placeholder="Enter notification title..."
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="discount">Discount Code (Optional)</Label>
+                  <Input
+                    id="discount"
+                    placeholder="SAVE20"
+                    value={discountCode}
+                    onChange={(e) => setDiscountCode(e.target.value)}
+                  />
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <MessageSquare className="h-5 w-5 text-purple-500" />
-              <div>
-                <div className="text-2xl font-bold">87%</div>
-                <div className="text-sm text-muted-foreground">Push Open Rate</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Send Notification Form */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Send className="h-5 w-5" />
-              Send Notification
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label htmlFor="title">Notification Title</Label>
-              <Input
-                id="title"
-                placeholder="Enter notification title..."
-                value={notificationTitle}
-                onChange={(e) => setNotificationTitle(e.target.value)}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="message">Message</Label>
-              <Textarea
-                id="message"
-                placeholder="Write your message here..."
-                value={notificationMessage}
-                onChange={(e) => setNotificationMessage(e.target.value)}
-                rows={4}
-              />
-            </div>
-
-            <div className="space-y-3">
-              <Label>Delivery Options</Label>
-              <div className="flex items-center justify-between">
-                <Label htmlFor="email-toggle" className="flex items-center gap-2">
-                  <Mail className="h-4 w-4" />
-                  Send Email
-                </Label>
-                <Switch
-                  id="email-toggle"
-                  checked={includeEmail}
-                  onCheckedChange={setIncludeEmail}
+              <div className="space-y-2">
+                <Label htmlFor="message">Message</Label>
+                <Textarea
+                  id="message"
+                  placeholder="Write your message to followers..."
+                  rows={4}
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
                 />
               </div>
-              <div className="flex items-center justify-between">
-                <Label htmlFor="push-toggle" className="flex items-center gap-2">
-                  <Bell className="h-4 w-4" />
-                  Send Push Notification
-                </Label>
-                <Switch
-                  id="push-toggle"
-                  checked={includePush}
-                  onCheckedChange={setIncludePush}
-                />
-              </div>
-            </div>
 
-            <div>
-              <Label>Priority Level</Label>
-              <div className="flex gap-2 mt-2">
-                {(['low', 'medium', 'high', 'urgent'] as const).map((level) => (
-                  <Button
-                    key={level}
-                    variant={priority === level ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setPriority(level)}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="flex items-center justify-between p-3 border rounded">
+                  <div className="flex items-center gap-2">
+                    <Mail className="h-4 w-4" />
+                    <span className="text-sm">Email</span>
+                  </div>
+                  <Switch
+                    checked={includeEmail}
+                    onCheckedChange={setIncludeEmail}
+                  />
+                </div>
+                
+                <div className="flex items-center justify-between p-3 border rounded">
+                  <div className="flex items-center gap-2">
+                    <Bell className="h-4 w-4" />
+                    <span className="text-sm">Push</span>
+                  </div>
+                  <Switch
+                    checked={includePush}
+                    onCheckedChange={setIncludePush}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Priority</Label>
+                  <select
+                    className="w-full p-2 border rounded"
+                    value={priority}
+                    onChange={(e) => setPriority(e.target.value as typeof priority)}
                   >
-                    {level.charAt(0).toUpperCase() + level.slice(1)}
-                  </Button>
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                    <option value="urgent">Urgent</option>
+                  </select>
+                </div>
+              </div>
+
+              <Button 
+                onClick={handleSendNotification}
+                disabled={isLoading || !title.trim() || !message.trim()}
+                className="w-full"
+              >
+                <Send className="h-4 w-4 mr-2" />
+                {isLoading ? 'Sending...' : 'Send Notification'}
+              </Button>
+            </TabsContent>
+
+            <TabsContent value="templates" className="space-y-4">
+              <div className="grid gap-4">
+                {quickMessageTemplates.map((template, index) => (
+                  <Card key={index} className="cursor-pointer hover:bg-muted/50 transition-colors"
+                        onClick={() => {
+                          setTitle(template.title);
+                          setMessage(template.template);
+                        }}>
+                    <CardContent className="p-4">
+                      <div className="flex items-start gap-3">
+                        <template.icon className="h-5 w-5 mt-0.5 text-primary" />
+                        <div>
+                          <h4 className="font-medium">{template.title}</h4>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {template.template}
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
                 ))}
               </div>
-            </div>
-
-            <Button 
-              onClick={handleSendNotification}
-              disabled={sendNotification.isPending || !notificationTitle.trim() || !notificationMessage.trim()}
-              className="w-full"
-            >
-              {sendNotification.isPending ? 'Sending...' : `Send to ${activeFollowers} Followers`}
-            </Button>
-          </CardContent>
-        </Card>
-
-        {/* Templates */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Quick Templates</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {notificationTemplates.map((template) => (
-                <div
-                  key={template.title}
-                  className="p-3 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
-                  onClick={() => {
-                    setNotificationTitle(template.template.title);
-                    setNotificationMessage(template.template.message);
-                  }}
-                >
-                  <div className="flex items-center gap-3">
-                    <template.icon className="h-5 w-5 text-muted-foreground" />
-                    <div>
-                      <div className="font-medium">{template.title}</div>
-                      <div className="text-sm text-muted-foreground">
-                        Click to use this template
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
     </div>
   );
 };
