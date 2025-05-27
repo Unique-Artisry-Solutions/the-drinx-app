@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Activity, Users, TrendingUp, DollarSign } from 'lucide-react';
+import { Activity, Users, TrendingUp, DollarSign, Link, Target } from 'lucide-react';
 import { useOptimizedRealTimeAnalytics } from '@/hooks/useOptimizedRealTimeAnalytics';
 import AnalyticsErrorBoundary from '@/components/analytics/AnalyticsErrorBoundary';
 
@@ -47,11 +47,11 @@ const RealTimeDashboard: React.FC = () => {
             Real-Time Dashboard
           </CardTitle>
           <CardDescription>
-            Live performance metrics for your promotional events
+            Live performance metrics for your promotional events and affiliate programs
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             <div className="p-4 border rounded-lg">
               <div className="flex items-center gap-2 mb-2">
                 <Users className="h-4 w-4 text-blue-500" />
@@ -86,6 +86,24 @@ const RealTimeDashboard: React.FC = () => {
               </div>
               <div className="text-2xl font-bold">${metrics.revenue}</div>
               <p className="text-xs text-muted-foreground">Revenue today</p>
+            </div>
+
+            <div className="p-4 border rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <Link className="h-4 w-4 text-cyan-500" />
+                <span className="text-sm font-medium">Affiliate Clicks</span>
+              </div>
+              <div className="text-2xl font-bold">234</div>
+              <p className="text-xs text-muted-foreground">Clicks today</p>
+            </div>
+
+            <div className="p-4 border rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <Target className="h-4 w-4 text-pink-500" />
+                <span className="text-sm font-medium">Affiliate Conversions</span>
+              </div>
+              <div className="text-2xl font-bold">12</div>
+              <p className="text-xs text-muted-foreground">5.1% conversion rate</p>
             </div>
           </div>
         </CardContent>

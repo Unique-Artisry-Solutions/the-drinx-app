@@ -1,6 +1,5 @@
-
 import { UnifiedNavItem } from '@/types/navigation/NavigationTypes';
-import { Home, Search, User, Settings, Bell, Calendar, MapPin, Users, BarChart3, Shield, Target, Route } from 'lucide-react';
+import { Home, Search, User, Settings, Bell, Calendar, MapPin, Users, BarChart3, Shield, Target, Route, UserCheck } from 'lucide-react';
 
 export const guestNavItems: UnifiedNavItem[] = [
   {
@@ -76,6 +75,11 @@ export const promoterNavItems: UnifiedNavItem[] = [
     label: 'Marketing',
     path: '/promoter/marketing-analytics',
     icon: Target
+  },
+  {
+    label: 'Affiliates',
+    path: '/promoter/affiliate',
+    icon: UserCheck
   },
   {
     label: 'Profile',
