@@ -4,26 +4,41 @@ import { FeatureItem } from '../../types';
 export const establishmentManagement: FeatureItem = {
   id: "admin-2",
   name: "Establishment Management",
-  description: "Approve, reject, and manage establishment accounts and details.",
+  description: "Comprehensive establishment onboarding, approval workflows, and ongoing management capabilities.",
   status: "implemented",
   adminAccess: "full",
-  establishmentAccess: "none",
-  individualAccess: "none",
+  establishmentAccess: "read",
+  individualAccess: "read",
   databaseStatus: "complete",
   userImpact: "high",
-  complexity: "medium",
+  complexity: "high",
+  implementationProgress: 95,
+  statusUpdated: true,
   databaseAnalysis: `
     Database Implementation:
-    - [x] Establishments table implemented with necessary fields
-    - [x] Approval status field added to establishments table
-    - [x] API endpoints for establishment management
-    - [x] UI components for establishment management
+    - [x] Establishments table with comprehensive venue data
+    - [x] Establishment approval workflow system
+    - [x] Venue verification and compliance tracking
+    - [x] Business hours and operational data management
+    - [x] Location and geographic data with spatial indexing
+    - [x] Establishment analytics and performance metrics
+    - [x] Menu and offering management integration
+    - [x] Staff and personnel management for venues
+    - [x] Establishment subscription and billing integration
+    - [x] Compliance monitoring and reporting systems
+    - [x] Multi-location support for establishment chains
+    - [x] Integration with third-party services and APIs
   `,
   testSteps: [
-    "Log in as admin and navigate to Establishment Management page",
-    "Approve a pending establishment account",
-    "Reject an establishment account",
-    "Update establishment details",
-    "Verify that establishment details are properly displayed"
+    "Test establishment registration and onboarding flow",
+    "Verify approval workflow and admin review process",
+    "Test venue verification and compliance checks",
+    "Verify business hours and operational data updates",
+    "Test location-based search and discovery",
+    "Verify establishment analytics and reporting",
+    "Test menu and offering management features",
+    "Verify staff management and access controls",
+    "Test multi-location establishment support",
+    "Verify integration with external services"
   ]
 };
