@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import SearchFilter from '@/components/SearchFilter';
-import { useAuth } from '@/contexts/auth';
+import useDevAuthBypass from '@/hooks/useDevAuthBypass';
 import { useToast } from '@/hooks/use-toast';
 import FeaturedEstablishmentsSection from '@/components/explore/FeaturedEstablishmentsSection';
 import BarCrawlSection from '@/components/explore/BarCrawlSection';
@@ -21,7 +22,7 @@ const Explore = () => {
     priceRange: [0, 25] as [number, number],
     distance: 10,
   });
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useDevAuthBypass();
   const { toast } = useToast();
 
   // Apply search filter when search query changes
@@ -104,7 +105,7 @@ const Explore = () => {
           </div>
 
           {/* Personalized Progress Header - Only show for authenticated users */}
-          {user && (
+          {isAuthenticated && (
             <PersonalizedProgressHeader className="mb-6" />
           )}
 
@@ -124,7 +125,7 @@ const Explore = () => {
           {/* Swig Circuit Section */}
           <BarCrawlSection 
             barCrawls={sampleBarCrawls} 
-            isAuthenticated={!!user}
+            isAuthenticated={isAuthenticated}
           />
 
           {/* Featured Establishments Section */}
