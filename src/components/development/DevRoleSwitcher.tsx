@@ -3,12 +3,15 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ChevronDown, ChevronUp, Settings, User, Store, Megaphone, Shield } from 'lucide-react';
+import { ChevronDown, ChevronUp, Settings, User, Store, Megaphone, Shield, Move } from 'lucide-react';
 import { useDevelopmentMode } from '@/contexts/DevelopmentModeContext';
+
+type Position = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
 
 const DevRoleSwitcher: React.FC = () => {
   const { isDevelopment, devMode, switchToUserType, exitDevMode, isDevModeActive } = useDevelopmentMode();
   const [isExpanded, setIsExpanded] = useState(false);
+  const [position, setPosition] = useState<Position>('top-right');
 
   if (!isDevelopment) return null;
 
@@ -23,8 +26,30 @@ const DevRoleSwitcher: React.FC = () => {
 
   const toggleExpanded = () => setIsExpanded(!isExpanded);
 
+  const getPositionClasses = () => {
+    switch (position) {
+      case 'top-left':
+        return 'top-4 left-4';
+      case 'top-right':
+        return 'top-4 right-4';
+      case 'bottom-left':
+        return 'bottom-4 left-4';
+      case 'bottom-right':
+        return 'bottom-4 right-4';
+      default:
+        return 'top-4 right-4';
+    }
+  };
+
+  const cyclePosition = () => {
+    const positions: Position[] = ['top-right', 'top-left', 'bottom-left', 'bottom-right'];
+    const currentIndex = positions.indexOf(position);
+    const nextIndex = (currentIndex + 1) % positions.length;
+    setPosition(positions[nextIndex]);
+  };
+
   return (
-    <div className="fixed top-4 right-4 z-[9999] max-w-sm">
+    <div className={`fixed ${getPositionClasses()} z-[9999] max-w-sm`}>
       {/* Collapsed Header */}
       <div 
         className="shadow-lg border-2 border-orange-400 bg-orange-50 p-2 rounded-lg cursor-pointer hover:bg-orange-100 transition-colors"
@@ -41,11 +66,25 @@ const DevRoleSwitcher: React.FC = () => {
               </Badge>
             )}
           </div>
-          {isExpanded ? (
-            <ChevronUp className="h-4 w-4 text-orange-600" />
-          ) : (
-            <ChevronDown className="h-4 w-4 text-orange-600" />
-          )}
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                cyclePosition();
+              }}
+              className="p-1 h-auto hover:bg-orange-200"
+              title="Change position"
+            >
+              <Move className="h-3 w-3 text-orange-600" />
+            </Button>
+            {isExpanded ? (
+              <ChevronUp className="h-4 w-4 text-orange-600" />
+            ) : (
+              <ChevronDown className="h-4 w-4 text-orange-600" />
+            )}
+          </div>
         </div>
       </div>
 
@@ -59,6 +98,7 @@ const DevRoleSwitcher: React.FC = () => {
             <div className="text-sm text-orange-700">
               <div>Mode: {isDevModeActive ? 'Active' : 'Inactive'}</div>
               {devMode && <div>Role: {devMode}</div>}
+              <div className="text-xs text-orange-600 mt-1">Position: {position}</div>
             </div>
           </CardHeader>
           <CardContent className="pt-0">
