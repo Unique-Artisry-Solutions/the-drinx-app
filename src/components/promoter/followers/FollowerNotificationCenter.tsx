@@ -11,12 +11,12 @@ import { Send, Users, Bell } from 'lucide-react';
 
 interface FollowerNotificationCenterProps {
   promoterId: string;
-  followerCount: number;
+  followerCount?: number; // Make it optional with default
 }
 
 const FollowerNotificationCenter: React.FC<FollowerNotificationCenterProps> = ({ 
   promoterId, 
-  followerCount 
+  followerCount = 0 // Default to 0 if not provided
 }) => {
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
@@ -29,6 +29,9 @@ const FollowerNotificationCenter: React.FC<FollowerNotificationCenterProps> = ({
     isLoading, 
     sendBulkNotification 
   } = useFollowerNotifications(promoterId);
+
+  // Use actual follower count from segments if available
+  const actualFollowerCount = segments.find(s => s.id === 'all')?.count ?? followerCount;
 
   const handleSendNotification = async () => {
     if (!title.trim() || !message.trim()) {
@@ -77,7 +80,7 @@ const FollowerNotificationCenter: React.FC<FollowerNotificationCenterProps> = ({
           Notify Followers
         </CardTitle>
         <p className="text-sm text-muted-foreground">
-          Send messages to your {followerCount.toLocaleString()} followers
+          Send messages to your {actualFollowerCount.toLocaleString()} followers
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
