@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import SearchFilter from '@/components/SearchFilter';
@@ -8,6 +7,7 @@ import FeaturedEstablishmentsSection from '@/components/explore/FeaturedEstablis
 import BarCrawlSection from '@/components/explore/BarCrawlSection';
 import CocktailsSection from '@/components/explore/CocktailsSection';
 import EventsSection from '@/components/explore/EventsSection';
+import PersonalizedProgressHeader from '@/components/explore/PersonalizedProgressHeader';
 
 // Sample data - would be fetched from API in a real application
 import { sampleCocktails, sampleEstablishments, sampleBarCrawls } from '@/data/sampleData';
@@ -102,6 +102,11 @@ const Explore = () => {
               Find your perfect non-alcoholic drink
             </p>
           </div>
+
+          {/* Personalized Progress Header - Only show for authenticated users */}
+          {user && (
+            <PersonalizedProgressHeader className="mb-6" />
+          )}
 
           <SearchFilter 
             onSearch={handleSearch} 
