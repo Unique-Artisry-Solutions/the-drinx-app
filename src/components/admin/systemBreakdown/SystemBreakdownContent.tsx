@@ -1,186 +1,227 @@
-import React, { useState } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { 
-  BarChart3, 
-  Users, 
-  Activity, 
-  GitBranch, 
-  Shield, 
-  RefreshCw,
-  TrendingUp,
-  Database,
-  AlertTriangle
-} from 'lucide-react';
 
+import React from 'react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import SystemHeader from './SystemHeader';
+import OverviewTab from './OverviewTab';
+import EnhancedFeatureTab from './EnhancedFeatureTab';
+import FeatureShowcaseTab from './FeatureShowcaseTab';
+import ComparisonTab from './tabs/ComparisonTab';
+import TimelineTab from './tabs/TimelineTab';
+import PromoterRequirementsTab from './tabs/PromoterRequirementsTab';
+import ProposedImprovementsTab from './tabs/ProposedImprovementsTab';
+import ReleaseManagementTab from './tabs/ReleaseManagementTab';
 import { useSystemBreakdown } from './hooks/useSystemBreakdown';
-import { useEnhancedSystemData } from './hooks/useEnhancedSystemData';
-import SystemHealthCheck from './components/SystemHealthCheck';
-import SystemMetricsDashboard from './components/SystemMetricsDashboard';
-import ResourceManagementPanel from './components/ResourceManagementPanel';
-import DependencyVisualization from './components/DependencyVisualization';
-import RiskAssessmentPanel from './components/RiskAssessmentPanel';
-import { DashboardOverviewTab } from './dashboard/DashboardOverviewTab';
-import { DashboardAnalyticsTab } from './dashboard/DashboardAnalyticsTab';
-import { DashboardFeatureTab } from './dashboard/DashboardFeatureTab';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { cn } from '@/lib/utils';
 
 const SystemBreakdownContent: React.FC = () => {
-  const [activeTab, setActiveTab] = useState('overview');
   const {
+    activeTab,
+    setActiveTab,
     adminFeatures,
     establishmentFeatures,
     individualFeatures,
     promoterFeatures,
-    progressHistory,
-    monthlyProgressData,
-    currentSnapshot,
-    dataValidation,
+    analyzing,
+    analysisProgress,
+    analysisSteps,
+    updatedFeaturesCount,
     handleLogout,
     handleExportCSV,
     handleAnalyzeFeatures,
-    handleCreateReleaseFromFeatures
+    handleCreateReleaseFromFeatures,
+    progressHistory,
+    monthlyProgressData,
+    currentSnapshot,
+    dataValidation
   } = useSystemBreakdown();
 
-  const { data: enhancedData, isLoading, refreshData } = useEnhancedSystemData();
+  const isMobile = useIsMobile();
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="flex items-center gap-2">
-          <RefreshCw className="h-4 w-4 animate-spin" />
-          <span>Loading system data...</span>
-        </div>
-      </div>
-    );
-  }
+  console.log('SystemBreakdownContent: Rendering with activeTab:', activeTab);
+  console.log('SystemBreakdownContent: Feature counts:', {
+    admin: adminFeatures.length,
+    establishment: establishmentFeatures.length,
+    individual: individualFeatures.length,
+    promoter: promoterFeatures.length
+  });
+
+  // Calculate progress percentages for components that need them
+  const calculateProgress = (features: any[]) => {
+    if (!features || features.length === 0) return { frontend: 0, backend: 0, overall: 0 };
+    
+    const implemented = features.filter(f => f.status === 'implemented').length;
+    const inProgress = features.filter(f => f.status === 'in_progress').length;
+    
+    const overall = Math.round(((implemented + inProgress * 0.5) / features.length) * 100);
+    const frontend = Math.min(overall + 5, 100); // Frontend typically slightly ahead
+    const backend = Math.max(overall - 5, 0); // Backend typically slightly behind
+    
+    return { frontend, backend, overall };
+  };
+
+  const adminProgress = calculateProgress(adminFeatures);
+  const establishmentProgress = calculateProgress(establishmentFeatures);
+  const individualProgress = calculateProgress(individualFeatures);
+  const promoterProgress = calculateProgress(promoterFeatures);
+
+  // Overall system progress
+  const frontendProgressPercentage = Math.round(
+    (adminProgress.frontend + establishmentProgress.frontend + individualProgress.frontend + promoterProgress.frontend) / 4
+  );
+  const backendProgressPercentage = Math.round(
+    (adminProgress.backend + establishmentProgress.backend + individualProgress.backend + promoterProgress.backend) / 4
+  );
+  const confidenceScore = 85; // Static confidence score
+
+  const tabs = [
+    { value: 'overview', label: 'Overview' },
+    { value: 'admin', label: 'Admin' },
+    { value: 'establishment', label: 'Establishments' },
+    { value: 'individual', label: 'Users' },
+    { value: 'promoter', label: 'Promoters' },
+    { value: 'promoter-requirements', label: 'Requirements' },
+    { value: 'improvements', label: 'Improvements' },
+    { value: 'releases', label: 'Releases' },
+    { value: 'comparison', label: 'Comparison' },
+    { value: 'timeline', label: 'Timeline' },
+    { value: 'showcase', label: 'Showcase' }
+  ];
 
   return (
-    <div className="container mx-auto p-6 max-w-7xl">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-        <div>
-          <h1 className="text-3xl font-bold">System Functionality Breakdown</h1>
-          <p className="text-muted-foreground">
-            Comprehensive system analysis with real-time monitoring and analytics
-          </p>
+    <div className="space-y-6">
+      <SystemHeader
+        onAnalyzeFeatures={handleAnalyzeFeatures}
+        onExportCSV={handleExportCSV}
+        analyzing={analyzing}
+      />
+
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        {/* Navigation Tabs */}
+        <div className="sticky top-4 z-10 bg-card rounded-lg p-1 shadow-sm mb-6 overflow-x-auto">
+          {isMobile ? (
+            <div className="flex space-x-2 min-w-max px-1">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.value}
+                  onClick={() => setActiveTab(tab.value)}
+                  className={cn(
+                    "px-3 py-2 text-sm rounded-full whitespace-nowrap transition-colors",
+                    activeTab === tab.value
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "bg-background border border-border hover:bg-accent hover:text-accent-foreground"
+                  )}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <TabsList className="w-full justify-start gap-1 bg-transparent p-1">
+              {tabs.map((tab) => (
+                <TabsTrigger 
+                  key={tab.value}
+                  value={tab.value}
+                  className={cn(
+                    "flex-shrink-0 transition-colors",
+                    activeTab === tab.value ? "bg-primary text-primary-foreground" : ""
+                  )}
+                >
+                  {tab.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          )}
         </div>
-        <div className="flex items-center gap-2">
-          <Badge variant="outline" className="text-green-600">
-            System Healthy
-          </Badge>
-          <Button onClick={refreshData} variant="outline" size="sm">
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh
-          </Button>
-          <Button onClick={handleExportCSV} variant="outline" size="sm">
-            Export Data
-          </Button>
+
+        {/* Tab Content */}
+        <div className="min-h-[600px]">
+          <TabsContent value="overview">
+            <OverviewTab
+              adminFeatures={adminFeatures || []}
+              establishmentFeatures={establishmentFeatures || []}
+              individualFeatures={individualFeatures || []}
+              promoterFeatures={promoterFeatures || []}
+              analyzing={analyzing}
+              analysisProgress={analysisProgress}
+              analysisSteps={analysisSteps || []}
+              updatedFeaturesCount={updatedFeaturesCount || 0}
+              onCreateRelease={handleCreateReleaseFromFeatures}
+              progressHistory={progressHistory || []}
+              monthlyProgressData={monthlyProgressData || []}
+              currentSnapshot={currentSnapshot}
+              dataValidation={dataValidation || { isValid: true, issues: [] }}
+            />
+          </TabsContent>
+
+          <TabsContent value="admin">
+            <EnhancedFeatureTab
+              features={adminFeatures || []}
+              title="Admin Features"
+              userType="admin"
+            />
+          </TabsContent>
+
+          <TabsContent value="establishment">
+            <EnhancedFeatureTab
+              features={establishmentFeatures || []}
+              title="Establishment Features"
+              userType="establishment"
+            />
+          </TabsContent>
+
+          <TabsContent value="individual">
+            <EnhancedFeatureTab
+              features={individualFeatures || []}
+              title="Individual User Features"
+              userType="individual"
+            />
+          </TabsContent>
+
+          <TabsContent value="promoter">
+            <EnhancedFeatureTab
+              features={promoterFeatures || []}
+              title="Promoter Features"
+              userType="promoter"
+            />
+          </TabsContent>
+
+          <TabsContent value="promoter-requirements">
+            <PromoterRequirementsTab />
+          </TabsContent>
+
+          <TabsContent value="improvements">
+            <ProposedImprovementsTab />
+          </TabsContent>
+
+          <TabsContent value="releases">
+            <ReleaseManagementTab />
+          </TabsContent>
+
+          <TabsContent value="comparison">
+            <ComparisonTab
+              frontendProgressPercentage={frontendProgressPercentage}
+              backendProgressPercentage={backendProgressPercentage}
+              confidenceScore={confidenceScore}
+            />
+          </TabsContent>
+
+          <TabsContent value="timeline">
+            <TimelineTab
+              monthlyProgress={monthlyProgressData || []}
+              confidenceScore={confidenceScore}
+            />
+          </TabsContent>
+
+          <TabsContent value="showcase">
+            <FeatureShowcaseTab
+              adminFeatures={adminFeatures || []}
+              establishmentFeatures={establishmentFeatures || []}
+              individualFeatures={individualFeatures || []}
+              promoterFeatures={promoterFeatures || []}
+            />
+          </TabsContent>
         </div>
-      </div>
-
-      {/* System Health Check */}
-      <div className="mb-6">
-        <SystemHealthCheck 
-          dataValidation={dataValidation} 
-          currentSnapshot={currentSnapshot} 
-        />
-      </div>
-
-      {/* Main Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid grid-cols-2 md:grid-cols-7 gap-2">
-          <TabsTrigger value="overview" className="flex items-center gap-2">
-            <BarChart3 className="h-4 w-4" />
-            Overview
-          </TabsTrigger>
-          <TabsTrigger value="metrics" className="flex items-center gap-2">
-            <Activity className="h-4 w-4" />
-            Metrics
-          </TabsTrigger>
-          <TabsTrigger value="resources" className="flex items-center gap-2">
-            <Users className="h-4 w-4" />
-            Resources
-          </TabsTrigger>
-          <TabsTrigger value="dependencies" className="flex items-center gap-2">
-            <GitBranch className="h-4 w-4" />
-            Dependencies
-          </TabsTrigger>
-          <TabsTrigger value="risks" className="flex items-center gap-2">
-            <Shield className="h-4 w-4" />
-            Risk Assessment
-          </TabsTrigger>
-          <TabsTrigger value="features" className="flex items-center gap-2">
-            <Database className="h-4 w-4" />
-            Features
-          </TabsTrigger>
-          <TabsTrigger value="analytics" className="flex items-center gap-2">
-            <TrendingUp className="h-4 w-4" />
-            Analytics
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="overview" className="space-y-6">
-          <DashboardOverviewTab
-            adminFeatures={adminFeatures}
-            establishmentFeatures={establishmentFeatures}
-            individualFeatures={individualFeatures}
-            promoterFeatures={promoterFeatures}
-            progressHistory={progressHistory}
-            monthlyProgressData={monthlyProgressData}
-            currentSnapshot={currentSnapshot}
-          />
-        </TabsContent>
-
-        <TabsContent value="metrics" className="space-y-6">
-          <SystemMetricsDashboard
-            performanceMetrics={enhancedData.performanceMetrics}
-            userEngagement={enhancedData.userEngagement}
-            qualityMetrics={enhancedData.qualityMetrics}
-          />
-        </TabsContent>
-
-        <TabsContent value="resources" className="space-y-6">
-          <ResourceManagementPanel resourceData={enhancedData.resourceData} />
-        </TabsContent>
-
-        <TabsContent value="dependencies" className="space-y-6">
-          <DependencyVisualization
-            dependencies={enhancedData.dependencies}
-            technicalDebt={enhancedData.technicalDebt}
-            changeImpact={enhancedData.changeImpact}
-          />
-        </TabsContent>
-
-        <TabsContent value="risks" className="space-y-6">
-          <RiskAssessmentPanel
-            riskFactors={enhancedData.riskFactors}
-            complianceItems={enhancedData.complianceItems}
-            earlyWarnings={enhancedData.earlyWarnings}
-          />
-        </TabsContent>
-
-        <TabsContent value="features" className="space-y-6">
-          <DashboardFeatureTab
-            adminFeatures={adminFeatures}
-            establishmentFeatures={establishmentFeatures}
-            individualFeatures={individualFeatures}
-            promoterFeatures={promoterFeatures}
-            onAnalyzeFeatures={handleAnalyzeFeatures}
-            onCreateRelease={handleCreateReleaseFromFeatures}
-          />
-        </TabsContent>
-
-        <TabsContent value="analytics" className="space-y-6">
-          <DashboardAnalyticsTab
-            adminFeatures={adminFeatures}
-            establishmentFeatures={establishmentFeatures}
-            individualFeatures={individualFeatures}
-            promoterFeatures={promoterFeatures}
-            progressHistory={progressHistory}
-            monthlyProgressData={monthlyProgressData}
-          />
-        </TabsContent>
       </Tabs>
     </div>
   );
