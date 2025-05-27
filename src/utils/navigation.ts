@@ -41,11 +41,11 @@ export const createBreadcrumbsFromPath = (
   
   let currentPath = '';
   
-  // Always include home if not on home page
-  if (pathname !== '/') {
+  // Always include home if not on home page - but use dynamic home path
+  if (pathname !== '/' && pathname !== '/landing') {
     breadcrumbs.push({ 
-      path: '/',
-      label: 'Home'
+      path: '/', // This will be replaced by the component with the correct home path
+      label: 'Home' // This will be replaced by the component with the correct label
     });
   }
   
