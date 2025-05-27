@@ -1,136 +1,109 @@
 
-import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Event, EventLocation, EventContactInfo, EventTicketType } from '@/types/EventTypes';
 import { useToast } from '@/hooks/use-toast';
-import { safeJsonToType, safeJsonToRecord } from '@/utils/typeGuards';
+import { Event, EventLocation, EventContactInfo } from '@/types/EventTypes';
+import { safeJsonToRecord, safeJsonToType } from '@/utils/typeGuards';
 
-/**
- * Hook for fetching and managing event details 
- */
 export const useEventDetails = (eventId: string) => {
-  const [event, setEvent] = useState<Event | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  useEffect(() => {
-    const fetchEventDetails = async () => {
-      if (!eventId) {
-        setIsLoading(false);
-        return;
-      }
+  const { data: event, isLoading, error } = useQuery({
+    queryKey: ['event', eventId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('events')
+        .select(`
+          *,
+          venue:venue_id (id, name, address),
+          event_ticket_types (*)
+        `)
+        .eq('id', eventId)
+        .single();
 
-      setIsLoading(true);
-      setError(null);
-
-      try {
-        // Get event details
-        const { data: eventData, error: eventError } = await supabase
-          .from('events')
-          .select(`
-            *,
-            venue:venue_id (
-              id,
-              name,
-              address
-            ),
-            event_ticket_types (*)
-          `)
-          .eq('id', eventId)
-          .single();
-
-        if (eventError) throw eventError;
-
-        // Get attendee counts
-        const { data: attendeesData, error: attendeesError } = await supabase
-          .from('event_attendees')
-          .select('status')
-          .eq('event_id', eventId);
-
-        if (attendeesError) console.error("Error fetching attendee count:", attendeesError);
-
-        // Calculate registration and check-in counts
-        const registeredCount = attendeesData ? attendeesData.filter(a => a.status === 'registered').length : 0;
-        const checkedInCount = attendeesData ? attendeesData.filter(a => a.status === 'checked_in').length : 0;
-
-        // Parse location_details and contact_info from JSON if needed
-        const defaultLocation: EventLocation = {
-          address: '',
-          city: '',
-          state: '',
-          zip: '',
-          country: ''
-        };
-        
-        const defaultContactInfo: EventContactInfo = {
-          name: '',
-          email: ''
-        };
-
-        const locationDetails = safeJsonToType<EventLocation>(
-          eventData.location_details,
-          defaultLocation
-        );
-
-        const contactInfo = safeJsonToType<EventContactInfo>(
-          eventData.contact_info,
-          defaultContactInfo
-        );
-
-        const customSettings = safeJsonToRecord(eventData.custom_settings);
-
-        // Format the event data
-        const formattedEvent: Event = {
-          id: eventData.id,
-          name: eventData.name,
-          description: eventData.description || '',
-          date: eventData.date,
-          time: eventData.time,
-          venue_id: eventData.venue_id,
-          image_url: eventData.image_url,
-          promotional_materials: eventData.promotional_materials || [],
-          status: eventData.status || 'draft',
-          created_by: eventData.created_by || '',
-          created_at: eventData.created_at,
-          updated_at: eventData.updated_at,
-          capacity: eventData.capacity,
-          event_type: eventData.event_type,
-          location_details: locationDetails,
-          contact_info: contactInfo,
-          venue: eventData.venue || {
-            id: '',
-            name: 'TBD',
-            address: ''
-          },
-          attendees: {
-            registered: registeredCount,
-            checked_in: checkedInCount,
-            capacity: eventData.capacity || 0
-          },
-          ticketTypes: eventData.event_ticket_types,
-          distance: undefined,
-          is_public: eventData.is_public !== false,
-          event_url: eventData.event_url,
-          custom_settings: customSettings
-        };
-
-        setEvent(formattedEvent);
-      } catch (err: any) {
-        console.error('Error fetching event details:', err);
-        setError(err.message);
+      if (error) {
         toast({
-          title: "Error loading event",
-          description: err.message,
-          variant: "destructive",
+          title: 'Error fetching event',
+          description: error.message,
+          variant: 'destructive',
         });
-      } finally {
-        setIsLoading(false);
+        throw error;
       }
-    };
 
-    fetchEventDetails();
-  }, [eventId, toast]);
+      // Transform the data to match the Event interface
+      const defaultLocation: EventLocation = {
+        address: '',
+        city: '',
+        state: '',
+        zip: '',
+        country: ''
+      };
 
-  return { event, isLoading, error };
+      const defaultContactInfo: EventContactInfo = {
+        name: '',
+        email: ''
+      };
+
+      const locationDetails = safeJsonToType<EventLocation>(
+        data.location_details,
+        defaultLocation
+      );
+
+      const contactInfo = safeJsonToType<EventContactInfo>(
+        data.contact_info,
+        defaultContactInfo
+      );
+
+      const customSettings = safeJsonToRecord(data.custom_settings);
+
+      const ticketTypes = data.event_ticket_types.map(ticket => ({
+        id: ticket.id,
+        name: ticket.name,
+        description: ticket.description,
+        price: ticket.price,
+        quantity: ticket.quantity,
+        sold: 0,
+        available: ticket.quantity
+      }));
+
+      const formattedEvent: Event = {
+        id: data.id,
+        name: data.name,
+        description: data.description || '',
+        date: data.date,
+        time: data.time,
+        venue_id: data.venue_id,
+        venue: data.venue || { id: '', name: 'TBD', address: '' },
+        image_url: data.image_url,
+        promotional_materials: data.promotional_materials || [],
+        status: data.status || 'draft',
+        created_by: data.created_by,
+        created_at: data.created_at,
+        updated_at: data.updated_at,
+        capacity: data.capacity,
+        event_type: data.event_type,
+        location_details: locationDetails,
+        contact_info: contactInfo,
+        custom_settings: customSettings,
+        is_public: data.is_public !== false,
+        event_url: data.event_url,
+        ticketTypes: ticketTypes,
+        attendees: {
+          registered: 0,
+          checked_in: 0,
+          capacity: data.capacity || 0
+        },
+        distance: undefined
+      };
+
+      return formattedEvent;
+    },
+    enabled: !!eventId,
+  });
+
+  return {
+    event,
+    isLoading,
+    error
+  };
 };

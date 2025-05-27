@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { 
   PayoutRequest, 
@@ -6,6 +5,7 @@ import {
   OrganizerTaxInfo,
   FeeCalculation 
 } from '@/types/FinancialTypes';
+import { toJsonCompatible } from '@/utils/typeGuards';
 
 export async function createPayoutRequest(data: {
   event_id?: string;
@@ -205,12 +205,20 @@ export async function updateOrganizerTaxInfo(
   organizerId: string,
   taxInfo: Partial<OrganizerTaxInfo>
 ): Promise<OrganizerTaxInfo> {
+  // Ensure required fields are provided with defaults
+  const updateData = {
+    organizer_id: organizerId,
+    region: taxInfo.region || 'US',
+    country_code: taxInfo.country_code || 'US',
+    tax_exempt: taxInfo.tax_exempt || false,
+    verified: taxInfo.verified || false,
+    address: toJsonCompatible(taxInfo.address || {}),
+    ...taxInfo
+  };
+
   const { data, error } = await supabase
     .from('organizer_tax_info')
-    .upsert({
-      organizer_id: organizerId,
-      ...taxInfo
-    })
+    .upsert(updateData)
     .select()
     .single();
 

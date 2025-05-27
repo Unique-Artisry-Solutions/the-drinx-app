@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { 
   Card,
@@ -10,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BrainCircuit, Mail, Settings } from 'lucide-react';
 import { EventMarketingCampaign } from '@/types/EventTypes';
-import { safeJsonToRecord } from '@/utils/typeGuards';
+import { safeJsonToRecord, toJsonCompatible } from '@/utils/typeGuards';
 
 // Email marketing component that displays campaign metrics and allows for creating/editing campaigns
 const EmailMarketingPanel = ({ 
@@ -44,8 +45,8 @@ const EmailMarketingPanel = ({
     );
   }
 
-  // Check if campaign has A/B testing configured
-  const targetAudience = safeJsonToRecord(campaign.target_audience || {});
+  // Check if campaign has A/B testing configured - fix type conversion
+  const targetAudience = safeJsonToRecord(toJsonCompatible(campaign.target_audience) || {});
   const abTest = targetAudience.abTest || {};
   const isABTesting = Boolean(abTest.variantA && abTest.variantB);
   const trafficSplit = abTest.distribution || 50;
@@ -103,7 +104,6 @@ const EmailMarketingPanel = ({
               </div>
               <BrainCircuit className="h-6 w-6 text-blue-500" />
             </div>
-            {/* ... A/B testing content ... */}
             <div className="mt-4 grid grid-cols-2 gap-4">
               <div className="border rounded p-3">
                 <h5 className="font-medium">Variant A</h5>
