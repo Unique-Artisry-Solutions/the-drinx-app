@@ -37,6 +37,32 @@ export interface NotificationPreferences {
   push_notifications?: boolean;
 }
 
+// Add the missing FollowerNotificationPreferences type
+export interface FollowerNotificationPreferences {
+  events: boolean;
+  discounts: boolean;
+  updates: boolean;
+  email_notifications: boolean;
+  push_notifications: boolean;
+  quiet_hours: {
+    enabled: boolean;
+    start: string;
+    end: string;
+  };
+}
+
+// Database-compatible notification preferences type
+export interface DatabaseNotificationPreferences {
+  id: string;
+  user_id: string;
+  category_id: string;
+  is_enabled: boolean;
+  channels: ('email' | 'push' | 'in_app')[];
+  metadata?: Record<string, any>;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface SubscriptionSettings {
   id?: string;
   user_id: string;

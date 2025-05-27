@@ -1,7 +1,7 @@
 
 import { Json } from '@/integrations/supabase/types';
 import { NotificationInterface } from '@/types/notification';
-import { NotificationPreferences, FollowerNotificationPreferences } from '@/types/SubscriptionTypes';
+import { DatabaseNotificationPreferences, FollowerNotificationPreferences } from '@/types/SubscriptionTypes';
 
 // Safe type conversion utilities for follower system
 export const safeJsonToFollowerPreferences = (json: Json): FollowerNotificationPreferences => {
@@ -88,7 +88,7 @@ const safeJsonToCoordinates = (json: Json): { latitude: number; longitude: numbe
   return undefined;
 };
 
-export const notificationPreferencesToJson = (prefs: NotificationPreferences): Json => {
+export const databaseNotificationPreferencesToJson = (prefs: DatabaseNotificationPreferences): Json => {
   return {
     id: prefs.id,
     user_id: prefs.user_id,

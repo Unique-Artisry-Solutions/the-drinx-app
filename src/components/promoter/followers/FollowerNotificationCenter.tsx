@@ -3,23 +3,13 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Label } from '@/components/ui/label';
 import { useFollowerNotifications } from '@/hooks/notifications/useFollowerNotifications';
-import { useToast } from '@/hooks/use-toast';
-import { 
-  Send, 
-  Users, 
-  Mail, 
-  Bell, 
-  Gift,
-  Calendar,
-  Target
-} from 'lucide-react';
+import { FollowerNotificationRequest } from '@/types/FollowerNotificationTypes';
+import { Send, Users, Bell } from 'lucide-react';
 
-export interface FollowerNotificationCenterProps {
+interface FollowerNotificationCenterProps {
   promoterId: string;
   followerCount: number;
 }
@@ -28,186 +18,144 @@ const FollowerNotificationCenter: React.FC<FollowerNotificationCenterProps> = ({
   promoterId, 
   followerCount 
 }) => {
-  const { sendBulkNotification, scheduleNotification, isLoading } = useFollowerNotifications(promoterId);
-  const { toast } = useToast();
+  const [title, setTitle] = useState('');
+  const [message, setMessage] = useState('');
+  const [discountCode, setDiscountCode] = useState('');
+  const [includeEmail, setIncludeEmail] = useState(true);
+  const [includePush, setIncludePush] = useState(false);
   
-  const [activeTab, setActiveTab] = useState('instant');
-  const [notification, setNotification] = useState({
-    title: '',
-    message: '',
-    targetType: 'all' as 'all' | 'tier' | 'specific',
-    specificTiers: [] as string[],
-    discountCode: '',
-    includeEmail: true,
-    includePush: true,
-    priority: 'medium' as 'low' | 'medium' | 'high' | 'urgent'
-  });
+  const { 
+    segments, 
+    isLoading, 
+    sendBulkNotification 
+  } = useFollowerNotifications(promoterId);
 
   const handleSendNotification = async () => {
-    if (!notification.title.trim() || !notification.message.trim()) {
-      toast({
-        title: 'Error',
-        description: 'Please provide both title and message',
-        variant: 'destructive'
-      });
+    if (!title.trim() || !message.trim()) {
       return;
     }
 
+    const request: FollowerNotificationRequest = {
+      targetType: 'all',
+      title: title.trim(),
+      message: message.trim(),
+      discountCode: discountCode.trim() || undefined,
+      includeEmail,
+      includePush,
+      priority: 'medium'
+    };
+
     try {
-      await sendBulkNotification({
-        targetType: notification.targetType,
-        specificTiers: notification.specificTiers,
-        message: notification.message,
-        discountCode: notification.discountCode,
-        includeEmail: notification.includeEmail,
-        includePush: notification.includePush,
-        title: notification.title,
-        priority: notification.priority
-      });
-
-      // Reset form
-      setNotification({
-        title: '',
-        message: '',
-        targetType: 'all',
-        specificTiers: [],
-        discountCode: '',
-        includeEmail: true,
-        includePush: true,
-        priority: 'medium'
-      });
-
-      toast({
-        title: 'Success',
-        description: 'Notification sent successfully to your followers!',
-      });
+      await sendBulkNotification.mutateAsync(request);
+      setTitle('');
+      setMessage('');
+      setDiscountCode('');
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to send notification. Please try again.',
-        variant: 'destructive'
-      });
+      console.error('Failed to send notification:', error);
     }
   };
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="animate-pulse space-y-4">
+            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+            <div className="h-20 bg-gray-200 rounded"></div>
+            <div className="h-10 bg-gray-200 rounded w-1/3"></div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Bell className="h-5 w-5" />
-          Follower Notification Center
-          <Badge variant="secondary" className="ml-auto">
-            <Users className="h-3 w-3 mr-1" />
-            {followerCount.toLocaleString()} followers
-          </Badge>
+          Notify Followers
         </CardTitle>
+        <p className="text-sm text-muted-foreground">
+          Send messages to your {followerCount.toLocaleString()} followers
+        </p>
       </CardHeader>
-      <CardContent>
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="instant">
-              <Send className="h-4 w-4 mr-2" />
-              Instant
-            </TabsTrigger>
-            <TabsTrigger value="scheduled">
-              <Calendar className="h-4 w-4 mr-2" />
-              Scheduled
-            </TabsTrigger>
-            <TabsTrigger value="templates">
-              <Target className="h-4 w-4 mr-2" />
-              Templates
-            </TabsTrigger>
-          </TabsList>
+      <CardContent className="space-y-4">
+        <div>
+          <Label htmlFor="title">Title</Label>
+          <Input
+            id="title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Notification title..."
+            maxLength={100}
+          />
+        </div>
 
-          <TabsContent value="instant" className="space-y-4">
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="title">Notification Title</Label>
-                <Input
-                  id="title"
-                  value={notification.title}
-                  onChange={(e) => setNotification(prev => ({ ...prev, title: e.target.value }))}
-                  placeholder="Enter notification title..."
-                  className="mt-1"
-                />
-              </div>
+        <div>
+          <Label htmlFor="message">Message</Label>
+          <Textarea
+            id="message"
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            placeholder="Your message to followers..."
+            rows={4}
+            maxLength={500}
+          />
+        </div>
 
-              <div>
-                <Label htmlFor="message">Message</Label>
-                <Textarea
-                  id="message"
-                  value={notification.message}
-                  onChange={(e) => setNotification(prev => ({ ...prev, message: e.target.value }))}
-                  placeholder="Write your message to followers..."
-                  className="mt-1 min-h-[100px]"
-                />
-              </div>
+        <div>
+          <Label htmlFor="discount">Discount Code (Optional)</Label>
+          <Input
+            id="discount"
+            value={discountCode}
+            onChange={(e) => setDiscountCode(e.target.value)}
+            placeholder="SAVE20"
+            maxLength={20}
+          />
+        </div>
 
-              <div>
-                <Label htmlFor="discountCode">Discount Code (Optional)</Label>
-                <Input
-                  id="discountCode"
-                  value={notification.discountCode}
-                  onChange={(e) => setNotification(prev => ({ ...prev, discountCode: e.target.value }))}
-                  placeholder="Enter discount code..."
-                  className="mt-1"
-                />
-              </div>
+        <div className="flex items-center space-x-4">
+          <label className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              checked={includeEmail}
+              onChange={(e) => setIncludeEmail(e.target.checked)}
+            />
+            <span className="text-sm">Email</span>
+          </label>
+          <label className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              checked={includePush}
+              onChange={(e) => setIncludePush(e.target.checked)}
+            />
+            <span className="text-sm">Push</span>
+          </label>
+        </div>
 
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="includeEmail"
-                    checked={notification.includeEmail}
-                    onChange={(e) => setNotification(prev => ({ ...prev, includeEmail: e.target.checked }))}
-                  />
-                  <Label htmlFor="includeEmail" className="flex items-center gap-1">
-                    <Mail className="h-4 w-4" />
-                    Email
-                  </Label>
+        <Button
+          onClick={handleSendNotification}
+          disabled={!title.trim() || !message.trim() || sendBulkNotification.isPending}
+          className="w-full"
+        >
+          <Send className="h-4 w-4 mr-2" />
+          {sendBulkNotification.isPending ? 'Sending...' : 'Send Notification'}
+        </Button>
+
+        {segments.length > 0 && (
+          <div className="mt-4 p-3 bg-muted rounded-lg">
+            <h4 className="text-sm font-medium mb-2">Target Segments:</h4>
+            <div className="space-y-1">
+              {segments.map((segment) => (
+                <div key={segment.id} className="flex items-center gap-2 text-sm">
+                  <Users className="h-3 w-3" />
+                  <span>{segment.name}: {segment.count} followers</span>
                 </div>
-                
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="includePush"
-                    checked={notification.includePush}
-                    onChange={(e) => setNotification(prev => ({ ...prev, includePush: e.target.checked }))}
-                  />
-                  <Label htmlFor="includePush" className="flex items-center gap-1">
-                    <Bell className="h-4 w-4" />
-                    Push
-                  </Label>
-                </div>
-              </div>
-
-              <Button 
-                onClick={handleSendNotification}
-                disabled={isLoading || !notification.title.trim() || !notification.message.trim()}
-                className="w-full"
-              >
-                {isLoading ? 'Sending...' : 'Send Notification'}
-              </Button>
+              ))}
             </div>
-          </TabsContent>
-
-          <TabsContent value="scheduled" className="space-y-4">
-            <div className="text-center py-8 text-muted-foreground">
-              <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>Scheduled notifications coming soon!</p>
-              <p className="text-sm">Plan your follower communications in advance.</p>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="templates" className="space-y-4">
-            <div className="text-center py-8 text-muted-foreground">
-              <Target className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>Message templates coming soon!</p>
-              <p className="text-sm">Save time with pre-made message templates.</p>
-            </div>
-          </TabsContent>
-        </Tabs>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
