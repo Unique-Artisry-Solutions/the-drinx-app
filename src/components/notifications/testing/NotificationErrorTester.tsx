@@ -1,59 +1,39 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
-import { 
-  Wifi, 
-  WifiOff, 
-  RefreshCw, 
-  AlertTriangle, 
-  Clock, 
-  CheckCircle,
-  XCircle 
-} from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { CheckCircle, XCircle, Clock, AlertTriangle, RefreshCw } from 'lucide-react';
 import { useNotificationErrorTesting } from '@/hooks/notifications/testing/useNotificationErrorTesting';
-
-interface TestResult {
-  name: string;
-  status: 'pending' | 'running' | 'passed' | 'failed';
-  duration?: number;
-  details?: string;
-  retryCount?: number;
-}
 
 export const NotificationErrorTester = () => {
   const {
-    isTestingNetworkConditions,
-    isTestingDeduplication,
-    isTestingRetryMechanisms,
-    isTestingCleanup,
-    testResults,
-    runNetworkConditionTests,
-    runDeduplicationTests,
-    runRetryMechanismTests,
-    runCleanupTests,
-    runAllErrorTests
+    isRunning,
+    progress,
+    currentTest,
+    results,
+    error,
+    runTests,
+    clearResults,
+    retryFailedTests
   } = useNotificationErrorTesting();
 
-  const [testProgress, setTestProgress] = useState(0);
-
-  const getStatusIcon = (status: TestResult['status']) => {
+  const getStatusIcon = (status: string) => {
     switch (status) {
       case 'passed':
         return <CheckCircle className="h-4 w-4 text-green-500" />;
       case 'failed':
         return <XCircle className="h-4 w-4 text-red-500" />;
       case 'running':
-        return <RefreshCw className="h-4 w-4 text-blue-500 animate-spin" />;
+        return <Clock className="h-4 w-4 text-blue-500 animate-spin" />;
       default:
-        return <Clock className="h-4 w-4 text-gray-400" />;
+        return <AlertTriangle className="h-4 w-4 text-gray-400" />;
     }
   };
 
-  const getStatusBadge = (status: TestResult['status']) => {
+  const getStatusBadge = (status: string) => {
     const variants = {
       passed: 'default',
       failed: 'destructive',
@@ -62,116 +42,94 @@ export const NotificationErrorTester = () => {
     } as const;
 
     return (
-      <Badge variant={variants[status]}>
+      <Badge variant={variants[status as keyof typeof variants] || 'outline'}>
         {status.charAt(0).toUpperCase() + status.slice(1)}
       </Badge>
     );
   };
 
-  const isAnyTestRunning = isTestingNetworkConditions || isTestingDeduplication || 
-                          isTestingRetryMechanisms || isTestingCleanup;
+  const failedTestsCount = results.filter(r => r.status === 'failed').length;
+  const passedTestsCount = results.filter(r => r.status === 'passed').length;
 
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-orange-500" />
+          <CardTitle className="flex items-center justify-between">
             Error Handling & Performance Testing
+            <div className="flex gap-2">
+              {failedTestsCount > 0 && (
+                <Button
+                  onClick={retryFailedTests}
+                  disabled={isRunning}
+                  variant="outline"
+                  size="sm"
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Retry Failed ({failedTestsCount})
+                </Button>
+              )}
+              <Button
+                onClick={clearResults}
+                disabled={isRunning}
+                variant="outline"
+                size="sm"
+              >
+                Clear Results
+              </Button>
+              <Button
+                onClick={runTests}
+                disabled={isRunning}
+                variant="default"
+              >
+                {isRunning ? 'Running Tests...' : 'Run All Tests'}
+              </Button>
+            </div>
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Test Controls */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-            <Button
-              onClick={runNetworkConditionTests}
-              disabled={isAnyTestRunning}
-              variant="outline"
-              size="sm"
-              className="flex items-center gap-2"
-            >
-              {navigator.onLine ? <Wifi className="h-4 w-4" /> : <WifiOff className="h-4 w-4" />}
-              Network Tests
-            </Button>
-            
-            <Button
-              onClick={runDeduplicationTests}
-              disabled={isAnyTestRunning}
-              variant="outline"
-              size="sm"
-            >
-              Deduplication
-            </Button>
-            
-            <Button
-              onClick={runRetryMechanismTests}
-              disabled={isAnyTestRunning}
-              variant="outline"
-              size="sm"
-            >
-              Retry Logic
-            </Button>
-            
-            <Button
-              onClick={runCleanupTests}
-              disabled={isAnyTestRunning}
-              variant="outline"
-              size="sm"
-            >
-              Cleanup
-            </Button>
-            
-            <Button
-              onClick={() => {
-                setTestProgress(0);
-                runAllErrorTests((progress) => setTestProgress(progress));
-              }}
-              disabled={isAnyTestRunning}
-              variant="default"
-              size="sm"
-            >
-              Run All Tests
-            </Button>
-          </div>
+        <CardContent>
+          {error && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
 
-          {/* Progress Bar */}
-          {isAnyTestRunning && (
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>Test Progress</span>
-                <span>{Math.round(testProgress)}%</span>
+          {isRunning && (
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium">Progress</span>
+                <span className="text-sm text-gray-500">{Math.round(progress)}%</span>
               </div>
-              <Progress value={testProgress} className="w-full" />
+              <Progress value={progress} className="w-full" />
+              {currentTest && (
+                <p className="text-sm text-gray-600 mt-2">
+                  Currently running: {currentTest}
+                </p>
+              )}
             </div>
           )}
 
-          {/* Network Status */}
-          <Alert>
-            <div className="flex items-center gap-2">
-              {navigator.onLine ? (
-                <Wifi className="h-4 w-4 text-green-500" />
-              ) : (
-                <WifiOff className="h-4 w-4 text-red-500" />
-              )}
-              <span className="font-medium">
-                Network Status: {navigator.onLine ? 'Online' : 'Offline'}
-              </span>
-            </div>
-            <AlertDescription className="mt-2">
-              {navigator.onLine 
-                ? 'Network connection detected. All network-dependent tests can run.'
-                : 'No network connection. Network tests will simulate offline conditions.'
-              }
-            </AlertDescription>
-          </Alert>
+          {results.length > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-medium text-lg">Test Results</h3>
+                <div className="flex gap-4 text-sm">
+                  <span className="text-green-600">
+                    Passed: {passedTestsCount}
+                  </span>
+                  <span className="text-red-600">
+                    Failed: {failedTestsCount}
+                  </span>
+                  <span className="text-gray-600">
+                    Total: {results.length}
+                  </span>
+                </div>
+              </div>
 
-          {/* Test Results */}
-          {testResults.length > 0 && (
-            <div className="space-y-3">
-              <h3 className="font-medium">Test Results</h3>
               <div className="space-y-2">
-                {testResults.map((result, index) => (
-                  <div 
+                {results.map((result, index) => (
+                  <div
                     key={index}
                     className="flex items-center justify-between p-3 border rounded-lg"
                   >
@@ -179,8 +137,8 @@ export const NotificationErrorTester = () => {
                       {getStatusIcon(result.status)}
                       <div>
                         <span className="text-sm font-medium">{result.name}</span>
-                        {result.details && (
-                          <p className="text-xs text-gray-600 mt-1">{result.details}</p>
+                        {result.message && (
+                          <p className="text-xs text-gray-600 mt-1">{result.message}</p>
                         )}
                       </div>
                     </div>
@@ -188,49 +146,26 @@ export const NotificationErrorTester = () => {
                       {getStatusBadge(result.status)}
                       {result.duration && (
                         <span className="text-xs text-gray-500">
-                          {result.duration}ms
+                          {Math.round(result.duration)}ms
                         </span>
                       )}
-                      {result.retryCount && result.retryCount > 0 && (
+                      {result.retryCount !== undefined && result.retryCount > 0 && (
                         <span className="text-xs text-orange-500">
-                          {result.retryCount} retries
+                          Retry: {result.retryCount}
                         </span>
                       )}
                     </div>
                   </div>
                 ))}
               </div>
-              
-              {/* Summary */}
-              <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                <h4 className="font-medium text-sm mb-2">Test Summary</h4>
-                <div className="grid grid-cols-4 gap-4 text-xs">
-                  <div>
-                    <span className="text-green-600 font-medium">
-                      {testResults.filter(r => r.status === 'passed').length}
-                    </span>
-                    <span className="text-gray-600"> Passed</span>
-                  </div>
-                  <div>
-                    <span className="text-red-600 font-medium">
-                      {testResults.filter(r => r.status === 'failed').length}
-                    </span>
-                    <span className="text-gray-600"> Failed</span>
-                  </div>
-                  <div>
-                    <span className="text-blue-600 font-medium">
-                      {testResults.filter(r => r.status === 'running').length}
-                    </span>
-                    <span className="text-gray-600"> Running</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-600 font-medium">
-                      {testResults.filter(r => r.status === 'pending').length}
-                    </span>
-                    <span className="text-gray-600"> Pending</span>
-                  </div>
-                </div>
-              </div>
+            </div>
+          )}
+
+          {!isRunning && results.length === 0 && (
+            <div className="text-center py-8">
+              <AlertTriangle className="mx-auto h-8 w-8 text-gray-400 mb-2" />
+              <p className="text-gray-600">No test results available</p>
+              <p className="text-gray-500 text-sm">Click "Run All Tests" to start testing</p>
             </div>
           )}
         </CardContent>

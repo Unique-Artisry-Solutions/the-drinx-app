@@ -6,6 +6,7 @@
 export * from './NotificationTypes';
 export * from './ToastTypes';
 export * from './PushNotificationTypes';
+export * from './TestingTypes';
 import type { ActionConfig } from '@/hooks/use-toast';
 
 // Re-export the NotificationInterface
