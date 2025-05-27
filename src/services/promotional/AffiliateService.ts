@@ -5,6 +5,7 @@ import {
   convertDatabaseAffiliateProgram, 
   convertDatabaseAffiliatePartner, 
   convertDatabaseAffiliateCommission,
+  convertToDbAffiliateTrackingLinkInsert,
   filterValidPrograms,
   filterValidPartners,
   filterValidCommissions
@@ -112,9 +113,11 @@ export class AffiliateService {
 
   // Tracking Links
   static async createTrackingLink(data: Omit<AffiliateTrackingLink, 'id' | 'created_at' | 'updated_at'>): Promise<AffiliateTrackingLink> {
+    const insertData = convertToDbAffiliateTrackingLinkInsert(data);
+    
     const { data: link, error } = await supabase
       .from('affiliate_tracking_links')
-      .insert(data)
+      .insert(insertData)
       .select()
       .single();
 

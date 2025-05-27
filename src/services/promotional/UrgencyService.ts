@@ -5,6 +5,9 @@ import {
   convertDatabaseCountdownTimer,
   convertDatabaseUrgencyCampaign,
   convertDatabaseScarcityIndicator,
+  convertToDbCountdownTimerInsert,
+  convertToDbUrgencyCampaignInsert,
+  convertToDbScarcityIndicatorInsert,
   filterValidCountdownTimers,
   filterValidUrgencyCampaigns,
   filterValidScarcityIndicators
@@ -13,9 +16,11 @@ import {
 export class UrgencyService {
   // Countdown Timers
   static async createTimer(data: Omit<CountdownTimer, 'id' | 'created_at' | 'updated_at'>): Promise<CountdownTimer> {
+    const insertData = convertToDbCountdownTimerInsert(data);
+    
     const { data: timer, error } = await supabase
       .from('countdown_timers')
-      .insert(data)
+      .insert(insertData)
       .select()
       .single();
 
@@ -62,9 +67,11 @@ export class UrgencyService {
 
   // Urgency Campaigns
   static async createCampaign(data: Omit<UrgencyCampaign, 'id' | 'created_at' | 'updated_at'>): Promise<UrgencyCampaign> {
+    const insertData = convertToDbUrgencyCampaignInsert(data);
+    
     const { data: campaign, error } = await supabase
       .from('urgency_campaigns')
-      .insert(data)
+      .insert(insertData)
       .select()
       .single();
 
@@ -92,9 +99,11 @@ export class UrgencyService {
 
   // Scarcity Indicators
   static async createIndicator(data: Omit<ScarcityIndicator, 'id' | 'created_at' | 'updated_at'>): Promise<ScarcityIndicator> {
+    const insertData = convertToDbScarcityIndicatorInsert(data);
+    
     const { data: indicator, error } = await supabase
       .from('scarcity_indicators')
-      .insert(data)
+      .insert(insertData)
       .select()
       .single();
 
