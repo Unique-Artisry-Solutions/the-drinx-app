@@ -63,7 +63,7 @@ export const AppSubscriptionPlans: React.FC<AppSubscriptionPlansProps> = ({
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
         {plans.map((plan) => {
-          const isCurrentPlan = userSubscription?.plan_id === plan.id;
+          const isCurrentPlan = userSubscription?.subscription_type === plan.id;
           const isPremium = plan.id === 'premium';
           
           return (
@@ -131,7 +131,7 @@ export const AppSubscriptionPlans: React.FC<AppSubscriptionPlansProps> = ({
       {hasActiveSubscription && (
         <div className="text-center text-sm text-gray-600">
           <p>
-            You have an active {userSubscription?.plan_id} subscription. 
+            You have an active {userSubscription?.subscription_type} subscription. 
             You can switch plans or manage your subscription at any time.
           </p>
         </div>
