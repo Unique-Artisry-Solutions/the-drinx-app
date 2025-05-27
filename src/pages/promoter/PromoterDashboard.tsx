@@ -1,245 +1,218 @@
 
-import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/contexts/auth';
+import { Badge } from '@/components/ui/badge';
 import { 
   BarChart3, 
   Calendar, 
   Users, 
+  Target, 
   DollarSign, 
+  Timer, 
   TrendingUp, 
-  Eye,
   Settings,
-  Timer,
-  Zap,
-  Target
+  ArrowRight,
+  Plus
 } from 'lucide-react';
-import { DynamicPricingDashboard } from '@/components/pricing/DynamicPricingDashboard';
-import { PricingRulesManager } from '@/components/pricing/PricingRulesManager';
-import { UrgencyDashboard } from '@/components/promoter/urgency/UrgencyDashboard';
-import RealTimeDashboard from '@/components/promoter/RealTimeDashboard';
+
+interface QuickActionCard {
+  title: string;
+  description: string;
+  icon: React.ElementType;
+  path: string;
+  status?: 'active' | 'new' | 'coming-soon';
+  metrics?: string;
+}
 
 const PromoterDashboard = () => {
-  const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState('overview');
+  const navigate = useNavigate();
 
-  // Mock data for dashboard metrics
-  const dashboardMetrics = {
+  // Mock overview metrics
+  const overviewMetrics = {
     totalEvents: 12,
-    totalAttendees: 1248,
-    totalRevenue: 24580,
-    conversionRate: 12.5,
-    avgTicketPrice: 45.00,
-    upcomingEvents: 3
+    activeEvents: 5,
+    totalTicketsSold: 1247,
+    totalRevenue: 28540,
+    conversionRate: 12.3
+  };
+
+  const quickActions: QuickActionCard[] = [
+    {
+      title: 'Dynamic Pricing',
+      description: 'Manage pricing rules and automation',
+      icon: DollarSign,
+      path: '/promoter/pricing',
+      status: 'active',
+      metrics: '5 active rules'
+    },
+    {
+      title: 'Urgency Features',
+      description: 'Countdown timers and scarcity indicators',
+      icon: Timer,
+      path: '/promoter/urgency',
+      status: 'active',
+      metrics: '3 campaigns running'
+    },
+    {
+      title: 'Real-Time Analytics',
+      description: 'Live monitoring and performance tracking',
+      icon: TrendingUp,
+      path: '/promoter/real-time-analytics',
+      status: 'new',
+      metrics: '147 active visitors'
+    },
+    {
+      title: 'Event Management',
+      description: 'Create and manage your events',
+      icon: Calendar,
+      path: '/promoter/events',
+      status: 'active',
+      metrics: `${overviewMetrics.activeEvents} active events`
+    },
+    {
+      title: 'Marketing Analytics',
+      description: 'Track campaign performance',
+      icon: Target,
+      path: '/promoter/marketing-analytics',
+      status: 'active',
+      metrics: `${overviewMetrics.conversionRate}% conversion rate`
+    },
+    {
+      title: 'Settings',
+      description: 'Configure your account preferences',
+      icon: Settings,
+      path: '/promoter/settings',
+      status: 'active'
+    }
+  ];
+
+  const getStatusBadge = (status?: string) => {
+    switch (status) {
+      case 'new':
+        return <Badge variant="secondary" className="bg-green-100 text-green-800">New</Badge>;
+      case 'coming-soon':
+        return <Badge variant="outline">Coming Soon</Badge>;
+      default:
+        return null;
+    }
   };
 
   return (
-    <div className="container mx-auto p-6 max-w-7xl">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold mb-2">Promoter Dashboard</h1>
-        <p className="text-gray-600">
-          Welcome back! Here's an overview of your events and performance.
-        </p>
+    <div className="container mx-auto px-4 py-6 space-y-6">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold">Promoter Dashboard</h1>
+          <p className="text-muted-foreground">Manage your events and promotional campaigns</p>
+        </div>
+        <Button onClick={() => navigate('/promoter/events')} className="flex items-center gap-2">
+          <Plus className="h-4 w-4" />
+          Create Event
+        </Button>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="overview" className="flex items-center gap-2">
-            <BarChart3 className="h-4 w-4" />
-            Overview
-          </TabsTrigger>
-          <TabsTrigger value="pricing" className="flex items-center gap-2">
-            <DollarSign className="h-4 w-4" />
-            Dynamic Pricing
-          </TabsTrigger>
-          <TabsTrigger value="urgency" className="flex items-center gap-2">
-            <Timer className="h-4 w-4" />
-            Urgency Features
-          </TabsTrigger>
-          <TabsTrigger value="analytics" className="flex items-center gap-2">
-            <TrendingUp className="h-4 w-4" />
-            Real-Time Analytics
-          </TabsTrigger>
-          <TabsTrigger value="settings" className="flex items-center gap-2">
-            <Settings className="h-4 w-4" />
-            Settings
-          </TabsTrigger>
-        </TabsList>
+      {/* Overview Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-blue-500" />
+              <div className="text-sm font-medium">Total Events</div>
+            </div>
+            <div className="text-2xl font-bold mt-1">{overviewMetrics.totalEvents}</div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <BarChart3 className="h-4 w-4 text-green-500" />
+              <div className="text-sm font-medium">Active Events</div>
+            </div>
+            <div className="text-2xl font-bold mt-1">{overviewMetrics.activeEvents}</div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <Users className="h-4 w-4 text-purple-500" />
+              <div className="text-sm font-medium">Tickets Sold</div>
+            </div>
+            <div className="text-2xl font-bold mt-1">{overviewMetrics.totalTicketsSold}</div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <DollarSign className="h-4 w-4 text-orange-500" />
+              <div className="text-sm font-medium">Total Revenue</div>
+            </div>
+            <div className="text-2xl font-bold mt-1">${overviewMetrics.totalRevenue.toLocaleString()}</div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <Target className="h-4 w-4 text-cyan-500" />
+              <div className="text-sm font-medium">Conversion Rate</div>
+            </div>
+            <div className="text-2xl font-bold mt-1">{overviewMetrics.conversionRate}%</div>
+          </CardContent>
+        </Card>
+      </div>
 
-        <TabsContent value="overview" className="space-y-6">
-          {/* Key Metrics Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-blue-500" />
-                  <div className="text-sm font-medium">Total Events</div>
-                </div>
-                <div className="text-2xl font-bold mt-1">{dashboardMetrics.totalEvents}</div>
-                <p className="text-xs text-muted-foreground">+2 this month</p>
+      {/* Quick Actions */}
+      <div>
+        <h2 className="text-2xl font-semibold mb-4">Dashboard Sections</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {quickActions.map((action) => (
+            <Card 
+              key={action.path} 
+              className="cursor-pointer hover:shadow-md transition-all duration-200 group"
+              onClick={() => navigate(action.path)}
+            >
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <action.icon className="h-5 w-5 text-purple-600" />
+                    {action.title}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {getStatusBadge(action.status)}
+                    <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-purple-600 transition-colors" />
+                  </div>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground mb-2">{action.description}</p>
+                {action.metrics && (
+                  <p className="text-sm font-medium text-purple-600">{action.metrics}</p>
+                )}
               </CardContent>
             </Card>
-            
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2">
-                  <Users className="h-4 w-4 text-green-500" />
-                  <div className="text-sm font-medium">Total Attendees</div>
-                </div>
-                <div className="text-2xl font-bold mt-1">{dashboardMetrics.totalAttendees.toLocaleString()}</div>
-                <p className="text-xs text-muted-foreground">+12% vs last month</p>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2">
-                  <DollarSign className="h-4 w-4 text-purple-500" />
-                  <div className="text-sm font-medium">Total Revenue</div>
-                </div>
-                <div className="text-2xl font-bold mt-1">${dashboardMetrics.totalRevenue.toLocaleString()}</div>
-                <p className="text-xs text-muted-foreground">+8% vs last month</p>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2">
-                  <Target className="h-4 w-4 text-orange-500" />
-                  <div className="text-sm font-medium">Conversion Rate</div>
-                </div>
-                <div className="text-2xl font-bold mt-1">{dashboardMetrics.conversionRate}%</div>
-                <p className="text-xs text-muted-foreground">+2.1% vs last month</p>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4 text-cyan-500" />
-                  <div className="text-sm font-medium">Avg Ticket Price</div>
-                </div>
-                <div className="text-2xl font-bold mt-1">${dashboardMetrics.avgTicketPrice}</div>
-                <p className="text-xs text-muted-foreground">+$3.20 vs last month</p>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-red-500" />
-                  <div className="text-sm font-medium">Upcoming Events</div>
-                </div>
-                <div className="text-2xl font-bold mt-1">{dashboardMetrics.upcomingEvents}</div>
-                <p className="text-xs text-muted-foreground">Next 30 days</p>
-              </CardContent>
-            </Card>
+          ))}
+        </div>
+      </div>
+
+      {/* Recent Activity */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Activity</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8">
+            <p className="text-muted-foreground mb-4">
+              Recent activity and notifications will appear here
+            </p>
+            <Badge variant="outline">Coming Soon</Badge>
           </div>
-
-          {/* Quick Actions */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Quick Actions</CardTitle>
-              <CardDescription>
-                Common tasks to help you manage your events and campaigns
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <Button variant="outline" className="h-20 flex-col gap-2">
-                  <Calendar className="h-6 w-6" />
-                  Create Event
-                </Button>
-                <Button variant="outline" className="h-20 flex-col gap-2">
-                  <Timer className="h-6 w-6" />
-                  Add Countdown Timer
-                </Button>
-                <Button variant="outline" className="h-20 flex-col gap-2">
-                  <Zap className="h-6 w-6" />
-                  Create Urgency Campaign
-                </Button>
-                <Button variant="outline" className="h-20 flex-col gap-2">
-                  <DollarSign className="h-6 w-6" />
-                  Setup Pricing Rules
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Recent Activity */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Activity</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <div className="flex-1">
-                    <p className="text-sm">New ticket sale for "Summer Music Festival"</p>
-                    <p className="text-xs text-muted-foreground">2 minutes ago</p>
-                  </div>
-                  <Badge variant="outline">+$45</Badge>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                  <div className="flex-1">
-                    <p className="text-sm">Urgency campaign "Last Chance" triggered</p>
-                    <p className="text-xs text-muted-foreground">15 minutes ago</p>
-                  </div>
-                  <Badge variant="outline">Campaign</Badge>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                  <div className="flex-1">
-                    <p className="text-sm">Dynamic pricing adjusted for high demand</p>
-                    <p className="text-xs text-muted-foreground">1 hour ago</p>
-                  </div>
-                  <Badge variant="outline">Pricing</Badge>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="pricing" className="space-y-6">
-          <DynamicPricingDashboard promoterId={user?.id || ''} />
-          <PricingRulesManager 
-            promoterId={user?.id || ''} 
-            onCreateRule={() => console.log('Create pricing rule')}
-            onEditRule={(rule) => console.log('Edit pricing rule:', rule)}
-          />
-        </TabsContent>
-
-        <TabsContent value="urgency" className="space-y-6">
-          <UrgencyDashboard 
-            promoterId={user?.id || ''}
-            eventId={undefined}
-            swigCircuitId={undefined}
-          />
-        </TabsContent>
-
-        <TabsContent value="analytics" className="space-y-6">
-          <RealTimeDashboard />
-        </TabsContent>
-
-        <TabsContent value="settings" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Dashboard Settings</CardTitle>
-              <CardDescription>
-                Configure your dashboard preferences and notifications
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">Settings panel coming soon...</p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+        </CardContent>
+      </Card>
     </div>
   );
 };

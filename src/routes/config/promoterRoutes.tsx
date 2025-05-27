@@ -12,6 +12,12 @@ const PromoterMarketingAnalytics = lazy(() => import('@/pages/promoter/PromoterM
 const CreateSwigCircuitPage = lazy(() => import('@/pages/profile/CreateSwigCircuitPage'));
 const AffiliateDashboard = lazy(() => import('@/components/promoter/affiliate/AffiliateDashboard'));
 
+// New dashboard pages
+const PromoterPricingPage = lazy(() => import('@/pages/promoter/PromoterPricingPage'));
+const PromoterUrgencyPage = lazy(() => import('@/pages/promoter/PromoterUrgencyPage'));
+const PromoterRealTimeAnalyticsPage = lazy(() => import('@/pages/promoter/PromoterRealTimeAnalyticsPage'));
+const PromoterSettingsPage = lazy(() => import('@/pages/promoter/PromoterSettingsPage'));
+
 export const promoterRoutes: RouteObject[] = [
   {
     path: '/promoter',
@@ -106,6 +112,55 @@ export const promoterRoutes: RouteObject[] = [
         redirectTo="/login"
       >
         <AffiliateDashboard promoterId="" />
+      </RouteProtectionWrapper>
+    )
+  },
+  // New dashboard routes
+  {
+    path: '/promoter/pricing',
+    element: (
+      <RouteProtectionWrapper 
+        requireAuth={true} 
+        allowedUserTypes={['promoter']}
+        redirectTo="/login"
+      >
+        <PromoterPricingPage />
+      </RouteProtectionWrapper>
+    )
+  },
+  {
+    path: '/promoter/urgency',
+    element: (
+      <RouteProtectionWrapper 
+        requireAuth={true} 
+        allowedUserTypes={['promoter']}
+        redirectTo="/login"
+      >
+        <PromoterUrgencyPage />
+      </RouteProtectionWrapper>
+    )
+  },
+  {
+    path: '/promoter/real-time-analytics',
+    element: (
+      <RouteProtectionWrapper 
+        requireAuth={true} 
+        allowedUserTypes={['promoter']}
+        redirectTo="/login"
+      >
+        <PromoterRealTimeAnalyticsPage />
+      </RouteProtectionWrapper>
+    )
+  },
+  {
+    path: '/promoter/settings',
+    element: (
+      <RouteProtectionWrapper 
+        requireAuth={true} 
+        allowedUserTypes={['promoter']}
+        redirectTo="/login"
+      >
+        <PromoterSettingsPage />
       </RouteProtectionWrapper>
     )
   }
