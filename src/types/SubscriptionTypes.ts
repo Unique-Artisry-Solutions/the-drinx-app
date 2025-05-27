@@ -3,7 +3,7 @@ export interface Subscription {
   id: string;
   subscriber_id: string;
   promoter_id: string;
-  tier_id?: string | null; // Now optional for free followers
+  tier_id?: string | null; // Optional for free followers
   subscription_start: string;
   subscription_end?: string;
   status: 'active' | 'cancelled' | 'expired';
@@ -20,11 +20,11 @@ export interface SubscriptionTier {
   id: string;
   promoter_id: string;
   name: string;
-  price: number;
+  price: number; // Keep for potential future premium following features
   tier: 'basic' | 'premium' | 'vip';
   features: Record<string, any>[];
   is_active: boolean;
-  is_free: boolean; // New field for free tiers
+  is_free: boolean; // Most following will be free
   created_at: string;
   updated_at: string;
 }
@@ -61,4 +61,17 @@ export interface EventNotificationSchedule {
   target_radius?: number | null;
   created_at?: string;
   updated_at?: string;
+}
+
+// New types for app-level subscriptions
+export interface AppSubscription {
+  id: string;
+  user_id: string;
+  plan_id: string;
+  stripe_subscription_id?: string;
+  status: 'active' | 'cancelled' | 'past_due' | 'trialing';
+  current_period_start: string;
+  current_period_end: string;
+  created_at: string;
+  updated_at: string;
 }
