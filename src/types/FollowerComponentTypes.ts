@@ -1,4 +1,3 @@
-
 export interface FollowerComponentProps {
   promoterId: string;
   className?: string;
@@ -61,4 +60,46 @@ export interface FollowerPreferences {
   email: boolean;
   push: boolean;
   sms?: boolean;
+}
+
+export interface FollowerAnalyticsData {
+  growthData: Array<{
+    date: string;
+    newFollowers: number;
+    totalFollowers: number;
+    unfollowers: number;
+  }>;
+  engagementMetrics: {
+    totalViews: number;
+    totalLikes: number;
+    totalComments: number;
+    totalShares: number;
+    averageEngagementRate: number;
+    topPerformingContent: Array<{
+      title: string;
+      type: 'event' | 'promotion' | 'general';
+      engagementScore: number;
+      reach: number;
+      clicks: number;
+    }>;
+  };
+  demographics: {
+    ageDistribution: Array<{ range: string; count: number; percentage: number; }>;
+    genderDistribution: Array<{ gender: string; count: number; percentage: number; }>;
+    locationData: Array<{ location: string; count: number; percentage: number; }>;
+    interestCategories: Array<{ category: string; interestLevel: number; count: number; }>;
+  };
+}
+
+export interface FollowerExportOptions {
+  format: 'csv' | 'xlsx' | 'json' | 'pdf';
+  dateRange: '7d' | '30d' | '90d' | '1y' | 'all';
+  includeFields: {
+    basicInfo: boolean;
+    demographics: boolean;
+    engagement: boolean;
+    preferences: boolean;
+    analytics: boolean;
+  };
+  segmentFilter?: string;
 }
