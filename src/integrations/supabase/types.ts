@@ -3787,6 +3787,7 @@ export type Database = {
           subscriber_id: string
           subscription_end: string | null
           subscription_start: string
+          tier_id: string | null
           updated_at: string
         }
         Insert: {
@@ -3798,6 +3799,7 @@ export type Database = {
           subscriber_id: string
           subscription_end?: string | null
           subscription_start?: string
+          tier_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -3809,9 +3811,18 @@ export type Database = {
           subscriber_id?: string
           subscription_end?: string | null
           subscription_start?: string
+          tier_id?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "promoter_followers_tier_id_fkey"
+            columns: ["tier_id"]
+            isOneToOne: false
+            referencedRelation: "promoter_subscription_tiers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       promoter_notification_preferences: {
         Row: {
@@ -3884,6 +3895,7 @@ export type Database = {
           features: Json
           id: string
           is_active: boolean
+          is_free: boolean | null
           name: string
           price: number
           promoter_id: string
@@ -3895,6 +3907,7 @@ export type Database = {
           features?: Json
           id?: string
           is_active?: boolean
+          is_free?: boolean | null
           name: string
           price: number
           promoter_id: string
@@ -3906,6 +3919,7 @@ export type Database = {
           features?: Json
           id?: string
           is_active?: boolean
+          is_free?: boolean | null
           name?: string
           price?: number
           promoter_id?: string
