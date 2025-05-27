@@ -8,37 +8,71 @@ import FollowerList from './FollowerList';
 import FollowerAnalyticsWidgets from './FollowerAnalyticsWidgets';
 import FollowerNotificationCenter from './FollowerNotificationCenter';
 import FollowerSystemHealthMonitor from '@/components/admin/FollowerSystemHealthMonitor';
+import FollowerErrorBoundary from './FollowerErrorBoundary';
+import { FollowerListSkeleton } from './FollowerLoadingStates';
 import { Search, Users, Bell, BarChart3, Settings } from 'lucide-react';
+import { FollowerComponentProps } from '@/types/FollowerComponentTypes';
 
-interface FollowerDashboardProps {
-  promoterId: string;
+interface FollowerDashboardProps extends FollowerComponentProps {
+  // Dashboard-specific props can be added here
 }
 
-const FollowerDashboard: React.FC<FollowerDashboardProps> = ({ promoterId }) => {
+const FollowerDashboard: React.FC<FollowerDashboardProps> = ({ 
+  promoterId,
+  className = '',
+  onError,
+  onSuccess
+}) => {
   const [activeTab, setActiveTab] = useState('overview');
   const [searchTerm, setSearchTerm] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  
   const { 
     followers, 
     isLoading, 
     usingNewSystem,
-    systemHealth 
+    systemHealth,
+    refetch
   } = useAdaptiveSubscriptions(promoterId);
 
   const followerCount = followers?.length || 0;
 
+  const handleError = (err: Error) => {
+    setError(err.message);
+    onError?.(err);
+  };
+
+  const handleRetry = () => {
+    setError(null);
+    refetch();
+  };
+
+  if (error) {
+    return (
+      <div className={`space-y-6 ${className}`}>
+        <FollowerErrorBoundary 
+          error={error} 
+          onRetry={handleRetry}
+          showDetails={true}
+        />
+      </div>
+    );
+  }
+
   if (isLoading) {
     return (
-      <div className="space-y-6">
+      <div className={`space-y-6 ${className}`}>
         <div className="animate-pulse">
           <div className="h-8 bg-gray-200 rounded w-1/3 mb-4"></div>
           <div className="h-32 bg-gray-200 rounded"></div>
         </div>
+        <FollowerListSkeleton count={3} />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className={`space-y-6 ${className}`}>
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Follower Dashboard</h1>
@@ -78,7 +112,10 @@ const FollowerDashboard: React.FC<FollowerDashboardProps> = ({ promoterId }) => 
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
-          <FollowerAnalyticsWidgets promoterId={promoterId} />
+          <FollowerAnalyticsWidgets 
+            promoterId={promoterId} 
+            onError={handleError}
+          />
           
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
@@ -86,7 +123,12 @@ const FollowerDashboard: React.FC<FollowerDashboardProps> = ({ promoterId }) => 
                 <CardTitle>Recent Followers</CardTitle>
               </CardHeader>
               <CardContent>
-                <FollowerList promoterId={promoterId} searchTerm="" />
+                <FollowerList 
+                  promoterId={promoterId} 
+                  searchTerm=""
+                  maxItems={5}
+                  onError={handleError}
+                />
               </CardContent>
             </Card>
             
@@ -98,6 +140,8 @@ const FollowerDashboard: React.FC<FollowerDashboardProps> = ({ promoterId }) => 
                 <FollowerNotificationCenter 
                   promoterId={promoterId} 
                   followerCount={followerCount}
+                  onError={handleError}
+                  onSuccess={onSuccess}
                 />
               </CardContent>
             </Card>
@@ -121,7 +165,12 @@ const FollowerDashboard: React.FC<FollowerDashboardProps> = ({ promoterId }) => 
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <FollowerList promoterId={promoterId} searchTerm={searchTerm} />
+              <FollowerList 
+                promoterId={promoterId} 
+                searchTerm={searchTerm}
+                showActions={true}
+                onError={handleError}
+              />
             </CardContent>
           </Card>
         </TabsContent>
@@ -130,15 +179,25 @@ const FollowerDashboard: React.FC<FollowerDashboardProps> = ({ promoterId }) => 
           <FollowerNotificationCenter 
             promoterId={promoterId} 
             followerCount={followerCount}
+            allowScheduling={true}
+            onError={handleError}
+            onSuccess={onSuccess}
           />
         </TabsContent>
 
         <TabsContent value="analytics" className="space-y-6">
-          <FollowerAnalyticsWidgets promoterId={promoterId} detailed={true} />
+          <FollowerAnalyticsWidgets 
+            promoterId={promoterId} 
+            detailed={true}
+            onError={handleError}
+          />
         </TabsContent>
 
         <TabsContent value="system" className="space-y-6">
-          <FollowerSystemHealthMonitor promoterId={promoterId} />
+          <FollowerSystemHealthMonitor 
+            promoterId={promoterId}
+            onError={handleError}
+          />
         </TabsContent>
       </Tabs>
     </div>

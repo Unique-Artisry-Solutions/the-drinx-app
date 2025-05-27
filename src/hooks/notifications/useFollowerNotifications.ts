@@ -23,11 +23,17 @@ export function useFollowerNotifications(promoterId: string) {
 
       if (error) throw error;
 
-      const segments = [
+      const segments: Array<{
+        id: string;
+        name: string;
+        type: 'all' | 'tier' | 'location' | 'engagement';
+        count: number;
+        criteria?: Record<string, any>;
+      }> = [
         {
-          id: 'all' as const,
+          id: 'all',
           name: 'All Followers',
-          type: 'all' as const,
+          type: 'all',
           count: followers?.length || 0
         }
       ];
@@ -48,7 +54,7 @@ export function useFollowerNotifications(promoterId: string) {
         segments.push({
           id: `tier-${tierName}`,
           name: `${tierName} Tier`,
-          type: 'tier' as const,
+          type: 'tier',
           count,
           criteria: { tier: tierName }
         });

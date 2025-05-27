@@ -14,50 +14,63 @@ import {
 } from 'lucide-react';
 import { useSubscriptions } from '@/hooks/useSubscriptions';
 import { formatDistanceToNow } from 'date-fns';
+import { FollowerListProps } from '@/types/FollowerComponentTypes';
+import FollowerErrorBoundary from './FollowerErrorBoundary';
+import { FollowerListSkeleton } from './FollowerLoadingStates';
 
-interface FollowerListProps {
-  promoterId: string;
-  searchTerm?: string;
-}
-
-const FollowerList: React.FC<FollowerListProps> = ({ promoterId, searchTerm = '' }) => {
+const FollowerList: React.FC<FollowerListProps> = ({ 
+  promoterId, 
+  searchTerm = '',
+  filters,
+  showActions = false,
+  maxItems,
+  className = '',
+  onError,
+  onSuccess
+}) => {
   const { followers, isLoading } = useSubscriptions(promoterId);
 
   const filteredFollowers = useMemo(() => {
     if (!followers) return [];
     
-    return followers.filter(follower => {
+    let filtered = followers.filter(follower => {
       const searchLower = searchTerm.toLowerCase();
-      return (
+      const matchesSearch = (
         follower.subscriber_id.toLowerCase().includes(searchLower) ||
         (follower.promoter_name || '').toLowerCase().includes(searchLower)
       );
+
+      if (!matchesSearch) return false;
+
+      // Apply filters if provided
+      if (filters) {
+        if (filters.status && follower.follow_status !== filters.status) return false;
+        if (filters.notificationsEnabled !== undefined) {
+          const hasNotifications = follower.notification_preferences?.events ?? true;
+          if (filters.notificationsEnabled !== hasNotifications) return false;
+        }
+        if (filters.joinedAfter && new Date(follower.created_at) < filters.joinedAfter) return false;
+        if (filters.joinedBefore && new Date(follower.created_at) > filters.joinedBefore) return false;
+      }
+
+      return true;
     });
-  }, [followers, searchTerm]);
+
+    // Limit results if maxItems is specified
+    if (maxItems && filtered.length > maxItems) {
+      filtered = filtered.slice(0, maxItems);
+    }
+
+    return filtered;
+  }, [followers, searchTerm, filters, maxItems]);
 
   if (isLoading) {
-    return (
-      <Card>
-        <CardContent className="p-6">
-          <div className="space-y-4">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="flex items-center space-x-4 animate-pulse">
-                <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
-                <div className="flex-1">
-                  <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
-                  <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    );
+    return <FollowerListSkeleton count={maxItems || 5} />;
   }
 
   if (filteredFollowers.length === 0) {
     return (
-      <Card>
+      <Card className={className}>
         <CardContent className="p-6 text-center">
           <div className="text-muted-foreground">
             {searchTerm ? 'No followers found matching your search.' : 'No followers yet.'}
@@ -68,14 +81,16 @@ const FollowerList: React.FC<FollowerListProps> = ({ promoterId, searchTerm = ''
   }
 
   return (
-    <Card>
+    <Card className={className}>
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <span>Followers ({filteredFollowers.length})</span>
-          <Button variant="outline" size="sm">
-            <Mail className="h-4 w-4 mr-2" />
-            Message All
-          </Button>
+          {showActions && (
+            <Button variant="outline" size="sm">
+              <Mail className="h-4 w-4 mr-2" />
+              Message All
+            </Button>
+          )}
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -120,14 +135,16 @@ const FollowerList: React.FC<FollowerListProps> = ({ promoterId, searchTerm = ''
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <Button variant="ghost" size="sm">
-                    <MessageSquare className="h-4 w-4" />
-                  </Button>
-                  <Button variant="ghost" size="sm">
-                    <MoreHorizontal className="h-4 w-4" />
-                  </Button>
-                </div>
+                {showActions && (
+                  <div className="flex items-center gap-2">
+                    <Button variant="ghost" size="sm">
+                      <MessageSquare className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="sm">
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
               </div>
             );
           })}
