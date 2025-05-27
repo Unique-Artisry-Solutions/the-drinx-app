@@ -1,18 +1,39 @@
 
 import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { useRealTimeAnalytics } from '@/hooks/useRealTimeAnalytics';
+import AnalyticsLineChart from '@/components/charts/AnalyticsLineChart';
+import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
 interface TrendAnalysisComponentProps {
-  eventId?: string;
+  className?: string;
 }
 
-const TrendAnalysisComponent: React.FC<TrendAnalysisComponentProps> = ({
-  eventId
+const TrendAnalysisComponent: React.FC<TrendAnalysisComponentProps> = ({ 
+  className = '' 
 }) => {
-  const { timeFrameData, chartData, isLoading, error } = useRealTimeAnalytics(eventId);
+  const { trendData, chartData, isLoading, error } = useRealTimeAnalytics();
+
+  if (isLoading) {
+    return (
+      <Card className={className}>
+        <CardContent className="p-8">
+          <div className="text-center">Loading trend analysis...</div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className={className}>
+        <CardContent className="p-8">
+          <div className="text-center text-red-500">Error loading trends: {error}</div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   const getTrendIcon = (trend: 'up' | 'down' | 'stable') => {
     switch (trend) {
@@ -20,6 +41,8 @@ const TrendAnalysisComponent: React.FC<TrendAnalysisComponentProps> = ({
         return <TrendingUp className="h-4 w-4 text-green-500" />;
       case 'down':
         return <TrendingDown className="h-4 w-4 text-red-500" />;
+      case 'stable':
+        return <Minus className="h-4 w-4 text-gray-500" />;
       default:
         return <Minus className="h-4 w-4 text-gray-500" />;
     }
@@ -31,167 +54,134 @@ const TrendAnalysisComponent: React.FC<TrendAnalysisComponentProps> = ({
         return 'text-green-600';
       case 'down':
         return 'text-red-600';
+      case 'stable':
+        return 'text-gray-600';
       default:
         return 'text-gray-600';
     }
   };
 
-  const formatChange = (change: number) => {
-    const absChange = Math.abs(change);
-    const sign = change >= 0 ? '+' : '';
-    return `${sign}${absChange.toFixed(1)}%`;
-  };
-
-  if (isLoading) {
-    return (
-      <Card>
-        <CardContent className="p-6">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
-            <p className="mt-2 text-sm text-muted-foreground">Loading trend analysis...</p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (error) {
-    return (
-      <Card>
-        <CardContent className="p-6">
-          <div className="text-center">
-            <p className="text-red-500">Error loading trend data: {error}</p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
-    <div className="space-y-6">
+    <div className={`space-y-6 ${className}`}>
+      {/* Trend Metrics Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {trendData.map((trend) => (
+          <Card key={trend.label}>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between mb-2">
+                <div className="text-sm font-medium text-muted-foreground">
+                  {trend.label}
+                </div>
+                {getTrendIcon(trend.trend)}
+              </div>
+              <div className="text-2xl font-bold mb-1">
+                {typeof trend.value === 'number' 
+                  ? trend.value.toLocaleString() 
+                  : trend.value}
+              </div>
+              <div className={`text-xs flex items-center gap-1 ${getTrendColor(trend.trend)}`}>
+                {trend.change > 0 ? '+' : ''}{trend.change}%
+                <span className="text-muted-foreground">vs last period</span>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Trend Chart */}
       <Card>
         <CardHeader>
           <CardTitle>Trend Analysis</CardTitle>
-          <CardDescription>
-            Performance trends and comparative analysis over time
-          </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-2">
-            {timeFrameData.map((metric, index) => (
-              <div key={index} className="p-4 border rounded-lg">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium">{metric.label}</span>
-                  {getTrendIcon(metric.trend)}
-                </div>
-                <div className="text-2xl font-bold mb-1">
-                  {metric.value.toLocaleString()}
-                </div>
-                <div className={`text-sm ${getTrendColor(metric.trend)}`}>
-                  {formatChange(metric.change)} vs previous period
-                </div>
-              </div>
-            ))}
-          </div>
+          <AnalyticsLineChart
+            data={chartData}
+            height={300}
+            series={[
+              { key: 'value', name: 'Trend Value', color: '#3B82F6' },
+              { key: 'clicks', name: 'Clicks', color: '#10B981' },
+              { key: 'conversions', name: 'Conversions', color: '#F59E0B' }
+            ]}
+          />
         </CardContent>
       </Card>
 
-      {/* Weekly Trends */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Weekly Activity Trends</CardTitle>
-          <CardDescription>
-            Daily activity patterns over the past month
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {chartData.length > 0 ? (
-            <div className="space-y-4">
-              <div className="h-64 w-full bg-gray-50 rounded-lg flex items-center justify-center">
-                <div className="text-center">
-                  <p className="text-lg font-medium">Activity Chart</p>
-                  <p className="text-sm text-gray-500">
-                    {chartData.length} data points from {chartData[0]?.date} to {chartData[chartData.length - 1]?.date}
-                  </p>
-                </div>
-              </div>
-              
-              {/* Summary stats */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="text-center">
-                  <div className="text-lg font-bold">
-                    {Math.max(...chartData.map(d => d.value))}
+      {/* Trend Insights */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Positive Trends</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {trendData
+                .filter(trend => trend.trend === 'up' && trend.change > 0)
+                .map((trend) => (
+                  <div key={`positive-${trend.label}`} className="flex items-center justify-between">
+                    <span className="text-sm">{trend.label}</span>
+                    <Badge variant="outline" className="text-green-600">
+                      +{trend.change}%
+                    </Badge>
                   </div>
-                  <div className="text-xs text-gray-500">Peak Activity</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-lg font-bold">
-                    {Math.min(...chartData.map(d => d.value))}
-                  </div>
-                  <div className="text-xs text-gray-500">Lowest Activity</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-lg font-bold">
-                    {Math.round(chartData.reduce((sum, d) => sum + d.value, 0) / chartData.length)}
-                  </div>
-                  <div className="text-xs text-gray-500">Daily Average</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-lg font-bold">
-                    {chartData.reduce((sum, d) => sum + d.value, 0)}
-                  </div>
-                  <div className="text-xs text-gray-500">Total Activity</div>
-                </div>
-              </div>
+                ))}
             </div>
-          ) : (
-            <div className="h-64 flex items-center justify-center">
-              <p className="text-gray-500">No trend data available</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
-      {/* Performance Insights */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Performance Insights</CardTitle>
-          <CardDescription>
-            Key insights and recommendations based on current trends
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {timeFrameData.map((metric, index) => {
-              let insight = '';
-              let badgeVariant: 'default' | 'secondary' | 'destructive' | 'outline' = 'outline';
-
-              if (metric.trend === 'up' && metric.change > 10) {
-                insight = `${metric.label} showing strong growth (+${metric.change.toFixed(1)}%)`;
-                badgeVariant = 'default';
-              } else if (metric.trend === 'down' && metric.change < -10) {
-                insight = `${metric.label} needs attention (${metric.change.toFixed(1)}% decline)`;
-                badgeVariant = 'destructive';
-              } else if (metric.trend === 'stable') {
-                insight = `${metric.label} is stable with minimal change`;
-                badgeVariant = 'secondary';
-              } else if (metric.trend === 'up') {
-                insight = `${metric.label} showing modest improvement (+${metric.change.toFixed(1)}%)`;
-                badgeVariant = 'outline';
-              } else {
-                insight = `${metric.label} showing slight decline (${metric.change.toFixed(1)}%)`;
-                badgeVariant = 'outline';
-              }
-
-              return (
-                <div key={index} className="flex items-center justify-between">
-                  <span className="text-sm">{insight}</span>
-                  <Badge variant={badgeVariant}>
-                    {metric.trend === 'up' ? 'Positive' : metric.trend === 'down' ? 'Negative' : 'Stable'}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Areas for Improvement</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {trendData
+                .filter(trend => trend.trend === 'down' && trend.change < 0)
+                .map((trend) => (
+                  <div key={`negative-${trend.label}`} className="flex items-center justify-between">
+                    <span className="text-sm">{trend.label}</span>
+                    <Badge variant="outline" className="text-red-600">
+                      {trend.change}%
+                    </Badge>
+                  </div>
+                ))}
+              {trendData.filter(trend => trend.trend === 'stable').map((trend) => (
+                <div key={`stable-${trend.label}`} className="flex items-center justify-between">
+                  <span className="text-sm">{trend.label}</span>
+                  <Badge variant="outline" className="text-gray-600">
+                    {trend.change >= 0 ? '+' : ''}{trend.change}%
                   </Badge>
                 </div>
-              );
-            })}
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Summary Insights */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Trend Summary</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+            <div>
+              <div className="text-2xl font-bold text-green-600">
+                {trendData.filter(trend => trend.trend === 'up').length}
+              </div>
+              <div className="text-sm text-muted-foreground">Improving Metrics</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-red-600">
+                {trendData.filter(trend => trend.trend === 'down').length}
+              </div>
+              <div className="text-sm text-muted-foreground">Declining Metrics</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-gray-600">
+                {trendData.filter(trend => trend.trend === 'stable').length}
+              </div>
+              <div className="text-sm text-muted-foreground">Stable Metrics</div>
+            </div>
           </div>
         </CardContent>
       </Card>
