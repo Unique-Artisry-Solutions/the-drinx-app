@@ -1,41 +1,29 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { eventVisibilityService, type EventVisibilitySettings } from '@/services/EventVisibilityService';
+import { eventVisibilityService } from '@/services/EventVisibilityService';
+import { EventVisibilitySettings as EventVisibilitySettingsType } from '@/types/EventVisibilityTypes';
 
 interface EventVisibilitySettingsProps {
   eventId: string;
-  onSettingsChange?: (settings: EventVisibilitySettings) => void;
 }
 
-export const EventVisibilitySettingsComponent: React.FC<EventVisibilitySettingsProps> = ({
-  eventId,
-  onSettingsChange
-}) => {
-  const [settings, setSettings] = useState<EventVisibilitySettings>({
-    isPublic: true,
+const EventVisibilitySettings: React.FC<EventVisibilitySettingsProps> = ({ eventId }) => {
+  const [settings, setSettings] = useState<EventVisibilitySettingsType>({
+    isPrivate: false,
     requiresFollowing: false,
-    accessType: 'public',
-    followerOnlyAccess: false,
-    premiumFollowerAccess: false,
-    specificTierAccess: [],
-    earlyAccess: {
-      enabled: false,
-      daysEarly: 0,
-      forFollowerTypes: [],
-      specificTiers: []
-    }
+    allowedTiers: [],
+    guestListOnly: false
   });
-  
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
+
+  const availableTiers = ['basic', 'premium', 'vip'];
 
   useEffect(() => {
     loadSettings();
@@ -57,11 +45,10 @@ export const EventVisibilitySettingsComponent: React.FC<EventVisibilitySettingsP
     }
   };
 
-  const saveSettings = async () => {
+  const handleSave = async () => {
     try {
       setIsSaving(true);
-      await eventVisibilityService.updateEventVisibility(eventId, settings);
-      onSettingsChange?.(settings);
+      await eventVisibilityService.updateEventVisibilitySettings(eventId, settings);
       toast({
         title: 'Success',
         description: 'Event visibility settings updated successfully'
@@ -77,50 +64,18 @@ export const EventVisibilitySettingsComponent: React.FC<EventVisibilitySettingsP
     }
   };
 
-  const updateSettings = (updates: Partial<EventVisibilitySettings>) => {
-    setSettings(prev => ({ ...prev, ...updates }));
+  const handleTierChange = (tier: string, checked: boolean) => {
+    setSettings(prev => ({
+      ...prev,
+      allowedTiers: checked 
+        ? [...prev.allowedTiers, tier]
+        : prev.allowedTiers.filter(t => t !== tier)
+    }));
   };
 
   if (isLoading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Event Visibility</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="animate-pulse space-y-4">
-            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-          </div>
-        </CardContent>
-      </Card>
-    );
+    return <div>Loading event visibility settings...</div>;
   }
-
-  // Derive UI state from settings
-  const isEarlyAccessEnabled = settings.earlyAccess?.enabled || false;
-  const earlyAccessDays = settings.earlyAccess?.daysEarly || 0;
-
-  // Update access type based on UI toggles
-  React.useEffect(() => {
-    let newAccessType = settings.accessType;
-    
-    if (settings.specificTierAccess && settings.specificTierAccess.length > 0) {
-      newAccessType = 'tier_specific';
-    } else if (settings.premiumFollowerAccess) {
-      newAccessType = 'premium_only';
-    } else if (settings.followerOnlyAccess) {
-      newAccessType = 'followers_only';
-    } else if (isEarlyAccessEnabled) {
-      newAccessType = 'early_access';
-    } else {
-      newAccessType = 'public';
-    }
-
-    if (newAccessType !== settings.accessType) {
-      updateSettings({ accessType: newAccessType });
-    }
-  }, [settings.specificTierAccess, settings.premiumFollowerAccess, settings.followerOnlyAccess, isEarlyAccessEnabled]);
 
   return (
     <Card>
@@ -128,191 +83,53 @@ export const EventVisibilitySettingsComponent: React.FC<EventVisibilitySettingsP
         <CardTitle>Event Visibility Settings</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Public Access */}
         <div className="flex items-center space-x-2">
           <Switch
-            id="public-access"
-            checked={settings.isPublic}
-            onCheckedChange={(checked) => updateSettings({ isPublic: checked })}
+            id="private"
+            checked={settings.isPrivate}
+            onCheckedChange={(checked) => setSettings(prev => ({ ...prev, isPrivate: checked }))}
           />
-          <Label htmlFor="public-access">Public Event</Label>
+          <Label htmlFor="private">Private Event</Label>
         </div>
 
-        {/* Follower Only Access */}
+        <div className="flex items-center space-x-2">
+          <Switch
+            id="following"
+            checked={settings.requiresFollowing}
+            onCheckedChange={(checked) => setSettings(prev => ({ ...prev, requiresFollowing: checked }))}
+          />
+          <Label htmlFor="following">Requires Following</Label>
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <Switch
+            id="guestList"
+            checked={settings.guestListOnly}
+            onCheckedChange={(checked) => setSettings(prev => ({ ...prev, guestListOnly: checked }))}
+          />
+          <Label htmlFor="guestList">Guest List Only</Label>
+        </div>
+
         <div className="space-y-2">
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="follower-only"
-              checked={settings.followerOnlyAccess}
-              onCheckedChange={(checked) => 
-                updateSettings({ followerOnlyAccess: !!checked })
-              }
-            />
-            <Label htmlFor="follower-only">Followers Only</Label>
-          </div>
-          <p className="text-sm text-gray-500 ml-6">
-            Only users who follow you can see this event
-          </p>
-        </div>
-
-        {/* Premium Follower Access */}
-        <div className="space-y-2">
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="premium-only"
-              checked={settings.premiumFollowerAccess}
-              onCheckedChange={(checked) => 
-                updateSettings({ premiumFollowerAccess: !!checked })
-              }
-            />
-            <Label htmlFor="premium-only">Premium Followers Only</Label>
-          </div>
-          <p className="text-sm text-gray-500 ml-6">
-            Only premium subscribers can see this event
-          </p>
-        </div>
-
-        {/* Specific Tier Access */}
-        <div className="space-y-2">
-          <Label>Specific Tier Access</Label>
-          <div className="space-y-2">
-            {settings.specificTierAccess && settings.specificTierAccess.map((tierId, index) => (
-              <div key={index} className="flex items-center space-x-2">
-                <Input
-                  value={tierId}
-                  onChange={(e) => {
-                    const newTiers = [...settings.specificTierAccess];
-                    newTiers[index] = e.target.value;
-                    updateSettings({ specificTierAccess: newTiers });
-                  }}
-                  placeholder="Enter tier ID"
-                />
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    const newTiers = settings.specificTierAccess.filter((_, i) => i !== index);
-                    updateSettings({ specificTierAccess: newTiers });
-                  }}
-                >
-                  Remove
-                </Button>
-              </div>
-            ))}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                const newTiers = [...(settings.specificTierAccess || []), ''];
-                updateSettings({ specificTierAccess: newTiers });
-              }}
-            >
-              Add Tier
-            </Button>
-          </div>
-        </div>
-
-        {/* Early Access */}
-        <div className="space-y-4">
-          <div className="flex items-center space-x-2">
-            <Switch
-              id="early-access"
-              checked={settings.earlyAccess?.enabled || false}
-              onCheckedChange={(checked) => 
-                updateSettings({
-                  earlyAccess: {
-                    ...settings.earlyAccess,
-                    enabled: checked
-                  }
-                })
-              }
-            />
-            <Label htmlFor="early-access">Early Access</Label>
-          </div>
-
-          {isEarlyAccessEnabled && (
-            <div className="ml-6 space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="early-days">Days Early</Label>
-                <Input
-                  id="early-days"
-                  type="number"
-                  value={settings.earlyAccess?.daysEarly || 0}
-                  onChange={(e) => 
-                    updateSettings({
-                      earlyAccess: {
-                        ...settings.earlyAccess,
-                        daysEarly: parseInt(e.target.value) || 0
-                      }
-                    })
-                  }
-                  min="0"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Early Access For</Label>
-                <div className="space-y-2">
-                  {['premium', 'vip'].map(type => (
-                    <div key={type} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`early-${type}`}
-                        checked={settings.earlyAccess?.forFollowerTypes?.includes(type) || false}
-                        onCheckedChange={(checked) => {
-                          const currentTypes = settings.earlyAccess?.forFollowerTypes || [];
-                          const newTypes = checked 
-                            ? [...currentTypes, type]
-                            : currentTypes.filter(t => t !== type);
-                          updateSettings({
-                            earlyAccess: {
-                              ...settings.earlyAccess,
-                              forFollowerTypes: newTypes
-                            }
-                          });
-                        }}
-                      />
-                      <Label htmlFor={`early-${type}`} className="capitalize">{type} Followers</Label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Specific Tiers for Early Access</Label>
-                {settings.earlyAccess?.specificTiers?.map((tierId, index) => (
-                  <div key={index} className="flex items-center space-x-2">
-                    <Input
-                      value={tierId}
-                      onChange={(e) => {
-                        const newTiers = [...(settings.earlyAccess?.specificTiers || [])];
-                        newTiers[index] = e.target.value;
-                        updateSettings({
-                          earlyAccess: {
-                            ...settings.earlyAccess,
-                            specificTiers: newTiers
-                          }
-                        });
-                      }}
-                      placeholder="Enter tier ID"
-                    />
-                  </div>
-                ))}
-              </div>
+          <Label>Allowed Tiers</Label>
+          {availableTiers.map(tier => (
+            <div key={tier} className="flex items-center space-x-2">
+              <Checkbox
+                id={tier}
+                checked={settings.allowedTiers.includes(tier)}
+                onCheckedChange={(checked) => handleTierChange(tier, checked as boolean)}
+              />
+              <Label htmlFor={tier} className="capitalize">{tier}</Label>
             </div>
-          )}
+          ))}
         </div>
 
-        <div className="flex justify-end">
-          <Button 
-            onClick={saveSettings}
-            disabled={isSaving}
-          >
-            {isSaving ? 'Saving...' : 'Save Settings'}
-          </Button>
-        </div>
+        <Button onClick={handleSave} disabled={isSaving}>
+          {isSaving ? 'Saving...' : 'Save Settings'}
+        </Button>
       </CardContent>
     </Card>
   );
 };
 
-export default EventVisibilitySettingsComponent;
+export default EventVisibilitySettings;

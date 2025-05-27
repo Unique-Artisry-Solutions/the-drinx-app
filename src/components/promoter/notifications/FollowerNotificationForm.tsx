@@ -8,28 +8,27 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { promoterNotificationService, type FollowerNotificationRequest, type FollowerSegment } from '@/services/PromoterNotificationService';
+import { promoterNotificationService } from '@/services/PromoterNotificationService';
+import { FollowerSegment, FollowerNotificationRequest, NotificationResult } from '@/types/FollowerNotificationTypes';
 
 interface FollowerNotificationFormProps {
   promoterId: string;
-  onNotificationSent?: (result: { success: boolean; sentCount: number }) => void;
 }
 
-export const FollowerNotificationForm: React.FC<FollowerNotificationFormProps> = ({
-  promoterId,
-  onNotificationSent
-}) => {
-  const [isLoading, setIsLoading] = useState(false);
+const FollowerNotificationForm: React.FC<FollowerNotificationFormProps> = ({ promoterId }) => {
   const [segments, setSegments] = useState<FollowerSegment[]>([]);
-  const [notification, setNotification] = useState<FollowerNotificationRequest>({
+  const [request, setRequest] = useState<FollowerNotificationRequest>({
     targetType: 'all',
-    title: '',
+    specificTiers: [],
     message: '',
-    priority: 'medium',
-    includeEmail: false,
-    includePush: false
+    discountCode: '',
+    includeEmail: true,
+    includePush: true,
+    title: '',
+    priority: 'medium'
   });
-
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSending, setIsSending] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -38,6 +37,7 @@ export const FollowerNotificationForm: React.FC<FollowerNotificationFormProps> =
 
   const loadSegments = async () => {
     try {
+      setIsLoading(true);
       const followerSegments = await promoterNotificationService.getFollowerSegments(promoterId);
       setSegments(followerSegments);
     } catch (error: any) {
@@ -46,25 +46,24 @@ export const FollowerNotificationForm: React.FC<FollowerNotificationFormProps> =
         description: 'Failed to load follower segments',
         variant: 'destructive'
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!notification.title.trim() || !notification.message.trim()) {
+  const handleSend = async () => {
+    if (!request.title || !request.message) {
       toast({
         title: 'Validation Error',
-        description: 'Title and message are required',
+        description: 'Please fill in both title and message',
         variant: 'destructive'
       });
       return;
     }
 
-    setIsLoading(true);
-    
     try {
-      const result = await promoterNotificationService.notifyFollowers(promoterId, notification);
+      setIsSending(true);
+      const result: NotificationResult = await promoterNotificationService.notifyFollowers(promoterId, request);
       
       if (result.success) {
         toast({
@@ -73,179 +72,179 @@ export const FollowerNotificationForm: React.FC<FollowerNotificationFormProps> =
         });
         
         // Reset form
-        setNotification({
+        setRequest({
           targetType: 'all',
-          title: '',
+          specificTiers: [],
           message: '',
-          priority: 'medium',
-          includeEmail: false,
-          includePush: false
+          discountCode: '',
+          includeEmail: true,
+          includePush: true,
+          title: '',
+          priority: 'medium'
         });
-        
-        onNotificationSent?.(result);
       } else {
+        const errorMessage = result.errors?.join(', ') || 'Failed to send notifications';
         toast({
-          title: 'Partial Success',
-          description: `Sent to ${result.sentCount} followers. ${result.errors.length} errors occurred.`,
+          title: 'Error',
+          description: errorMessage,
           variant: 'destructive'
         });
       }
     } catch (error: any) {
       toast({
         title: 'Error',
-        description: 'Failed to send notifications',
+        description: 'Failed to send notification',
         variant: 'destructive'
       });
     } finally {
-      setIsLoading(false);
+      setIsSending(false);
     }
   };
 
-  const updateNotification = (updates: Partial<FollowerNotificationRequest>) => {
-    setNotification(prev => ({ ...prev, ...updates }));
+  const getSegmentCount = (segmentId: string) => {
+    const segment = segments.find(s => s.id === segmentId);
+    return segment?.count || 0;
   };
 
-  const getSegmentInfo = (targetType: string) => {
-    const segment = segments.find(s => s.id === targetType);
-    return segment ? `${segment.count} followers` : '';
-  };
+  if (isLoading) {
+    return <div>Loading follower segments...</div>;
+  }
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Send Notification to Followers</CardTitle>
       </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Target Audience */}
+      <CardContent className="space-y-6">
+        <div className="space-y-2">
+          <Label>Target Audience</Label>
+          <Select
+            value={request.targetType}
+            onValueChange={(value: 'all' | 'tier' | 'specific') => 
+              setRequest(prev => ({ ...prev, targetType: value }))
+            }
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Followers</SelectItem>
+              <SelectItem value="tier">Specific Tiers</SelectItem>
+            </SelectContent>
+          </Select>
+          
+          {segments.map(segment => {
+            if (segment.type === request.targetType || request.targetType === 'all') {
+              return (
+                <div key={segment.id} className="text-sm text-gray-600">
+                  {segment.name}: {segment.count} followers
+                </div>
+              );
+            }
+            return null;
+          })}
+        </div>
+
+        {request.targetType === 'tier' && (
           <div className="space-y-2">
-            <Label htmlFor="target-type">Target Audience</Label>
-            <Select
-              value={notification.targetType}
-              onValueChange={(value: any) => updateNotification({ targetType: value })}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Followers ({getSegmentInfo('all')})</SelectItem>
-                <SelectItem value="free">Free Followers ({getSegmentInfo('free')})</SelectItem>
-                <SelectItem value="premium">Premium Followers ({getSegmentInfo('premium')})</SelectItem>
-                <SelectItem value="specific_tiers">Specific Tiers</SelectItem>
-              </SelectContent>
-            </Select>
+            <Label>Select Tiers</Label>
+            {segments
+              .filter(s => s.type === 'tier')
+              .map(segment => (
+                <div key={segment.id} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={segment.id}
+                    checked={request.specificTiers?.includes(segment.id) || false}
+                    onCheckedChange={(checked) => {
+                      setRequest(prev => ({
+                        ...prev,
+                        specificTiers: checked
+                          ? [...(prev.specificTiers || []), segment.id]
+                          : (prev.specificTiers || []).filter(id => id !== segment.id)
+                      }));
+                    }}
+                  />
+                  <Label htmlFor={segment.id}>
+                    {segment.name} ({segment.count} followers)
+                  </Label>
+                </div>
+              ))}
           </div>
+        )}
 
-          {/* Specific Tiers Selection */}
-          {notification.targetType === 'specific_tiers' && (
-            <div className="space-y-2">
-              <Label>Select Tiers</Label>
-              <div className="space-y-2 max-h-40 overflow-y-auto">
-                {segments
-                  .filter(s => s.type === 'tier')
-                  .map((segment) => (
-                    <div key={segment.id} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`tier-${segment.id}`}
-                        checked={notification.specificTiers?.includes(segment.id) || false}
-                        onCheckedChange={(checked) => {
-                          const currentTiers = notification.specificTiers || [];
-                          const newTiers = checked
-                            ? [...currentTiers, segment.id]
-                            : currentTiers.filter(id => id !== segment.id);
-                          updateNotification({ specificTiers: newTiers });
-                        }}
-                      />
-                      <Label htmlFor={`tier-${segment.id}`}>
-                        {segment.name} ({segment.count})
-                      </Label>
-                    </div>
-                  ))}
-              </div>
-            </div>
-          )}
+        <div className="space-y-2">
+          <Label htmlFor="title">Title</Label>
+          <Input
+            id="title"
+            placeholder="Notification title"
+            value={request.title}
+            onChange={(e) => setRequest(prev => ({ ...prev, title: e.target.value }))}
+          />
+        </div>
 
-          {/* Title */}
-          <div className="space-y-2">
-            <Label htmlFor="title">Title</Label>
-            <Input
-              id="title"
-              value={notification.title}
-              onChange={(e) => updateNotification({ title: e.target.value })}
-              placeholder="Enter notification title"
-              required
+        <div className="space-y-2">
+          <Label htmlFor="message">Message</Label>
+          <Textarea
+            id="message"
+            placeholder="Your message to followers"
+            value={request.message}
+            onChange={(e) => setRequest(prev => ({ ...prev, message: e.target.value }))}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="discount">Discount Code (Optional)</Label>
+          <Input
+            id="discount"
+            placeholder="SAVE20"
+            value={request.discountCode}
+            onChange={(e) => setRequest(prev => ({ ...prev, discountCode: e.target.value }))}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label>Priority</Label>
+          <Select
+            value={request.priority}
+            onValueChange={(value: 'low' | 'medium' | 'high' | 'urgent') => 
+              setRequest(prev => ({ ...prev, priority: value }))
+            }
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="low">Low</SelectItem>
+              <SelectItem value="medium">Medium</SelectItem>
+              <SelectItem value="high">High</SelectItem>
+              <SelectItem value="urgent">Urgent</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-4">
+          <Label>Delivery Methods</Label>
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="email"
+              checked={request.includeEmail}
+              onCheckedChange={(checked) => setRequest(prev => ({ ...prev, includeEmail: checked as boolean }))}
             />
+            <Label htmlFor="email">Email Notification</Label>
           </div>
-
-          {/* Message */}
-          <div className="space-y-2">
-            <Label htmlFor="message">Message</Label>
-            <Textarea
-              id="message"
-              value={notification.message}
-              onChange={(e) => updateNotification({ message: e.target.value })}
-              placeholder="Enter your message to followers"
-              rows={4}
-              required
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="push"
+              checked={request.includePush}
+              onCheckedChange={(checked) => setRequest(prev => ({ ...prev, includePush: checked as boolean }))}
             />
+            <Label htmlFor="push">Push Notification</Label>
           </div>
+        </div>
 
-          {/* Discount Code */}
-          <div className="space-y-2">
-            <Label htmlFor="discount-code">Discount Code (Optional)</Label>
-            <Input
-              id="discount-code"
-              value={notification.discountCode || ''}
-              onChange={(e) => updateNotification({ discountCode: e.target.value })}
-              placeholder="Enter discount code"
-            />
-          </div>
-
-          {/* Priority */}
-          <div className="space-y-2">
-            <Label htmlFor="priority">Priority</Label>
-            <Select
-              value={notification.priority}
-              onValueChange={(value: any) => updateNotification({ priority: value })}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="low">Low</SelectItem>
-                <SelectItem value="medium">Medium</SelectItem>
-                <SelectItem value="high">High</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Delivery Options */}
-          <div className="space-y-4">
-            <Label>Delivery Options</Label>
-            <div className="space-y-2">
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="include-email"
-                  checked={notification.includeEmail || false}
-                  onCheckedChange={(checked) => updateNotification({ includeEmail: !!checked })}
-                />
-                <Label htmlFor="include-email">Send Email Notifications</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="include-push"
-                  checked={notification.includePush || false}
-                  onCheckedChange={(checked) => updateNotification({ includePush: !!checked })}
-                />
-                <Label htmlFor="include-push">Send Push Notifications</Label>
-              </div>
-            </div>
-          </div>
-
-          <Button type="submit" disabled={isLoading} className="w-full">
-            {isLoading ? 'Sending...' : 'Send Notification'}
-          </Button>
-        </form>
+        <Button onClick={handleSend} disabled={isSending} className="w-full">
+          {isSending ? 'Sending...' : 'Send Notification'}
+        </Button>
       </CardContent>
     </Card>
   );
