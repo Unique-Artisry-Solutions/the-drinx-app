@@ -36,7 +36,7 @@ export function createProgressSnapshot(
     blockedFeatures: stats.blockedFeatures || 0,
     averageImplementationProgress: stats.averageImplementation,
     frontendProgress: stats.frontendImplementationRate,
-    backendProgress: stats.databaseCompletionRate,
+    backendProgress: stats.dbCompletionRate,
     adminFeatureCount: adminFeatures.length,
     establishmentFeatureCount: establishmentFeatures.length,
     individualFeatureCount: individualFeatures.length,
