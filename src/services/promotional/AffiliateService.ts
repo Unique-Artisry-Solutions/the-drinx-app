@@ -1,6 +1,14 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { AffiliateProgram, AffiliatePartner, AffiliateTrackingLink, AffiliateCommission, AffiliatePayout } from '@/types/promotional';
+import { 
+  convertDatabaseAffiliateProgram, 
+  convertDatabaseAffiliatePartner, 
+  convertDatabaseAffiliateCommission,
+  filterValidPrograms,
+  filterValidPartners,
+  filterValidCommissions
+} from '@/types/promotional/TypeBridge';
 
 export class AffiliateService {
   // Affiliate Programs
@@ -12,7 +20,13 @@ export class AffiliateService {
       .single();
 
     if (error) throw new Error(`Failed to create affiliate program: ${error.message}`);
-    return program;
+    
+    const convertedProgram = convertDatabaseAffiliateProgram(program);
+    if (!convertedProgram) {
+      throw new Error('Failed to convert database program to valid type');
+    }
+    
+    return convertedProgram;
   }
 
   static async getPromoterPrograms(promoterId: string): Promise<AffiliateProgram[]> {
@@ -23,7 +37,8 @@ export class AffiliateService {
       .order('created_at', { ascending: false });
 
     if (error) throw new Error(`Failed to fetch affiliate programs: ${error.message}`);
-    return data || [];
+    
+    return filterValidPrograms(data || []);
   }
 
   static async updateProgram(id: string, updates: Partial<AffiliateProgram>): Promise<AffiliateProgram> {
@@ -35,7 +50,13 @@ export class AffiliateService {
       .single();
 
     if (error) throw new Error(`Failed to update affiliate program: ${error.message}`);
-    return data;
+    
+    const convertedProgram = convertDatabaseAffiliateProgram(data);
+    if (!convertedProgram) {
+      throw new Error('Failed to convert updated program to valid type');
+    }
+    
+    return convertedProgram;
   }
 
   // Affiliate Partners
@@ -47,7 +68,13 @@ export class AffiliateService {
       .single();
 
     if (error) throw new Error(`Failed to create affiliate partner: ${error.message}`);
-    return partner;
+    
+    const convertedPartner = convertDatabaseAffiliatePartner(partner);
+    if (!convertedPartner) {
+      throw new Error('Failed to convert database partner to valid type');
+    }
+    
+    return convertedPartner;
   }
 
   static async getProgramPartners(programId: string): Promise<AffiliatePartner[]> {
@@ -58,7 +85,8 @@ export class AffiliateService {
       .order('created_at', { ascending: false });
 
     if (error) throw new Error(`Failed to fetch affiliate partners: ${error.message}`);
-    return data || [];
+    
+    return filterValidPartners(data || []);
   }
 
   static async approvePartner(partnerId: string): Promise<AffiliatePartner> {
@@ -73,7 +101,13 @@ export class AffiliateService {
       .single();
 
     if (error) throw new Error(`Failed to approve affiliate partner: ${error.message}`);
-    return data;
+    
+    const convertedPartner = convertDatabaseAffiliatePartner(data);
+    if (!convertedPartner) {
+      throw new Error('Failed to convert approved partner to valid type');
+    }
+    
+    return convertedPartner;
   }
 
   // Tracking Links
@@ -100,12 +134,9 @@ export class AffiliateService {
   }
 
   static async trackClick(trackingCode: string): Promise<void> {
-    const { error } = await supabase
-      .from('affiliate_tracking_links')
-      .update({ 
-        click_count: supabase.raw('click_count + 1') 
-      })
-      .eq('tracking_code', trackingCode);
+    const { error } = await supabase.rpc('increment_click_count', {
+      tracking_code: trackingCode
+    });
 
     if (error) throw new Error(`Failed to track click: ${error.message}`);
   }
@@ -119,7 +150,13 @@ export class AffiliateService {
       .single();
 
     if (error) throw new Error(`Failed to create commission: ${error.message}`);
-    return commission;
+    
+    const convertedCommission = convertDatabaseAffiliateCommission(commission);
+    if (!convertedCommission) {
+      throw new Error('Failed to convert database commission to valid type');
+    }
+    
+    return convertedCommission;
   }
 
   static async getPartnerCommissions(partnerId: string): Promise<AffiliateCommission[]> {
@@ -130,7 +167,8 @@ export class AffiliateService {
       .order('created_at', { ascending: false });
 
     if (error) throw new Error(`Failed to fetch commissions: ${error.message}`);
-    return data || [];
+    
+    return filterValidCommissions(data || []);
   }
 
   // Generate unique tracking code

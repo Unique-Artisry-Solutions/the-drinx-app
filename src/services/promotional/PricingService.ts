@@ -1,9 +1,12 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { PricingRule, DemandMetrics, PriceHistory, PricingAutomation } from '@/types/promotional';
+import { PricingRule } from '@/types/promotional';
+import { 
+  convertDatabasePricingRule, 
+  filterValidPricingRules 
+} from '@/types/promotional/TypeBridge';
 
 export class PricingService {
-  // Pricing Rules
   static async createRule(data: Omit<PricingRule, 'id' | 'created_at' | 'updated_at'>): Promise<PricingRule> {
     const { data: rule, error } = await supabase
       .from('pricing_rules')
@@ -12,18 +15,13 @@ export class PricingService {
       .single();
 
     if (error) throw new Error(`Failed to create pricing rule: ${error.message}`);
-    return rule;
-  }
-
-  static async getPromoterRules(promoterId: string): Promise<PricingRule[]> {
-    const { data, error } = await supabase
-      .from('pricing_rules')
-      .select('*')
-      .eq('promoter_id', promoterId)
-      .order('priority', { ascending: false });
-
-    if (error) throw new Error(`Failed to fetch pricing rules: ${error.message}`);
-    return data || [];
+    
+    const convertedRule = convertDatabasePricingRule(rule);
+    if (!convertedRule) {
+      throw new Error('Failed to convert database rule to valid type');
+    }
+    
+    return convertedRule;
   }
 
   static async getEventRules(eventId: string): Promise<PricingRule[]> {
@@ -34,8 +32,22 @@ export class PricingService {
       .eq('is_active', true)
       .order('priority', { ascending: false });
 
-    if (error) throw new Error(`Failed to fetch event pricing rules: ${error.message}`);
-    return data || [];
+    if (error) throw new Error(`Failed to fetch pricing rules: ${error.message}`);
+    
+    return filterValidPricingRules(data || []);
+  }
+
+  static async getCircuitRules(circuitId: string): Promise<PricingRule[]> {
+    const { data, error } = await supabase
+      .from('pricing_rules')
+      .select('*')
+      .eq('swig_circuit_id', circuitId)
+      .eq('is_active', true)
+      .order('priority', { ascending: false });
+
+    if (error) throw new Error(`Failed to fetch circuit pricing rules: ${error.message}`);
+    
+    return filterValidPricingRules(data || []);
   }
 
   static async updateRule(id: string, updates: Partial<PricingRule>): Promise<PricingRule> {
@@ -47,180 +59,80 @@ export class PricingService {
       .single();
 
     if (error) throw new Error(`Failed to update pricing rule: ${error.message}`);
-    return data;
+    
+    const convertedRule = convertDatabasePricingRule(data);
+    if (!convertedRule) {
+      throw new Error('Failed to convert updated rule to valid type');
+    }
+    
+    return convertedRule;
   }
 
-  // Demand Metrics
-  static async recordDemandMetrics(data: Omit<DemandMetrics, 'id' | 'created_at' | 'updated_at'>): Promise<DemandMetrics> {
-    const { data: metrics, error } = await supabase
-      .from('demand_metrics')
-      .insert(data)
-      .select()
-      .single();
+  static async deleteRule(id: string): Promise<void> {
+    const { error } = await supabase
+      .from('pricing_rules')
+      .delete()
+      .eq('id', id);
 
-    if (error) throw new Error(`Failed to record demand metrics: ${error.message}`);
-    return metrics;
+    if (error) throw new Error(`Failed to delete pricing rule: ${error.message}`);
   }
 
-  static async getDemandMetrics(eventId?: string, swigCircuitId?: string, days: number = 7): Promise<DemandMetrics[]> {
-    let query = supabase
-      .from('demand_metrics')
-      .select('*')
-      .gte('metric_date', new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString().split('T')[0])
-      .order('metric_date', { ascending: false });
+  static calculateAdjustedPrice(basePrice: number, rule: PricingRule): number {
+    let adjustedPrice = basePrice;
 
-    if (eventId) {
-      query = query.eq('event_id', eventId);
-    } else if (swigCircuitId) {
-      query = query.eq('swig_circuit_id', swigCircuitId);
+    switch (rule.price_adjustment_type) {
+      case 'percentage':
+        adjustedPrice = basePrice * (1 + (rule.adjustment_value / 100));
+        break;
+      case 'fixed_amount':
+        adjustedPrice = basePrice + rule.adjustment_value;
+        break;
+      case 'tier_based':
+        // Implement tier-based logic based on conditions
+        adjustedPrice = basePrice + rule.adjustment_value;
+        break;
+      default:
+        adjustedPrice = basePrice;
     }
 
-    const { data, error } = await query;
+    // Apply min/max constraints
+    if (rule.min_price !== null && adjustedPrice < rule.min_price) {
+      adjustedPrice = rule.min_price;
+    }
+    if (rule.max_price !== null && adjustedPrice > rule.max_price) {
+      adjustedPrice = rule.max_price;
+    }
 
-    if (error) throw new Error(`Failed to fetch demand metrics: ${error.message}`);
-    return data || [];
+    return Math.round(adjustedPrice * 100) / 100; // Round to 2 decimal places
   }
 
-  static async calculateDemandScore(eventId?: string, swigCircuitId?: string): Promise<number> {
-    const metrics = await this.getDemandMetrics(eventId, swigCircuitId, 1);
-    const todayMetrics = metrics[0];
-
-    if (!todayMetrics) return 0;
-
-    // Calculate demand score based on various factors
-    const viewToInquiryRate = todayMetrics.page_views > 0 ? todayMetrics.ticket_inquiries / todayMetrics.page_views : 0;
-    const cartConversionRate = todayMetrics.cart_additions > 0 ? (todayMetrics.cart_additions - todayMetrics.cart_abandonments) / todayMetrics.cart_additions : 0;
-    const velocityScore = Math.min(todayMetrics.sales_velocity * 10, 100); // Normalize sales velocity
-
-    const demandScore = (viewToInquiryRate * 30) + (cartConversionRate * 40) + (velocityScore * 30);
+  static async applyBestPricing(basePrice: number, eventId?: string, circuitId?: string): Promise<number> {
+    const rules: PricingRule[] = [];
     
-    // Update the demand score in the database
-    await supabase
-      .from('demand_metrics')
-      .update({ demand_score: demandScore })
-      .eq('id', todayMetrics.id);
+    if (eventId) {
+      const eventRules = await this.getEventRules(eventId);
+      rules.push(...eventRules);
+    }
+    
+    if (circuitId) {
+      const circuitRules = await this.getCircuitRules(circuitId);
+      rules.push(...circuitRules);
+    }
 
-    return Math.min(Math.max(demandScore, 0), 100); // Clamp between 0-100
-  }
+    if (rules.length === 0) {
+      return basePrice;
+    }
 
-  // Price History
-  static async recordPriceChange(data: Omit<PriceHistory, 'id' | 'created_at'>): Promise<PriceHistory> {
-    const { data: priceChange, error } = await supabase
-      .from('price_history')
-      .insert(data)
-      .select()
-      .single();
-
-    if (error) throw new Error(`Failed to record price change: ${error.message}`);
-    return priceChange;
-  }
-
-  static async getPriceHistory(pricingTierId: string): Promise<PriceHistory[]> {
-    const { data, error } = await supabase
-      .from('price_history')
-      .select('*')
-      .eq('pricing_tier_id', pricingTierId)
-      .order('effective_at', { ascending: false });
-
-    if (error) throw new Error(`Failed to fetch price history: ${error.message}`);
-    return data || [];
-  }
-
-  // Pricing Automations
-  static async createAutomation(data: Omit<PricingAutomation, 'id' | 'created_at' | 'updated_at'>): Promise<PricingAutomation> {
-    const { data: automation, error } = await supabase
-      .from('pricing_automations')
-      .insert(data)
-      .select()
-      .single();
-
-    if (error) throw new Error(`Failed to create pricing automation: ${error.message}`);
-    return automation;
-  }
-
-  static async getActiveAutomations(): Promise<PricingAutomation[]> {
-    const { data, error } = await supabase
-      .from('pricing_automations')
-      .select('*, pricing_rules(*)')
-      .eq('is_active', true);
-
-    if (error) throw new Error(`Failed to fetch active automations: ${error.message}`);
-    return data || [];
-  }
-
-  static async triggerAutomation(automationId: string): Promise<void> {
-    const { error } = await supabase
-      .from('pricing_automations')
-      .update({
-        last_triggered: new Date().toISOString(),
-        trigger_count: supabase.raw('trigger_count + 1')
-      })
-      .eq('id', automationId);
-
-    if (error) throw new Error(`Failed to trigger automation: ${error.message}`);
-  }
-
-  // Price calculation based on rules
-  static async calculateOptimalPrice(
-    basePrice: number, 
-    eventId?: string, 
-    swigCircuitId?: string
-  ): Promise<{ newPrice: number; appliedRules: PricingRule[] }> {
-    const rules = eventId 
-      ? await this.getEventRules(eventId)
-      : await supabase.from('pricing_rules').select('*').eq('swig_circuit_id', swigCircuitId).eq('is_active', true);
-
-    let newPrice = basePrice;
-    const appliedRules: PricingRule[] = [];
-
-    for (const rule of rules.data || []) {
-      const shouldApply = await this.evaluateRuleConditions(rule, eventId, swigCircuitId);
-      
-      if (shouldApply) {
-        if (rule.price_adjustment_type === 'percentage') {
-          newPrice *= (1 + rule.price_adjustment_value / 100);
-        } else {
-          newPrice += rule.price_adjustment_value;
-        }
-
-        // Apply min/max constraints
-        if (rule.min_price && newPrice < rule.min_price) newPrice = rule.min_price;
-        if (rule.max_price && newPrice > rule.max_price) newPrice = rule.max_price;
-
-        appliedRules.push(rule);
+    // Apply rules in priority order and return the best price for the customer
+    let bestPrice = basePrice;
+    
+    for (const rule of rules) {
+      const adjustedPrice = this.calculateAdjustedPrice(basePrice, rule);
+      if (adjustedPrice < bestPrice) {
+        bestPrice = adjustedPrice;
       }
     }
 
-    return { newPrice: Math.round(newPrice * 100) / 100, appliedRules };
-  }
-
-  private static async evaluateRuleConditions(
-    rule: PricingRule, 
-    eventId?: string, 
-    swigCircuitId?: string
-  ): Promise<boolean> {
-    const now = new Date();
-    const conditions = rule.conditions;
-
-    // Time-based conditions
-    if (rule.rule_type === 'time_based' || rule.rule_type === 'combined') {
-      if (conditions.start_time && now < new Date(conditions.start_time)) return false;
-      if (conditions.end_time && now > new Date(conditions.end_time)) return false;
-    }
-
-    // Demand-based conditions
-    if (rule.rule_type === 'demand_based' || rule.rule_type === 'combined') {
-      const demandScore = await this.calculateDemandScore(eventId, swigCircuitId);
-      if (conditions.min_demand_score && demandScore < conditions.min_demand_score) return false;
-      if (conditions.max_demand_score && demandScore > conditions.max_demand_score) return false;
-    }
-
-    // Inventory-based conditions
-    if (rule.rule_type === 'inventory_based' || rule.rule_type === 'combined') {
-      // This would require integration with ticket inventory system
-      // For now, we'll assume it passes
-    }
-
-    return true;
+    return bestPrice;
   }
 }

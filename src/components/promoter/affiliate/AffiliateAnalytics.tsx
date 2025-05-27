@@ -1,9 +1,9 @@
 
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { AnalyticsLineChart } from '@/components/charts/AnalyticsLineChart';
-import { AnalyticsPieChart } from '@/components/charts/AnalyticsPieChart';
-import { AnalyticsBarChart } from '@/components/charts/AnalyticsBarChart';
+import AnalyticsLineChart from '@/components/charts/AnalyticsLineChart';
+import AnalyticsPieChart from '@/components/charts/AnalyticsPieChart';
+import AnalyticsBarChart from '@/components/charts/AnalyticsBarChart';
 
 interface AffiliateAnalyticsProps {
   promoterId: string;

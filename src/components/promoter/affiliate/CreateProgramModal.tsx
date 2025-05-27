@@ -68,11 +68,20 @@ export const CreateProgramModal: React.FC<CreateProgramModalProps> = ({
   const commissionType = watch('commission_type');
 
   const onSubmit = (data: ProgramFormData) => {
-    onCreateProgram({
-      ...data,
+    // Ensure all required fields are present
+    const programData: Omit<AffiliateProgram, 'id' | 'created_at' | 'updated_at'> = {
       promoter_id: promoterId,
+      name: data.name,
+      description: data.description || null,
+      commission_type: data.commission_type,
+      commission_rate: data.commission_rate,
+      min_payout_amount: data.min_payout_amount,
+      cookie_duration_days: data.cookie_duration_days,
+      terms_and_conditions: data.terms_and_conditions || null,
       is_active: true,
-    });
+    };
+    
+    onCreateProgram(programData);
     reset();
     onClose();
   };
