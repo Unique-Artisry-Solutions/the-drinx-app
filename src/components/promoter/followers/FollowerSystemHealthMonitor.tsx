@@ -60,95 +60,88 @@ const FollowerSystemHealthMonitor: React.FC<FollowerSystemHealthMonitorProps> = 
     refetch();
   };
 
+  // Throw error if system health indicates a critical error
+  if (systemHealth?.error) {
+    throw new Error(systemHealth.error);
+  }
+
   return (
-    <FollowerErrorBoundary onRetry={handleRefresh}>
-      <Card className={className}>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <span className="flex items-center gap-2">
-              <Database className="h-5 w-5" />
-              System Health
+    <Card className={className}>
+      <CardHeader>
+        <CardTitle className="flex items-center justify-between">
+          <span className="flex items-center gap-2">
+            <Database className="h-5 w-5" />
+            System Health
+          </span>
+          <Button variant="ghost" size="sm" onClick={handleRefresh}>
+            <RefreshCw className="h-4 w-4" />
+          </Button>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Current System Status */}
+        <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+          <div className="flex items-center gap-2">
+            <Zap className="h-4 w-4" />
+            <span className="font-medium">
+              Current System: {usingNewSystem ? 'New' : 'Legacy'}
             </span>
-            <Button variant="ghost" size="sm" onClick={handleRefresh}>
-              <RefreshCw className="h-4 w-4" />
-            </Button>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Current System Status */}
-          <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-            <div className="flex items-center gap-2">
-              <Zap className="h-4 w-4" />
-              <span className="font-medium">
-                Current System: {usingNewSystem ? 'New' : 'Legacy'}
-              </span>
-            </div>
-            {getStatusBadge(true)}
           </div>
+          {getStatusBadge(true)}
+        </div>
 
-          {/* System Health Details */}
-          {systemHealth && (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  {getStatusIcon(systemHealth.newSystemWorking)}
-                  <span className="text-sm">New System</span>
-                </div>
-                {getStatusBadge(systemHealth.newSystemWorking)}
+        {/* System Health Details */}
+        {systemHealth && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                {getStatusIcon(systemHealth.newSystemWorking)}
+                <span className="text-sm">New System</span>
               </div>
-
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  {getStatusIcon(systemHealth.legacySystemWorking)}
-                  <span className="text-sm">Legacy System</span>
-                </div>
-                {getStatusBadge(systemHealth.legacySystemWorking)}
-              </div>
-
-              {showDetails && (
-                <div className="space-y-2 pt-2 border-t">
-                  <div className="flex items-center justify-between text-sm">
-                    <span>New System Count:</span>
-                    <span className="font-mono">{systemHealth.newSystemCount || 0}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span>Legacy System Count:</span>
-                    <span className="font-mono">{systemHealth.legacySystemCount || 0}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span>Systems In Sync:</span>
-                    <span className={systemHealth.systemInSync ? 'text-green-600' : 'text-red-600'}>
-                      {systemHealth.systemInSync ? 'Yes' : 'No'}
-                    </span>
-                  </div>
-                </div>
-              )}
+              {getStatusBadge(systemHealth.newSystemWorking)}
             </div>
-          )}
 
-          {/* Error Alert */}
-          {systemHealth?.error && (
-            <Alert variant="destructive">
-              <AlertTriangle className="h-4 w-4" />
-              <AlertDescription>
-                System Error: {systemHealth.error}
-              </AlertDescription>
-            </Alert>
-          )}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                {getStatusIcon(systemHealth.legacySystemWorking)}
+                <span className="text-sm">Legacy System</span>
+              </div>
+              {getStatusBadge(systemHealth.legacySystemWorking)}
+            </div>
 
-          {/* Sync Warning */}
-          {systemHealth && !systemHealth.systemInSync && (
-            <Alert>
-              <Users className="h-4 w-4" />
-              <AlertDescription>
-                Data sync issue detected. New system has {systemHealth.newSystemCount} followers, 
-                legacy system has {systemHealth.legacySystemCount} followers.
-              </AlertDescription>
-            </Alert>
-          )}
-        </CardContent>
-      </Card>
-    </FollowerErrorBoundary>
+            {showDetails && (
+              <div className="space-y-2 pt-2 border-t">
+                <div className="flex items-center justify-between text-sm">
+                  <span>New System Count:</span>
+                  <span className="font-mono">{systemHealth.newSystemCount || 0}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span>Legacy System Count:</span>
+                  <span className="font-mono">{systemHealth.legacySystemCount || 0}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span>Systems In Sync:</span>
+                  <span className={systemHealth.systemInSync ? 'text-green-600' : 'text-red-600'}>
+                    {systemHealth.systemInSync ? 'Yes' : 'No'}
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Sync Warning */}
+        {systemHealth && !systemHealth.systemInSync && (
+          <Alert>
+            <Users className="h-4 w-4" />
+            <AlertDescription>
+              Data sync issue detected. New system has {systemHealth.newSystemCount} followers, 
+              legacy system has {systemHealth.legacySystemCount} followers.
+            </AlertDescription>
+          </Alert>
+        )}
+      </CardContent>
+    </Card>
   );
 };
 
