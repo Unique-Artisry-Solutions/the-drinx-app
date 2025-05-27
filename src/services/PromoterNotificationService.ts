@@ -1,278 +1,275 @@
 
 import { supabase } from '@/lib/supabase';
-import { useToast } from '@/hooks/use-toast';
-
-export interface FollowerNotificationRequest {
-  targetType: 'all' | 'free' | 'premium' | 'specific_tiers';
-  specificTiers?: string[];
-  title: string;
-  message: string;
-  discountCode?: string;
-  priority: 'low' | 'medium' | 'high';
-  includeEmail?: boolean;
-  includePush?: boolean;
-}
-
-export interface NotificationPreferences {
-  events: boolean;
-  promotions: boolean;
-  announcements: boolean;
-  email_notifications?: boolean;
-  push_notifications?: boolean;
-}
+import { NotificationPreferences } from '@/types/SubscriptionTypes';
 
 export interface FollowerSegment {
   id: string;
   name: string;
-  count: number;
-  type: 'free' | 'premium' | 'tier';
-  tierDetails?: {
-    tierId: string;
-    tierName: string;
-  };
+  description: string;
+  followerCount: number;
+  criteria: any;
 }
 
-export interface FollowerStats {
-  total: number;
-  active: number;
-  free: number;
-  premium: number;
-  tiers: {
-    tierId: string;
-    tierName: string;
-    count: number;
-  }[];
+export interface FollowerNotificationRequest {
+  title: string;
+  content: string;
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  targetSegments?: string[];
+  scheduledFor?: string;
+  locationBased?: boolean;
+  coordinates?: { latitude: number; longitude: number };
+  targetRadius?: number;
 }
-
-// Type guard for NotificationPreferences
-function isNotificationPreferences(obj: any): obj is NotificationPreferences {
-  return obj && 
-         typeof obj === 'object' && 
-         typeof obj.events === 'boolean' &&
-         typeof obj.promotions === 'boolean' &&
-         typeof obj.announcements === 'boolean';
-}
-
-// Default notification preferences
-const defaultNotificationPreferences: NotificationPreferences = {
-  events: true,
-  promotions: true,
-  announcements: true,
-  email_notifications: false,
-  push_notifications: false
-};
 
 class PromoterNotificationService {
-  async sendTargetedNotification(
-    promoterId: string, 
-    notification: FollowerNotificationRequest
-  ): Promise<{ success: boolean; sentCount: number; errors: string[] }> {
+  async getFollowerSegments(promoterId: string): Promise<FollowerSegment[]> {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
-
-      // Get followers based on target type
-      let followersQuery = supabase
+      // Get all followers for the promoter
+      const { data: followers, error: followersError } = await supabase
         .from('promoter_followers')
-        .select(`
-          subscriber_id,
-          tier_id,
-          notification_preferences,
-          promoter_subscription_tiers(name, tier)
-        `)
+        .select('subscriber_id, tier_id, follow_status, notification_preferences')
         .eq('promoter_id', promoterId)
         .eq('follow_status', 'active');
 
-      // Filter based on target type
-      if (notification.targetType === 'premium') {
-        followersQuery = followersQuery.not('tier_id', 'is', null);
-      } else if (notification.targetType === 'free') {
-        followersQuery = followersQuery.is('tier_id', null);
-      } else if (notification.targetType === 'specific_tiers' && notification.specificTiers) {
-        followersQuery = followersQuery.in('tier_id', notification.specificTiers);
-      }
+      if (followersError) throw followersError;
 
-      const { data: followers, error } = await followersQuery;
-      if (error) throw error;
-
-      if (!followers || followers.length === 0) {
-        return { success: true, sentCount: 0, errors: [] };
-      }
-
-      let sentCount = 0;
-      const errors: string[] = [];
-
-      // Create notifications for each follower
-      for (const follower of followers) {
-        try {
-          // Check notification preferences
-          const preferences = isNotificationPreferences(follower.notification_preferences) 
-            ? follower.notification_preferences 
-            : defaultNotificationPreferences;
-
-          if (!preferences.events && notification.title.toLowerCase().includes('event')) {
-            continue;
-          }
-          if (!preferences.promotions && notification.discountCode) {
-            continue;
-          }
-
-          // Create in-app notification
-          const { error: notificationError } = await supabase
-            .from('notifications')
-            .insert({
-              recipient_id: follower.subscriber_id,
-              title: notification.title,
-              content: notification.message,
-              priority: notification.priority,
-              metadata: {
-                type: 'promoter_notification',
-                promoter_id: promoterId,
-                discount_code: notification.discountCode,
-                target_type: notification.targetType
-              }
-            });
-
-          if (notificationError) {
-            errors.push(`Failed to send to ${follower.subscriber_id}: ${notificationError.message}`);
-          } else {
-            sentCount++;
-          }
-
-          // TODO: Implement email and push notifications based on preferences
-          
-        } catch (err: any) {
-          errors.push(`Error processing follower ${follower.subscriber_id}: ${err.message}`);
+      const segments: FollowerSegment[] = [
+        {
+          id: 'all_followers',
+          name: 'All Followers',
+          description: 'All active followers',
+          followerCount: followers?.length || 0,
+          criteria: { type: 'all' }
         }
+      ];
+
+      // Group by tier if there are tiers
+      const tierGroups = new Map();
+      followers?.forEach(follower => {
+        if (follower.tier_id) {
+          if (!tierGroups.has(follower.tier_id)) {
+            tierGroups.set(follower.tier_id, []);
+          }
+          tierGroups.get(follower.tier_id).push(follower);
+        }
+      });
+
+      // Add tier-based segments
+      for (const [tierId, tierFollowers] of tierGroups) {
+        segments.push({
+          id: `tier_${tierId}`,
+          name: `Tier ${tierId} Subscribers`,
+          description: `Followers with tier subscription`,
+          followerCount: tierFollowers.length,
+          criteria: { type: 'tier', tierId }
+        });
       }
 
-      return { success: errors.length === 0, sentCount, errors };
-    } catch (error: any) {
-      return { success: false, sentCount: 0, errors: [error.message] };
+      // Add free followers segment
+      const freeFollowers = followers?.filter(f => !f.tier_id) || [];
+      if (freeFollowers.length > 0) {
+        segments.push({
+          id: 'free_followers',
+          name: 'Free Followers',
+          description: 'Followers without paid subscription',
+          followerCount: freeFollowers.length,
+          criteria: { type: 'free' }
+        });
+      }
+
+      return segments;
+    } catch (error) {
+      console.error('Error getting follower segments:', error);
+      return [];
     }
   }
 
-  // Alias for backward compatibility
   async notifyFollowers(
     promoterId: string, 
-    notification: FollowerNotificationRequest
-  ): Promise<{ success: boolean; sentCount: number; errors: string[] }> {
-    return this.sendTargetedNotification(promoterId, notification);
+    request: FollowerNotificationRequest
+  ): Promise<void> {
+    try {
+      // Get target followers based on segments
+      let targetFollowers = await this.getTargetFollowers(promoterId, request.targetSegments);
+
+      // Filter by notification preferences
+      targetFollowers = await this.filterByPreferences(targetFollowers, {
+        title: request.title,
+        content: request.content,
+        priority: request.priority
+      });
+
+      // Send notifications to each follower
+      for (const follower of targetFollowers) {
+        await this.sendNotificationToUser(follower.subscriber_id, {
+          title: request.title,
+          content: request.content,
+          priority: request.priority,
+          metadata: {
+            promoter_id: promoterId,
+            notification_type: 'follower_update',
+            location_based: request.locationBased || false,
+            coordinates: request.coordinates || null,
+            target_radius: request.targetRadius || null
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error notifying followers:', error);
+      throw error;
+    }
   }
 
-  async getFollowerStats(promoterId: string): Promise<FollowerStats> {
-    const { data: followers, error } = await supabase
+  private async getTargetFollowers(promoterId: string, segmentIds?: string[]) {
+    let query = supabase
       .from('promoter_followers')
-      .select(`
-        tier_id,
-        follow_status,
-        promoter_subscription_tiers(name, tier)
-      `)
+      .select('subscriber_id, tier_id, notification_preferences')
       .eq('promoter_id', promoterId)
       .eq('follow_status', 'active');
 
-    if (error) throw error;
+    // Apply segment filters
+    if (segmentIds && segmentIds.length > 0) {
+      const includesFreeFollowers = segmentIds.includes('free_followers');
+      const tierSegments = segmentIds
+        .filter(id => id.startsWith('tier_'))
+        .map(id => id.replace('tier_', ''));
 
-    if (!followers) {
-      return {
-        total: 0,
-        active: 0,
-        free: 0,
-        premium: 0,
-        tiers: []
-      };
+      if (includesFreeFollowers && tierSegments.length > 0) {
+        // Include both free followers and specific tiers
+        query = query.or(`tier_id.is.null,tier_id.in.(${tierSegments.join(',')})`);
+      } else if (includesFreeFollowers) {
+        // Only free followers
+        query = query.is('tier_id', null);
+      } else if (tierSegments.length > 0) {
+        // Only specific tiers
+        query = query.in('tier_id', tierSegments);
+      }
+      // If 'all_followers' is included, no additional filter needed
     }
 
-    const total = followers.length;
-    const active = followers.filter(f => f.follow_status === 'active').length;
-    const free = followers.filter(f => !f.tier_id).length;
-    const premium = followers.filter(f => f.tier_id).length;
-
-    // Group by tiers
-    const tierCounts = new Map<string, { name: string; count: number }>();
-    followers.forEach(follower => {
-      if (follower.tier_id && follower.promoter_subscription_tiers) {
-        const tier = follower.promoter_subscription_tiers as any;
-        const existing = tierCounts.get(follower.tier_id) || { name: tier.name, count: 0 };
-        tierCounts.set(follower.tier_id, { ...existing, count: existing.count + 1 });
-      }
-    });
-
-    const tiers = Array.from(tierCounts.entries()).map(([tierId, data]) => ({
-      tierId,
-      tierName: data.name,
-      count: data.count
-    }));
-
-    return { total, active, free, premium, tiers };
-  }
-
-  async getFollowerSegments(promoterId: string): Promise<FollowerSegment[]> {
-    const stats = await this.getFollowerStats(promoterId);
-    
-    const segments: FollowerSegment[] = [
-      {
-        id: 'all',
-        name: 'All Followers',
-        count: stats.total,
-        type: 'free'
-      },
-      {
-        id: 'free',
-        name: 'Free Followers',
-        count: stats.free,
-        type: 'free'
-      },
-      {
-        id: 'premium',
-        name: 'Premium Followers',
-        count: stats.premium,
-        type: 'premium'
-      }
-    ];
-
-    // Add tier-specific segments
-    stats.tiers.forEach(tier => {
-      segments.push({
-        id: tier.tierId,
-        name: tier.tierName,
-        count: tier.count,
-        type: 'tier',
-        tierDetails: {
-          tierId: tier.tierId,
-          tierName: tier.tierName
-        }
-      });
-    });
-
-    return segments;
-  }
-
-  async updateNotificationPreferences(
-    promoterId: string, 
-    subscriberId: string, 
-    preferences: NotificationPreferences
-  ): Promise<void> {
-    const { error } = await supabase
-      .from('promoter_followers')
-      .update({ notification_preferences: preferences })
-      .eq('promoter_id', promoterId)
-      .eq('subscriber_id', subscriberId);
-
-    if (error) throw error;
-  }
-
-  async getNotificationHistory(promoterId: string, limit: number = 50): Promise<any[]> {
-    const { data, error } = await supabase
-      .from('notifications')
-      .select('*')
-      .eq('metadata->>promoter_id', promoterId)
-      .order('created_at', { ascending: false })
-      .limit(limit);
-
+    const { data, error } = await query;
     if (error) throw error;
     return data || [];
+  }
+
+  private async filterByPreferences(followers: any[], notification: any) {
+    return followers.filter(follower => {
+      // Parse notification preferences safely
+      const preferences = this.parseNotificationPreferences(follower.notification_preferences);
+      
+      // Check if user wants to receive this type of notification
+      return preferences.events === true || preferences.promotions === true || preferences.announcements === true;
+    });
+  }
+
+  private parseNotificationPreferences(preferencesData: any): NotificationPreferences {
+    const defaultPreferences: NotificationPreferences = {
+      events: true,
+      promotions: true,
+      announcements: true,
+      email_notifications: false,
+      push_notifications: false
+    };
+
+    if (!preferencesData) {
+      return defaultPreferences;
+    }
+
+    // Handle different data types
+    let preferences: any = {};
+    
+    if (typeof preferencesData === 'string') {
+      try {
+        preferences = JSON.parse(preferencesData);
+      } catch {
+        return defaultPreferences;
+      }
+    } else if (typeof preferencesData === 'object' && preferencesData !== null) {
+      preferences = preferencesData;
+    } else {
+      return defaultPreferences;
+    }
+
+    return {
+      events: preferences.events ?? defaultPreferences.events,
+      promotions: preferences.promotions ?? defaultPreferences.promotions,
+      announcements: preferences.announcements ?? defaultPreferences.announcements,
+      email_notifications: preferences.email_notifications ?? defaultPreferences.email_notifications,
+      push_notifications: preferences.push_notifications ?? defaultPreferences.push_notifications
+    };
+  }
+
+  private async sendNotificationToUser(userId: string, notification: any) {
+    try {
+      // Convert to JSON-compatible format
+      const notificationData = {
+        recipient_id: userId,
+        recipient_type: 'individual',
+        title: notification.title,
+        content: notification.content,
+        priority: notification.priority,
+        metadata: notification.metadata || {}
+      };
+
+      const { error } = await supabase
+        .from('notifications')
+        .insert([notificationData]);
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error sending notification to user:', error);
+      throw error;
+    }
+  }
+
+  async sendTargetedNotification(
+    promoterId: string,
+    segmentId: string,
+    notification: {
+      title: string;
+      content: string;
+      priority: 'low' | 'medium' | 'high' | 'urgent';
+    }
+  ): Promise<void> {
+    // Use the new notifyFollowers method
+    await this.notifyFollowers(promoterId, {
+      ...notification,
+      targetSegments: [segmentId]
+    });
+  }
+
+  async getPromoterNotificationStats(promoterId: string): Promise<any> {
+    try {
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('id, created_at, priority, is_read')
+        .eq('metadata->>promoter_id', promoterId)
+        .order('created_at', { ascending: false })
+        .limit(100);
+
+      if (error) throw error;
+
+      const total = data?.length || 0;
+      const read = data?.filter(n => n.is_read).length || 0;
+      const unread = total - read;
+
+      return {
+        total_sent: total,
+        total_read: read,
+        total_unread: unread,
+        read_rate: total > 0 ? (read / total) * 100 : 0
+      };
+    } catch (error) {
+      console.error('Error getting notification stats:', error);
+      return {
+        total_sent: 0,
+        total_read: 0,
+        total_unread: 0,
+        read_rate: 0
+      };
+    }
   }
 }
 
 export const promoterNotificationService = new PromoterNotificationService();
+export type { FollowerSegment, FollowerNotificationRequest };

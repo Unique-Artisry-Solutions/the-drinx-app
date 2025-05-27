@@ -1,241 +1,236 @@
 
 import { supabase } from '@/lib/supabase';
-
-export interface EventVisibilitySettings {
-  isPublic: boolean;
-  requiresFollowing: boolean;
-  allowedTiers?: string[];
-  earlyAccessHours?: number;
-  accessType: 'public' | 'followers_only' | 'premium_only' | 'tier_specific' | 'early_access';
-  
-  // Additional UI-specific properties
-  followerOnlyAccess: boolean;
-  premiumFollowerAccess: boolean;
-  specificTierAccess: string[];
-  earlyAccess: {
-    enabled: boolean;
-    daysEarly: number;
-    forFollowerTypes: string[];
-    specificTiers: string[];
-  };
-}
+import { EventVisibilitySettings } from '@/types/SubscriptionTypes';
 
 export interface EventAccessInfo {
   hasAccess: boolean;
-  accessType?: 'public' | 'follower' | 'premium' | 'tier_specific';
+  accessType?: 'public' | 'followers' | 'subscribers' | 'private';
   reason?: string;
   requiresFollowing?: boolean;
-  availableTiers?: string[];
 }
-
-// Type guard for EventVisibilitySettings
-function isEventVisibilitySettings(obj: any): obj is EventVisibilitySettings {
-  return obj && 
-         typeof obj === 'object' && 
-         typeof obj.isPublic === 'boolean' &&
-         typeof obj.requiresFollowing === 'boolean' &&
-         typeof obj.accessType === 'string';
-}
-
-// Default settings
-const defaultVisibilitySettings: EventVisibilitySettings = {
-  isPublic: true,
-  requiresFollowing: false,
-  accessType: 'public',
-  followerOnlyAccess: false,
-  premiumFollowerAccess: false,
-  specificTierAccess: [],
-  earlyAccess: {
-    enabled: false,
-    daysEarly: 0,
-    forFollowerTypes: [],
-    specificTiers: []
-  }
-};
 
 class EventVisibilityService {
-  async updateEventVisibility(eventId: string, settings: EventVisibilitySettings): Promise<void> {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('User not authenticated');
-
-    // Verify user owns the event
-    const { data: event } = await supabase
-      .from('events')
-      .select('created_by, custom_settings')
-      .eq('id', eventId)
-      .single();
-
-    if (!event || event.created_by !== user.id) {
-      throw new Error('Unauthorized to modify this event');
-    }
-
-    const { error } = await supabase
-      .from('events')
-      .update({
-        custom_settings: {
-          ...event.custom_settings || {},
-          visibility: settings
-        }
-      })
-      .eq('id', eventId);
-
-    if (error) throw error;
-  }
-
-  // Alias for backward compatibility
-  async setEventVisibility(eventId: string, settings: EventVisibilitySettings): Promise<void> {
-    return this.updateEventVisibility(eventId, settings);
-  }
-
-  async getEventVisibilitySettings(eventId: string): Promise<EventVisibilitySettings> {
-    const { data: event, error } = await supabase
-      .from('events')
-      .select('custom_settings')
-      .eq('id', eventId)
-      .single();
-
-    if (error) throw error;
-
-    const customSettings = event?.custom_settings as any;
-    const visibilityData = customSettings?.visibility;
-
-    // Safe type conversion with validation
-    if (isEventVisibilitySettings(visibilityData)) {
-      return {
-        ...defaultVisibilitySettings,
-        ...visibilityData
-      };
-    }
-
-    return defaultVisibilitySettings;
-  }
-
   async checkEventAccess(eventId: string, userId?: string): Promise<EventAccessInfo> {
-    // Get event details and visibility settings
-    const { data: event, error } = await supabase
-      .from('events')
-      .select('custom_settings, is_public')
-      .eq('id', eventId)
-      .single();
+    try {
+      // Get event details with visibility settings
+      const { data: event, error } = await supabase
+        .from('events')
+        .select('*, custom_settings')
+        .eq('id', eventId)
+        .maybeSingle();
 
-    if (error) throw error;
+      if (error) throw error;
+      if (!event) {
+        return { hasAccess: false, reason: 'Event not found' };
+      }
 
-    const customSettings = event?.custom_settings as any;
-    const visibilitySettings = customSettings?.visibility;
-    
-    // Use safe type conversion
-    const settings: EventVisibilitySettings = isEventVisibilitySettings(visibilitySettings) 
-      ? { ...defaultVisibilitySettings, ...visibilitySettings }
-      : defaultVisibilitySettings;
+      // Parse visibility settings safely
+      const visibilitySettings = this.parseVisibilitySettings(event.custom_settings);
 
-    // If event is public, allow access
-    if (settings.isPublic && settings.accessType === 'public') {
-      return { hasAccess: true, accessType: 'public' };
-    }
+      // Public events are always accessible
+      if (visibilitySettings.isPublic) {
+        return { 
+          hasAccess: true, 
+          accessType: 'public' 
+        };
+      }
 
-    // If no user, deny access for non-public events
-    if (!userId) {
-      return { 
-        hasAccess: false, 
-        reason: 'Login required to access this event',
-        requiresFollowing: settings.requiresFollowing 
-      };
-    }
+      // Private events require user authentication
+      if (!userId) {
+        return { 
+          hasAccess: false, 
+          reason: 'Authentication required',
+          requiresFollowing: visibilitySettings.requiresFollowing 
+        };
+      }
 
-    // Get user's subscription to the event creator
-    const { data: eventCreator } = await supabase
-      .from('events')
-      .select('created_by')
-      .eq('id', eventId)
-      .single();
+      // Check if user is the event creator
+      if (event.created_by === userId) {
+        return { hasAccess: true, accessType: 'private' };
+      }
 
-    if (!eventCreator) {
-      return { hasAccess: false, reason: 'Event not found' };
-    }
-
-    const { data: subscription } = await supabase
-      .from('promoter_followers')
-      .select('tier_id, follow_status')
-      .eq('promoter_id', eventCreator.created_by)
-      .eq('subscriber_id', userId)
-      .eq('follow_status', 'active')
-      .maybeSingle();
-
-    // Check access based on settings
-    switch (settings.accessType) {
-      case 'followers_only':
-        if (!subscription) {
+      // Check following/subscription requirements
+      if (visibilitySettings.requiresFollowing) {
+        const isFollowing = await this.checkUserFollowing(event.created_by, userId);
+        if (!isFollowing) {
           return { 
             hasAccess: false, 
-            reason: 'Follow the promoter to access this event',
-            requiresFollowing: true 
-          };
-        }
-        return { hasAccess: true, accessType: 'follower' };
-
-      case 'premium_only':
-        if (!subscription || !subscription.tier_id) {
-          return { 
-            hasAccess: false, 
-            reason: 'Premium subscription required',
-            requiresFollowing: true 
-          };
-        }
-        return { hasAccess: true, accessType: 'premium' };
-
-      case 'tier_specific':
-        if (!subscription || !subscription.tier_id || 
-            !settings.allowedTiers?.includes(subscription.tier_id)) {
-          return { 
-            hasAccess: false, 
-            reason: 'Specific tier subscription required',
+            reason: 'Following required',
             requiresFollowing: true,
-            availableTiers: settings.allowedTiers 
+            accessType: 'followers' 
           };
         }
-        return { hasAccess: true, accessType: 'tier_specific' };
+      }
 
-      case 'early_access':
-        // Implement early access logic based on subscription level
-        if (!subscription) {
+      if (visibilitySettings.requiresSubscription) {
+        const hasSubscription = await this.checkUserSubscription(event.created_by, userId);
+        if (!hasSubscription) {
           return { 
             hasAccess: false, 
-            reason: 'Early access requires following the promoter',
-            requiresFollowing: true 
+            reason: 'Subscription required',
+            accessType: 'subscribers' 
           };
         }
-        return { hasAccess: true, accessType: 'follower' };
+      }
 
-      default:
-        return { hasAccess: true, accessType: 'public' };
+      return { hasAccess: true, accessType: 'followers' };
+    } catch (error) {
+      console.error('Error checking event access:', error);
+      return { hasAccess: false, reason: 'Access check failed' };
     }
+  }
+
+  private parseVisibilitySettings(customSettings: any): EventVisibilitySettings {
+    // Handle null/undefined settings
+    if (!customSettings) {
+      return this.getDefaultVisibilitySettings();
+    }
+
+    // Handle different data types safely
+    let settings: any = {};
+    
+    if (typeof customSettings === 'string') {
+      try {
+        settings = JSON.parse(customSettings);
+      } catch {
+        return this.getDefaultVisibilitySettings();
+      }
+    } else if (typeof customSettings === 'object' && customSettings !== null) {
+      settings = customSettings;
+    } else {
+      return this.getDefaultVisibilitySettings();
+    }
+
+    // Extract visibility settings with defaults
+    const visibilitySettings = settings.visibility || {};
+    
+    return {
+      isPublic: visibilitySettings.isPublic ?? true,
+      requiresFollowing: visibilitySettings.requiresFollowing ?? false,
+      requiresSubscription: visibilitySettings.requiresSubscription ?? false,
+      allowedTiers: Array.isArray(visibilitySettings.allowedTiers) ? visibilitySettings.allowedTiers : [],
+      accessTokenRequired: visibilitySettings.accessTokenRequired ?? false
+    };
+  }
+
+  private getDefaultVisibilitySettings(): EventVisibilitySettings {
+    return {
+      isPublic: true,
+      requiresFollowing: false,
+      requiresSubscription: false,
+      allowedTiers: [],
+      accessTokenRequired: false
+    };
   }
 
   async getVisibleEvents(userId?: string, promoterId?: string): Promise<any[]> {
-    let query = supabase
-      .from('events')
-      .select('*');
+    try {
+      let query = supabase
+        .from('events')
+        .select('*, custom_settings');
 
-    if (promoterId) {
-      query = query.eq('created_by', promoterId);
-    }
-
-    const { data: events, error } = await query;
-    if (error) throw error;
-
-    if (!events) return [];
-
-    // Filter events based on visibility and user access
-    const visibleEvents = [];
-    for (const event of events) {
-      const accessInfo = await this.checkEventAccess(event.id, userId);
-      if (accessInfo.hasAccess) {
-        visibleEvents.push(event);
+      if (promoterId) {
+        query = query.eq('created_by', promoterId);
       }
-    }
 
-    return visibleEvents;
+      const { data: events, error } = await query;
+      if (error) throw error;
+
+      if (!events) return [];
+
+      // Filter events based on visibility
+      const visibleEvents = [];
+      for (const event of events) {
+        const accessInfo = await this.checkEventAccess(event.id, userId);
+        if (accessInfo.hasAccess) {
+          visibleEvents.push(event);
+        }
+      }
+
+      return visibleEvents;
+    } catch (error) {
+      console.error('Error getting visible events:', error);
+      return [];
+    }
+  }
+
+  async updateEventVisibility(eventId: string, settings: EventVisibilitySettings): Promise<void> {
+    try {
+      // Get current custom_settings
+      const { data: event, error: fetchError } = await supabase
+        .from('events')
+        .select('custom_settings')
+        .eq('id', eventId)
+        .maybeSingle();
+
+      if (fetchError) throw fetchError;
+
+      // Merge visibility settings into custom_settings
+      let customSettings: any = {};
+      
+      if (event?.custom_settings) {
+        if (typeof event.custom_settings === 'string') {
+          try {
+            customSettings = JSON.parse(event.custom_settings);
+          } catch {
+            customSettings = {};
+          }
+        } else if (typeof event.custom_settings === 'object') {
+          customSettings = { ...event.custom_settings };
+        }
+      }
+
+      customSettings.visibility = settings;
+
+      const { error } = await supabase
+        .from('events')
+        .update({ custom_settings: customSettings })
+        .eq('id', eventId);
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error updating event visibility:', error);
+      throw error;
+    }
+  }
+
+  private async checkUserFollowing(promoterId: string, userId: string): Promise<boolean> {
+    try {
+      const { data, error } = await supabase
+        .from('promoter_followers')
+        .select('id')
+        .eq('promoter_id', promoterId)
+        .eq('subscriber_id', userId)
+        .eq('follow_status', 'active')
+        .maybeSingle();
+
+      if (error && error.code !== 'PGRST116') throw error;
+      return !!data;
+    } catch (error) {
+      console.error('Error checking user following:', error);
+      return false;
+    }
+  }
+
+  private async checkUserSubscription(promoterId: string, userId: string): Promise<boolean> {
+    try {
+      const { data, error } = await supabase
+        .from('promoter_followers')
+        .select('tier_id')
+        .eq('promoter_id', promoterId)
+        .eq('subscriber_id', userId)
+        .eq('follow_status', 'active')
+        .not('tier_id', 'is', null)
+        .maybeSingle();
+
+      if (error && error.code !== 'PGRST116') throw error;
+      return !!data;
+    } catch (error) {
+      console.error('Error checking user subscription:', error);
+      return false;
+    }
   }
 }
 
 export const eventVisibilityService = new EventVisibilityService();
+export type { EventVisibilitySettings };
