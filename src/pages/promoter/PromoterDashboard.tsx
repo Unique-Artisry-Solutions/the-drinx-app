@@ -11,7 +11,8 @@ import {
   Plus,
   Eye,
   BarChart3,
-  Target
+  Target,
+  Route
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import RealTimeDashboard from '@/components/promoter/RealTimeDashboard';
@@ -46,6 +47,13 @@ const PromoterDashboard = () => {
       color: "bg-blue-500"
     },
     {
+      title: "Create Swig Circuit",
+      description: "Design a new swig circuit experience",
+      icon: Route,
+      action: () => navigate('/promoter/create-swig-circuit'),
+      color: "bg-spiritless-pink"
+    },
+    {
       title: "View Analytics", 
       description: "Check detailed performance metrics",
       icon: BarChart3,
@@ -76,10 +84,19 @@ const PromoterDashboard = () => {
           <h1 className="text-3xl font-bold text-gray-900">Promoter Dashboard</h1>
           <p className="text-gray-600 mt-2">Monitor your events and campaign performance</p>
         </div>
-        <Button onClick={() => navigate('/promoter/events')} className="flex items-center gap-2">
-          <Plus className="h-4 w-4" />
-          Create Event
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={() => navigate('/promoter/events')} className="flex items-center gap-2">
+            <Plus className="h-4 w-4" />
+            Create Event
+          </Button>
+          <Button 
+            onClick={() => navigate('/promoter/create-swig-circuit')} 
+            className="flex items-center gap-2 bg-spiritless-pink hover:bg-spiritless-pink/90"
+          >
+            <Route className="h-4 w-4" />
+            Create Swig Circuit
+          </Button>
+        </div>
       </div>
 
       {/* Real-Time Analytics Dashboard */}
@@ -94,7 +111,7 @@ const PromoterDashboard = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
             {quickActions.map((action, index) => {
               const Icon = action.icon;
               return (
@@ -107,9 +124,9 @@ const PromoterDashboard = () => {
                     <div className={`p-2 rounded-lg ${action.color} group-hover:scale-105 transition-transform`}>
                       <Icon className="h-5 w-5 text-white" />
                     </div>
-                    <h3 className="font-semibold">{action.title}</h3>
+                    <h3 className="font-semibold text-sm">{action.title}</h3>
                   </div>
-                  <p className="text-sm text-muted-foreground">{action.description}</p>
+                  <p className="text-xs text-muted-foreground">{action.description}</p>
                 </div>
               );
             })}

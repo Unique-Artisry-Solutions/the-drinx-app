@@ -1,6 +1,6 @@
 
 import { UnifiedNavItem } from '@/types/navigation/NavigationTypes';
-import { Home, Search, User, Settings, Bell, Calendar, MapPin, Users, BarChart3, Shield, Target } from 'lucide-react';
+import { Home, Search, User, Settings, Bell, Calendar, MapPin, Users, BarChart3, Shield, Target, Route } from 'lucide-react';
 
 export const guestNavItems: UnifiedNavItem[] = [
   {
@@ -61,6 +61,11 @@ export const promoterNavItems: UnifiedNavItem[] = [
     label: 'Events',
     path: '/promoter/events',
     icon: Calendar
+  },
+  {
+    label: 'Swig Circuits',
+    path: '/promoter/create-swig-circuit',
+    icon: Route
   },
   {
     label: 'Analytics',

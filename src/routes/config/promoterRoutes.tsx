@@ -9,6 +9,7 @@ const PromoterProfile = lazy(() => import('@/pages/promoter/PromoterProfile'));
 const PromoterEvents = lazy(() => import('@/pages/promoter/PromoterEvents'));
 const PromoterAnalyticsPage = lazy(() => import('@/pages/promoter/PromoterAnalyticsPage'));
 const PromoterMarketingAnalytics = lazy(() => import('@/pages/promoter/PromoterMarketingAnalytics'));
+const CreateSwigCircuitPage = lazy(() => import('@/pages/profile/CreateSwigCircuitPage'));
 
 export const promoterRoutes: RouteObject[] = [
   {
@@ -80,6 +81,18 @@ export const promoterRoutes: RouteObject[] = [
         redirectTo="/login"
       >
         <PromoterMarketingAnalytics />
+      </RouteProtectionWrapper>
+    )
+  },
+  {
+    path: '/promoter/create-swig-circuit',
+    element: (
+      <RouteProtectionWrapper 
+        requireAuth={true} 
+        allowedUserTypes={['promoter']}
+        redirectTo="/login"
+      >
+        <CreateSwigCircuitPage />
       </RouteProtectionWrapper>
     )
   }
