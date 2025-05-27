@@ -13,6 +13,7 @@ import { DashboardPricingTab } from '@/components/promoter/dashboard/DashboardPr
 import { DashboardUrgencyTab } from '@/components/promoter/dashboard/DashboardUrgencyTab';
 import { DashboardAnalyticsTab } from '@/components/promoter/dashboard/DashboardAnalyticsTab';
 import { DashboardPredictiveAnalyticsTab } from '@/components/promoter/dashboard/DashboardPredictiveAnalyticsTab';
+import { DashboardReportingTab } from '@/components/promoter/dashboard/DashboardReportingTab';
 import { DashboardSettingsTab } from '@/components/promoter/dashboard/DashboardSettingsTab';
 
 const PromoterDashboard = () => {
@@ -38,12 +39,13 @@ const PromoterDashboard = () => {
 
       {/* Tabbed Interface */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid grid-cols-2 md:grid-cols-6 gap-2">
+        <TabsList className="grid grid-cols-2 md:grid-cols-7 gap-2">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="pricing">Dynamic Pricing</TabsTrigger>
           <TabsTrigger value="urgency">Urgency Features</TabsTrigger>
           <TabsTrigger value="analytics">Real-Time Analytics</TabsTrigger>
           <TabsTrigger value="predictive">Predictive Analytics</TabsTrigger>
+          <TabsTrigger value="reporting">Reporting Suite</TabsTrigger>
           <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
 
@@ -65,6 +67,10 @@ const PromoterDashboard = () => {
 
         <TabsContent value="predictive" className="space-y-6">
           <DashboardPredictiveAnalyticsTab promoterId={promoterId} />
+        </TabsContent>
+
+        <TabsContent value="reporting" className="space-y-6">
+          <DashboardReportingTab promoterId={promoterId} />
         </TabsContent>
 
         <TabsContent value="settings" className="space-y-6">
