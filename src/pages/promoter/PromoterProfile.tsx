@@ -2,30 +2,46 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { User, Mail, Phone, MapPin, Edit } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Edit, Settings } from 'lucide-react';
 import Layout from '@/components/Layout';
+import { useNavigate } from 'react-router-dom';
 
 const PromoterProfile: React.FC = () => {
+  const navigate = useNavigate();
+
   return (
     <Layout>
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
           <div className="flex justify-between items-center mb-8">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Promoter Profile</h1>
-              <p className="text-gray-600 mt-2">Manage your promoter profile information</p>
+              <h1 className="text-3xl font-bold text-purple-700">Promoter Profile</h1>
+              <p className="text-muted-foreground">View your promoter profile information</p>
             </div>
-            <Button className="flex items-center gap-2">
-              <Edit className="h-4 w-4" />
-              Edit Profile
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                variant="outline"
+                className="flex items-center gap-2"
+                onClick={() => navigate('/promoter/settings')}
+              >
+                <Settings className="h-4 w-4" />
+                Settings
+              </Button>
+              <Button 
+                className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700"
+                onClick={() => navigate('/promoter/profile/edit')}
+              >
+                <Edit className="h-4 w-4" />
+                Edit Profile
+              </Button>
+            </div>
           </div>
           
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2">
               <Card>
                 <CardHeader>
-                  <CardTitle>Profile Information</CardTitle>
+                  <CardTitle className="text-purple-700">Profile Information</CardTitle>
                   <CardDescription>Your basic profile details</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -71,7 +87,7 @@ const PromoterProfile: React.FC = () => {
             <div>
               <Card>
                 <CardHeader>
-                  <CardTitle>Quick Stats</CardTitle>
+                  <CardTitle className="text-purple-700">Quick Stats</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="text-center">
