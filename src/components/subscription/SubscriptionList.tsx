@@ -11,7 +11,7 @@ const SubscriptionList: React.FC<SubscriptionListProps> = ({ promoterId }) => {
   const { tiers, subscriptions, isLoading } = useSubscriptions(promoterId);
 
   if (isLoading) {
-    return <div className="flex justify-center p-8">Loading subscription options...</div>;
+    return <div className="flex justify-center p-8">Loading follow options...</div>;
   }
 
   // Check if user is already following/subscribed
@@ -25,7 +25,7 @@ const SubscriptionList: React.FC<SubscriptionListProps> = ({ promoterId }) => {
   return (
     <div className="space-y-6 p-4">
       <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold mb-2">Follow or Subscribe</h2>
+        <h2 className="text-2xl font-bold mb-2">Follow This Promoter</h2>
         <p className="text-gray-600">
           Start with free following or upgrade to premium for exclusive benefits
         </p>
@@ -59,7 +59,7 @@ const SubscriptionList: React.FC<SubscriptionListProps> = ({ promoterId }) => {
       {tiers.length === 0 && (
         <div className="text-center p-8 bg-gray-50 rounded-lg">
           <p className="text-gray-600">
-            This promoter hasn't set up premium subscription tiers yet, but you can still follow for free!
+            This promoter hasn't set up premium follow tiers yet, but you can still follow for free!
           </p>
         </div>
       )}

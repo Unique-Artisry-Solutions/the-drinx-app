@@ -13,7 +13,7 @@ export const FollowerCountWidget: React.FC<FollowerCountWidgetProps> = ({ promot
 
   const totalFollowers = subscriptions?.length || 0;
   const freeFollowers = subscriptions?.filter(sub => !sub.tier_id).length || 0;
-  const premiumSubscribers = subscriptions?.filter(sub => sub.tier_id).length || 0;
+  const premiumFollowers = subscriptions?.filter(sub => sub.tier_id).length || 0;
   const recentGrowth = 12; // Mock growth percentage - would come from analytics
 
   if (isLoading) {
@@ -65,16 +65,16 @@ export const FollowerCountWidget: React.FC<FollowerCountWidgetProps> = ({ promot
         </CardContent>
       </Card>
 
-      {/* Premium Subscribers */}
+      {/* Premium Followers */}
       <Card>
         <CardContent className="p-4">
           <div className="flex items-center gap-2">
             <Crown className="h-4 w-4 text-purple-500" />
-            <div className="text-sm font-medium">Premium Subscribers</div>
+            <div className="text-sm font-medium">Premium Followers</div>
           </div>
-          <div className="text-2xl font-bold mt-1">{premiumSubscribers.toLocaleString()}</div>
+          <div className="text-2xl font-bold mt-1">{premiumFollowers.toLocaleString()}</div>
           <div className="text-xs text-gray-500 mt-1">
-            {totalFollowers > 0 ? Math.round((premiumSubscribers / totalFollowers) * 100) : 0}% of total
+            {totalFollowers > 0 ? Math.round((premiumFollowers / totalFollowers) * 100) : 0}% of total
           </div>
         </CardContent>
       </Card>

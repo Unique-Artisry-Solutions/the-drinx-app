@@ -17,6 +17,7 @@ import DashboardReportingTab from '@/components/promoter/dashboard/DashboardRepo
 import DashboardMobileAnalyticsTab from '@/components/promoter/dashboard/DashboardMobileAnalyticsTab';
 import { DashboardSettingsTab } from '@/components/promoter/dashboard/DashboardSettingsTab';
 import DashboardPaymentTab from '@/components/promoter/dashboard/DashboardPaymentTab';
+import { FollowerManagementDashboard } from '@/components/promoter/FollowerManagementDashboard';
 
 const PromoterDashboard = () => {
   const navigate = useNavigate();
@@ -41,8 +42,9 @@ const PromoterDashboard = () => {
 
       {/* Tabbed Interface */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid grid-cols-2 md:grid-cols-9 gap-2">
+        <TabsList className="grid grid-cols-2 md:grid-cols-10 gap-2">
           <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="followers">Followers</TabsTrigger>
           <TabsTrigger value="pricing">Dynamic Pricing</TabsTrigger>
           <TabsTrigger value="urgency">Urgency Features</TabsTrigger>
           <TabsTrigger value="analytics">Real-Time Analytics</TabsTrigger>
@@ -55,6 +57,10 @@ const PromoterDashboard = () => {
 
         <TabsContent value="overview" className="space-y-6">
           <DashboardOverviewTab promoterId={promoterId} />
+        </TabsContent>
+
+        <TabsContent value="followers" className="space-y-6">
+          <FollowerManagementDashboard promoterId={promoterId} />
         </TabsContent>
 
         <TabsContent value="pricing" className="space-y-6">

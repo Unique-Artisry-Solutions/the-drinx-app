@@ -4,231 +4,296 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useFollowers } from '@/hooks/useFollowers';
-import { useAuth } from '@/contexts/auth';
-import { Mail, Image, Tag, Users } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { useSubscriptions } from '@/hooks/useSubscriptions';
+import { Bell, Image, Gift } from 'lucide-react';
 
 interface FollowerCommunicationProps {
   promoterId: string;
 }
 
 export const FollowerCommunication: React.FC<FollowerCommunicationProps> = ({ promoterId }) => {
-  const { user } = useAuth();
-  const { sendNotification, sendFlyer, sendDiscountCode } = useFollowers();
+  const { 
+    sendNotification, 
+    sendFlyer, 
+    sendDiscountCode, 
+    tiers,
+    followers 
+  } = useSubscriptions(promoterId);
+
+  const [activeTab, setActiveTab] = useState<'announcement' | 'flyer' | 'discount'>('announcement');
+  const [targetTiers, setTargetTiers] = useState<string[]>([]);
   
-  const [activeTab, setActiveTab] = useState<'notification' | 'flyer' | 'discount'>('notification');
-  const [formData, setFormData] = useState({
-    title: '',
-    content: '',
-    flyerUrl: '',
-    discountCode: '',
-    expiresAt: '',
-    targetTiers: [] as string[]
-  });
+  // Announcement form
+  const [announcementTitle, setAnnouncementTitle] = useState('');
+  const [announcementContent, setAnnouncementContent] = useState('');
+  const [priority, setPriority] = useState<'low' | 'medium' | 'high' | 'urgent'>('medium');
+  
+  // Flyer form
+  const [flyerTitle, setFlyerTitle] = useState('');
+  const [flyerDescription, setFlyerDescription] = useState('');
+  const [flyerUrl, setFlyerUrl] = useState('');
+  
+  // Discount form
+  const [discountTitle, setDiscountTitle] = useState('');
+  const [discountDescription, setDiscountDescription] = useState('');
+  const [discountCode, setDiscountCode] = useState('');
+  const [expiresAt, setExpiresAt] = useState('');
 
-  const handleSendNotification = async () => {
-    if (!user || !formData.title || !formData.content) return;
-
+  const handleSendAnnouncement = async () => {
+    if (!announcementTitle || !announcementContent) return;
+    
     await sendNotification.mutateAsync({
       promoterId,
       notification: {
-        title: formData.title,
-        content: formData.content,
-        type: 'announcement'
+        title: announcementTitle,
+        content: announcementContent,
+        priority
       },
-      targetTiers: formData.targetTiers.length > 0 ? formData.targetTiers : undefined
+      targetTiers: targetTiers.length > 0 ? targetTiers : undefined
     });
-
-    setFormData({ ...formData, title: '', content: '' });
+    
+    // Reset form
+    setAnnouncementTitle('');
+    setAnnouncementContent('');
+    setPriority('medium');
   };
 
   const handleSendFlyer = async () => {
-    if (!user || !formData.title || !formData.content || !formData.flyerUrl) return;
-
+    if (!flyerTitle || !flyerDescription || !flyerUrl) return;
+    
     await sendFlyer.mutateAsync({
       promoterId,
-      flyerUrl: formData.flyerUrl,
-      title: formData.title,
-      description: formData.content,
-      targetTiers: formData.targetTiers.length > 0 ? formData.targetTiers : undefined
+      flyerUrl,
+      title: flyerTitle,
+      description: flyerDescription,
+      targetTiers: targetTiers.length > 0 ? targetTiers : undefined
     });
-
-    setFormData({ ...formData, title: '', content: '', flyerUrl: '' });
+    
+    // Reset form
+    setFlyerTitle('');
+    setFlyerDescription('');
+    setFlyerUrl('');
   };
 
   const handleSendDiscountCode = async () => {
-    if (!user || !formData.title || !formData.content || !formData.discountCode) return;
-
+    if (!discountTitle || !discountDescription || !discountCode) return;
+    
     await sendDiscountCode.mutateAsync({
       promoterId,
-      discountCode: formData.discountCode,
-      title: formData.title,
-      description: formData.content,
-      expiresAt: formData.expiresAt || undefined,
-      targetTiers: formData.targetTiers.length > 0 ? formData.targetTiers : undefined
+      discountCode,
+      title: discountTitle,
+      description: discountDescription,
+      expiresAt: expiresAt || undefined,
+      targetTiers: targetTiers.length > 0 ? targetTiers : undefined
     });
-
-    setFormData({ 
-      ...formData, 
-      title: '', 
-      content: '', 
-      discountCode: '', 
-      expiresAt: '' 
-    });
+    
+    // Reset form
+    setDiscountTitle('');
+    setDiscountDescription('');
+    setDiscountCode('');
+    setExpiresAt('');
   };
 
-  const isLoading = sendNotification.isPending || sendFlyer.isPending || sendDiscountCode.isPending;
+  const toggleTierTarget = (tierId: string) => {
+    setTargetTiers(prev => 
+      prev.includes(tierId) 
+        ? prev.filter(id => id !== tierId)
+        : [...prev, tierId]
+    );
+  };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Users className="h-5 w-5" />
-          Communicate with Followers
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Tab Navigation */}
-        <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
-          <Button
-            variant={activeTab === 'notification' ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => setActiveTab('notification')}
-            className="flex-1"
-          >
-            <Mail className="h-4 w-4 mr-2" />
-            Announcement
-          </Button>
-          <Button
-            variant={activeTab === 'flyer' ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => setActiveTab('flyer')}
-            className="flex-1"
-          >
-            <Image className="h-4 w-4 mr-2" />
-            Flyer
-          </Button>
-          <Button
-            variant={activeTab === 'discount' ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => setActiveTab('discount')}
-            className="flex-1"
-          >
-            <Tag className="h-4 w-4 mr-2" />
-            Discount
-          </Button>
-        </div>
-
-        {/* Common Fields */}
-        <div className="space-y-4">
-          <div>
-            <Label htmlFor="title">Title</Label>
-            <Input
-              id="title"
-              value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              placeholder="Enter a title for your message"
-            />
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Communicate with Followers</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Send announcements, flyers, and discount codes to your {followers.length} followers
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Tab Navigation */}
+          <div className="flex space-x-2">
+            <Button
+              variant={activeTab === 'announcement' ? 'default' : 'outline'}
+              onClick={() => setActiveTab('announcement')}
+              className="flex items-center gap-2"
+            >
+              <Bell className="h-4 w-4" />
+              Announcement
+            </Button>
+            <Button
+              variant={activeTab === 'flyer' ? 'default' : 'outline'}
+              onClick={() => setActiveTab('flyer')}
+              className="flex items-center gap-2"
+            >
+              <Image className="h-4 w-4" />
+              Flyer
+            </Button>
+            <Button
+              variant={activeTab === 'discount' ? 'default' : 'outline'}
+              onClick={() => setActiveTab('discount')}
+              className="flex items-center gap-2"
+            >
+              <Gift className="h-4 w-4" />
+              Discount Code
+            </Button>
           </div>
 
-          <div>
-            <Label htmlFor="content">Message</Label>
-            <Textarea
-              id="content"
-              value={formData.content}
-              onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-              placeholder="Write your message to followers..."
-              rows={4}
-            />
+          {/* Target Audience Selection */}
+          <div className="space-y-3">
+            <h4 className="font-medium">Target Audience</h4>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant={targetTiers.length === 0 ? 'default' : 'outline'}
+                onClick={() => setTargetTiers([])}
+                size="sm"
+              >
+                All Followers
+              </Button>
+              <Button
+                variant={targetTiers.includes('free') ? 'default' : 'outline'}
+                onClick={() => toggleTierTarget('free')}
+                size="sm"
+              >
+                Free Followers Only
+              </Button>
+              {tiers.map(tier => (
+                <Button
+                  key={tier.id}
+                  variant={targetTiers.includes(tier.id) ? 'default' : 'outline'}
+                  onClick={() => toggleTierTarget(tier.id)}
+                  size="sm"
+                >
+                  {tier.name} Subscribers
+                </Button>
+              ))}
+            </div>
           </div>
 
-          {/* Flyer URL Field */}
-          {activeTab === 'flyer' && (
-            <div>
-              <Label htmlFor="flyerUrl">Flyer Image URL</Label>
-              <Input
-                id="flyerUrl"
-                type="url"
-                value={formData.flyerUrl}
-                onChange={(e) => setFormData({ ...formData, flyerUrl: e.target.value })}
-                placeholder="https://example.com/flyer.jpg"
-              />
+          {/* Announcement Tab */}
+          {activeTab === 'announcement' && (
+            <div className="space-y-4">
+              <div>
+                <Input
+                  placeholder="Announcement title"
+                  value={announcementTitle}
+                  onChange={(e) => setAnnouncementTitle(e.target.value)}
+                />
+              </div>
+              <div>
+                <Textarea
+                  placeholder="Your announcement message..."
+                  value={announcementContent}
+                  onChange={(e) => setAnnouncementContent(e.target.value)}
+                  rows={4}
+                />
+              </div>
+              <div>
+                <Select value={priority} onValueChange={(value: any) => setPriority(value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Priority" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="low">Low Priority</SelectItem>
+                    <SelectItem value="medium">Medium Priority</SelectItem>
+                    <SelectItem value="high">High Priority</SelectItem>
+                    <SelectItem value="urgent">Urgent</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button 
+                onClick={handleSendAnnouncement}
+                disabled={!announcementTitle || !announcementContent || sendNotification.isPending}
+                className="w-full"
+              >
+                {sendNotification.isPending ? 'Sending...' : 'Send Announcement'}
+              </Button>
             </div>
           )}
 
-          {/* Discount Code Fields */}
-          {activeTab === 'discount' && (
-            <>
+          {/* Flyer Tab */}
+          {activeTab === 'flyer' && (
+            <div className="space-y-4">
               <div>
-                <Label htmlFor="discountCode">Discount Code</Label>
                 <Input
-                  id="discountCode"
-                  value={formData.discountCode}
-                  onChange={(e) => setFormData({ ...formData, discountCode: e.target.value.toUpperCase() })}
-                  placeholder="SAVE20"
+                  placeholder="Flyer title"
+                  value={flyerTitle}
+                  onChange={(e) => setFlyerTitle(e.target.value)}
                 />
               </div>
-
               <div>
-                <Label htmlFor="expiresAt">Expires At (Optional)</Label>
-                <Input
-                  id="expiresAt"
-                  type="datetime-local"
-                  value={formData.expiresAt}
-                  onChange={(e) => setFormData({ ...formData, expiresAt: e.target.value })}
+                <Textarea
+                  placeholder="Flyer description..."
+                  value={flyerDescription}
+                  onChange={(e) => setFlyerDescription(e.target.value)}
+                  rows={3}
                 />
               </div>
-            </>
+              <div>
+                <Input
+                  placeholder="Flyer image URL"
+                  value={flyerUrl}
+                  onChange={(e) => setFlyerUrl(e.target.value)}
+                  type="url"
+                />
+              </div>
+              <Button 
+                onClick={handleSendFlyer}
+                disabled={!flyerTitle || !flyerDescription || !flyerUrl || sendFlyer.isPending}
+                className="w-full"
+              >
+                {sendFlyer.isPending ? 'Sending...' : 'Send Flyer'}
+              </Button>
+            </div>
           )}
 
-          {/* Target Tiers Selection */}
-          <div>
-            <Label>Target Audience</Label>
-            <Select
-              value={formData.targetTiers.length > 0 ? 'custom' : 'all'}
-              onValueChange={(value) => {
-                if (value === 'all') {
-                  setFormData({ ...formData, targetTiers: [] });
-                }
-                // For custom targeting, you'd implement tier selection logic here
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select audience" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Followers</SelectItem>
-                <SelectItem value="free">Free Followers Only</SelectItem>
-                <SelectItem value="premium">Premium Subscribers Only</SelectItem>
-                <SelectItem value="custom">Custom Selection</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        {/* Send Button */}
-        <Button 
-          onClick={() => {
-            switch (activeTab) {
-              case 'notification':
-                handleSendNotification();
-                break;
-              case 'flyer':
-                handleSendFlyer();
-                break;
-              case 'discount':
-                handleSendDiscountCode();
-                break;
-            }
-          }}
-          disabled={isLoading || !formData.title || !formData.content}
-          className="w-full"
-        >
-          {isLoading ? 'Sending...' : `Send ${activeTab === 'notification' ? 'Announcement' : activeTab === 'flyer' ? 'Flyer' : 'Discount Code'}`}
-        </Button>
-      </CardContent>
-    </Card>
+          {/* Discount Code Tab */}
+          {activeTab === 'discount' && (
+            <div className="space-y-4">
+              <div>
+                <Input
+                  placeholder="Discount title"
+                  value={discountTitle}
+                  onChange={(e) => setDiscountTitle(e.target.value)}
+                />
+              </div>
+              <div>
+                <Textarea
+                  placeholder="Discount description..."
+                  value={discountDescription}
+                  onChange={(e) => setDiscountDescription(e.target.value)}
+                  rows={3}
+                />
+              </div>
+              <div>
+                <Input
+                  placeholder="Discount code (e.g., SAVE20)"
+                  value={discountCode}
+                  onChange={(e) => setDiscountCode(e.target.value)}
+                />
+              </div>
+              <div>
+                <Input
+                  placeholder="Expiration date (optional)"
+                  value={expiresAt}
+                  onChange={(e) => setExpiresAt(e.target.value)}
+                  type="date"
+                />
+              </div>
+              <Button 
+                onClick={handleSendDiscountCode}
+                disabled={!discountTitle || !discountDescription || !discountCode || sendDiscountCode.isPending}
+                className="w-full"
+              >
+                {sendDiscountCode.isPending ? 'Sending...' : 'Send Discount Code'}
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 };

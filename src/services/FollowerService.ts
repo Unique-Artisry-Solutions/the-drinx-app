@@ -1,6 +1,6 @@
 
 import { supabase } from '@/lib/supabase';
-import type { NotificationPreferences, Subscription } from '@/types/SubscriptionTypes';
+import type { Subscription, NotificationPreferences } from '@/types/SubscriptionTypes';
 
 export interface FollowRequest {
   promoterId: string;
@@ -13,19 +13,17 @@ export interface FollowerNotification {
   priority?: 'low' | 'medium' | 'high' | 'urgent';
 }
 
-// Helper function to safely convert Json to NotificationPreferences
-function jsonToNotificationPreferences(json: any): NotificationPreferences {
-  if (typeof json === 'object' && json !== null) {
+// Helper functions to safely convert between NotificationPreferences and Json
+const convertToNotificationPreferences = (data: any): NotificationPreferences => {
+  if (data && typeof data === 'object') {
     return {
-      events: json.events ?? true,
-      promotions: json.promotions ?? true,
-      announcements: json.announcements ?? true,
-      email_notifications: json.email_notifications ?? false,
-      push_notifications: json.push_notifications ?? false,
+      events: data.events ?? true,
+      promotions: data.promotions ?? true,
+      announcements: data.announcements ?? true,
+      email_notifications: data.email_notifications ?? false,
+      push_notifications: data.push_notifications ?? false,
     };
   }
-  
-  // Default preferences if json is not a valid object
   return {
     events: true,
     promotions: true,
@@ -33,21 +31,20 @@ function jsonToNotificationPreferences(json: any): NotificationPreferences {
     email_notifications: false,
     push_notifications: false,
   };
-}
+};
 
-// Helper function to safely convert NotificationPreferences to Json
-function notificationPreferencesToJson(preferences: NotificationPreferences): Record<string, boolean> {
+const convertFromNotificationPreferences = (prefs: NotificationPreferences): Record<string, any> => {
   return {
-    events: preferences.events,
-    promotions: preferences.promotions,
-    announcements: preferences.announcements,
-    email_notifications: preferences.email_notifications ?? false,
-    push_notifications: preferences.push_notifications ?? false,
+    events: prefs.events,
+    promotions: prefs.promotions,
+    announcements: prefs.announcements,
+    email_notifications: prefs.email_notifications,
+    push_notifications: prefs.push_notifications,
   };
-}
+};
 
 export class FollowerService {
-  // Get user's followed promoters/subscriptions
+  // Get user's followed promoters
   static async getUserFollows(): Promise<Subscription[]> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('User not authenticated');
@@ -55,8 +52,17 @@ export class FollowerService {
     const { data, error } = await supabase
       .from('promoter_followers')
       .select(`
-        *,
-        promoter_subscription_tiers!left(name, tier, price)
+        id,
+        subscriber_id,
+        promoter_id,
+        tier_id,
+        subscription_start,
+        subscription_end,
+        follow_status,
+        created_at,
+        updated_at,
+        notification_preferences,
+        promoter_subscription_tiers!inner(name)
       `)
       .eq('subscriber_id', user.id)
       .eq('follow_status', 'active');
@@ -71,11 +77,11 @@ export class FollowerService {
       subscription_start: item.subscription_start,
       subscription_end: item.subscription_end,
       status: 'active' as const,
-      follow_status: item.follow_status,
+      follow_status: item.follow_status as 'active' | 'paused' | 'cancelled' | 'pending',
       created_at: item.created_at,
       updated_at: item.updated_at,
       tier_name: item.promoter_subscription_tiers?.name,
-      notification_preferences: jsonToNotificationPreferences(item.notification_preferences)
+      notification_preferences: convertToNotificationPreferences(item.notification_preferences)
     }));
   }
 
@@ -84,9 +90,17 @@ export class FollowerService {
     const { data, error } = await supabase
       .from('promoter_followers')
       .select(`
-        *,
-        profiles!inner(display_name, username),
-        promoter_subscription_tiers!left(name, tier, price)
+        id,
+        subscriber_id,
+        promoter_id,
+        tier_id,
+        subscription_start,
+        subscription_end,
+        follow_status,
+        created_at,
+        updated_at,
+        notification_preferences,
+        promoter_subscription_tiers(name)
       `)
       .eq('promoter_id', promoterId)
       .eq('follow_status', 'active');
@@ -101,11 +115,11 @@ export class FollowerService {
       subscription_start: item.subscription_start,
       subscription_end: item.subscription_end,
       status: 'active' as const,
-      follow_status: item.follow_status,
+      follow_status: item.follow_status as 'active' | 'paused' | 'cancelled' | 'pending',
       created_at: item.created_at,
       updated_at: item.updated_at,
       tier_name: item.promoter_subscription_tiers?.name,
-      notification_preferences: jsonToNotificationPreferences(item.notification_preferences)
+      notification_preferences: convertToNotificationPreferences(item.notification_preferences)
     }));
   }
 
@@ -114,27 +128,13 @@ export class FollowerService {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('User not authenticated');
 
-    // Check if already following
-    const { data: existing } = await supabase
-      .from('promoter_followers')
-      .select('id')
-      .eq('subscriber_id', user.id)
-      .eq('promoter_id', promoterId)
-      .eq('follow_status', 'active')
-      .maybeSingle();
-
-    if (existing) {
-      throw new Error('Already following this promoter');
-    }
-
     const { error } = await supabase
       .from('promoter_followers')
       .insert({
         subscriber_id: user.id,
         promoter_id: promoterId,
-        tier_id: null, // null for free followers
         follow_status: 'active',
-        notification_preferences: notificationPreferencesToJson({
+        notification_preferences: convertFromNotificationPreferences({
           events: true,
           promotions: true,
           announcements: true,
@@ -151,39 +151,20 @@ export class FollowerService {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('User not authenticated');
 
-    // Check if already subscribed to this tier
+    // First check if user is already following
     const { data: existing } = await supabase
       .from('promoter_followers')
       .select('id')
       .eq('subscriber_id', user.id)
       .eq('promoter_id', promoterId)
-      .eq('tier_id', tierId)
-      .eq('follow_status', 'active')
-      .maybeSingle();
+      .single();
 
     if (existing) {
-      throw new Error('Already subscribed to this tier');
-    }
-
-    // If user is already following for free, upgrade to premium
-    const { data: freeFollow } = await supabase
-      .from('promoter_followers')
-      .select('id')
-      .eq('subscriber_id', user.id)
-      .eq('promoter_id', promoterId)
-      .is('tier_id', null)
-      .eq('follow_status', 'active')
-      .maybeSingle();
-
-    if (freeFollow) {
-      // Upgrade existing free follow to premium
+      // Update existing follow to premium tier
       const { error } = await supabase
         .from('promoter_followers')
-        .update({ 
-          tier_id: tierId,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', freeFollow.id);
+        .update({ tier_id: tierId })
+        .eq('id', existing.id);
 
       if (error) throw error;
     } else {
@@ -195,12 +176,12 @@ export class FollowerService {
           promoter_id: promoterId,
           tier_id: tierId,
           follow_status: 'active',
-          notification_preferences: notificationPreferencesToJson({
+          notification_preferences: convertFromNotificationPreferences({
             events: true,
             promotions: true,
             announcements: true,
-            email_notifications: true,
-            push_notifications: true,
+            email_notifications: false,
+            push_notifications: false,
           })
         });
 
@@ -210,17 +191,10 @@ export class FollowerService {
 
   // Unfollow/unsubscribe
   static async unfollowPromoter(subscriptionId: string): Promise<void> {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('User not authenticated');
-
     const { error } = await supabase
       .from('promoter_followers')
-      .update({ 
-        follow_status: 'cancelled',
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', subscriptionId)
-      .eq('subscriber_id', user.id);
+      .update({ follow_status: 'cancelled' })
+      .eq('id', subscriptionId);
 
     if (error) throw error;
   }
@@ -228,12 +202,9 @@ export class FollowerService {
   // Send notification to followers
   static async sendNotificationToFollowers(
     promoterId: string, 
-    notification: FollowerNotification,
+    notification: FollowerNotification, 
     targetTiers?: string[]
   ): Promise<void> {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('User not authenticated');
-
     // Get followers based on target tiers
     let query = supabase
       .from('promoter_followers')
@@ -242,43 +213,32 @@ export class FollowerService {
       .eq('follow_status', 'active');
 
     if (targetTiers && targetTiers.length > 0) {
-      if (targetTiers.includes('free')) {
-        // Include both free followers and specific tiers
-        const paidTiers = targetTiers.filter(t => t !== 'free');
-        if (paidTiers.length > 0) {
-          query = query.or(`tier_id.is.null,tier_id.in.(${paidTiers.join(',')})`);
-        } else {
-          query = query.is('tier_id', null);
-        }
-      } else {
-        query = query.in('tier_id', targetTiers);
-      }
+      query = query.in('tier_id', targetTiers);
     }
 
     const { data: followers, error: followersError } = await query;
     if (followersError) throw followersError;
 
-    // Filter followers who have notifications enabled
-    const eligibleFollowers = followers.filter(follower => {
-      const prefs = jsonToNotificationPreferences(follower.notification_preferences);
-      return prefs.announcements;
-    });
-
-    // Create notifications for eligible followers
-    const notifications = eligibleFollowers.map(follower => ({
-      recipient_id: follower.subscriber_id,
-      title: notification.title,
-      content: notification.content,
-      priority: notification.priority || 'medium',
-      recipient_type: 'individual'
-    }));
+    // Create notifications for each follower
+    const notifications = followers
+      .filter(follower => {
+        const prefs = convertToNotificationPreferences(follower.notification_preferences);
+        return prefs.announcements; // Check if they want announcements
+      })
+      .map(follower => ({
+        recipient_id: follower.subscriber_id,
+        title: notification.title,
+        content: notification.content,
+        priority: notification.priority || 'medium',
+        recipient_type: 'individual'
+      }));
 
     if (notifications.length > 0) {
-      const { error } = await supabase
+      const { error: notificationError } = await supabase
         .from('notifications')
         .insert(notifications);
 
-      if (error) throw error;
+      if (notificationError) throw notificationError;
     }
   }
 
@@ -292,7 +252,7 @@ export class FollowerService {
   ): Promise<void> {
     await this.sendNotificationToFollowers(promoterId, {
       title,
-      content: `${description}\n\nView flyer: ${flyerUrl}`,
+      content: `${description}\n\nView Flyer: ${flyerUrl}`,
       priority: 'medium'
     }, targetTiers);
   }
@@ -306,31 +266,26 @@ export class FollowerService {
     expiresAt?: string,
     targetTiers?: string[]
   ): Promise<void> {
-    const expiryText = expiresAt ? `\n\nExpires: ${new Date(expiresAt).toLocaleDateString()}` : '';
+    const content = `${description}\n\nDiscount Code: ${discountCode}${expiresAt ? `\nExpires: ${new Date(expiresAt).toLocaleDateString()}` : ''}`;
     
     await this.sendNotificationToFollowers(promoterId, {
       title,
-      content: `${description}\n\nDiscount Code: ${discountCode}${expiryText}`,
+      content,
       priority: 'high'
     }, targetTiers);
   }
 
   // Update notification preferences
   static async updateNotificationPreferences(
-    subscriptionId: string,
+    subscriptionId: string, 
     preferences: NotificationPreferences
   ): Promise<void> {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('User not authenticated');
-
     const { error } = await supabase
       .from('promoter_followers')
       .update({ 
-        notification_preferences: notificationPreferencesToJson(preferences),
-        updated_at: new Date().toISOString()
+        notification_preferences: convertFromNotificationPreferences(preferences) 
       })
-      .eq('id', subscriptionId)
-      .eq('subscriber_id', user.id);
+      .eq('id', subscriptionId);
 
     if (error) throw error;
   }

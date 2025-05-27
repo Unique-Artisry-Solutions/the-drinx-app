@@ -55,7 +55,7 @@ export const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
           <div className="flex items-center justify-between">
             <CardTitle className="text-xl font-bold flex items-center gap-2">
               <Heart className="h-5 w-5 text-green-500" />
-              Free Follower
+              Free Follow
             </CardTitle>
             <Badge variant="secondary" className="bg-green-100 text-green-700">
               Free
@@ -63,10 +63,10 @@ export const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
           </div>
         </CardHeader>
         <CardContent className="text-center">
-          <p className="text-3xl font-bold mb-4 text-green-600">
-            $0.00
-            <span className="text-sm text-gray-500">/month</span>
-          </p>
+          <div className="mb-6">
+            <div className="text-2xl font-bold text-green-600 mb-2">Free to Follow</div>
+            <p className="text-sm text-gray-600">Stay connected with this promoter</p>
+          </div>
           <ul className="space-y-2 text-left mb-6">
             <li className="flex items-center">
               <CheckIcon className="h-5 w-5 text-green-500 mr-2" />
@@ -118,10 +118,10 @@ export const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
         </div>
       </CardHeader>
       <CardContent className="text-center">
-        <p className="text-3xl font-bold mb-4">
-          ${tier.price.toFixed(2)}
-          <span className="text-sm text-gray-500">/month</span>
-        </p>
+        <div className="mb-6">
+          <div className="text-2xl font-bold mb-2">Premium Follow</div>
+          <p className="text-sm text-gray-600">Enhanced experience with exclusive benefits</p>
+        </div>
         <ul className="space-y-2 text-left mb-6">
           {/* Display features included in this tier */}
           {tierFeatures.map((featureId) => {
@@ -165,8 +165,8 @@ export const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
           {isLoading
             ? 'Processing...'
             : isSubscribed
-            ? 'Unsubscribe'
-            : `Subscribe - $${tier.price}/month`}
+            ? 'Unfollow'
+            : 'Follow Premium'}
         </Button>
       </CardFooter>
     </Card>
