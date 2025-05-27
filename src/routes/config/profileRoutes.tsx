@@ -10,7 +10,6 @@ const BarCrawlsPage = lazy(() => import('@/pages/profile/BarCrawlsPage'));
 const BarCrawlManagementPage = lazy(() => import('@/pages/profile/BarCrawlManagementPage'));
 const CrawlersListPage = lazy(() => import('@/pages/profile/CrawlersListPage'));
 const UserRecipesPage = lazy(() => import('@/pages/profile/UserRecipesPage'));
-const CreateSwigCircuitPage = lazy(() => import('@/pages/profile/CreateSwigCircuitPage'));
 const CheckInScannerPage = lazy(() => import('@/pages/profile/CheckInScannerPage'));
 const SettingsPage = lazy(() => import('@/pages/settings/SettingsPage'));
 const NotificationsPage = lazy(() => import('@/pages/notifications/NotificationsPage'));
@@ -25,7 +24,6 @@ export const profileRoutes: RouteObject[] = [
   { path: '/profile/bar-crawl/:id', element: <BarCrawlManagementPage /> },
   { path: '/profile/crawlers/:id', element: <CrawlersListPage /> },
   { path: '/profile/recipes', element: <UserRecipesPage /> },
-  { path: '/profile/create-swig-circuit', element: <CreateSwigCircuitPage /> },
   { path: '/profile/scanner', element: <CheckInScannerPage /> },
   { path: '/profile/settings', element: <SettingsPage /> },
   { path: '/profile/notifications', element: <NotificationsPage /> },
