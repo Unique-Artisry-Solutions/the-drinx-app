@@ -3,6 +3,7 @@ import React from 'react';
 import Layout from '@/components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart3, Calendar, Route, Users, TrendingUp, DollarSign } from 'lucide-react';
+import { QuickActions } from '@/components/promoter/QuickActions';
 
 const PromoterDashboard: React.FC = () => {
   return (
@@ -60,6 +61,9 @@ const PromoterDashboard: React.FC = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Quick Actions Section */}
+        <QuickActions />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card>
