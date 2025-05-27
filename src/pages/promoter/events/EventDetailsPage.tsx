@@ -10,6 +10,7 @@ import EventHeader from '@/components/events/EventHeader';
 import EventDetails from '@/components/events/EventDetails';
 import EventFooter from '@/components/events/EventFooter';
 import EventTabsSection from '@/components/events/EventTabsSection';
+import ErrorDisplay from '@/components/common/ErrorDisplay';
 
 const EventDetailsPage = () => {
   const { eventId } = useParams<{ eventId: string }>();
@@ -30,13 +31,22 @@ const EventDetailsPage = () => {
     }
   };
 
+  const handleRetry = () => {
+    window.location.reload();
+  };
+
   return (
     <Layout>
       <div className="container mx-auto py-10">
         {isLoading ? (
           <div className="text-center">Loading event details...</div>
         ) : error ? (
-          <div className="text-center text-red-500">Error: {error}</div>
+          <ErrorDisplay 
+            error={error}
+            title="Error loading event details"
+            onRetry={handleRetry}
+            className="mb-4"
+          />
         ) : event ? (
           <div className="space-y-6">
             <Card>
