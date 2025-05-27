@@ -16,6 +16,7 @@ const PromoterAnalytics = lazy(() => import('@/pages/promoter/PromoterAnalytics'
 const CreateSwigCircuit = lazy(() => import('@/pages/promoter/CreateSwigCircuit'));
 const MarketingAnalytics = lazy(() => import('@/pages/promoter/MarketingAnalytics'));
 const PromoterNotificationsPage = lazy(() => import('@/pages/promoter/notifications/PromoterNotificationsPage'));
+const NotificationTestingPage = lazy(() => import('@/pages/promoter/notifications/NotificationTestingPage'));
 
 export const promoterRoutes: RouteObject[] = [
   { path: '/promoter/dashboard', element: <PromoterDashboard /> },
@@ -23,6 +24,7 @@ export const promoterRoutes: RouteObject[] = [
   { path: '/promoter/profile/edit', element: <PromoterProfileEdit /> },
   { path: '/promoter/settings', element: <PromoterSettingsPage /> },
   { path: '/promoter/notifications', element: <PromoterNotificationsPage /> },
+  { path: '/promoter/notifications/testing', element: <NotificationTestingPage /> },
   { path: '/promoter/events', element: <PromoterEvents /> },
   { path: '/promoter/analytics', element: <PromoterAnalytics /> },
   { path: '/promoter/create-swig-circuit', element: <CreateSwigCircuit /> },
