@@ -1,5 +1,6 @@
 
 import { Notification } from '@/types/notification';
+import { FollowerPreferences } from '@/types/FollowerComponentTypes';
 
 export function safeJsonToNotificationInterface(data: any): Notification {
   return {
@@ -23,4 +24,27 @@ export function validateNotificationData(data: any): boolean {
     data.content &&
     ['low', 'medium', 'high', 'urgent'].includes(data.priority)
   );
+}
+
+export function safeJsonToFollowerPreferences(data: any): FollowerPreferences {
+  if (!data || typeof data !== 'object') {
+    // Return default preferences if data is invalid
+    return {
+      events: true,
+      promotions: true,
+      generalUpdates: true,
+      email: true,
+      push: false,
+      sms: false
+    };
+  }
+
+  return {
+    events: data.events !== false, // Default to true unless explicitly false
+    promotions: data.promotions !== false,
+    generalUpdates: data.generalUpdates !== false,
+    email: data.email !== false,
+    push: data.push === true, // Default to false unless explicitly true
+    sms: data.sms === true
+  };
 }

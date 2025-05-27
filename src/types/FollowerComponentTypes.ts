@@ -46,9 +46,19 @@ export interface FollowerActionResult {
   errors?: string[];
 }
 
-// Add the missing interface for FollowerNotificationCenter
+// Updated interface for FollowerNotificationCenter with followerCount
 export interface FollowerNotificationCenterProps extends FollowerComponentProps {
   followerCount?: number;
   defaultMessage?: string;
   allowScheduling?: boolean;
+}
+
+// Add interface for follower preferences
+export interface FollowerPreferences {
+  events: boolean;
+  promotions: boolean;
+  generalUpdates: boolean;
+  email: boolean;
+  push: boolean;
+  sms?: boolean;
 }
