@@ -16,7 +16,7 @@ const DataExportPanel: React.FC<DataExportPanelProps> = ({
   onExport,
   isExporting
 }) => {
-  const [exportType, setExportType] = useState<'csv' | 'excel' | 'pdf'>('csv');
+  const [exportType, setExportType] = useState<'csv' | 'pdf' | 'xlsx' | 'json'>('csv');
   const [dataType, setDataType] = useState<'events' | 'attendees' | 'revenue' | 'all'>('events');
   const [dateRange, setDateRange] = useState<'7d' | '30d' | '90d' | 'all'>('30d');
 
@@ -70,8 +70,9 @@ const DataExportPanel: React.FC<DataExportPanelProps> = ({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="csv">CSV</SelectItem>
-                  <SelectItem value="excel">Excel (.xlsx)</SelectItem>
+                  <SelectItem value="xlsx">Excel (.xlsx)</SelectItem>
                   <SelectItem value="pdf">PDF Report</SelectItem>
+                  <SelectItem value="json">JSON</SelectItem>
                 </SelectContent>
               </Select>
             </div>
