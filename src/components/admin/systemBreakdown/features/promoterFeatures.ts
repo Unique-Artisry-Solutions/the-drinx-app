@@ -94,17 +94,17 @@ export const promoterFeatures: FeatureItem[] = [
   },
   {
     id: 'prom-009',
-    name: 'Subscription Management',
-    description: 'Manage recurring events and subscription-based circuits',
-    status: 'planned',
+    name: 'Follower/Subscriber System',
+    description: 'Instagram-like follow system where users can subscribe to promoters for free notifications and updates',
+    status: 'in_progress',
     adminAccess: 'full',
     establishmentAccess: 'read',
     individualAccess: 'read',
     promoterAccess: 'full',
-    databaseStatus: 'not_started',
-    userImpact: 'medium',
-    complexity: 'high',
-    implementationProgress: 15
+    databaseStatus: 'in_progress',
+    userImpact: 'high',
+    complexity: 'medium',
+    implementationProgress: 75
   },
   {
     id: 'prom-010',
