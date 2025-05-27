@@ -15,17 +15,26 @@ import {
 import { useSubscriptions } from '@/hooks/useSubscriptions';
 import AnalyticsLineChart from '@/components/charts/AnalyticsLineChart';
 import AnalyticsPieChart from '@/components/charts/AnalyticsPieChart';
+import { FollowerAnalyticsProps } from '@/types/FollowerComponentTypes';
+import FollowerErrorBoundary from './FollowerErrorBoundary';
 
-interface FollowerAnalyticsWidgetsProps {
-  promoterId: string;
-  detailed?: boolean;
-}
-
-const FollowerAnalyticsWidgets: React.FC<FollowerAnalyticsWidgetsProps> = ({ 
+const FollowerAnalyticsWidgets: React.FC<FollowerAnalyticsProps> = ({ 
   promoterId, 
-  detailed = false 
+  detailed = false,
+  timeRange = 'month',
+  metrics = [],
+  className = '',
+  onError,
+  onSuccess
 }) => {
   const { followers, isLoading } = useSubscriptions(promoterId);
+
+  // Handle errors
+  React.useEffect(() => {
+    if (followers && onSuccess) {
+      onSuccess({ followerCount: followers.length });
+    }
+  }, [followers, onSuccess]);
 
   // Mock analytics data - in real implementation, this would come from API
   const analytics = {
@@ -53,7 +62,7 @@ const FollowerAnalyticsWidgets: React.FC<FollowerAnalyticsWidgetsProps> = ({
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 ${className}`}>
         {[...Array(4)].map((_, i) => (
           <Card key={i}>
             <CardContent className="p-6">
@@ -68,8 +77,11 @@ const FollowerAnalyticsWidgets: React.FC<FollowerAnalyticsWidgetsProps> = ({
     );
   }
 
-  const metrics = [
+  const filteredMetrics = metrics.length > 0 ? metrics : ['followers', 'engagement', 'growth'];
+  
+  const allMetrics = [
     {
+      id: 'followers',
       title: "Total Followers",
       value: analytics.totalFollowers.toLocaleString(),
       icon: Users,
@@ -78,6 +90,7 @@ const FollowerAnalyticsWidgets: React.FC<FollowerAnalyticsWidgetsProps> = ({
       changeType: analytics.growthRate > 0 ? 'positive' : 'negative'
     },
     {
+      id: 'active',
       title: "Active Followers",
       value: analytics.activeFollowers.toLocaleString(),
       icon: Heart,
@@ -86,6 +99,7 @@ const FollowerAnalyticsWidgets: React.FC<FollowerAnalyticsWidgetsProps> = ({
       changeType: 'positive'
     },
     {
+      id: 'engagement',
       title: "Engagement Rate",
       value: `${analytics.engagementRate}%`,
       icon: MessageSquare,
@@ -94,6 +108,7 @@ const FollowerAnalyticsWidgets: React.FC<FollowerAnalyticsWidgetsProps> = ({
       changeType: 'positive'
     },
     {
+      id: 'notifications',
       title: "Notifications On",
       value: analytics.notificationsEnabled.toLocaleString(),
       icon: Bell,
@@ -103,100 +118,106 @@ const FollowerAnalyticsWidgets: React.FC<FollowerAnalyticsWidgetsProps> = ({
     }
   ];
 
+  const displayMetrics = allMetrics.filter(metric => 
+    filteredMetrics.includes(metric.id) || filteredMetrics.includes(metric.title.toLowerCase())
+  );
+
   return (
-    <div className="space-y-6">
-      {/* Key Metrics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {metrics.map((metric) => (
-          <Card key={metric.title}>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-2">
-                <metric.icon className={`h-5 w-5 ${metric.iconColor}`} />
-                <Badge 
-                  variant={metric.changeType === 'positive' ? 'default' : 'destructive'}
-                  className="text-xs"
-                >
-                  {metric.changeType === 'positive' ? (
-                    <TrendingUp className="h-3 w-3 mr-1" />
-                  ) : (
-                    <TrendingDown className="h-3 w-3 mr-1" />
-                  )}
-                  {Math.abs(metric.change)}%
-                </Badge>
-              </div>
-              <div>
-                <div className="text-2xl font-bold">{metric.value}</div>
-                <p className="text-sm text-muted-foreground">{metric.title}</p>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* Detailed Analytics (shown when detailed=true) */}
-      {detailed && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5" />
-                Weekly Growth
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <AnalyticsLineChart
-                data={analytics.weeklyGrowth}
-                height={200}
-                series={[{ key: 'value', name: 'New Followers', color: '#3B82F6' }]}
-              />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                Follower Sources
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <AnalyticsPieChart
-                data={analytics.followerSources}
-                height={200}
-              />
-            </CardContent>
-          </Card>
+    <FollowerErrorBoundary onRetry={() => window.location.reload()}>
+      <div className={`space-y-6 ${className}`}>
+        {/* Key Metrics Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {displayMetrics.map((metric) => (
+            <Card key={metric.id}>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-2">
+                  <metric.icon className={`h-5 w-5 ${metric.iconColor}`} />
+                  <Badge 
+                    variant={metric.changeType === 'positive' ? 'default' : 'destructive'}
+                    className="text-xs"
+                  >
+                    {metric.changeType === 'positive' ? (
+                      <TrendingUp className="h-3 w-3 mr-1" />
+                    ) : (
+                      <TrendingDown className="h-3 w-3 mr-1" />
+                    )}
+                    {Math.abs(metric.change)}%
+                  </Badge>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold">{metric.value}</div>
+                  <p className="text-sm text-muted-foreground">{metric.title}</p>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
-      )}
 
-      {/* Engagement Insights */}
-      {detailed && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Eye className="h-5 w-5" />
-              Engagement Insights
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="text-center">
-                <div className="text-3xl font-bold text-blue-500">4.2</div>
-                <div className="text-sm text-muted-foreground">Avg. Event Rating</div>
+        {/* Detailed Analytics (shown when detailed=true) */}
+        {detailed && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5" />
+                  Growth ({timeRange})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <AnalyticsLineChart
+                  data={analytics.weeklyGrowth}
+                  height={200}
+                  series={[{ key: 'value', name: 'New Followers', color: '#3B82F6' }]}
+                />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  Follower Sources
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <AnalyticsPieChart
+                  data={analytics.followerSources}
+                  height={200}
+                />
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Engagement Insights */}
+        {detailed && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Eye className="h-5 w-5" />
+                Engagement Insights
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-blue-500">4.2</div>
+                  <div className="text-sm text-muted-foreground">Avg. Event Rating</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-green-500">78%</div>
+                  <div className="text-sm text-muted-foreground">Event Attendance Rate</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-purple-500">92%</div>
+                  <div className="text-sm text-muted-foreground">Notification Open Rate</div>
+                </div>
               </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-green-500">78%</div>
-                <div className="text-sm text-muted-foreground">Event Attendance Rate</div>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-purple-500">92%</div>
-                <div className="text-sm text-muted-foreground">Notification Open Rate</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-    </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    </FollowerErrorBoundary>
   );
 };
 
