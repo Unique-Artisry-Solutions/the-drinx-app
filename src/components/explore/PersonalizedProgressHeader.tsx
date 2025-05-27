@@ -22,7 +22,7 @@ const PersonalizedProgressHeader: React.FC<PersonalizedProgressHeaderProps> = ({
 
   // Mock data for demonstration
   const mockData = {
-    currentPoints: 1,250,
+    currentPoints: 1250,
     recentGains: 85,
     currentTier: 'Silver Explorer',
     nextTier: 'Gold Adventurer',
