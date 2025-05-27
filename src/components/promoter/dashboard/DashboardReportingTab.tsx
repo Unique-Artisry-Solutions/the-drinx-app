@@ -6,10 +6,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { FileText, BarChart3, Download, Plus, AlertCircle } from 'lucide-react';
 import { useReporting } from '@/hooks/useReporting';
-import { EventReportsPanel } from '@/components/reporting/EventReportsPanel';
-import { ComparativeAnalyticsPanel } from '@/components/reporting/ComparativeAnalyticsPanel';
-import { CustomDashboardPanel } from '@/components/reporting/CustomDashboardPanel';
-import { DataExportPanel } from '@/components/reporting/DataExportPanel';
+import EventReportsPanel from '@/components/reporting/EventReportsPanel';
+import ComparativeAnalyticsPanel from '@/components/reporting/ComparativeAnalyticsPanel';
+import CustomDashboardPanel from '@/components/reporting/CustomDashboardPanel';
+import DataExportPanel from '@/components/reporting/DataExportPanel';
 
 interface DashboardReportingTabProps {
   promoterId: string;

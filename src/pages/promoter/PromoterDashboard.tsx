@@ -13,7 +13,7 @@ import { DashboardPricingTab } from '@/components/promoter/dashboard/DashboardPr
 import { DashboardUrgencyTab } from '@/components/promoter/dashboard/DashboardUrgencyTab';
 import { DashboardAnalyticsTab } from '@/components/promoter/dashboard/DashboardAnalyticsTab';
 import { DashboardPredictiveAnalyticsTab } from '@/components/promoter/dashboard/DashboardPredictiveAnalyticsTab';
-import { DashboardReportingTab } from '@/components/promoter/dashboard/DashboardReportingTab';
+import DashboardReportingTab from '@/components/promoter/dashboard/DashboardReportingTab';
 import { DashboardSettingsTab } from '@/components/promoter/dashboard/DashboardSettingsTab';
 
 const PromoterDashboard = () => {
