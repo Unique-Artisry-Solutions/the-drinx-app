@@ -8,7 +8,7 @@ class EventVisibilityServiceClass {
     try {
       const { data: event, error } = await supabase
         .from('events')
-        .select('visibility, custom_settings')
+        .select('is_public, custom_settings')
         .eq('id', eventId)
         .single();
 
@@ -17,7 +17,7 @@ class EventVisibilityServiceClass {
 
       // Parse custom settings safely
       let settings: EventVisibilitySettings = {
-        isPrivate: false,
+        isPrivate: !event.is_public,
         requiresFollowing: false,
         allowedTiers: [],
         guestListOnly: false
@@ -38,7 +38,7 @@ class EventVisibilityServiceClass {
       }
 
       // Check access based on visibility and settings
-      if (event.visibility === 'public' && !settings.isPrivate) {
+      if (event.is_public && !settings.isPrivate) {
         return {
           hasAccess: true,
           accessType: 'public'
@@ -55,11 +55,11 @@ class EventVisibilityServiceClass {
 
         if (eventData) {
           const { data: subscription } = await supabase
-            .from('promoter_subscriptions')
+            .from('promoter_followers')
             .select('*')
             .eq('subscriber_id', userId)
             .eq('promoter_id', eventData.created_by)
-            .eq('status', 'active')
+            .eq('follow_status', 'active')
             .single();
 
           if (!subscription) {
@@ -92,7 +92,7 @@ class EventVisibilityServiceClass {
       let query = supabase
         .from('events')
         .select('*')
-        .eq('status', 'active');
+        .eq('status', 'published');
 
       if (promoterId) {
         query = query.eq('created_by', promoterId);
@@ -103,7 +103,7 @@ class EventVisibilityServiceClass {
 
       if (!userId) {
         // Return only public events for non-authenticated users
-        return events?.filter(event => event.visibility === 'public') || [];
+        return events?.filter(event => event.is_public) || [];
       }
 
       // Filter events based on access rules
@@ -126,7 +126,7 @@ class EventVisibilityServiceClass {
     try {
       const { data: event, error } = await supabase
         .from('events')
-        .select('visibility, custom_settings')
+        .select('is_public, custom_settings')
         .eq('id', eventId)
         .single();
 
@@ -135,7 +135,7 @@ class EventVisibilityServiceClass {
 
       // Default settings
       const defaultSettings: EventVisibilitySettings = {
-        isPrivate: event.visibility === 'private',
+        isPrivate: !event.is_public,
         requiresFollowing: false,
         allowedTiers: [],
         guestListOnly: false
@@ -170,7 +170,7 @@ class EventVisibilityServiceClass {
 
   async updateEventVisibilitySettings(eventId: string, settings: EventVisibilitySettings): Promise<void> {
     try {
-      const visibility = settings.isPrivate ? 'private' : 'public';
+      const isPublic = !settings.isPrivate;
       
       // Convert settings to JSON safely
       const customSettings: Json = {
@@ -184,7 +184,7 @@ class EventVisibilityServiceClass {
       const { error } = await supabase
         .from('events')
         .update({ 
-          visibility,
+          is_public: isPublic,
           custom_settings: customSettings
         })
         .eq('id', eventId);

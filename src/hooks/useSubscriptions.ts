@@ -1,7 +1,7 @@
 
 import { useFollowers } from './useFollowers';
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import type { SubscriptionTier } from '@/types/SubscriptionTypes';
 
 export function useSubscriptions(promoterId?: string) {
@@ -30,7 +30,7 @@ export function useSubscriptions(promoterId?: string) {
     // Subscription tiers
     tiers,
     
-    // User follows/subscriptions
+    // User follows/subscriptions - map to the followers data structure
     subscriptions: followers.userFollows,
     
     // Followers for promoter
