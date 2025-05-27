@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/auth';
+import useDevAuthBypass from '@/hooks/useDevAuthBypass';
 import { sampleEstablishments, sampleCocktails } from '@/data/sampleData';
 
 export interface UserStats {
@@ -45,7 +44,7 @@ export interface UpcomingEvent {
 }
 
 export const usePersonalizedData = () => {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated } = useDevAuthBypass();
   const [loading, setLoading] = useState(true);
   const [userStats, setUserStats] = useState<UserStats | null>(null);
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
@@ -147,7 +146,7 @@ export const usePersonalizedData = () => {
       // Nearby establishments using sample data
       const nearby = sampleEstablishments.slice(0, 3).map(est => ({
         ...est,
-        image_url: est.image || '/placeholder-establishment.jpg', // Fix the property name mismatch
+        image_url: est.image || '/placeholder-establishment.jpg',
         distance: `${(Math.random() * 2 + 0.1).toFixed(1)} miles`
       }));
       setNearbyEstablishments(nearby);

@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/auth';
+import useDevAuthBypass from '@/hooks/useDevAuthBypass';
 import { subDays, isToday } from 'date-fns';
 
 interface StreakDay {
@@ -17,7 +16,7 @@ interface StreakData {
 }
 
 export const useStreakData = (): StreakData => {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated } = useDevAuthBypass();
   const [streakData, setStreakData] = useState<StreakDay[]>([]);
   const [currentStreak, setCurrentStreak] = useState(0);
   const [longestStreak, setLongestStreak] = useState(0);
@@ -28,14 +27,12 @@ export const useStreakData = (): StreakData => {
       setIsLoading(true);
       
       if (isAuthenticated && user) {
-        // Mock streak data - in a real app, this would come from the API
         const mockStreakData: StreakDay[] = [];
         const today = new Date();
         
-        // Generate mock data for the last 60 days
         for (let i = 59; i >= 0; i--) {
           const date = subDays(today, i);
-          const hasVisit = Math.random() > 0.3; // 70% chance of visit
+          const hasVisit = Math.random() > 0.3;
           
           mockStreakData.push({
             date,
@@ -44,7 +41,6 @@ export const useStreakData = (): StreakData => {
           });
         }
         
-        // Calculate current streak (working backwards from today)
         let currentStreakCount = 0;
         for (let i = mockStreakData.length - 1; i >= 0; i--) {
           if (mockStreakData[i].hasVisit) {
@@ -54,7 +50,6 @@ export const useStreakData = (): StreakData => {
           }
         }
         
-        // Calculate longest streak
         let longestStreakCount = 0;
         let tempStreak = 0;
         
@@ -71,7 +66,6 @@ export const useStreakData = (): StreakData => {
         setCurrentStreak(currentStreakCount);
         setLongestStreak(longestStreakCount);
       } else {
-        // Guest user - no streak data
         setStreakData([]);
         setCurrentStreak(0);
         setLongestStreak(0);
