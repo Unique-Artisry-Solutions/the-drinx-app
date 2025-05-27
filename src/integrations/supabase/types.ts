@@ -1835,6 +1835,220 @@ export type Database = {
         }
         Relationships: []
       }
+      fee_structures: {
+        Row: {
+          created_at: string
+          effective_from: string
+          effective_until: string | null
+          event_type: string | null
+          id: string
+          is_active: boolean
+          name: string
+          payment_processing_fee_fixed: number
+          payment_processing_fee_percentage: number
+          platform_fee_fixed: number
+          platform_fee_percentage: number
+          region: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          effective_from?: string
+          effective_until?: string | null
+          event_type?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          payment_processing_fee_fixed?: number
+          payment_processing_fee_percentage?: number
+          platform_fee_fixed?: number
+          platform_fee_percentage?: number
+          region: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          effective_from?: string
+          effective_until?: string | null
+          event_type?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          payment_processing_fee_fixed?: number
+          payment_processing_fee_percentage?: number
+          platform_fee_fixed?: number
+          platform_fee_percentage?: number
+          region?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      financial_reports: {
+        Row: {
+          created_at: string
+          generated_at: string
+          id: string
+          net_earnings: number
+          organizer_id: string
+          payouts_completed: number
+          payouts_pending: number
+          period_end: string
+          period_start: string
+          refunds_count: number
+          report_data: Json
+          report_type: string
+          ticket_sales_count: number
+          total_fees: number
+          total_revenue: number
+          total_taxes: number
+        }
+        Insert: {
+          created_at?: string
+          generated_at?: string
+          id?: string
+          net_earnings?: number
+          organizer_id: string
+          payouts_completed?: number
+          payouts_pending?: number
+          period_end: string
+          period_start: string
+          refunds_count?: number
+          report_data?: Json
+          report_type: string
+          ticket_sales_count?: number
+          total_fees?: number
+          total_revenue?: number
+          total_taxes?: number
+        }
+        Update: {
+          created_at?: string
+          generated_at?: string
+          id?: string
+          net_earnings?: number
+          organizer_id?: string
+          payouts_completed?: number
+          payouts_pending?: number
+          period_end?: string
+          period_start?: string
+          refunds_count?: number
+          report_data?: Json
+          report_type?: string
+          ticket_sales_count?: number
+          total_fees?: number
+          total_revenue?: number
+          total_taxes?: number
+        }
+        Relationships: []
+      }
+      financial_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          event_id: string | null
+          fee_amount: number
+          id: string
+          metadata: Json
+          net_amount: number
+          payout_request_id: string | null
+          provider: string
+          provider_transaction_id: string | null
+          reconciled: boolean
+          reconciled_at: string | null
+          status: string
+          swig_circuit_id: string | null
+          tax_amount: number
+          ticket_purchase_id: string | null
+          transaction_type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string
+          event_id?: string | null
+          fee_amount?: number
+          id?: string
+          metadata?: Json
+          net_amount: number
+          payout_request_id?: string | null
+          provider?: string
+          provider_transaction_id?: string | null
+          reconciled?: boolean
+          reconciled_at?: string | null
+          status?: string
+          swig_circuit_id?: string | null
+          tax_amount?: number
+          ticket_purchase_id?: string | null
+          transaction_type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          event_id?: string | null
+          fee_amount?: number
+          id?: string
+          metadata?: Json
+          net_amount?: number
+          payout_request_id?: string | null
+          provider?: string
+          provider_transaction_id?: string | null
+          reconciled?: boolean
+          reconciled_at?: string | null
+          status?: string
+          swig_circuit_id?: string | null
+          tax_amount?: number
+          ticket_purchase_id?: string | null
+          transaction_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_transactions_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_statistics"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "financial_transactions_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_transactions_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "promoter_event_performance_view"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "financial_transactions_payout_request_id_fkey"
+            columns: ["payout_request_id"]
+            isOneToOne: false
+            referencedRelation: "payout_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_transactions_swig_circuit_id_fkey"
+            columns: ["swig_circuit_id"]
+            isOneToOne: false
+            referencedRelation: "swig_circuits"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_transactions_ticket_purchase_id_fkey"
+            columns: ["ticket_purchase_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_purchases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ingredient_pairing_scores: {
         Row: {
           complementary_notes: string | null
@@ -2321,6 +2535,57 @@ export type Database = {
           },
         ]
       }
+      organizer_tax_info: {
+        Row: {
+          address: Json
+          business_name: string | null
+          business_type: string | null
+          country_code: string
+          created_at: string
+          id: string
+          organizer_id: string
+          region: string
+          tax_exempt: boolean
+          tax_exempt_certificate_url: string | null
+          tax_id: string | null
+          updated_at: string
+          verified: boolean
+          verified_at: string | null
+        }
+        Insert: {
+          address?: Json
+          business_name?: string | null
+          business_type?: string | null
+          country_code: string
+          created_at?: string
+          id?: string
+          organizer_id: string
+          region: string
+          tax_exempt?: boolean
+          tax_exempt_certificate_url?: string | null
+          tax_id?: string | null
+          updated_at?: string
+          verified?: boolean
+          verified_at?: string | null
+        }
+        Update: {
+          address?: Json
+          business_name?: string | null
+          business_type?: string | null
+          country_code?: string
+          created_at?: string
+          id?: string
+          organizer_id?: string
+          region?: string
+          tax_exempt?: boolean
+          tax_exempt_certificate_url?: string | null
+          tax_id?: string | null
+          updated_at?: string
+          verified?: boolean
+          verified_at?: string | null
+        }
+        Relationships: []
+      }
       payment_failure_logs: {
         Row: {
           amount: number | null
@@ -2554,6 +2819,95 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      payout_requests: {
+        Row: {
+          amount: number
+          created_at: string
+          event_id: string | null
+          failure_reason: string | null
+          fees_deducted: number
+          id: string
+          metadata: Json
+          net_amount: number
+          organizer_id: string
+          payout_method: Json
+          processed_at: string | null
+          provider_transaction_id: string | null
+          requested_at: string
+          status: string
+          swig_circuit_id: string | null
+          tax_withheld: number
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          event_id?: string | null
+          failure_reason?: string | null
+          fees_deducted?: number
+          id?: string
+          metadata?: Json
+          net_amount: number
+          organizer_id: string
+          payout_method?: Json
+          processed_at?: string | null
+          provider_transaction_id?: string | null
+          requested_at?: string
+          status?: string
+          swig_circuit_id?: string | null
+          tax_withheld?: number
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          event_id?: string | null
+          failure_reason?: string | null
+          fees_deducted?: number
+          id?: string
+          metadata?: Json
+          net_amount?: number
+          organizer_id?: string
+          payout_method?: Json
+          processed_at?: string | null
+          provider_transaction_id?: string | null
+          requested_at?: string
+          status?: string
+          swig_circuit_id?: string | null
+          tax_withheld?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payout_requests_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_statistics"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "payout_requests_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payout_requests_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "promoter_event_performance_view"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "payout_requests_swig_circuit_id_fkey"
+            columns: ["swig_circuit_id"]
+            isOneToOne: false
+            referencedRelation: "swig_circuits"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -4146,6 +4500,48 @@ export type Database = {
         }
         Relationships: []
       }
+      tax_configurations: {
+        Row: {
+          country_code: string
+          created_at: string
+          id: string
+          is_active: boolean
+          region: string
+          requires_tax_id: boolean
+          tax_rate: number
+          tax_type: string
+          threshold_amount: number | null
+          updated_at: string
+          withholding_required: boolean
+        }
+        Insert: {
+          country_code: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          region: string
+          requires_tax_id?: boolean
+          tax_rate: number
+          tax_type: string
+          threshold_amount?: number | null
+          updated_at?: string
+          withholding_required?: boolean
+        }
+        Update: {
+          country_code?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          region?: string
+          requires_tax_id?: boolean
+          tax_rate?: number
+          tax_type?: string
+          threshold_amount?: number | null
+          updated_at?: string
+          withholding_required?: boolean
+        }
+        Relationships: []
+      }
       ticket_cancellation_policies: {
         Row: {
           created_at: string | null
@@ -5211,6 +5607,17 @@ export type Database = {
           points_change: number
           new_balance: number
           error: string
+        }[]
+      }
+      calculate_fees_and_taxes: {
+        Args: { p_amount: number; p_region?: string; p_event_type?: string }
+        Returns: {
+          gross_amount: number
+          platform_fee: number
+          processing_fee: number
+          total_fees: number
+          tax_amount: number
+          net_amount: number
         }[]
       }
       calculate_refund_amount: {
