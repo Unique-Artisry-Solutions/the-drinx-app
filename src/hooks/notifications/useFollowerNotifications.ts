@@ -1,4 +1,3 @@
-
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -26,7 +25,7 @@ export function useFollowerNotifications(promoterId: string) {
 
       const segments = [
         {
-          id: 'all',
+          id: 'all' as const,
           name: 'All Followers',
           type: 'all' as const,
           count: followers?.length || 0

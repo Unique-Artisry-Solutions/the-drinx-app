@@ -5,32 +5,29 @@ export async function setupFollowerDatabase() {
   try {
     console.log('Setting up follower database schema...');
     
-    // Check if tables exist and create them if they don't
-    const { data: tables, error: tablesError } = await supabase
-      .from('information_schema.tables')
-      .select('table_name')
-      .eq('table_schema', 'public')
-      .in('table_name', ['promoter_followers', 'promoter_subscription_tiers', 'notifications', 'notification_categories']);
+    // Check if tables exist by trying to query them
+    const checkTable = async (tableName: string) => {
+      try {
+        const { error } = await supabase.from(tableName as any).select('id').limit(1);
+        return !error;
+      } catch {
+        return false;
+      }
+    };
 
-    if (tablesError) {
-      console.error('Error checking tables:', tablesError);
-      return false;
-    }
-
-    const existingTables = tables?.map(t => t.table_name) || [];
+    const promoterFollowersExists = await checkTable('promoter_followers');
+    const notificationsExists = await checkTable('notifications');
     
-    if (!existingTables.includes('promoter_followers')) {
-      console.log('Creating promoter_followers table...');
-      // Table creation logic would go here
+    if (!promoterFollowersExists) {
+      console.log('promoter_followers table not found - please run the database migration');
     }
 
-    if (!existingTables.includes('notifications')) {
-      console.log('Creating notifications table...');
-      // Table creation logic would go here  
+    if (!notificationsExists) {
+      console.log('notifications table not found - please run the database migration');
     }
 
-    console.log('Database setup completed successfully');
-    return true;
+    console.log('Database setup check completed');
+    return promoterFollowersExists && notificationsExists;
   } catch (error) {
     console.error('Error setting up database:', error);
     return false;

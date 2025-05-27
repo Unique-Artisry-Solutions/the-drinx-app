@@ -3,11 +3,12 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
-import { useSubscriptions } from '@/hooks/useSubscriptions';
+import { useAdaptiveSubscriptions } from '@/hooks/useAdaptiveSubscriptions';
 import FollowerList from './FollowerList';
 import FollowerAnalyticsWidgets from './FollowerAnalyticsWidgets';
 import FollowerNotificationCenter from './FollowerNotificationCenter';
-import { Search, Users, Bell, BarChart3 } from 'lucide-react';
+import FollowerSystemHealthMonitor from '@/components/admin/FollowerSystemHealthMonitor';
+import { Search, Users, Bell, BarChart3, Settings } from 'lucide-react';
 
 interface FollowerDashboardProps {
   promoterId: string;
@@ -16,7 +17,12 @@ interface FollowerDashboardProps {
 const FollowerDashboard: React.FC<FollowerDashboardProps> = ({ promoterId }) => {
   const [activeTab, setActiveTab] = useState('overview');
   const [searchTerm, setSearchTerm] = useState('');
-  const { followers, isLoading } = useSubscriptions(promoterId);
+  const { 
+    followers, 
+    isLoading, 
+    usingNewSystem,
+    systemHealth 
+  } = useAdaptiveSubscriptions(promoterId);
 
   const followerCount = followers?.length || 0;
 
@@ -38,12 +44,17 @@ const FollowerDashboard: React.FC<FollowerDashboardProps> = ({ promoterId }) => 
           <h1 className="text-3xl font-bold">Follower Dashboard</h1>
           <p className="text-muted-foreground">
             Manage your {followerCount.toLocaleString()} followers and engagement
+            {usingNewSystem && (
+              <span className="ml-2 text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                New System
+              </span>
+            )}
           </p>
         </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="overview" className="flex items-center gap-2">
             <BarChart3 className="h-4 w-4" />
             Overview
@@ -59,6 +70,10 @@ const FollowerDashboard: React.FC<FollowerDashboardProps> = ({ promoterId }) => 
           <TabsTrigger value="analytics" className="flex items-center gap-2">
             <BarChart3 className="h-4 w-4" />
             Analytics
+          </TabsTrigger>
+          <TabsTrigger value="system" className="flex items-center gap-2">
+            <Settings className="h-4 w-4" />
+            System
           </TabsTrigger>
         </TabsList>
 
@@ -120,6 +135,10 @@ const FollowerDashboard: React.FC<FollowerDashboardProps> = ({ promoterId }) => 
 
         <TabsContent value="analytics" className="space-y-6">
           <FollowerAnalyticsWidgets promoterId={promoterId} detailed={true} />
+        </TabsContent>
+
+        <TabsContent value="system" className="space-y-6">
+          <FollowerSystemHealthMonitor promoterId={promoterId} />
         </TabsContent>
       </Tabs>
     </div>
