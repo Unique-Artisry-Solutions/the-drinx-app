@@ -10,7 +10,10 @@ import {
   Timer, 
   Calendar,
   Eye,
-  ArrowUpRight
+  ArrowUpRight,
+  Share2,
+  Target,
+  Zap
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -27,35 +30,51 @@ export const DashboardWidgets: React.FC<DashboardWidgetsProps> = ({ promoterId }
     liveEvents: 3,
     todayRevenue: 2840,
     urgentCampaigns: 2,
-    conversionRate: 8.5
+    conversionRate: 8.5,
+    affiliatePerformance: 156,
+    referralConversions: 23,
+    pricingEffectiveness: 92
   };
 
   const recentActivity = [
     {
       id: 1,
+      type: 'affiliate',
+      message: 'New affiliate partner approved: Marketing Pro Co.',
+      time: '1 minute ago',
+      amount: null
+    },
+    {
+      id: 2,
       type: 'sale',
       message: 'New ticket purchase for Summer Vibes Event',
       time: '2 minutes ago',
       amount: '$45'
     },
     {
-      id: 2,
+      id: 3,
+      type: 'referral',
+      message: '5 new referrals from social media campaign',
+      time: '8 minutes ago'
+    },
+    {
+      id: 4,
       type: 'campaign',
       message: 'Urgency campaign "Last Chance" started',
       time: '15 minutes ago'
     },
     {
-      id: 3,
-      type: 'visitor',
-      message: '23 new visitors on pricing page',
-      time: '30 minutes ago'
+      id: 5,
+      type: 'pricing',
+      message: 'Dynamic pricing rule triggered for VIP tickets',
+      time: '22 minutes ago'
     }
   ];
 
   return (
     <div className="space-y-6">
       {/* Real-Time Metrics Row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="hover:shadow-md transition-shadow">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-2">
@@ -75,6 +94,63 @@ export const DashboardWidgets: React.FC<DashboardWidgetsProps> = ({ promoterId }
           </CardContent>
         </Card>
 
+        <Card className="hover:shadow-md transition-shadow">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Users className="h-4 w-4 text-blue-500" />
+              <span className="text-sm font-medium">Affiliate Performance</span>
+            </div>
+            <div className="text-2xl font-bold">{realTimeData.affiliatePerformance}</div>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="mt-2 p-0 h-auto text-sm text-muted-foreground hover:text-primary"
+              onClick={() => navigate('/promoter/affiliates')}
+            >
+              Manage affiliates <ArrowUpRight className="h-3 w-3 ml-1" />
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:shadow-md transition-shadow">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Share2 className="h-4 w-4 text-orange-500" />
+              <span className="text-sm font-medium">Referral Conversions</span>
+            </div>
+            <div className="text-2xl font-bold">{realTimeData.referralConversions}</div>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="mt-2 p-0 h-auto text-sm text-muted-foreground hover:text-primary"
+              onClick={() => navigate('/promoter/referrals')}
+            >
+              View campaigns <ArrowUpRight className="h-3 w-3 ml-1" />
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:shadow-md transition-shadow">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Zap className="h-4 w-4 text-purple-500" />
+              <span className="text-sm font-medium">Pricing Effectiveness</span>
+            </div>
+            <div className="text-2xl font-bold">{realTimeData.pricingEffectiveness}%</div>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="mt-2 p-0 h-auto text-sm text-muted-foreground hover:text-primary"
+              onClick={() => navigate('/promoter/pricing')}
+            >
+              Manage pricing <ArrowUpRight className="h-3 w-3 ml-1" />
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Extended Metrics Row */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="hover:shadow-md transition-shadow">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-2">

@@ -11,7 +11,11 @@ import {
   Calendar, 
   Target, 
   Settings,
-  ArrowRight
+  ArrowRight,
+  Users,
+  Share2,
+  Tag,
+  Zap
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -39,7 +43,7 @@ export const QuickActions: React.FC = () => {
       actionText: 'Manage Pricing'
     },
     {
-      title: 'Urgency Features',
+      title: 'Urgency Tools',
       description: 'Countdown timers and scarcity indicators',
       icon: Timer,
       path: '/promoter/urgency',
@@ -48,11 +52,29 @@ export const QuickActions: React.FC = () => {
       actionText: 'Create Campaign'
     },
     {
+      title: 'Affiliate Management',
+      description: 'Manage affiliate partners and tracking',
+      icon: Users,
+      path: '/promoter/affiliates',
+      status: 'new',
+      metrics: '12 active partners',
+      actionText: 'Manage Affiliates'
+    },
+    {
+      title: 'Referral Campaigns',
+      description: 'Track and optimize referral programs',
+      icon: Share2,
+      path: '/promoter/referrals',
+      status: 'new',
+      metrics: '8.2% conversion rate',
+      actionText: 'View Campaigns'
+    },
+    {
       title: 'Real-Time Analytics',
       description: 'Live monitoring and performance tracking',
       icon: TrendingUp,
       path: '/promoter/real-time-analytics',
-      status: 'new',
+      status: 'active',
       metrics: '147 active visitors',
       actionText: 'View Live Data'
     },
