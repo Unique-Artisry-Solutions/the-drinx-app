@@ -9,6 +9,305 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      affiliate_commissions: {
+        Row: {
+          affiliate_partner_id: string
+          approved_at: string | null
+          commission_amount: number
+          created_at: string
+          id: string
+          paid_at: string | null
+          status: string
+          ticket_purchase_id: string | null
+          tracking_link_id: string
+          updated_at: string
+        }
+        Insert: {
+          affiliate_partner_id: string
+          approved_at?: string | null
+          commission_amount: number
+          created_at?: string
+          id?: string
+          paid_at?: string | null
+          status?: string
+          ticket_purchase_id?: string | null
+          tracking_link_id: string
+          updated_at?: string
+        }
+        Update: {
+          affiliate_partner_id?: string
+          approved_at?: string | null
+          commission_amount?: number
+          created_at?: string
+          id?: string
+          paid_at?: string | null
+          status?: string
+          ticket_purchase_id?: string | null
+          tracking_link_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_commissions_affiliate_partner_id_fkey"
+            columns: ["affiliate_partner_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "affiliate_commissions_ticket_purchase_id_fkey"
+            columns: ["ticket_purchase_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_purchases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "affiliate_commissions_tracking_link_id_fkey"
+            columns: ["tracking_link_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_tracking_links"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      affiliate_partners: {
+        Row: {
+          affiliate_code: string
+          affiliate_program_id: string
+          approved_at: string | null
+          created_at: string
+          id: string
+          status: string
+          suspended_at: string | null
+          total_clicks: number | null
+          total_conversions: number | null
+          total_earnings: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          affiliate_code: string
+          affiliate_program_id: string
+          approved_at?: string | null
+          created_at?: string
+          id?: string
+          status?: string
+          suspended_at?: string | null
+          total_clicks?: number | null
+          total_conversions?: number | null
+          total_earnings?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          affiliate_code?: string
+          affiliate_program_id?: string
+          approved_at?: string | null
+          created_at?: string
+          id?: string
+          status?: string
+          suspended_at?: string | null
+          total_clicks?: number | null
+          total_conversions?: number | null
+          total_earnings?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_partners_affiliate_program_id_fkey"
+            columns: ["affiliate_program_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_programs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "affiliate_partners_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      affiliate_payouts: {
+        Row: {
+          affiliate_partner_id: string
+          amount: number
+          created_at: string
+          id: string
+          payout_method: Json
+          processed_at: string | null
+          provider_transaction_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          affiliate_partner_id: string
+          amount: number
+          created_at?: string
+          id?: string
+          payout_method?: Json
+          processed_at?: string | null
+          provider_transaction_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          affiliate_partner_id?: string
+          amount?: number
+          created_at?: string
+          id?: string
+          payout_method?: Json
+          processed_at?: string | null
+          provider_transaction_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_payouts_affiliate_partner_id_fkey"
+            columns: ["affiliate_partner_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      affiliate_programs: {
+        Row: {
+          commission_rate: number
+          commission_type: string
+          cookie_duration_days: number | null
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          min_payout_amount: number | null
+          name: string
+          promoter_id: string
+          terms_and_conditions: string | null
+          updated_at: string
+        }
+        Insert: {
+          commission_rate: number
+          commission_type: string
+          cookie_duration_days?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          min_payout_amount?: number | null
+          name: string
+          promoter_id: string
+          terms_and_conditions?: string | null
+          updated_at?: string
+        }
+        Update: {
+          commission_rate?: number
+          commission_type?: string
+          cookie_duration_days?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          min_payout_amount?: number | null
+          name?: string
+          promoter_id?: string
+          terms_and_conditions?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_programs_promoter_id_fkey"
+            columns: ["promoter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      affiliate_tracking_links: {
+        Row: {
+          affiliate_partner_id: string
+          click_count: number | null
+          conversion_count: number | null
+          created_at: string
+          event_id: string | null
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          link_url: string
+          swig_circuit_id: string | null
+          tracking_code: string
+          updated_at: string
+        }
+        Insert: {
+          affiliate_partner_id: string
+          click_count?: number | null
+          conversion_count?: number | null
+          created_at?: string
+          event_id?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          link_url: string
+          swig_circuit_id?: string | null
+          tracking_code: string
+          updated_at?: string
+        }
+        Update: {
+          affiliate_partner_id?: string
+          click_count?: number | null
+          conversion_count?: number | null
+          created_at?: string
+          event_id?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          link_url?: string
+          swig_circuit_id?: string | null
+          tracking_code?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_tracking_links_affiliate_partner_id_fkey"
+            columns: ["affiliate_partner_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "affiliate_tracking_links_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_statistics"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "affiliate_tracking_links_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "affiliate_tracking_links_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "promoter_event_performance_view"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "affiliate_tracking_links_swig_circuit_id_fkey"
+            columns: ["swig_circuit_id"]
+            isOneToOne: false
+            referencedRelation: "swig_circuits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_model_parameters: {
         Row: {
           created_at: string
@@ -740,6 +1039,160 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      countdown_timers: {
+        Row: {
+          auto_hide_on_expiry: boolean | null
+          created_at: string
+          description: string | null
+          display_style: Json | null
+          event_id: string | null
+          id: string
+          is_active: boolean
+          swig_circuit_id: string | null
+          target_datetime: string
+          timer_type: string
+          title: string
+          updated_at: string
+          urgency_message: string | null
+        }
+        Insert: {
+          auto_hide_on_expiry?: boolean | null
+          created_at?: string
+          description?: string | null
+          display_style?: Json | null
+          event_id?: string | null
+          id?: string
+          is_active?: boolean
+          swig_circuit_id?: string | null
+          target_datetime: string
+          timer_type: string
+          title: string
+          updated_at?: string
+          urgency_message?: string | null
+        }
+        Update: {
+          auto_hide_on_expiry?: boolean | null
+          created_at?: string
+          description?: string | null
+          display_style?: Json | null
+          event_id?: string | null
+          id?: string
+          is_active?: boolean
+          swig_circuit_id?: string | null
+          target_datetime?: string
+          timer_type?: string
+          title?: string
+          updated_at?: string
+          urgency_message?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "countdown_timers_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_statistics"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "countdown_timers_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "countdown_timers_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "promoter_event_performance_view"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "countdown_timers_swig_circuit_id_fkey"
+            columns: ["swig_circuit_id"]
+            isOneToOne: false
+            referencedRelation: "swig_circuits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      demand_metrics: {
+        Row: {
+          cart_abandonments: number | null
+          cart_additions: number | null
+          created_at: string
+          demand_score: number | null
+          event_id: string | null
+          id: string
+          metric_date: string
+          page_views: number | null
+          sales_velocity: number | null
+          swig_circuit_id: string | null
+          ticket_inquiries: number | null
+          unique_visitors: number | null
+          updated_at: string
+        }
+        Insert: {
+          cart_abandonments?: number | null
+          cart_additions?: number | null
+          created_at?: string
+          demand_score?: number | null
+          event_id?: string | null
+          id?: string
+          metric_date?: string
+          page_views?: number | null
+          sales_velocity?: number | null
+          swig_circuit_id?: string | null
+          ticket_inquiries?: number | null
+          unique_visitors?: number | null
+          updated_at?: string
+        }
+        Update: {
+          cart_abandonments?: number | null
+          cart_additions?: number | null
+          created_at?: string
+          demand_score?: number | null
+          event_id?: string | null
+          id?: string
+          metric_date?: string
+          page_views?: number | null
+          sales_velocity?: number | null
+          swig_circuit_id?: string | null
+          ticket_inquiries?: number | null
+          unique_visitors?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "demand_metrics_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_statistics"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "demand_metrics_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "demand_metrics_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "promoter_event_performance_view"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "demand_metrics_swig_circuit_id_fkey"
+            columns: ["swig_circuit_id"]
+            isOneToOne: false
+            referencedRelation: "swig_circuits"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       email_templates: {
         Row: {
@@ -2909,6 +3362,210 @@ export type Database = {
           },
         ]
       }
+      price_history: {
+        Row: {
+          automatic_change: boolean
+          change_reason: string
+          changed_by: string | null
+          created_at: string
+          effective_at: string
+          id: string
+          new_price: number
+          old_price: number
+          pricing_tier_id: string | null
+          rule_applied: string | null
+        }
+        Insert: {
+          automatic_change?: boolean
+          change_reason: string
+          changed_by?: string | null
+          created_at?: string
+          effective_at?: string
+          id?: string
+          new_price: number
+          old_price: number
+          pricing_tier_id?: string | null
+          rule_applied?: string | null
+        }
+        Update: {
+          automatic_change?: boolean
+          change_reason?: string
+          changed_by?: string | null
+          created_at?: string
+          effective_at?: string
+          id?: string
+          new_price?: number
+          old_price?: number
+          pricing_tier_id?: string | null
+          rule_applied?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "price_history_changed_by_fkey"
+            columns: ["changed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "price_history_pricing_tier_id_fkey"
+            columns: ["pricing_tier_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_pricing_tiers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "price_history_rule_applied_fkey"
+            columns: ["rule_applied"]
+            isOneToOne: false
+            referencedRelation: "pricing_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pricing_automations: {
+        Row: {
+          cooldown_minutes: number | null
+          created_at: string
+          id: string
+          is_active: boolean
+          last_triggered: string | null
+          max_triggers_per_day: number | null
+          pricing_rule_id: string
+          trigger_conditions: Json
+          trigger_count: number | null
+          updated_at: string
+        }
+        Insert: {
+          cooldown_minutes?: number | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_triggered?: string | null
+          max_triggers_per_day?: number | null
+          pricing_rule_id: string
+          trigger_conditions?: Json
+          trigger_count?: number | null
+          updated_at?: string
+        }
+        Update: {
+          cooldown_minutes?: number | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_triggered?: string | null
+          max_triggers_per_day?: number | null
+          pricing_rule_id?: string
+          trigger_conditions?: Json
+          trigger_count?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pricing_automations_pricing_rule_id_fkey"
+            columns: ["pricing_rule_id"]
+            isOneToOne: false
+            referencedRelation: "pricing_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pricing_rules: {
+        Row: {
+          conditions: Json
+          created_at: string
+          effective_from: string
+          effective_until: string | null
+          event_id: string | null
+          id: string
+          is_active: boolean
+          max_price: number | null
+          min_price: number | null
+          price_adjustment_type: string
+          price_adjustment_value: number
+          priority: number | null
+          promoter_id: string
+          rule_name: string
+          rule_type: string
+          swig_circuit_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          conditions?: Json
+          created_at?: string
+          effective_from?: string
+          effective_until?: string | null
+          event_id?: string | null
+          id?: string
+          is_active?: boolean
+          max_price?: number | null
+          min_price?: number | null
+          price_adjustment_type: string
+          price_adjustment_value: number
+          priority?: number | null
+          promoter_id: string
+          rule_name: string
+          rule_type: string
+          swig_circuit_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          conditions?: Json
+          created_at?: string
+          effective_from?: string
+          effective_until?: string | null
+          event_id?: string | null
+          id?: string
+          is_active?: boolean
+          max_price?: number | null
+          min_price?: number | null
+          price_adjustment_type?: string
+          price_adjustment_value?: number
+          priority?: number | null
+          promoter_id?: string
+          rule_name?: string
+          rule_type?: string
+          swig_circuit_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pricing_rules_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_statistics"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "pricing_rules_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pricing_rules_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "promoter_event_performance_view"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "pricing_rules_promoter_id_fkey"
+            columns: ["promoter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pricing_rules_swig_circuit_id_fkey"
+            columns: ["swig_circuit_id"]
+            isOneToOne: false
+            referencedRelation: "swig_circuits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -3456,6 +4113,166 @@ export type Database = {
         }
         Relationships: []
       }
+      referral_programs: {
+        Row: {
+          created_at: string
+          description: string | null
+          expiration_date: string | null
+          id: string
+          is_active: boolean
+          max_uses_per_user: number | null
+          name: string
+          promoter_id: string
+          referee_reward_type: string
+          referee_reward_value: number
+          referrer_reward_type: string
+          referrer_reward_value: number
+          tier_multipliers: Json | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          expiration_date?: string | null
+          id?: string
+          is_active?: boolean
+          max_uses_per_user?: number | null
+          name: string
+          promoter_id: string
+          referee_reward_type: string
+          referee_reward_value: number
+          referrer_reward_type: string
+          referrer_reward_value: number
+          tier_multipliers?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          expiration_date?: string | null
+          id?: string
+          is_active?: boolean
+          max_uses_per_user?: number | null
+          name?: string
+          promoter_id?: string
+          referee_reward_type?: string
+          referee_reward_value?: number
+          referrer_reward_type?: string
+          referrer_reward_value?: number
+          tier_multipliers?: Json | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referral_programs_promoter_id_fkey"
+            columns: ["promoter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      referral_rewards: {
+        Row: {
+          awarded_at: string | null
+          created_at: string
+          id: string
+          reward_amount: number
+          reward_points: number | null
+          reward_type: string
+          status: string
+          tier_bonus_applied: number | null
+          updated_at: string
+          user_id: string
+          user_referral_id: string
+        }
+        Insert: {
+          awarded_at?: string | null
+          created_at?: string
+          id?: string
+          reward_amount: number
+          reward_points?: number | null
+          reward_type: string
+          status?: string
+          tier_bonus_applied?: number | null
+          updated_at?: string
+          user_id: string
+          user_referral_id: string
+        }
+        Update: {
+          awarded_at?: string | null
+          created_at?: string
+          id?: string
+          reward_amount?: number
+          reward_points?: number | null
+          reward_type?: string
+          status?: string
+          tier_bonus_applied?: number | null
+          updated_at?: string
+          user_id?: string
+          user_referral_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referral_rewards_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referral_rewards_user_referral_id_fkey"
+            columns: ["user_referral_id"]
+            isOneToOne: false
+            referencedRelation: "user_referrals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      referral_tiers: {
+        Row: {
+          benefits: Json | null
+          bonus_multiplier: number
+          created_at: string
+          id: string
+          min_referrals: number
+          referral_program_id: string
+          tier_name: string
+          tier_order: number
+          updated_at: string
+        }
+        Insert: {
+          benefits?: Json | null
+          bonus_multiplier?: number
+          created_at?: string
+          id?: string
+          min_referrals: number
+          referral_program_id: string
+          tier_name: string
+          tier_order: number
+          updated_at?: string
+        }
+        Update: {
+          benefits?: Json | null
+          bonus_multiplier?: number
+          created_at?: string
+          id?: string
+          min_referrals?: number
+          referral_program_id?: string
+          tier_name?: string
+          tier_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referral_tiers_referral_program_id_fkey"
+            columns: ["referral_program_id"]
+            isOneToOne: false
+            referencedRelation: "referral_programs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       revenue_entries: {
         Row: {
           amount: number
@@ -3936,6 +4753,63 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      scarcity_indicators: {
+        Row: {
+          created_at: string
+          display_style: Json | null
+          id: string
+          indicator_type: string
+          is_active: boolean
+          message_template: string
+          priority: number | null
+          threshold_value: number | null
+          ticket_pricing_tier_id: string | null
+          updated_at: string
+          urgency_campaign_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          display_style?: Json | null
+          id?: string
+          indicator_type: string
+          is_active?: boolean
+          message_template: string
+          priority?: number | null
+          threshold_value?: number | null
+          ticket_pricing_tier_id?: string | null
+          updated_at?: string
+          urgency_campaign_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          display_style?: Json | null
+          id?: string
+          indicator_type?: string
+          is_active?: boolean
+          message_template?: string
+          priority?: number | null
+          threshold_value?: number | null
+          ticket_pricing_tier_id?: string | null
+          updated_at?: string
+          urgency_campaign_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scarcity_indicators_ticket_pricing_tier_id_fkey"
+            columns: ["ticket_pricing_tier_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_pricing_tiers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scarcity_indicators_urgency_campaign_id_fkey"
+            columns: ["urgency_campaign_id"]
+            isOneToOne: false
+            referencedRelation: "urgency_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       streak_settings: {
         Row: {
@@ -5029,6 +5903,102 @@ export type Database = {
           },
         ]
       }
+      urgency_campaigns: {
+        Row: {
+          campaign_name: string
+          campaign_type: string
+          conversion_count: number | null
+          created_at: string
+          current_displays: number | null
+          display_conditions: Json | null
+          end_date: string | null
+          event_id: string | null
+          id: string
+          is_active: boolean
+          max_displays: number | null
+          message_template: string
+          promoter_id: string
+          start_date: string
+          swig_circuit_id: string | null
+          trigger_conditions: Json | null
+          updated_at: string
+        }
+        Insert: {
+          campaign_name: string
+          campaign_type: string
+          conversion_count?: number | null
+          created_at?: string
+          current_displays?: number | null
+          display_conditions?: Json | null
+          end_date?: string | null
+          event_id?: string | null
+          id?: string
+          is_active?: boolean
+          max_displays?: number | null
+          message_template: string
+          promoter_id: string
+          start_date?: string
+          swig_circuit_id?: string | null
+          trigger_conditions?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          campaign_name?: string
+          campaign_type?: string
+          conversion_count?: number | null
+          created_at?: string
+          current_displays?: number | null
+          display_conditions?: Json | null
+          end_date?: string | null
+          event_id?: string | null
+          id?: string
+          is_active?: boolean
+          max_displays?: number | null
+          message_template?: string
+          promoter_id?: string
+          start_date?: string
+          swig_circuit_id?: string | null
+          trigger_conditions?: Json | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "urgency_campaigns_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_statistics"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "urgency_campaigns_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "urgency_campaigns_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "promoter_event_performance_view"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "urgency_campaigns_promoter_id_fkey"
+            columns: ["promoter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "urgency_campaigns_swig_circuit_id_fkey"
+            columns: ["swig_circuit_id"]
+            isOneToOne: false
+            referencedRelation: "swig_circuits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_activity_streaks: {
         Row: {
           created_at: string
@@ -5146,6 +6116,70 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_referrals: {
+        Row: {
+          completed_at: string | null
+          conversion_data: Json | null
+          conversion_event: string | null
+          created_at: string
+          id: string
+          referee_id: string | null
+          referral_code: string
+          referral_program_id: string
+          referrer_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          conversion_data?: Json | null
+          conversion_event?: string | null
+          created_at?: string
+          id?: string
+          referee_id?: string | null
+          referral_code: string
+          referral_program_id: string
+          referrer_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          conversion_data?: Json | null
+          conversion_event?: string | null
+          created_at?: string
+          id?: string
+          referee_id?: string | null
+          referral_code?: string
+          referral_program_id?: string
+          referrer_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_referrals_referee_id_fkey"
+            columns: ["referee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_referrals_referral_program_id_fkey"
+            columns: ["referral_program_id"]
+            isOneToOne: false
+            referencedRelation: "referral_programs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_referrals_referrer_id_fkey"
+            columns: ["referrer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_reward_preferences: {
         Row: {

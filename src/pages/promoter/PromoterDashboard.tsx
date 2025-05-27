@@ -12,7 +12,11 @@ import {
   Eye,
   BarChart3,
   Target,
-  Route
+  Route,
+  Share2,
+  Timer,
+  Zap,
+  UserPlus
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import RealTimeDashboard from '@/components/promoter/RealTimeDashboard';
@@ -76,6 +80,41 @@ const PromoterDashboard = () => {
     }
   ];
 
+  const promotionalTools = [
+    {
+      title: "Affiliate Marketing",
+      description: "Create partner programs and track commissions",
+      icon: Share2,
+      action: () => navigate('/promoter/affiliate-programs'),
+      color: "bg-indigo-500",
+      badge: "New"
+    },
+    {
+      title: "Referral Programs",
+      description: "Build user referral campaigns with rewards",
+      icon: UserPlus,
+      action: () => navigate('/promoter/referral-programs'),
+      color: "bg-emerald-500",
+      badge: "New"
+    },
+    {
+      title: "Dynamic Pricing",
+      description: "Automated pricing based on demand",
+      icon: TrendingUp,
+      action: () => navigate('/promoter/pricing-rules'),
+      color: "bg-amber-500",
+      badge: "New"
+    },
+    {
+      title: "Urgency Campaigns",
+      description: "Create countdown timers and scarcity displays",
+      icon: Timer,
+      action: () => navigate('/promoter/urgency-campaigns'),
+      color: "bg-red-500",
+      badge: "New"
+    }
+  ];
+
   return (
     <div className="container mx-auto px-4 py-8 space-y-8">
       {/* Header */}
@@ -101,6 +140,49 @@ const PromoterDashboard = () => {
 
       {/* Real-Time Analytics Dashboard */}
       <RealTimeDashboard />
+
+      {/* Promotional Tools Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Zap className="h-5 w-5 text-amber-500" />
+            Advanced Promotional Tools
+          </CardTitle>
+          <CardDescription>
+            Powerful tools to boost your event marketing and sales
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {promotionalTools.map((tool, index) => {
+              const Icon = tool.icon;
+              return (
+                <div
+                  key={index}
+                  onClick={tool.action}
+                  className="p-4 border rounded-lg hover:shadow-md transition-shadow cursor-pointer group relative"
+                >
+                  {tool.badge && (
+                    <Badge 
+                      variant="secondary" 
+                      className="absolute -top-1 -right-1 bg-green-100 text-green-800 text-xs"
+                    >
+                      {tool.badge}
+                    </Badge>
+                  )}
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className={`p-2 rounded-lg ${tool.color} group-hover:scale-105 transition-transform`}>
+                      <Icon className="h-5 w-5 text-white" />
+                    </div>
+                    <h3 className="font-semibold text-sm">{tool.title}</h3>
+                  </div>
+                  <p className="text-xs text-muted-foreground">{tool.description}</p>
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Quick Actions */}
       <Card>
