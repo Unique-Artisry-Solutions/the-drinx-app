@@ -1,275 +1,245 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { useAuth } from '@/contexts/auth';
 import { 
+  BarChart3, 
   Calendar, 
   Users, 
-  TrendingUp, 
   DollarSign, 
-  Plus,
+  TrendingUp, 
   Eye,
-  BarChart3,
-  Target,
-  Route,
-  Share2,
+  Settings,
   Timer,
   Zap,
-  UserPlus
+  Target
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { DynamicPricingDashboard } from '@/components/pricing/DynamicPricingDashboard';
+import { PricingRulesManager } from '@/components/pricing/PricingRulesManager';
+import { UrgencyDashboard } from '@/components/promoter/urgency/UrgencyDashboard';
 import RealTimeDashboard from '@/components/promoter/RealTimeDashboard';
 
 const PromoterDashboard = () => {
-  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState('overview');
 
-  // Mock recent events data
-  const recentEvents = [
-    {
-      id: 1,
-      name: "Summer Music Festival",
-      date: "2024-02-15",
-      attendees: 150,
-      status: "active"
-    },
-    {
-      id: 2,
-      name: "Tech Networking Night",
-      date: "2024-02-22",
-      attendees: 75,
-      status: "upcoming"
-    }
-  ];
-
-  const quickActions = [
-    {
-      title: "Create Event",
-      description: "Set up a new promotional event",
-      icon: Plus,
-      action: () => navigate('/promoter/events'),
-      color: "bg-blue-500"
-    },
-    {
-      title: "Create Swig Circuit",
-      description: "Design a new swig circuit experience",
-      icon: Route,
-      action: () => navigate('/promoter/create-swig-circuit'),
-      color: "bg-spiritless-pink"
-    },
-    {
-      title: "View Analytics", 
-      description: "Check detailed performance metrics",
-      icon: BarChart3,
-      action: () => navigate('/promoter/analytics'),
-      color: "bg-green-500"
-    },
-    {
-      title: "Marketing Analytics",
-      description: "Review campaign performance",
-      icon: Target,
-      action: () => navigate('/promoter/marketing-analytics'),
-      color: "bg-purple-500"
-    },
-    {
-      title: "Manage Events",
-      description: "Edit existing events",
-      icon: Calendar,
-      action: () => navigate('/promoter/events'),
-      color: "bg-orange-500"
-    }
-  ];
-
-  const promotionalTools = [
-    {
-      title: "Affiliate Marketing",
-      description: "Create partner programs and track commissions",
-      icon: Share2,
-      action: () => navigate('/promoter/affiliate-programs'),
-      color: "bg-indigo-500",
-      badge: "New"
-    },
-    {
-      title: "Referral Programs",
-      description: "Build user referral campaigns with rewards",
-      icon: UserPlus,
-      action: () => navigate('/promoter/referral-programs'),
-      color: "bg-emerald-500",
-      badge: "New"
-    },
-    {
-      title: "Dynamic Pricing",
-      description: "Automated pricing based on demand",
-      icon: TrendingUp,
-      action: () => navigate('/promoter/pricing-rules'),
-      color: "bg-amber-500",
-      badge: "New"
-    },
-    {
-      title: "Urgency Campaigns",
-      description: "Create countdown timers and scarcity displays",
-      icon: Timer,
-      action: () => navigate('/promoter/urgency-campaigns'),
-      color: "bg-red-500",
-      badge: "New"
-    }
-  ];
+  // Mock data for dashboard metrics
+  const dashboardMetrics = {
+    totalEvents: 12,
+    totalAttendees: 1248,
+    totalRevenue: 24580,
+    conversionRate: 12.5,
+    avgTicketPrice: 45.00,
+    upcomingEvents: 3
+  };
 
   return (
-    <div className="container mx-auto px-4 py-8 space-y-8">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Promoter Dashboard</h1>
-          <p className="text-gray-600 mt-2">Monitor your events and campaign performance</p>
-        </div>
-        <div className="flex gap-2">
-          <Button onClick={() => navigate('/promoter/events')} className="flex items-center gap-2">
-            <Plus className="h-4 w-4" />
-            Create Event
-          </Button>
-          <Button 
-            onClick={() => navigate('/promoter/create-swig-circuit')} 
-            className="flex items-center gap-2 bg-spiritless-pink hover:bg-spiritless-pink/90"
-          >
-            <Route className="h-4 w-4" />
-            Create Swig Circuit
-          </Button>
-        </div>
+    <div className="container mx-auto p-6 max-w-7xl">
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold mb-2">Promoter Dashboard</h1>
+        <p className="text-gray-600">
+          Welcome back! Here's an overview of your events and performance.
+        </p>
       </div>
 
-      {/* Real-Time Analytics Dashboard */}
-      <RealTimeDashboard />
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="overview" className="flex items-center gap-2">
+            <BarChart3 className="h-4 w-4" />
+            Overview
+          </TabsTrigger>
+          <TabsTrigger value="pricing" className="flex items-center gap-2">
+            <DollarSign className="h-4 w-4" />
+            Dynamic Pricing
+          </TabsTrigger>
+          <TabsTrigger value="urgency" className="flex items-center gap-2">
+            <Timer className="h-4 w-4" />
+            Urgency Features
+          </TabsTrigger>
+          <TabsTrigger value="analytics" className="flex items-center gap-2">
+            <TrendingUp className="h-4 w-4" />
+            Real-Time Analytics
+          </TabsTrigger>
+          <TabsTrigger value="settings" className="flex items-center gap-2">
+            <Settings className="h-4 w-4" />
+            Settings
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Promotional Tools Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Zap className="h-5 w-5 text-amber-500" />
-            Advanced Promotional Tools
-          </CardTitle>
-          <CardDescription>
-            Powerful tools to boost your event marketing and sales
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {promotionalTools.map((tool, index) => {
-              const Icon = tool.icon;
-              return (
-                <div
-                  key={index}
-                  onClick={tool.action}
-                  className="p-4 border rounded-lg hover:shadow-md transition-shadow cursor-pointer group relative"
-                >
-                  {tool.badge && (
-                    <Badge 
-                      variant="secondary" 
-                      className="absolute -top-1 -right-1 bg-green-100 text-green-800 text-xs"
-                    >
-                      {tool.badge}
-                    </Badge>
-                  )}
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className={`p-2 rounded-lg ${tool.color} group-hover:scale-105 transition-transform`}>
-                      <Icon className="h-5 w-5 text-white" />
-                    </div>
-                    <h3 className="font-semibold text-sm">{tool.title}</h3>
-                  </div>
-                  <p className="text-xs text-muted-foreground">{tool.description}</p>
+        <TabsContent value="overview" className="space-y-6">
+          {/* Key Metrics Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-blue-500" />
+                  <div className="text-sm font-medium">Total Events</div>
                 </div>
-              );
-            })}
+                <div className="text-2xl font-bold mt-1">{dashboardMetrics.totalEvents}</div>
+                <p className="text-xs text-muted-foreground">+2 this month</p>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2">
+                  <Users className="h-4 w-4 text-green-500" />
+                  <div className="text-sm font-medium">Total Attendees</div>
+                </div>
+                <div className="text-2xl font-bold mt-1">{dashboardMetrics.totalAttendees.toLocaleString()}</div>
+                <p className="text-xs text-muted-foreground">+12% vs last month</p>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2">
+                  <DollarSign className="h-4 w-4 text-purple-500" />
+                  <div className="text-sm font-medium">Total Revenue</div>
+                </div>
+                <div className="text-2xl font-bold mt-1">${dashboardMetrics.totalRevenue.toLocaleString()}</div>
+                <p className="text-xs text-muted-foreground">+8% vs last month</p>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2">
+                  <Target className="h-4 w-4 text-orange-500" />
+                  <div className="text-sm font-medium">Conversion Rate</div>
+                </div>
+                <div className="text-2xl font-bold mt-1">{dashboardMetrics.conversionRate}%</div>
+                <p className="text-xs text-muted-foreground">+2.1% vs last month</p>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4 text-cyan-500" />
+                  <div className="text-sm font-medium">Avg Ticket Price</div>
+                </div>
+                <div className="text-2xl font-bold mt-1">${dashboardMetrics.avgTicketPrice}</div>
+                <p className="text-xs text-muted-foreground">+$3.20 vs last month</p>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-red-500" />
+                  <div className="text-sm font-medium">Upcoming Events</div>
+                </div>
+                <div className="text-2xl font-bold mt-1">{dashboardMetrics.upcomingEvents}</div>
+                <p className="text-xs text-muted-foreground">Next 30 days</p>
+              </CardContent>
+            </Card>
           </div>
-        </CardContent>
-      </Card>
 
-      {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
-          <CardDescription>
-            Common tasks and navigation shortcuts
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-            {quickActions.map((action, index) => {
-              const Icon = action.icon;
-              return (
-                <div
-                  key={index}
-                  onClick={action.action}
-                  className="p-4 border rounded-lg hover:shadow-md transition-shadow cursor-pointer group"
-                >
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className={`p-2 rounded-lg ${action.color} group-hover:scale-105 transition-transform`}>
-                      <Icon className="h-5 w-5 text-white" />
-                    </div>
-                    <h3 className="font-semibold text-sm">{action.title}</h3>
-                  </div>
-                  <p className="text-xs text-muted-foreground">{action.description}</p>
-                </div>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
+          {/* Quick Actions */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Quick Actions</CardTitle>
+              <CardDescription>
+                Common tasks to help you manage your events and campaigns
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <Button variant="outline" className="h-20 flex-col gap-2">
+                  <Calendar className="h-6 w-6" />
+                  Create Event
+                </Button>
+                <Button variant="outline" className="h-20 flex-col gap-2">
+                  <Timer className="h-6 w-6" />
+                  Add Countdown Timer
+                </Button>
+                <Button variant="outline" className="h-20 flex-col gap-2">
+                  <Zap className="h-6 w-6" />
+                  Create Urgency Campaign
+                </Button>
+                <Button variant="outline" className="h-20 flex-col gap-2">
+                  <DollarSign className="h-6 w-6" />
+                  Setup Pricing Rules
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
 
-      {/* Recent Events */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
-            Recent Events
-          </CardTitle>
-          <CardDescription>
-            Your latest promotional events and their status
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {recentEvents.map((event) => (
-              <div key={event.id} className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex items-center gap-4">
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    <Calendar className="h-5 w-5 text-blue-600" />
+          {/* Recent Activity */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent Activity</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <div className="flex-1">
+                    <p className="text-sm">New ticket sale for "Summer Music Festival"</p>
+                    <p className="text-xs text-muted-foreground">2 minutes ago</p>
                   </div>
-                  <div>
-                    <h3 className="font-semibold">{event.name}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {new Date(event.date).toLocaleDateString()}
-                    </p>
-                  </div>
+                  <Badge variant="outline">+$45</Badge>
                 </div>
-                <div className="flex items-center gap-4">
-                  <div className="text-center">
-                    <p className="text-sm text-muted-foreground">Attendees</p>
-                    <p className="font-semibold">{event.attendees}</p>
+                <div className="flex items-center gap-3">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                  <div className="flex-1">
+                    <p className="text-sm">Urgency campaign "Last Chance" triggered</p>
+                    <p className="text-xs text-muted-foreground">15 minutes ago</p>
                   </div>
-                  <Badge 
-                    variant={event.status === 'active' ? 'default' : 'secondary'}
-                  >
-                    {event.status}
-                  </Badge>
-                  <Button variant="outline" size="sm">
-                    <Eye className="h-4 w-4 mr-2" />
-                    View
-                  </Button>
+                  <Badge variant="outline">Campaign</Badge>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                  <div className="flex-1">
+                    <p className="text-sm">Dynamic pricing adjusted for high demand</p>
+                    <p className="text-xs text-muted-foreground">1 hour ago</p>
+                  </div>
+                  <Badge variant="outline">Pricing</Badge>
                 </div>
               </div>
-            ))}
-          </div>
-          <div className="mt-4 text-center">
-            <Button 
-              variant="outline" 
-              onClick={() => navigate('/promoter/events')}
-            >
-              View All Events
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="pricing" className="space-y-6">
+          <DynamicPricingDashboard promoterId={user?.id || ''} />
+          <PricingRulesManager 
+            promoterId={user?.id || ''} 
+            onCreateRule={() => console.log('Create pricing rule')}
+            onEditRule={(rule) => console.log('Edit pricing rule:', rule)}
+          />
+        </TabsContent>
+
+        <TabsContent value="urgency" className="space-y-6">
+          <UrgencyDashboard 
+            promoterId={user?.id || ''}
+            eventId={undefined}
+            swigCircuitId={undefined}
+          />
+        </TabsContent>
+
+        <TabsContent value="analytics" className="space-y-6">
+          <RealTimeDashboard />
+        </TabsContent>
+
+        <TabsContent value="settings" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Dashboard Settings</CardTitle>
+              <CardDescription>
+                Configure your dashboard preferences and notifications
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">Settings panel coming soon...</p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
