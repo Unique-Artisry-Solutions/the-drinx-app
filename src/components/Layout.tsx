@@ -1,8 +1,6 @@
 
 import React from 'react';
 import ResponsiveLayout from './layout/ResponsiveLayout';
-import { useDevelopmentMode } from '@/contexts/DevelopmentModeContext';
-import DevRoleSwitcher from './development/DevRoleSwitcher';
 
 interface TabOption {
   value: string;
@@ -18,14 +16,7 @@ interface LayoutProps {
 }
 
 const Layout: React.FC<LayoutProps> = (props) => {
-  const { isDevelopment } = useDevelopmentMode();
-  
-  return (
-    <>
-      <ResponsiveLayout {...props} />
-      {isDevelopment && <DevRoleSwitcher />}
-    </>
-  );
+  return <ResponsiveLayout {...props} />;
 };
 
 export default Layout;
