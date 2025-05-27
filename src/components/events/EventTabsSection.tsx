@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import MarketingTabContent from '@/components/events/MarketingTabContent';
 import AttendeeSegmentsTab from '@/components/events/AttendeeSegmentsTab';
 import AttendeesTabContent from '@/components/events/attendees/AttendeesTabContent';
+import EventAnalyticsDashboard from '@/components/events/analytics/EventAnalyticsDashboard';
 
 interface EventTabsSectionProps {
   eventId: string | undefined;
@@ -23,6 +24,7 @@ const EventTabsSection: React.FC<EventTabsSectionProps> = ({ eventId, eventName 
         <TabsTrigger value="marketing">Marketing</TabsTrigger>
         <TabsTrigger value="attendees">Attendees</TabsTrigger>
         <TabsTrigger value="segments">Segments</TabsTrigger>
+        <TabsTrigger value="analytics">Analytics</TabsTrigger>
         <TabsTrigger value="checkin">Check-in</TabsTrigger>
       </TabsList>
       <TabsContent value="marketing">
@@ -42,6 +44,21 @@ const EventTabsSection: React.FC<EventTabsSectionProps> = ({ eventId, eventName 
             </CardHeader>
             <CardContent>
               <p>Please save the event first to manage attendees.</p>
+            </CardContent>
+          </Card>
+        )}
+      </TabsContent>
+      <TabsContent value="analytics">
+        {eventId ? (
+          <EventAnalyticsDashboard eventId={eventId} eventName={eventName} />
+        ) : (
+          <Card>
+            <CardHeader>
+              <CardTitle>Analytics</CardTitle>
+              <CardDescription>Event performance analytics</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p>Please save the event first to view analytics.</p>
             </CardContent>
           </Card>
         )}
