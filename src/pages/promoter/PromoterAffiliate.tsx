@@ -2,7 +2,7 @@
 import React from 'react';
 import Layout from '@/components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { UserCheck, DollarSign, Users, TrendingUp } from 'lucide-react';
+import { Users, DollarSign, TrendingUp, Share } from 'lucide-react';
 
 const PromoterAffiliate: React.FC = () => {
   return (
@@ -10,8 +10,8 @@ const PromoterAffiliate: React.FC = () => {
       <div className="container mx-auto px-4 py-6 space-y-6">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold">Affiliate Program</h1>
-            <p className="text-muted-foreground">Manage your affiliate partners and commissions</p>
+            <h1 className="text-3xl font-bold text-purple-700">Affiliate Program</h1>
+            <p className="text-muted-foreground">Manage your affiliate partnerships and earnings</p>
           </div>
         </div>
 
@@ -19,33 +19,22 @@ const PromoterAffiliate: React.FC = () => {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Active Affiliates</CardTitle>
-              <UserCheck className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">24</div>
-              <p className="text-xs text-muted-foreground">Partners promoting</p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Commission Paid</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">$1,245</div>
-              <p className="text-xs text-muted-foreground">This month</p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Referral Sales</CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">156</div>
-              <p className="text-xs text-muted-foreground">Tickets sold</p>
+              <div className="text-2xl font-bold">24</div>
+              <p className="text-xs text-muted-foreground">+3 this month</p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Earnings</CardTitle>
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">$3,247</div>
+              <p className="text-xs text-muted-foreground">+12% from last month</p>
             </CardContent>
           </Card>
           
@@ -55,8 +44,19 @@ const PromoterAffiliate: React.FC = () => {
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">12.4%</div>
-              <p className="text-xs text-muted-foreground">Average rate</p>
+              <div className="text-2xl font-bold">4.2%</div>
+              <p className="text-xs text-muted-foreground">+0.8% from last month</p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Referrals</CardTitle>
+              <Share className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">187</div>
+              <p className="text-xs text-muted-foreground">This month</p>
             </CardContent>
           </Card>
         </div>
@@ -68,7 +68,7 @@ const PromoterAffiliate: React.FC = () => {
           <CardContent>
             <div className="space-y-4">
               <div className="text-center py-8 text-muted-foreground">
-                Affiliate management dashboard coming soon
+                Affiliate program dashboard coming soon
               </div>
             </div>
           </CardContent>

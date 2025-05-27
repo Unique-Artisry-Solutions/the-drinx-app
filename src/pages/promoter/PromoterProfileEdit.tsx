@@ -1,191 +1,140 @@
 
 import React, { useState } from 'react';
-import Layout from '@/components/Layout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { User, Mail, Phone, MapPin, Save, Camera } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Save, ArrowLeft } from 'lucide-react';
+import Layout from '@/components/Layout';
+import { useNavigate } from 'react-router-dom';
 
 const PromoterProfileEdit: React.FC = () => {
-  const [formData, setFormData] = useState({
-    firstName: 'John',
-    lastName: 'Doe',
-    email: 'john.doe@example.com',
-    phone: '+1 (555) 123-4567',
-    location: 'San Francisco, CA',
-    bio: 'Experienced event promoter specializing in craft beverage experiences and community building.',
-    company: 'Premium Events Co.',
-    website: 'https://premiumevents.com'
-  });
+  const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleSave = () => {
-    // TODO: Implement save functionality
-    console.log('Saving profile data:', formData);
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    
+    // Simulate save operation
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    setIsLoading(false);
+    navigate('/promoter/profile');
   };
 
   return (
     <Layout>
-      <div className="container mx-auto px-4 py-6">
-        <div className="max-w-4xl mx-auto">
-          <div className="flex justify-between items-center mb-8">
-            <div>
-              <h1 className="text-3xl font-bold text-purple-700">Edit Promoter Profile</h1>
-              <p className="text-muted-foreground">Update your profile information and preferences</p>
-            </div>
-            <Button onClick={handleSave} className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700">
-              <Save className="h-4 w-4" />
-              Save Changes
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-2xl mx-auto">
+          <div className="flex items-center gap-4 mb-8">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => navigate('/promoter/profile')}
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Profile
             </Button>
+            <div>
+              <h1 className="text-3xl font-bold text-purple-700">Edit Profile</h1>
+              <p className="text-muted-foreground">Update your promoter profile information</p>
+            </div>
           </div>
           
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-purple-700">Profile Information</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="flex items-center space-x-4 mb-6">
-                    <div className="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center relative">
-                      <User className="h-10 w-10 text-purple-600" />
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
-                        className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full p-0"
-                      >
-                        <Camera className="h-3 w-3" />
-                      </Button>
-                    </div>
-                    <div>
-                      <h2 className="text-xl font-semibold">{formData.firstName} {formData.lastName}</h2>
-                      <p className="text-gray-600">Event Promoter</p>
-                    </div>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-purple-700">Profile Information</CardTitle>
+              <CardDescription>Update your basic profile details</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSave} className="space-y-6">
+                <div className="flex items-center justify-center mb-6">
+                  <div className="w-24 h-24 bg-purple-100 rounded-full flex items-center justify-center">
+                    <User className="h-12 w-12 text-purple-600" />
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="firstName">First Name</Label>
+                    <Input id="firstName" defaultValue="John" />
                   </div>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="firstName">First Name</Label>
-                      <Input
-                        id="firstName"
-                        name="firstName"
-                        value={formData.firstName}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="lastName">Last Name</Label>
-                      <Input
-                        id="lastName"
-                        name="lastName"
-                        value={formData.lastName}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="email">Email</Label>
-                      <Input
-                        id="email"
-                        name="email"
-                        type="email"
-                        value={formData.email}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="phone">Phone</Label>
-                      <Input
-                        id="phone"
-                        name="phone"
-                        value={formData.phone}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="location">Location</Label>
-                      <Input
-                        id="location"
-                        name="location"
-                        value={formData.location}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="company">Company</Label>
-                      <Input
-                        id="company"
-                        name="company"
-                        value={formData.company}
-                        onChange={handleInputChange}
-                      />
-                    </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="lastName">Last Name</Label>
+                    <Input id="lastName" defaultValue="Doe" />
                   </div>
-                  
-                  <div>
-                    <Label htmlFor="website">Website</Label>
-                    <Input
-                      id="website"
-                      name="website"
-                      value={formData.website}
-                      onChange={handleInputChange}
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Input 
+                      id="email" 
+                      type="email" 
+                      defaultValue="john.doe@example.com"
+                      className="pl-10"
                     />
                   </div>
-                  
-                  <div>
-                    <Label htmlFor="bio">Bio</Label>
-                    <Textarea
-                      id="bio"
-                      name="bio"
-                      value={formData.bio}
-                      onChange={handleInputChange}
-                      rows={4}
-                      placeholder="Tell us about yourself and your experience as a promoter..."
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone</Label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Input 
+                      id="phone" 
+                      type="tel" 
+                      defaultValue="+1 (555) 123-4567"
+                      className="pl-10"
                     />
                   </div>
-                </CardContent>
-              </Card>
-            </div>
-            
-            <div>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-purple-700">Profile Stats</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-purple-600">12</div>
-                    <p className="text-sm text-gray-600">Active Events</p>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="location">Location</Label>
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Input 
+                      id="location" 
+                      defaultValue="San Francisco, CA"
+                      className="pl-10"
+                    />
                   </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-purple-600">1,234</div>
-                    <p className="text-sm text-gray-600">Total Attendees</p>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-purple-600">4.8</div>
-                    <p className="text-sm text-gray-600">Average Rating</p>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-purple-600">87%</div>
-                    <p className="text-sm text-gray-600">Success Rate</p>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="bio">Bio</Label>
+                  <Textarea 
+                    id="bio" 
+                    placeholder="Tell us about yourself and your experience as a promoter..."
+                    rows={4}
+                  />
+                </div>
+                
+                <div className="flex gap-2 pt-4">
+                  <Button 
+                    type="submit" 
+                    className="bg-purple-600 hover:bg-purple-700"
+                    disabled={isLoading}
+                  >
+                    <Save className="h-4 w-4 mr-2" />
+                    {isLoading ? 'Saving...' : 'Save Changes'}
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="outline"
+                    onClick={() => navigate('/promoter/profile')}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </Layout>
