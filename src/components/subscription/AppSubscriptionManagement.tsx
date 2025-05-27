@@ -67,10 +67,10 @@ export const AppSubscriptionManagement: React.FC = () => {
                 Current Period
               </div>
               <p className="text-sm">
-                {userSubscription?.current_period_start && (
+                {userSubscription?.subscription_start && (
                   <>
-                    {format(new Date(userSubscription.current_period_start), 'MMM d, yyyy')} - {' '}
-                    {format(new Date(userSubscription.current_period_end), 'MMM d, yyyy')}
+                    {format(new Date(userSubscription.subscription_start), 'MMM d, yyyy')} - {' '}
+                    {userSubscription.subscription_end ? format(new Date(userSubscription.subscription_end), 'MMM d, yyyy') : 'Ongoing'}
                   </>
                 )}
               </p>
@@ -82,7 +82,7 @@ export const AppSubscriptionManagement: React.FC = () => {
                 Plan
               </div>
               <p className="text-sm font-medium">
-                {userSubscription?.plan_id === 'basic' ? 'Basic Plan' : 'Premium Plan'}
+                {userSubscription?.subscription_type === 'basic' ? 'Basic Plan' : 'Premium Plan'}
               </p>
             </div>
           </div>
@@ -130,7 +130,7 @@ export const AppSubscriptionManagement: React.FC = () => {
             <p>✅ Follow unlimited promoters</p>
             <p>✅ Receive notifications and updates</p>
             <p>✅ Event discovery and participation</p>
-            {userSubscription?.plan_id === 'premium' && (
+            {userSubscription?.subscription_type === 'premium' && (
               <>
                 <p>✅ Advanced analytics</p>
                 <p>✅ Priority support</p>

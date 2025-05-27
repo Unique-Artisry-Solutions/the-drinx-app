@@ -15,11 +15,12 @@ export interface AppSubscriptionPlan {
 export interface UserAppSubscription {
   id: string;
   user_id: string;
-  plan_id: string;
+  subscription_type: string;
   status: 'active' | 'cancelled' | 'past_due' | 'trialing';
-  current_period_start: string;
-  current_period_end: string;
-  stripe_subscription_id?: string;
+  subscription_start: string;
+  subscription_end: string | null;
+  payment_provider: string | null;
+  payment_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -67,13 +68,13 @@ class AppSubscriptionService {
     if (!user) return null;
 
     const { data, error } = await supabase
-      .from('user_app_subscriptions')
+      .from('app_subscriptions')
       .select('*')
       .eq('user_id', user.id)
       .eq('status', 'active')
-      .single();
+      .maybeSingle();
 
-    if (error && error.code !== 'PGRST116') {
+    if (error) {
       console.error('Error fetching app subscription:', error);
       return null;
     }
@@ -106,13 +107,13 @@ class AppSubscriptionService {
 
   async cancelSubscription(): Promise<void> {
     const subscription = await this.getUserSubscription();
-    if (!subscription?.stripe_subscription_id) {
+    if (!subscription?.payment_id) {
       throw new Error('No active subscription found');
     }
 
     try {
       await enhancedPaymentService.cancelSubscription(
-        subscription.stripe_subscription_id,
+        subscription.payment_id,
         false // Cancel at period end
       );
     } catch (error) {

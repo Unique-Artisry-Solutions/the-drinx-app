@@ -63,15 +63,16 @@ export interface EventNotificationSchedule {
   updated_at?: string;
 }
 
-// New types for app-level subscriptions
+// App-level subscription types - matches the database structure
 export interface AppSubscription {
   id: string;
   user_id: string;
-  plan_id: string;
-  stripe_subscription_id?: string;
+  subscription_type: string;
   status: 'active' | 'cancelled' | 'past_due' | 'trialing';
-  current_period_start: string;
-  current_period_end: string;
+  subscription_start: string;
+  subscription_end: string | null;
+  payment_provider: string | null;
+  payment_id: string | null;
   created_at: string;
   updated_at: string;
 }
