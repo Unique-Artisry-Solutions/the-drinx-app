@@ -1,126 +1,106 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/auth';
+import { supabase } from '@/integrations/supabase/client';
+import { followerPreferencesToJson, safeJsonToFollowerPreferences } from '@/utils/followerTypeUtils';
+import { FollowerNotificationPreferences } from '@/types/SubscriptionTypes';
 import { 
   Bell, 
   Mail, 
-  Clock, 
-  Volume2, 
-  VolumeX,
-  Settings,
-  Save
+  MessageSquare, 
+  Gift,
+  Clock,
+  Volume2,
+  Vibrate
 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
-
-interface NotificationPreferences {
-  events: boolean;
-  discounts: boolean;
-  updates: boolean;
-  email_notifications: boolean;
-  push_notifications: boolean;
-  notification_frequency: 'immediate' | 'daily' | 'weekly';
-  quiet_hours_enabled: boolean;
-  quiet_hours_start: string;
-  quiet_hours_end: string;
-  sound_enabled: boolean;
-  vibration_enabled: boolean;
-}
 
 interface FollowerNotificationSettingsProps {
-  userId: string;
-  promoterId: string;
+  promoterId?: string;
 }
 
-const FollowerNotificationSettings: React.FC<FollowerNotificationSettingsProps> = ({
-  userId,
-  promoterId
-}) => {
-  const [preferences, setPreferences] = useState<NotificationPreferences>({
+const FollowerNotificationSettings: React.FC<FollowerNotificationSettingsProps> = ({ promoterId }) => {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
+  const [preferences, setPreferences] = useState<FollowerNotificationPreferences>({
     events: true,
     discounts: true,
     updates: true,
     email_notifications: true,
-    push_notifications: true,
-    notification_frequency: 'immediate',
-    quiet_hours_enabled: false,
-    quiet_hours_start: '22:00',
-    quiet_hours_end: '08:00',
-    sound_enabled: true,
-    vibration_enabled: true
+    push_notifications: false,
+    quiet_hours: {
+      enabled: false,
+      start: '22:00',
+      end: '08:00'
+    }
   });
 
-  const [isLoading, setIsLoading] = useState(false);
-  const [hasChanges, setHasChanges] = useState(false);
-  const { toast } = useToast();
-
   useEffect(() => {
-    loadUserPreferences();
-  }, [userId, promoterId]);
+    loadPreferences();
+  }, [user, promoterId]);
 
-  const loadUserPreferences = async () => {
+  const loadPreferences = async () => {
+    if (!user || !promoterId) return;
+
     try {
       const { data, error } = await supabase
         .from('promoter_followers')
         .select('notification_preferences')
-        .eq('subscriber_id', userId)
+        .eq('subscriber_id', user.id)
         .eq('promoter_id', promoterId)
         .single();
 
-      if (error && error.code !== 'PGRST116') { // PGRST116 is "not found"
+      if (error && error.code !== 'PGRST116') {
         throw error;
       }
 
       if (data?.notification_preferences) {
-        setPreferences(prev => ({
-          ...prev,
-          ...data.notification_preferences
-        }));
+        const prefs = safeJsonToFollowerPreferences(data.notification_preferences);
+        setPreferences(prefs);
       }
     } catch (error) {
       console.error('Error loading notification preferences:', error);
     }
   };
 
-  const handlePreferenceChange = <K extends keyof NotificationPreferences>(
-    key: K,
-    value: NotificationPreferences[K]
-  ) => {
-    setPreferences(prev => ({
-      ...prev,
-      [key]: value
-    }));
-    setHasChanges(true);
-  };
+  const handleSavePreferences = async () => {
+    if (!user || !promoterId) {
+      toast({
+        title: 'Error',
+        description: 'Please log in to save preferences',
+        variant: 'destructive'
+      });
+      return;
+    }
 
-  const savePreferences = async () => {
     setIsLoading(true);
+
     try {
+      const preferencesJson = followerPreferencesToJson(preferences);
+      
       const { error } = await supabase
         .from('promoter_followers')
-        .update({
-          notification_preferences: preferences
+        .update({ 
+          notification_preferences: preferencesJson
         })
-        .eq('subscriber_id', userId)
+        .eq('subscriber_id', user.id)
         .eq('promoter_id', promoterId);
 
       if (error) throw error;
 
-      setHasChanges(false);
       toast({
-        title: 'Settings Saved',
-        description: 'Your notification preferences have been updated.',
+        title: 'Success',
+        description: 'Notification preferences saved!',
       });
     } catch (error) {
       console.error('Error saving preferences:', error);
       toast({
         title: 'Error',
-        description: 'Failed to save notification preferences',
+        description: 'Failed to save preferences. Please try again.',
         variant: 'destructive'
       });
     } finally {
@@ -128,196 +108,171 @@ const FollowerNotificationSettings: React.FC<FollowerNotificationSettingsProps> 
     }
   };
 
+  const updatePreference = (key: keyof FollowerNotificationPreferences, value: any) => {
+    setPreferences(prev => ({
+      ...prev,
+      [key]: value
+    }));
+  };
+
+  const updateQuietHours = (key: keyof FollowerNotificationPreferences['quiet_hours'], value: any) => {
+    setPreferences(prev => ({
+      ...prev,
+      quiet_hours: {
+        ...prev.quiet_hours,
+        [key]: value
+      }
+    }));
+  };
+
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Settings className="h-5 w-5" />
-            Notification Preferences
-            {hasChanges && (
-              <Badge variant="outline" className="ml-auto">
-                Unsaved changes
-              </Badge>
-            )}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Notification Types */}
-          <div className="space-y-4">
-            <h4 className="font-medium">What would you like to be notified about?</h4>
-            
-            <div className="grid gap-4">
-              <div className="flex items-center justify-between p-3 border rounded">
-                <div className="flex items-center gap-2">
-                  <Bell className="h-4 w-4" />
-                  <div>
-                    <Label className="text-sm font-medium">Events</Label>
-                    <p className="text-xs text-muted-foreground">New events and event updates</p>
-                  </div>
-                </div>
-                <Switch
-                  checked={preferences.events}
-                  onCheckedChange={(checked) => handlePreferenceChange('events', checked)}
-                />
-              </div>
-
-              <div className="flex items-center justify-between p-3 border rounded">
-                <div className="flex items-center gap-2">
-                  <Badge className="h-4 w-4 rounded-full" />
-                  <div>
-                    <Label className="text-sm font-medium">Discounts</Label>
-                    <p className="text-xs text-muted-foreground">Special offers and discount codes</p>
-                  </div>
-                </div>
-                <Switch
-                  checked={preferences.discounts}
-                  onCheckedChange={(checked) => handlePreferenceChange('discounts', checked)}
-                />
-              </div>
-
-              <div className="flex items-center justify-between p-3 border rounded">
-                <div className="flex items-center gap-2">
-                  <Bell className="h-4 w-4" />
-                  <div>
-                    <Label className="text-sm font-medium">General Updates</Label>
-                    <p className="text-xs text-muted-foreground">News and announcements</p>
-                  </div>
-                </div>
-                <Switch
-                  checked={preferences.updates}
-                  onCheckedChange={(checked) => handlePreferenceChange('updates', checked)}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Delivery Methods */}
-          <div className="space-y-4">
-            <h4 className="font-medium">How would you like to receive notifications?</h4>
-            
-            <div className="grid gap-4">
-              <div className="flex items-center justify-between p-3 border rounded">
-                <div className="flex items-center gap-2">
-                  <Mail className="h-4 w-4" />
-                  <Label className="text-sm font-medium">Email Notifications</Label>
-                </div>
-                <Switch
-                  checked={preferences.email_notifications}
-                  onCheckedChange={(checked) => handlePreferenceChange('email_notifications', checked)}
-                />
-              </div>
-
-              <div className="flex items-center justify-between p-3 border rounded">
-                <div className="flex items-center gap-2">
-                  <Bell className="h-4 w-4" />
-                  <Label className="text-sm font-medium">Push Notifications</Label>
-                </div>
-                <Switch
-                  checked={preferences.push_notifications}
-                  onCheckedChange={(checked) => handlePreferenceChange('push_notifications', checked)}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Frequency */}
-          <div className="space-y-4">
-            <h4 className="font-medium">Notification Frequency</h4>
-            
-            <div className="space-y-2">
-              <Label>How often would you like to receive notifications?</Label>
-              <select
-                className="w-full p-2 border rounded"
-                value={preferences.notification_frequency}
-                onChange={(e) => handlePreferenceChange('notification_frequency', e.target.value as typeof preferences.notification_frequency)}
-              >
-                <option value="immediate">Immediately</option>
-                <option value="daily">Daily Summary</option>
-                <option value="weekly">Weekly Summary</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Quiet Hours */}
-          <div className="space-y-4">
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Bell className="h-5 w-5" />
+          Notification Preferences
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {/* Notification Types */}
+        <div className="space-y-4">
+          <h3 className="font-medium">Notification Types</h3>
+          
+          <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4" />
-                <Label className="text-sm font-medium">Quiet Hours</Label>
-              </div>
-              <Switch
-                checked={preferences.quiet_hours_enabled}
-                onCheckedChange={(checked) => handlePreferenceChange('quiet_hours_enabled', checked)}
+              <Label htmlFor="events" className="flex items-center gap-2">
+                <MessageSquare className="h-4 w-4" />
+                Event Announcements
+              </Label>
+              <input
+                type="checkbox"
+                id="events"
+                checked={preferences.events}
+                onChange={(e) => updatePreference('events', e.target.checked)}
+                className="w-4 h-4"
               />
             </div>
-            
-            {preferences.quiet_hours_enabled && (
+
+            <div className="flex items-center justify-between">
+              <Label htmlFor="discounts" className="flex items-center gap-2">
+                <Gift className="h-4 w-4" />
+                Discount Codes & Offers
+              </Label>
+              <input
+                type="checkbox"
+                id="discounts"
+                checked={preferences.discounts}
+                onChange={(e) => updatePreference('discounts', e.target.checked)}
+                className="w-4 h-4"
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <Label htmlFor="updates" className="flex items-center gap-2">
+                <Bell className="h-4 w-4" />
+                General Updates
+              </Label>
+              <input
+                type="checkbox"
+                id="updates"
+                checked={preferences.updates}
+                onChange={(e) => updatePreference('updates', e.target.checked)}
+                className="w-4 h-4"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Delivery Methods */}
+        <div className="space-y-4">
+          <h3 className="font-medium">Delivery Methods</h3>
+          
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="email" className="flex items-center gap-2">
+                <Mail className="h-4 w-4" />
+                Email Notifications
+              </Label>
+              <input
+                type="checkbox"
+                id="email"
+                checked={preferences.email_notifications}
+                onChange={(e) => updatePreference('email_notifications', e.target.checked)}
+                className="w-4 h-4"
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <Label htmlFor="push" className="flex items-center gap-2">
+                <Bell className="h-4 w-4" />
+                Push Notifications
+              </Label>
+              <input
+                type="checkbox"
+                id="push"
+                checked={preferences.push_notifications}
+                onChange={(e) => updatePreference('push_notifications', e.target.checked)}
+                className="w-4 h-4"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Quiet Hours */}
+        <div className="space-y-4">
+          <h3 className="font-medium">Quiet Hours</h3>
+          
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="quietHours" className="flex items-center gap-2">
+                <Clock className="h-4 w-4" />
+                Enable Quiet Hours
+              </Label>
+              <input
+                type="checkbox"
+                id="quietHours"
+                checked={preferences.quiet_hours.enabled}
+                onChange={(e) => updateQuietHours('enabled', e.target.checked)}
+                className="w-4 h-4"
+              />
+            </div>
+
+            {preferences.quiet_hours.enabled && (
               <div className="grid grid-cols-2 gap-4 ml-6">
-                <div className="space-y-2">
-                  <Label htmlFor="quietStart">Start</Label>
-                  <Input
-                    id="quietStart"
+                <div>
+                  <Label htmlFor="quietStart">Start Time</Label>
+                  <input
                     type="time"
-                    value={preferences.quiet_hours_start}
-                    onChange={(e) => handlePreferenceChange('quiet_hours_start', e.target.value)}
+                    id="quietStart"
+                    value={preferences.quiet_hours.start}
+                    onChange={(e) => updateQuietHours('start', e.target.value)}
+                    className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md"
                   />
                 </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="quietEnd">End</Label>
-                  <Input
-                    id="quietEnd"
+                <div>
+                  <Label htmlFor="quietEnd">End Time</Label>
+                  <input
                     type="time"
-                    value={preferences.quiet_hours_end}
-                    onChange={(e) => handlePreferenceChange('quiet_hours_end', e.target.value)}
+                    id="quietEnd"
+                    value={preferences.quiet_hours.end}
+                    onChange={(e) => updateQuietHours('end', e.target.value)}
+                    className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md"
                   />
                 </div>
               </div>
             )}
           </div>
+        </div>
 
-          {/* Sound & Vibration */}
-          <div className="space-y-4">
-            <h4 className="font-medium">Sound & Vibration</h4>
-            
-            <div className="grid gap-4">
-              <div className="flex items-center justify-between p-3 border rounded">
-                <div className="flex items-center gap-2">
-                  {preferences.sound_enabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
-                  <Label className="text-sm font-medium">Sound</Label>
-                </div>
-                <Switch
-                  checked={preferences.sound_enabled}
-                  onCheckedChange={(checked) => handlePreferenceChange('sound_enabled', checked)}
-                />
-              </div>
-
-              <div className="flex items-center justify-between p-3 border rounded">
-                <div className="flex items-center gap-2">
-                  <Bell className="h-4 w-4" />
-                  <Label className="text-sm font-medium">Vibration</Label>
-                </div>
-                <Switch
-                  checked={preferences.vibration_enabled}
-                  onCheckedChange={(checked) => handlePreferenceChange('vibration_enabled', checked)}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Save Button */}
-          {hasChanges && (
-            <div className="flex justify-end pt-4 border-t">
-              <Button onClick={savePreferences} disabled={isLoading}>
-                <Save className="h-4 w-4 mr-2" />
-                {isLoading ? 'Saving...' : 'Save Preferences'}
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+        <Button 
+          onClick={handleSavePreferences}
+          disabled={isLoading}
+          className="w-full"
+        >
+          {isLoading ? 'Saving...' : 'Save Preferences'}
+        </Button>
+      </CardContent>
+    </Card>
   );
 };
 

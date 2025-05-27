@@ -42,7 +42,8 @@ export function useSubscriptions(promoterId?: string) {
     // Actions
     follow: followers.follow,
     subscribe: followers.subscribe,
-    unsubscribe: followers.unfollow,
+    unfollow: followers.unfollow, // Add the missing unfollow method
+    unsubscribe: followers.unfollow, // Alias for consistency
     
     // Promoter communication actions
     sendNotification: followers.sendNotification,

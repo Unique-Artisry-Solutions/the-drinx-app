@@ -1,9 +1,9 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth';
 import { useToast } from '@/hooks/use-toast';
 import { Notification } from '@/types/notification';
+import { safeJsonToNotificationInterface } from '@/utils/followerTypeUtils';
 
 interface RealTimeNotificationContextType {
   notifications: Notification[];
@@ -51,7 +51,7 @@ export const RealTimeNotificationProvider: React.FC<RealTimeNotificationProvider
         table: 'notifications',
         filter: `recipient_id=eq.${user.id}`
       }, (payload) => {
-        const newNotification = payload.new as Notification;
+        const newNotification = safeJsonToNotificationInterface(payload.new);
         
         // Add to notifications list
         setNotifications(prev => [newNotification, ...prev.slice(0, 49)]); // Keep only latest 50
@@ -73,7 +73,7 @@ export const RealTimeNotificationProvider: React.FC<RealTimeNotificationProvider
         table: 'notifications',
         filter: `recipient_id=eq.${user.id}`
       }, (payload) => {
-        const updatedNotification = payload.new as Notification;
+        const updatedNotification = safeJsonToNotificationInterface(payload.new);
         
         setNotifications(prev => 
           prev.map(notification => 
@@ -116,8 +116,9 @@ export const RealTimeNotificationProvider: React.FC<RealTimeNotificationProvider
       if (error) throw error;
 
       if (data) {
-        setNotifications(data);
-        setUnreadCount(data.filter(n => !n.is_read).length);
+        const processedNotifications = data.map(safeJsonToNotificationInterface);
+        setNotifications(processedNotifications);
+        setUnreadCount(processedNotifications.filter(n => !n.is_read).length);
       }
     } catch (error) {
       console.error('Error loading initial notifications:', error);
