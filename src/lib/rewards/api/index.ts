@@ -1,10 +1,10 @@
-
 import { getUserAchievements, recordActivity } from './achievements';
 import { getRewardAnalytics, processRewardAnalytics } from './analytics';
 import { getUserRewardProfile, redeemReward } from './profile';
 import { addPoints, batchUpdatePoints } from './operations';
 import { getUserPreference, setUserPreference } from './preferences';
 import { trackRewardEvent, trackFunnelProgression, trackCohortMetric, REWARD_EVENT_TYPES, FUNNEL_STAGES } from './tracking';
+import { processReferralSignup, createReferralCode, validateReferralCode } from './referrals';
 
 // Export all the API functions as a single object
 export const rewardsApi = {
@@ -32,6 +32,11 @@ export const rewardsApi = {
   trackRewardEvent,
   trackFunnelProgression,
   trackCohortMetric,
+  
+  // Referral functions
+  processReferralSignup,
+  createReferralCode,
+  validateReferralCode,
   
   // System check function
   isRewardsEnabled: async (userId: string): Promise<boolean> => {
@@ -61,7 +66,10 @@ export {
   trackFunnelProgression,
   trackCohortMetric,
   REWARD_EVENT_TYPES,
-  FUNNEL_STAGES
+  FUNNEL_STAGES,
+  processReferralSignup,
+  createReferralCode,
+  validateReferralCode
 };
 
 // Export types using 'export type' to fix isolatedModules issue
