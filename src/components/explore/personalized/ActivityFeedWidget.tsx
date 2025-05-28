@@ -1,360 +1,259 @@
 
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
 import { 
-  Activity, 
   Heart, 
   MessageCircle, 
-  Share2, 
+  Share, 
+  User, 
   MapPin, 
   Trophy, 
-  Camera, 
-  Users,
+  Camera,
   ChefHat,
-  Filter,
-  TrendingUp,
-  Clock,
-  MoreHorizontal
+  Navigation
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { useRealtimeActivity, RealtimeActivity } from '@/hooks/useRealtimeActivity';
 import { NotificationService } from '@/services/NotificationService';
 import { OfflineService } from '@/services/OfflineService';
 
-export interface ActivityFeedWidgetProps {
+interface ActivityFeedWidgetProps {
   activities?: RealtimeActivity[];
+  className?: string;
 }
 
-export const ActivityFeedWidget: React.FC<ActivityFeedWidgetProps> = ({ 
-  activities: propActivities 
+const ActivityFeedWidget: React.FC<ActivityFeedWidgetProps> = ({ 
+  activities: propActivities,
+  className = "" 
 }) => {
-  const { activities, isLoading, likeActivity, shareActivity } = useRealtimeActivity();
-  const [activeFilter, setActiveFilter] = useState<'all' | 'friends' | 'nearby' | 'trending'>('all');
-  const [selectedActivity, setSelectedActivity] = useState<RealtimeActivity | null>(null);
+  const { activities: hookActivities, isLoading, likeActivity, shareActivity } = useRealtimeActivity();
+  const [expandedActivity, setExpandedActivity] = useState<string | null>(null);
+  
+  // Use prop activities if provided, otherwise use hook activities
+  const activities = propActivities || hookActivities;
 
-  const displayActivities = propActivities || activities;
-
-  const getActivityIcon = (type: RealtimeActivity['type']) => {
-    switch (type) {
-      case 'check-in': return <MapPin className="h-4 w-4" />;
-      case 'review': return <MessageCircle className="h-4 w-4" />;
-      case 'recipe': return <ChefHat className="h-4 w-4" />;
-      case 'achievement': return <Trophy className="h-4 w-4" />;
-      case 'bar-crawl': return <Users className="h-4 w-4" />;
-      case 'photo-share': return <Camera className="h-4 w-4" />;
-      default: return <Activity className="h-4 w-4" />;
-    }
-  };
-
-  const getActivityColor = (type: RealtimeActivity['type']) => {
-    switch (type) {
-      case 'check-in': return 'bg-green-100 text-green-600 dark:bg-green-900/20 dark:text-green-400';
-      case 'review': return 'bg-blue-100 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400';
-      case 'recipe': return 'bg-purple-100 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400';
-      case 'achievement': return 'bg-yellow-100 text-yellow-600 dark:bg-yellow-900/20 dark:text-yellow-400';
-      case 'bar-crawl': return 'bg-orange-100 text-orange-600 dark:bg-orange-900/20 dark:text-orange-400';
-      case 'photo-share': return 'bg-pink-100 text-pink-600 dark:bg-pink-900/20 dark:text-pink-400';
-      default: return 'bg-gray-100 text-gray-600 dark:bg-gray-900/20 dark:text-gray-400';
-    }
-  };
-
-  const formatTimeAgo = (timestamp: string) => {
-    const now = new Date();
-    const time = new Date(timestamp);
-    const diffInMinutes = Math.floor((now.getTime() - time.getTime()) / (1000 * 60));
+  const getActivityIcon = (activityType: RealtimeActivity['type']) => {
+    const iconProps = { className: "h-4 w-4" };
     
-    if (diffInMinutes < 60) {
-      return `${diffInMinutes}m ago`;
-    } else if (diffInMinutes < 1440) {
-      return `${Math.floor(diffInMinutes / 60)}h ago`;
-    } else {
-      return `${Math.floor(diffInMinutes / 1440)}d ago`;
-    }
-  };
-
-  const handleLike = async (activity: RealtimeActivity) => {
-    if (OfflineService.isOffline()) {
-      OfflineService.queueAction('like_activity', { activityId: activity.id });
-      NotificationService.addNotification({
-        title: 'Action queued',
-        message: 'Your like will be processed when you\'re back online',
-        type: 'info'
-      });
-      return;
-    }
-
-    await likeActivity(activity.id);
-    NotificationService.addNotification({
-      title: activity.isLiked ? 'Unliked' : 'Liked!',
-      message: `You ${activity.isLiked ? 'unliked' : 'liked'} ${activity.user.name}'s activity`,
-      type: 'success'
-    });
-  };
-
-  const handleShare = async (activity: RealtimeActivity) => {
-    await shareActivity(activity.id);
-    NotificationService.addNotification({
-      title: 'Shared successfully!',
-      message: `${activity.user.name}'s activity has been shared`,
-      type: 'success'
-    });
-  };
-
-  const filteredActivities = displayActivities.filter(activity => {
-    switch (activeFilter) {
-      case 'friends':
-        return activity.metadata?.is_friend;
-      case 'nearby':
-        return activity.location;
-      case 'trending':
-        return activity.likes > 10;
+    switch (activityType) {
+      case 'photo-share':
+        return <Camera {...iconProps} className="h-4 w-4 text-pink-500" />;
+      case 'achievement':
+        return <Trophy {...iconProps} className="h-4 w-4 text-yellow-500" />;
+      case 'bar-crawl':
+        return <Navigation {...iconProps} className="h-4 w-4 text-blue-500" />;
+      case 'recipe':
+        return <ChefHat {...iconProps} className="h-4 w-4 text-green-500" />;
+      case 'check-in':
+        return <MapPin {...iconProps} className="h-4 w-4 text-red-500" />;
+      case 'review':
+        return <MessageCircle {...iconProps} className="h-4 w-4 text-purple-500" />;
       default:
-        return true;
+        return <User {...iconProps} />;
     }
-  });
+  };
+
+  const handleLike = async (activityId: string) => {
+    try {
+      if (OfflineService.isOffline()) {
+        OfflineService.queueAction('like_activity', { activityId });
+        NotificationService.addNotification({
+          title: 'Action Queued',
+          message: 'Like will be processed when online',
+          type: 'info'
+        });
+      }
+      await likeActivity(activityId);
+    } catch (error) {
+      NotificationService.addNotification({
+        title: 'Error',
+        message: 'Failed to like activity',
+        type: 'error'
+      });
+    }
+  };
+
+  const handleShare = async (activityId: string) => {
+    try {
+      await shareActivity(activityId);
+      NotificationService.addNotification({
+        title: 'Shared!',
+        message: 'Activity shared successfully',
+        type: 'success'
+      });
+    } catch (error) {
+      NotificationService.addNotification({
+        title: 'Error',
+        message: 'Failed to share activity',
+        type: 'error'
+      });
+    }
+  };
+
+  const toggleExpanded = (activityId: string) => {
+    setExpandedActivity(expandedActivity === activityId ? null : activityId);
+  };
 
   if (isLoading) {
     return (
-      <Card>
+      <Card className={`animate-pulse ${className}`}>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Activity className="h-5 w-5 text-primary" />
-            Community Activity
-          </CardTitle>
+          <div className="h-6 bg-muted rounded" />
         </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="animate-pulse flex gap-3">
-                <div className="w-8 h-8 bg-muted rounded-full"></div>
-                <div className="flex-1">
-                  <div className="h-4 bg-muted rounded w-3/4 mb-2"></div>
-                  <div className="h-3 bg-muted rounded w-1/2"></div>
-                </div>
+        <CardContent className="space-y-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="flex items-center space-x-3">
+              <div className="h-10 w-10 bg-muted rounded-full" />
+              <div className="flex-1 space-y-2">
+                <div className="h-4 bg-muted rounded w-3/4" />
+                <div className="h-3 bg-muted rounded w-1/2" />
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card className="overflow-hidden">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Activity className="h-5 w-5 text-primary" />
-            Community Activity
-          </CardTitle>
-          <div className="flex items-center gap-2">
-            <Badge variant="outline" className="text-xs">
-              Live
-            </Badge>
-            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-              <Filter className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
+    <Card className={`hover:shadow-lg transition-shadow duration-200 ${className}`}>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-lg font-semibold flex items-center gap-2">
+          <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse" />
+          Community Activity
+          <Badge variant="secondary" className="ml-auto">
+            Live
+          </Badge>
+        </CardTitle>
       </CardHeader>
-      <CardContent>
-        <Tabs value={activeFilter} onValueChange={(value: any) => setActiveFilter(value)} className="space-y-4">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="all" className="text-xs">All</TabsTrigger>
-            <TabsTrigger value="friends" className="text-xs">Friends</TabsTrigger>
-            <TabsTrigger value="nearby" className="text-xs">Nearby</TabsTrigger>
-            <TabsTrigger value="trending" className="text-xs">
-              <TrendingUp className="h-3 w-3 mr-1" />
-              Hot
-            </TabsTrigger>
-          </TabsList>
+      <CardContent className="space-y-4">
+        {activities.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            <User className="h-12 w-12 mx-auto mb-3 opacity-50" />
+            <p>No recent activity</p>
+            <p className="text-sm">Check back later for updates!</p>
+          </div>
+        ) : (
+          activities.map((currentActivity) => (
+            <div
+              key={currentActivity.id}
+              className="group border rounded-lg p-4 hover:bg-muted/30 transition-colors duration-200 cursor-pointer"
+              onClick={() => toggleExpanded(currentActivity.id)}
+            >
+              <div className="flex items-start gap-3">
+                <Avatar className="h-10 w-10 border-2 border-primary/20">
+                  <AvatarImage src={currentActivity.user.avatar} />
+                  <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10">
+                    {currentActivity.user.name.split(' ').map(n => n[0]).join('')}
+                  </AvatarFallback>
+                </Avatar>
+                
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    {getActivityIcon(currentActivity.type)}
+                    <span className="font-medium text-sm">
+                      {currentActivity.user.name}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {new Date(currentActivity.timestamp).toLocaleTimeString([], { 
+                        hour: '2-digit', 
+                        minute: '2-digit' 
+                      })}
+                    </span>
+                  </div>
+                  
+                  <h4 className="font-medium text-sm mb-1 group-hover:text-primary transition-colors">
+                    {currentActivity.title}
+                  </h4>
+                  
+                  <p className="text-sm text-muted-foreground mb-2">
+                    {currentActivity.description}
+                  </p>
+                  
+                  {currentActivity.location && (
+                    <div className="flex items-center gap-1 mb-2">
+                      <MapPin className="h-3 w-3 text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground">
+                        {currentActivity.location}
+                      </span>
+                    </div>
+                  )}
 
-          <TabsContent value={activeFilter} className="space-y-4">
-            <AnimatePresence mode="wait">
-              {filteredActivities.length === 0 ? (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="text-center py-8 text-muted-foreground"
-                >
-                  <Activity className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>No activity in this category yet</p>
-                </motion.div>
-              ) : (
-                <div className="space-y-4 max-h-96 overflow-y-auto">
-                  {filteredActivities.map((activity, index) => (
-                    <motion.div
-                      key={activity.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      transition={{ delay: index * 0.1 }}
-                      className="group"
-                    >
-                      <Card className="p-4 hover:shadow-sm transition-all duration-200 border-l-4 border-l-transparent hover:border-l-primary/50">
-                        <div className="flex gap-3">
-                          {/* Avatar */}
-                          <Avatar className="h-8 w-8 ring-2 ring-background">
-                            <AvatarImage src={activity.user.avatar} alt={activity.user.name} />
-                            <AvatarFallback className="text-xs">
-                              {activity.user.name.split(' ').map(n => n[0]).join('')}
-                            </AvatarFallback>
-                          </Avatar>
+                  {currentActivity.imageUrl && (
+                    <div className="mt-2 mb-3">
+                      <img 
+                        src={currentActivity.imageUrl} 
+                        alt="Activity"
+                        className="rounded-lg max-w-full h-32 object-cover border"
+                      />
+                    </div>
+                  )}
 
-                          {/* Content */}
-                          <div className="flex-1 min-w-0">
-                            {/* Header */}
-                            <div className="flex items-center gap-2 mb-2">
-                              <div className={`p-1 rounded-full ${getActivityColor(activity.type)}`}>
-                                {getActivityIcon(activity.type)}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium truncate">{activity.title}</p>
-                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                  <Clock className="h-3 w-3" />
-                                  <span>{formatTimeAgo(activity.timestamp)}</span>
-                                  {activity.location && (
-                                    <>
-                                      <span>•</span>
-                                      <MapPin className="h-3 w-3" />
-                                      <span className="truncate">{activity.location}</span>
-                                    </>
-                                  )}
-                                </div>
-                              </div>
-                              <Button variant="ghost" size="sm" className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </div>
-
-                            {/* Description */}
-                            <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-                              {activity.description}
-                            </p>
-
-                            {/* Image */}
-                            {activity.imageUrl && (
-                              <div className="mb-3 rounded-lg overflow-hidden">
-                                <img 
-                                  src={activity.imageUrl} 
-                                  alt="Activity"
-                                  className="w-full h-32 object-cover hover:scale-105 transition-transform duration-300 cursor-pointer"
-                                  onClick={() => setSelectedActivity(activity)}
-                                />
-                              </div>
-                            )}
-
-                            {/* Actions */}
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-4">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleLike(activity)}
-                                  className={`h-8 px-2 ${activity.isLiked ? 'text-red-500' : 'text-muted-foreground'}`}
-                                >
-                                  <Heart className={`h-4 w-4 mr-1 ${activity.isLiked ? 'fill-current' : ''}`} />
-                                  <span className="text-xs">{activity.likes}</span>
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleShare(activity)}
-                                  className="h-8 px-2 text-muted-foreground"
-                                >
-                                  <Share2 className="h-4 w-4 mr-1" />
-                                  <span className="text-xs">Share</span>
-                                </Button>
-                              </div>
-
-                              {/* Activity type badge */}
-                              <Badge variant="outline" className="text-xs capitalize">
-                                {activity.type.replace('-', ' ')}
-                              </Badge>
-                            </div>
-                          </div>
+                  {/* Expanded content */}
+                  {expandedActivity === currentActivity.id && (
+                    <div className="mt-3 pt-3 border-t space-y-2 animate-in slide-in-from-top-2 duration-200">
+                      {currentActivity.metadata && (
+                        <div className="text-xs text-muted-foreground">
+                          <p>Additional details about this activity...</p>
                         </div>
-                      </Card>
-                    </motion.div>
-                  ))}
-                </div>
-              )}
-            </AnimatePresence>
-          </TabsContent>
-        </Tabs>
-
-        {/* Activity Detail Modal */}
-        <Dialog open={!!selectedActivity} onOpenChange={() => setSelectedActivity(null)}>
-          <DialogContent className="max-w-lg">
-            {selectedActivity && (
-              <>
-                <DialogHeader>
-                  <DialogTitle className="flex items-center gap-2">
-                    <div className={`p-2 rounded-full ${getActivityColor(selectedActivity.type)}`}>
-                      {getActivityIcon(selectedActivity.type)}
-                    </div>
-                    {selectedActivity.title}
-                  </DialogTitle>
-                  <DialogDescription>
-                    By {selectedActivity.user.name} • {formatTimeAgo(selectedActivity.timestamp)}
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4">
-                  {selectedActivity.imageUrl && (
-                    <img 
-                      src={selectedActivity.imageUrl} 
-                      alt="Activity"
-                      className="w-full h-48 object-cover rounded-lg"
-                    />
-                  )}
-                  <p className="text-sm">{selectedActivity.description}</p>
-                  {selectedActivity.location && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <MapPin className="h-4 w-4" />
-                      <span>{selectedActivity.location}</span>
+                      )}
                     </div>
                   )}
-                  <div className="flex items-center justify-between pt-4 border-t">
+                  
+                  {/* Action buttons */}
+                  <div className="flex items-center justify-between mt-3">
                     <div className="flex items-center gap-4">
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleLike(selectedActivity)}
-                        className={activity.isLiked ? 'text-red-500' : ''}
+                        className={`h-8 px-2 ${currentActivity.isLiked ? 'text-red-500' : 'text-muted-foreground'} hover:text-red-500 transition-colors`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleLike(currentActivity.id);
+                        }}
                       >
-                        <Heart className={`h-4 w-4 mr-1 ${selectedActivity.isLiked ? 'fill-current' : ''}`} />
-                        {selectedActivity.likes}
+                        <Heart className={`h-4 w-4 mr-1 ${currentActivity.isLiked ? 'fill-current' : ''}`} />
+                        <span className="text-xs">{currentActivity.likes}</span>
                       </Button>
+                      
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleShare(selectedActivity)}
+                        className="h-8 px-2 text-muted-foreground hover:text-primary transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleShare(currentActivity.id);
+                        }}
                       >
-                        <Share2 className="h-4 w-4 mr-1" />
-                        Share
+                        <Share className="h-4 w-4 mr-1" />
+                        <span className="text-xs">Share</span>
                       </Button>
                     </div>
-                    <Badge variant="outline" className="capitalize">
-                      {selectedActivity.type.replace('-', ' ')}
-                    </Badge>
+                    
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 px-2 text-muted-foreground hover:text-primary transition-colors"
+                    >
+                      <MessageCircle className="h-4 w-4 mr-1" />
+                      <span className="text-xs">Comment</span>
+                    </Button>
                   </div>
                 </div>
-              </>
-            )}
-          </DialogContent>
-        </Dialog>
+              </div>
+            </div>
+          ))
+        )}
+        
+        {activities.length > 0 && (
+          <div className="text-center pt-2">
+            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary">
+              View all activity
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
