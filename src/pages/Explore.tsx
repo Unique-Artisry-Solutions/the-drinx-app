@@ -1,218 +1,219 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import Layout from '@/components/Layout';
-import SearchFilter from '@/components/SearchFilter';
-import useDevAuthBypass from '@/hooks/useDevAuthBypass';
-import { useToast } from '@/hooks/use-toast';
-import FeaturedEstablishmentsSection from '@/components/explore/FeaturedEstablishmentsSection';
-import BarCrawlSection from '@/components/explore/BarCrawlSection';
-import CocktailsSection from '@/components/explore/CocktailsSection';
-import EventsSection from '@/components/explore/EventsSection';
-import PersonalizedProgressHeader from '@/components/explore/PersonalizedProgressHeader';
-import DailyChallenges from '@/components/rewards/DailyChallenges';
+import QuickActionCards from '@/components/explore/personalized/QuickActionCards';
 import AchievementProximityAlerts from '@/components/rewards/AchievementProximityAlerts';
-import AchievementCelebration from '@/components/rewards/AchievementCelebration';
-import { useAchievementTracking } from '@/hooks/useAchievementTracking';
+import QuickStatsWidget from '@/components/explore/personalized/QuickStatsWidget';
+import RecommendationsWidget from '@/components/explore/personalized/RecommendationsWidget';
+import NearbyEstablishmentsWidget from '@/components/explore/personalized/NearbyEstablishmentsWidget';
+import UpcomingEventsWidget from '@/components/explore/personalized/UpcomingEventsWidget';
+import ActivityFeedWidget from '@/components/explore/personalized/ActivityFeedWidget';
+import { Achievement, QuickAction, UserStats, PersonalizedRecommendation, RecentActivity, UpcomingEvent } from '@/hooks/usePersonalizedData';
 
-// Sample data - would be fetched from API in a real application
-import { sampleCocktails, sampleEstablishments, sampleBarCrawls } from '@/data/sampleData';
-
-const Explore = () => {
-  const [cocktails] = useState(sampleCocktails);
-  const [establishments] = useState(sampleEstablishments);
-  const [filteredCocktails, setFilteredCocktails] = useState(sampleCocktails);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filters, setFilters] = useState({
-    priceRange: [0, 25] as [number, number],
-    distance: 10,
-  });
-  const [celebratingAchievement, setCelebratingAchievement] = useState(null);
-  
-  const { user, isAuthenticated } = useDevAuthBypass();
-  const { toast } = useToast();
-  const { 
-    achievements, 
-    trackActivity, 
-    getProximityAchievements,
-    getContextualSuggestions 
-  } = useAchievementTracking();
-
-  // Apply search filter when search query changes
-  useEffect(() => {
-    handleSearchFilter();
-  }, [searchQuery]);
-
-  // This function will handle the search now
-  const handleSearchFilter = () => {
-    let results = [...cocktails];
-    
-    // Apply search filter if there's a query
-    if (searchQuery && searchQuery.trim() !== '') {
-      const query = searchQuery.toLowerCase().trim();
-      
-      results = results.filter(cocktail => 
-        cocktail.name.toLowerCase().includes(query) ||
-        cocktail.description.toLowerCase().includes(query) ||
-        cocktail.establishment.name.toLowerCase().includes(query) ||
-        (cocktail.ingredients && cocktail.ingredients.some(ingredient => 
-          ingredient.toLowerCase().includes(query)
-        ))
-      );
-      
-      console.log(`Search query "${query}" found ${results.length} results`);
+const ExplorePage: React.FC = () => {
+  // Mock data for demonstration
+  const mockQuickActions: QuickAction[] = [
+    {
+      id: '1',
+      title: 'Find Nearby',
+      description: 'Discover establishments',
+      icon: 'map-pin',
+      action: () => console.log('Find nearby clicked')
+    },
+    {
+      id: '2',
+      title: 'Create Recipe',
+      description: 'Share your mocktail',
+      icon: 'glass-water',
+      action: () => console.log('Create recipe clicked')
+    },
+    {
+      id: '3',
+      title: 'Browse Events',
+      description: 'Join swig circuits',
+      icon: 'calendar',
+      action: () => console.log('Browse events clicked')
+    },
+    {
+      id: '4',
+      title: 'Search',
+      description: 'Find anything',
+      icon: 'search',
+      action: () => console.log('Search clicked')
     }
-    
-    // Apply price filter
-    results = results.filter(cocktail => {
-      const cocktailPrice = typeof cocktail.price === 'string' 
-        ? parseFloat(cocktail.price.replace('$', '')) 
-        : cocktail.price;
-        
-      return !isNaN(cocktailPrice) && 
-             cocktailPrice >= filters.priceRange[0] && 
-             cocktailPrice <= filters.priceRange[1];
-    });
-    
-    // Store the filtered results
-    setFilteredCocktails(results);
+  ];
+
+  const mockUserStats: UserStats = {
+    totalVisits: 12,
+    favoriteEstablishments: 5,
+    reviewsWritten: 8,
+    averageRating: 4.2
   };
 
-  // Update search query and trigger filter through useEffect
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
-  };
-
-  const handleFilterChange = (newFilters: any) => {
-    setFilters(newFilters);
-  };
-
-  const applyFilters = () => {
-    handleSearchFilter();
-    
-    // Show a toast notification with the results
-    toast({
-      title: "Filters Applied",
-      description: `Found ${filteredCocktails.length} cocktails matching your criteria.`
-    });
-  };
-
-  const resetFilters = () => {
-    setSearchQuery('');
-    setFilters({
-      priceRange: [0, 25],
-      distance: 10,
-    });
-    setFilteredCocktails(cocktails);
-  };
-
-  const handleChallengeComplete = (challengeId: string) => {
-    // Track challenge completion as activity
-    trackActivity({
-      type: 'check_in',
-      metadata: { challengeId, timestamp: new Date().toISOString() }
-    });
-    
-    toast({
-      title: "Challenge Completed! 🎉",
-      description: "You've earned points and unlocked new rewards!",
-    });
-  };
-
-  const handleAchievementComplete = (achievementId: string) => {
-    const completedAchievement = achievements.find(a => a.id === achievementId);
-    if (completedAchievement) {
-      setCelebratingAchievement(completedAchievement);
+  const mockRecommendations: PersonalizedRecommendation[] = [
+    {
+      id: '1',
+      name: 'Citrus Mint Cooler',
+      type: 'cocktail',
+      reason: 'Based on your preference for citrus flavors',
+      rating: 4.8,
+      distance: '0.3 miles'
+    },
+    {
+      id: '2',
+      name: 'The Garden Lounge',
+      type: 'establishment',
+      reason: 'Popular with users who like similar drinks',
+      rating: 4.6,
+      distance: '0.7 miles'
     }
-  };
+  ];
 
-  const handleCelebrationComplete = () => {
-    setCelebratingAchievement(null);
-  };
+  const mockNearbyEstablishments = [
+    {
+      id: '1',
+      name: 'The Botanical Bar',
+      address: '123 Garden Street',
+      image_url: '/placeholder.svg',
+      distance: '0.2 miles'
+    },
+    {
+      id: '2',
+      name: 'Citrus & Sage',
+      address: '456 Fresh Avenue',
+      image_url: '/placeholder.svg',
+      distance: '0.4 miles'
+    }
+  ];
 
-  // Get proximity achievements with contextual suggestions
-  const proximityAchievements = getContextualSuggestions();
+  const mockRecentActivity: RecentActivity[] = [
+    {
+      id: '1',
+      type: 'visit',
+      establishment: 'The Botanical Bar',
+      details: 'Checked in and tried their signature mocktail',
+      timestamp: '2 hours ago'
+    },
+    {
+      id: '2',
+      type: 'review',
+      establishment: 'Citrus & Sage',
+      details: 'Left a 5-star review',
+      timestamp: '1 day ago'
+    }
+  ];
+
+  const mockUpcomingEvents: UpcomingEvent[] = [
+    {
+      id: '1',
+      title: 'Summer Swig Circuit',
+      type: 'circuit',
+      date: 'June 15, 2024',
+      location: 'Downtown District'
+    },
+    {
+      id: '2',
+      title: 'Mocktail Masterclass',
+      type: 'workshop',
+      date: 'June 20, 2024',
+      location: 'The Garden Lounge'
+    }
+  ];
+
+  const mockAchievements: Achievement[] = [
+    {
+      id: '1',
+      name: 'First Timer',
+      description: 'Visit your first establishment',
+      category: 'visits',
+      progress: 1,
+      total: 1,
+      target: 1,
+      pointsReward: 50,
+      icon: 'map-pin',
+      urgency: 'low',
+      suggestion: 'You\'ve completed this achievement!',
+      estimatedCompletion: 'Complete'
+    },
+    {
+      id: '2',
+      name: 'Social Butterfly',
+      description: 'Leave 5 reviews to help others',
+      category: 'social',
+      progress: 3,
+      total: 5,
+      target: 5,
+      pointsReward: 100,
+      icon: 'star',
+      urgency: 'medium',
+      suggestion: 'Just 2 more reviews to unlock this achievement!',
+      estimatedCompletion: '2-3 visits'
+    },
+    {
+      id: '3',
+      name: 'Explorer',
+      description: 'Visit 10 different establishments',
+      category: 'exploration',
+      progress: 8,
+      total: 10,
+      target: 10,
+      pointsReward: 200,
+      icon: 'map-pin',
+      urgency: 'high',
+      suggestion: 'Only 2 more establishments to go!',
+      estimatedCompletion: '1 week'
+    }
+  ];
 
   return (
     <Layout>
-      <div className="min-h-screen bg-background">
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="mb-6">
-            <h1 className="text-2xl font-medium text-foreground mb-2">Explore Cocktails</h1>
-            <p className="text-muted-foreground">
-              Find your perfect non-alcoholic drink
-            </p>
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-foreground mb-2">
+            Explore Amazing Mocktails
+          </h1>
+          <p className="text-muted-foreground">
+            Discover the best non-alcoholic experiences in your area.
+          </p>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="mb-8">
+          <QuickActionCards actions={mockQuickActions} />
+        </div>
+
+        {/* Achievement Alerts */}
+        <div className="mb-8">
+          <AchievementProximityAlerts achievements={mockAchievements} />
+        </div>
+
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Column */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* User Stats */}
+            <QuickStatsWidget stats={mockUserStats} />
+
+            {/* Recommendations */}
+            <RecommendationsWidget recommendations={mockRecommendations} />
+
+            {/* Nearby Establishments */}
+            <NearbyEstablishmentsWidget establishments={mockNearbyEstablishments} />
           </div>
 
-          {/* Personalized Progress Header - Only show for authenticated users */}
-          {isAuthenticated && (
-            <PersonalizedProgressHeader className="mb-6" />
-          )}
+          {/* Right Column */}
+          <div className="space-y-6">
+            {/* Recent Activity */}
+            <ActivityFeedWidget activities={mockRecentActivity} />
 
-          {/* Achievement Proximity Alerts - Only show for authenticated users */}
-          {isAuthenticated && proximityAchievements.length > 0 && (
-            <div className="mb-6">
-              <h3 className="text-lg font-medium mb-3 flex items-center gap-2">
-                🎯 Almost There!
-                <span className="text-sm text-muted-foreground font-normal">
-                  {proximityAchievements.length} achievement{proximityAchievements.length !== 1 ? 's' : ''} within reach
-                </span>
-              </h3>
-              <AchievementProximityAlerts 
-                achievements={proximityAchievements}
-                onAchievementComplete={handleAchievementComplete}
-              />
-            </div>
-          )}
-
-          <SearchFilter 
-            onSearch={handleSearch} 
-            onFilterChange={handleFilterChange}
-            onApplyFilters={applyFilters} 
-            className="mb-6"
-            initialSearchTerm={searchQuery}
-            cocktails={cocktails}
-            establishments={establishments}
-          />
-
-          {/* Daily Challenges Section */}
-          <div className="mb-8">
-            <DailyChallenges 
-              onChallengeComplete={handleChallengeComplete}
-              className="max-w-md mx-auto md:max-w-none"
-            />
-          </div>
-
-          {/* Events Section */}
-          <EventsSection />
-
-          {/* Swig Circuit Section */}
-          <BarCrawlSection 
-            barCrawls={sampleBarCrawls} 
-            isAuthenticated={isAuthenticated}
-          />
-
-          {/* Featured Establishments Section */}
-          <div className="mt-8">
-            <FeaturedEstablishmentsSection establishments={establishments} />
-          </div>
-
-          {/* Cocktails Section */}
-          <div className="mt-8">
-            <CocktailsSection 
-              cocktails={filteredCocktails} 
-              resetFilters={resetFilters}
-            />
+            {/* Upcoming Events */}
+            <UpcomingEventsWidget events={mockUpcomingEvents} />
           </div>
         </div>
       </div>
-
-      {/* Achievement Celebration Modal */}
-      <AchievementCelebration
-        achievement={celebratingAchievement}
-        onComplete={handleCelebrationComplete}
-      />
     </Layout>
   );
 };
 
-export default Explore;
+export default ExplorePage;
