@@ -6,7 +6,6 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { rewardsApi } from '@/lib/rewards/api';
 import { preferencesSchema, type PreferencesFormData } from '../types';
-import { apiToComponentPreferences } from '@/lib/adapters/rewardAdapters';
 
 export const usePreferencesForm = (userId: string) => {
   const form = useForm<PreferencesFormData>({
@@ -27,12 +26,12 @@ export const usePreferencesForm = (userId: string) => {
   const { data: preferences, isLoading, error: fetchError } = useQuery({
     queryKey: ['rewardPreferences', userId],
     queryFn: async () => {
-      // Get all preference keys we need using the adapter pattern
+      // Get all preference keys we need
       const notificationSettings = await rewardsApi.getUserPreference(userId, 'notification_settings');
       const displaySettings = await rewardsApi.getUserPreference(userId, 'display_settings');
       
-      // Return the API preferences (will be transformed in useEffect)
-      return { notificationSettings, displaySettings };
+      // Return as an array of preferences
+      return [notificationSettings, displaySettings].filter(Boolean);
     },
     retry: 2
   });
@@ -62,30 +61,34 @@ export const usePreferencesForm = (userId: string) => {
   }, [fetchError]);
 
   React.useEffect(() => {
-    if (preferences?.notificationSettings && preferences?.displaySettings) {
+    if (preferences) {
       try {
-        // Transform API preferences to component preferences
-        const componentPrefs = apiToComponentPreferences(
-          preferences.notificationSettings,
-          preferences.displaySettings
-        );
-
-        // Transform to form data format
-        const formData: PreferencesFormData = {
-          notification_settings: {
-            point_changes: componentPrefs.notificationSettings.pointChanges,
-            tier_updates: componentPrefs.notificationSettings.tierUpdates,
-            reward_availability: componentPrefs.notificationSettings.rewardAvailability
-          },
-          display_settings: {
-            points_format: componentPrefs.displaySettings.pointsFormat,
-            show_tier_progress: componentPrefs.displaySettings.showTierProgress
+        const formattedPreferences = preferences.reduce((acc, pref) => {
+          try {
+            if (pref && pref.preference_key === 'notification_settings') {
+              acc.notification_settings = typeof pref.preference_value === 'string' 
+                ? JSON.parse(pref.preference_value)
+                : pref.preference_value;
+            } else if (pref && pref.preference_key === 'display_settings') {
+              acc.display_settings = typeof pref.preference_value === 'string' 
+                ? JSON.parse(pref.preference_value)
+                : pref.preference_value;
+            }
+          } catch (parseError) {
+            console.error(`Error parsing ${pref?.preference_key}:`, parseError);
+            toast.error(`Invalid preference format for ${pref?.preference_key}`);
           }
-        };
+          return acc;
+        }, {} as PreferencesFormData);
 
-        form.reset(formData);
+        if (formattedPreferences.notification_settings && formattedPreferences.display_settings) {
+          form.reset(formattedPreferences);
+        } else {
+          console.warn('Incomplete preference data:', formattedPreferences);
+          toast.error('Some preferences could not be loaded');
+        }
       } catch (error) {
-        console.error('Error transforming preferences:', error);
+        console.error('Error formatting preferences:', error);
         toast.error('Failed to process preferences data');
       }
     }

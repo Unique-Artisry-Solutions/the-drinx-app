@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { UserRewardProfile, transformRewardOffering, transformUserRewardProfile } from '@/types/rewards';
+import { UserRewardProfile, transformRewardOffering } from '@/types/rewards';
 import { toast } from 'sonner';
 
 export const useRewards = () => {
@@ -13,7 +13,7 @@ export const useRewards = () => {
     const fetchRewards = async () => {
       try {
         // In a real implementation, this would call an API
-        const mockProfile = transformUserRewardProfile({
+        const mockProfile: UserRewardProfile = {
           id: '1',
           points: 150,
           lifetime_points: 500,
@@ -30,7 +30,7 @@ export const useRewards = () => {
             is_active: true
           },
           availableRewards: [
-            {
+            transformRewardOffering({
               id: 'reward-1',
               name: 'Free Mocktail',
               description: 'Redeem for any mocktail of your choice',
@@ -38,9 +38,8 @@ export const useRewards = () => {
               quantity_available: 50,
               expiration_days: 30,
               is_active: true,
-              image_url: '/images/mocktail.jpg',
-              establishment_id: 'est-1'
-            }
+              image_url: '/images/mocktail.jpg'
+            })
           ],
           transactionHistory: [
             {
@@ -59,10 +58,9 @@ export const useRewards = () => {
             }
           ],
           redemptionHistory: [],
-          achievements: [],
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
-        });
+        };
         
         setRewardProfile(mockProfile);
       } catch (err) {
@@ -94,7 +92,7 @@ export const useRewards = () => {
         if (rewardToRedeem) {
           const mockUpdatedProfile = {
             ...rewardProfile,
-            points: Math.max(0, rewardProfile.points - rewardToRedeem.pointCost)
+            points: Math.max(0, rewardProfile.points - rewardToRedeem.points_required)
           };
           setRewardProfile(mockUpdatedProfile);
         }

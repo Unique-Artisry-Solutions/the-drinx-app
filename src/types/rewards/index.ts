@@ -1,130 +1,244 @@
 
-// Main rewards type system - unified exports
-export * from '../database';
-export * from '../api';
-export * from '../components';
-
-// Legacy type aliases for backward compatibility
-export type { ComponentRewardCampaign as RewardCampaign } from '../components';
-export type { ComponentUserPreferences as UserRewardPreference } from '../components';
-export type { ComponentRewardOffering as RewardOffering } from '../components';
-
-// Enhanced Achievement interface with all required properties
-export interface Achievement {
+// Base types that are flexible and accommodate different data sources
+export interface BaseEntity {
   id: string;
-  name: string;
-  description: string;
-  points: number;
-  pointsReward: number;
-  icon: string;
-  category: string;
-  progress: number;
-  threshold: number;
-  isCompleted: boolean;
-  unlockedAt?: string;
-}
-
-// Enhanced RewardTransaction interface
-export interface RewardTransaction {
-  id: string;
-  userId: string;
-  user_id: string;
-  type: 'earned' | 'redeemed';
-  transaction_type: 'EARN' | 'REDEEM';
-  points: number;
-  pointsAmount: number;
-  description: string;
-  source: string;
-  timestamp: string;
-  created_at: string;
-  date: string;
-}
-
-// Enhanced UserRewardProfile interface
-export interface UserRewardProfile {
-  id: string;
-  userId?: string;
-  points: number;
-  totalPoints: number;
-  lifetime_points: number;
-  lifetimePoints: number;
-  currentTier: RewardTier;
-  availableRewards: RewardOffering[];
-  transactionHistory: RewardTransaction[];
-  redemptionHistory: RewardTransaction[];
-  achievements: Achievement[];
-  created_at: string;
-  updated_at: string;
-}
-
-// Enhanced RewardTier interface
-export interface RewardTier {
-  id: string;
-  name: string;
-  points_required: number;
-  minimumPoints: number;
-  benefits: string[];
-  description: string;
-  color: string;
-  icon: string;
-  is_active: boolean;
-  establishment_id?: string;
-}
-
-// Enhanced TimeSeriesData interface
-export interface TimeSeriesData {
-  date: string;
-  pointsEarned: number;
-  pointsRedeemed: number;
-  netPoints: number;
-  earned: number;
-  redeemed: number;
-}
-
-// Enhanced RewardAnalytics interface
-export interface RewardAnalytics {
-  totalUsers: number;
-  totalPointsIssued: number;
-  totalPointsRedeemed: number;
-  totalPointsEarned: number;
-  averagePointsPerUser: number;
-  pointsEconomyBalance: number;
-  redemptionRate: number;
-  activeUsers: number;
-  transactionCount: number;
-  tierDistribution: Array<{
-    tier: string;
-    userCount: number;
-  }>;
-  sourcesBreakdown: Record<string, number>;
-  topTiers: Array<{
-    tier: string;
-    userCount: number;
-  }>;
-  timeSeriesData: TimeSeriesData[];
-}
-
-// RewardOffering interface
-export interface RewardOffering {
-  id: string;
-  name: string;
-  description?: string;
-  pointCost: number;
-  availableQuantity?: number;
-  points_required: number;
-  pointsRequired: number;
-  pointValue: number;
-  quantity_available?: number;
-  expiration_days?: number;
-  is_active: boolean;
-  image_url?: string;
-  establishment_id?: string;
-  category?: string;
   created_at?: string;
   updated_at?: string;
 }
 
-// Achievement categories and helper functions
+// Flexible achievement interface that works with different data sources
+export interface Achievement extends BaseEntity {
+  name: string;
+  description: string;
+  category: 'visits' | 'mocktails' | 'reviews' | 'social' | 'special';
+  icon: string;
+  pointsReward: number;
+  threshold: number;
+  isCompleted: boolean;
+  progress: number;
+}
+
+// Flexible reward transaction interface
+export interface RewardTransaction extends BaseEntity {
+  user_id?: string;
+  userId?: string;
+  points: number;
+  pointsAmount?: number;
+  transaction_type: 'EARN' | 'REDEEM' | 'earn' | 'redeem';
+  type?: 'EARN' | 'REDEEM' | 'earn' | 'redeem';
+  description: string;
+  source: string;
+  timestamp?: string;
+  date?: string;
+  metadata?: Record<string, any>;
+}
+
+// For test compatibility
+export interface RewardTransactionRow extends RewardTransaction {
+  version: number;
+}
+
+// Flexible reward tier interface
+export interface RewardTier extends BaseEntity {
+  name: string;
+  points_required?: number;
+  pointsRequired?: number;
+  minimumPoints?: number;
+  benefits: string[] | { description: string }[];
+  description?: string;
+  color?: string;
+  icon?: string;
+  is_active?: boolean;
+  establishment_id?: string;
+}
+
+// Flexible reward offering interface
+export interface RewardOffering extends BaseEntity {
+  name: string;
+  description?: string;
+  points_required: number;
+  pointsRequired?: number;
+  pointCost?: number;
+  pointValue?: number;
+  quantity_available?: number;
+  availableQuantity?: number;
+  expiration_days?: number;
+  is_active?: boolean;
+  image_url?: string;
+  establishment_id?: string;
+  category?: string;
+}
+
+// Flexible user reward profile
+export interface UserRewardProfile extends BaseEntity {
+  points: number;
+  lifetime_points?: number;
+  lifetimePoints?: number;
+  currentTier: RewardTier | null;
+  availableRewards: RewardOffering[];
+  transactionHistory: RewardTransaction[];
+  redemptionHistory: RewardTransaction[];
+}
+
+// Campaign-related types
+export interface CampaignReward extends BaseEntity {
+  type: 'points' | 'offering' | 'tier';
+  value: string;
+  description: string;
+}
+
+export interface AudienceFilter extends BaseEntity {
+  type: 'all' | 'tier' | 'pointsRange' | 'activity' | 'joinDate' | 'demographics';
+  value: string;
+  description: string;
+}
+
+export interface TriggerCondition extends BaseEntity {
+  type: 'schedule' | 'event' | 'manual';
+  value: string;
+  description: string;
+}
+
+export interface RewardCampaign extends BaseEntity {
+  name: string;
+  description?: string;
+  status: 'draft' | 'active' | 'paused' | 'completed';
+  start_date?: string;
+  end_date?: string;
+  rewards: CampaignReward[];
+  audience_filters: AudienceFilter[];
+  trigger_conditions: TriggerCondition[];
+  establishment_id?: string;
+}
+
+// User preferences
+export interface UserRewardPreference extends BaseEntity {
+  user_id: string;
+  notification_settings: {
+    point_changes: boolean;
+    tier_updates: boolean;
+    reward_availability: boolean;
+  };
+  display_settings: {
+    points_format: 'standard' | 'compact';
+    show_tier_progress: boolean;
+  };
+}
+
+// Time series data for analytics
+export interface TimeSeriesData {
+  date: string;
+  pointsEarned?: number;
+  pointsRedeemed?: number;
+  netPoints?: number;
+  earned?: number;
+  redeemed?: number;
+}
+
+// Analytics interfaces
+export interface RewardAnalytics {
+  totalPointsEarned: number;
+  totalPointsRedeemed: number;
+  pointsEconomyBalance: number;
+  redemptionRate: number;
+  sourcesBreakdown: Record<string, number>;
+  timeSeriesData: TimeSeriesData[];
+  transactionCount: number;
+  totalUsers: number;
+  activeUsers: number;
+  averagePointsPerUser: number;
+  tierDistribution?: Record<string, number>;
+}
+
+// Operation response types
+export interface RewardOperationResponse {
+  success: boolean;
+  error?: string;
+  message?: string;
+}
+
+export interface BatchRewardOperationResponse extends RewardOperationResponse {
+  userId?: string;
+  pointsChanged?: number;
+  newBalance?: number;
+}
+
+// Transformation utilities to ensure data consistency
+export const transformRewardTransaction = (data: any): RewardTransaction => ({
+  id: data.id || '',
+  user_id: data.user_id || data.userId,
+  userId: data.userId || data.user_id,
+  points: data.points || data.pointsAmount || 0,
+  pointsAmount: data.pointsAmount || data.points || 0,
+  transaction_type: data.transaction_type || data.type || 'EARN',
+  type: data.type || data.transaction_type || 'EARN',
+  description: data.description || '',
+  source: data.source || 'unknown',
+  timestamp: data.timestamp || data.date || data.created_at,
+  date: data.date || data.timestamp || data.created_at,
+  created_at: data.created_at || new Date().toISOString(),
+  updated_at: data.updated_at || new Date().toISOString(),
+  metadata: data.metadata || {}
+});
+
+export const transformRewardOffering = (data: any): RewardOffering => ({
+  id: data.id || '',
+  name: data.name || '',
+  description: data.description || '',
+  points_required: data.points_required || data.pointsRequired || data.pointCost || 0,
+  pointsRequired: data.pointsRequired || data.points_required || data.pointCost || 0,
+  pointCost: data.pointCost || data.points_required || data.pointsRequired || 0,
+  pointValue: data.pointValue || data.points_required || data.pointsRequired || 0,
+  quantity_available: data.quantity_available || data.availableQuantity,
+  availableQuantity: data.availableQuantity || data.quantity_available,
+  expiration_days: data.expiration_days,
+  is_active: data.is_active !== false,
+  image_url: data.image_url,
+  establishment_id: data.establishment_id,
+  category: data.category,
+  created_at: data.created_at || new Date().toISOString(),
+  updated_at: data.updated_at || new Date().toISOString()
+});
+
+export const transformRewardTier = (data: any): RewardTier => ({
+  id: data.id || '',
+  name: data.name || '',
+  points_required: data.points_required || data.pointsRequired || 0,
+  pointsRequired: data.pointsRequired || data.points_required || 0,
+  minimumPoints: data.minimumPoints || data.points_required || data.pointsRequired || 0,
+  benefits: Array.isArray(data.benefits) ? data.benefits : [],
+  description: data.description,
+  color: data.color,
+  icon: data.icon,
+  is_active: data.is_active !== false,
+  establishment_id: data.establishment_id,
+  created_at: data.created_at || new Date().toISOString(),
+  updated_at: data.updated_at || new Date().toISOString()
+});
+
+export const transformUserRewardProfile = (data: any): UserRewardProfile => ({
+  id: data.id || '',
+  points: data.points || 0,
+  lifetime_points: data.lifetime_points || data.lifetimePoints || 0,
+  lifetimePoints: data.lifetimePoints || data.lifetime_points || 0,
+  currentTier: data.currentTier,
+  availableRewards: (data.availableRewards || []).map(transformRewardOffering),
+  transactionHistory: (data.transactionHistory || []).map(transformRewardTransaction),
+  redemptionHistory: data.redemptionHistory || [],
+  created_at: data.created_at || new Date().toISOString(),
+  updated_at: data.updated_at || new Date().toISOString()
+});
+
+export const transformTimeSeriesData = (data: any): TimeSeriesData => ({
+  date: data.date,
+  pointsEarned: data.pointsEarned || data.earned || 0,
+  pointsRedeemed: data.pointsRedeemed || data.redeemed || 0,
+  netPoints: data.netPoints || (data.earned || 0) - (data.redeemed || 0),
+  earned: data.earned || data.pointsEarned || 0,
+  redeemed: data.redeemed || data.pointsRedeemed || 0
+});
+
+// Achievement utilities
 export const achievementCategories = [
   { id: 'visits', name: 'Visits' },
   { id: 'mocktails', name: 'Mocktails' },
@@ -135,80 +249,11 @@ export const achievementCategories = [
 
 export const getAchievementsByCategory = (achievements: Achievement[]): Record<string, Achievement[]> => {
   return achievements.reduce((acc, achievement) => {
-    if (!acc[achievement.category]) {
-      acc[achievement.category] = [];
+    const category = achievement.category;
+    if (!acc[category]) {
+      acc[category] = [];
     }
-    acc[achievement.category].push(achievement);
+    acc[category].push(achievement);
     return acc;
   }, {} as Record<string, Achievement[]>);
 };
-
-// Transform functions for backward compatibility
-export const transformRewardOffering = (offering: any): RewardOffering => {
-  return {
-    id: offering.id,
-    name: offering.name,
-    description: offering.description,
-    pointCost: offering.points_required || offering.pointCost || 0,
-    availableQuantity: offering.quantity_available || offering.availableQuantity,
-    points_required: offering.points_required || offering.pointCost || 0,
-    pointsRequired: offering.pointsRequired || offering.points_required || offering.pointCost || 0,
-    pointValue: offering.pointValue || offering.points_required || offering.pointCost || 0,
-    quantity_available: offering.quantity_available || offering.availableQuantity,
-    expiration_days: offering.expiration_days,
-    is_active: offering.is_active,
-    image_url: offering.image_url,
-    establishment_id: offering.establishment_id,
-    category: offering.category,
-    created_at: offering.created_at,
-    updated_at: offering.updated_at
-  };
-};
-
-export const transformRewardTransaction = (transaction: any): RewardTransaction => {
-  return {
-    id: transaction.id,
-    userId: transaction.user_id || transaction.userId,
-    user_id: transaction.user_id || transaction.userId,
-    type: transaction.type === 'EARN' ? 'earned' : 'redeemed',
-    transaction_type: transaction.transaction_type || (transaction.type === 'earned' ? 'EARN' : 'REDEEM'),
-    points: transaction.points || transaction.pointsAmount || 0,
-    pointsAmount: transaction.pointsAmount || transaction.points || 0,
-    description: transaction.description,
-    source: transaction.source || 'unknown',
-    timestamp: transaction.timestamp || transaction.created_at || transaction.date,
-    created_at: transaction.created_at || transaction.timestamp || transaction.date,
-    date: transaction.date || transaction.created_at || transaction.timestamp
-  };
-};
-
-export const transformUserRewardProfile = (profile: any): UserRewardProfile => {
-  return {
-    id: profile.id,
-    userId: profile.userId || profile.user_id,
-    points: profile.points || 0,
-    totalPoints: profile.totalPoints || profile.lifetime_points || 0,
-    lifetime_points: profile.lifetime_points || profile.totalPoints || 0,
-    lifetimePoints: profile.lifetimePoints || profile.lifetime_points || profile.totalPoints || 0,
-    currentTier: profile.currentTier || {
-      id: 'bronze',
-      name: 'Bronze',
-      points_required: 0,
-      minimumPoints: 0,
-      benefits: [],
-      description: 'Starting tier',
-      color: '#CD7F32',
-      icon: 'award',
-      is_active: true
-    },
-    availableRewards: (profile.availableRewards || []).map(transformRewardOffering),
-    transactionHistory: (profile.transactionHistory || []).map(transformRewardTransaction),
-    redemptionHistory: (profile.redemptionHistory || []).map(transformRewardTransaction),
-    achievements: profile.achievements || [],
-    created_at: profile.created_at || new Date().toISOString(),
-    updated_at: profile.updated_at || new Date().toISOString()
-  };
-};
-
-// Alias for backward compatibility
-export type RewardTransactionRow = RewardTransaction;
