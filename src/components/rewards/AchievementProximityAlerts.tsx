@@ -1,163 +1,196 @@
 
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { MapPin, Star, Share, Target, Clock, ChevronDown, ChevronUp } from 'lucide-react';
-import { Achievement } from '@/hooks/usePersonalizedData';
+import { Trophy, Target, Star, ChevronDown, ChevronUp, Zap } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { AnimatedProgressBar } from '@/components/animations/AnimatedProgressBar';
+import { ParticleEffect } from '@/components/animations/ParticleEffect';
 import { AchievementCelebration } from '@/components/animations/AchievementCelebration';
+import { Achievement } from '@/lib/rewards/types';
 
 interface AchievementProximityAlertsProps {
-  achievements: Achievement[];
+  className?: string;
 }
 
-const AchievementProximityAlerts: React.FC<AchievementProximityAlertsProps> = ({ achievements }) => {
+const AchievementProximityAlerts: React.FC<AchievementProximityAlertsProps> = ({ className = '' }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [showParticles, setShowParticles] = useState(false);
+  const [showCelebration, setShowCelebration] = useState(false);
   const [celebratingAchievement, setCelebratingAchievement] = useState<Achievement | null>(null);
   const isMobile = useIsMobile();
-  
-  const getIcon = (iconName: string) => {
-    switch (iconName) {
-      case 'map-pin':
-        return MapPin;
-      case 'star':
+
+  // Mock data - would come from rewards API in real app
+  const nearbyAchievements: Achievement[] = [
+    {
+      id: '1',
+      name: 'Social Butterfly',
+      description: 'Share 5 mocktail photos',
+      category: 'social',
+      threshold: 5,
+      pointsReward: 100,
+      isCompleted: false,
+      progress: 3,
+      pointValue: 100,
+      icon: 'share'
+    },
+    {
+      id: '2', 
+      name: 'Frequent Visitor',
+      description: 'Visit 10 establishments',
+      category: 'visits',
+      threshold: 10,
+      pointsReward: 150,
+      isCompleted: false,
+      progress: 8,
+      pointValue: 150,
+      icon: 'map-pin'
+    },
+    {
+      id: '3',
+      name: 'Mocktail Master',
+      description: 'Try 15 different mocktails',
+      category: 'mocktails',
+      threshold: 15,
+      pointsReward: 200,
+      isCompleted: false,
+      progress: 12,
+      pointValue: 200,
+      icon: 'glass'
+    }
+  ];
+
+  const getIcon = (category: string) => {
+    switch (category) {
+      case 'visits':
+        return Trophy;
+      case 'social':
         return Star;
-      case 'share':
-        return Share;
-      case 'target':
+      case 'mocktails':
         return Target;
       default:
-        return Target;
+        return Zap;
     }
   };
 
-  const getUrgencyColor = (urgency: string) => {
-    switch (urgency) {
-      case 'high':
-        return 'bg-red-500';
-      case 'medium':
-        return 'bg-yellow-500';
-      case 'low':
-        return 'bg-green-500';
-      default:
-        return 'bg-gray-500';
+  const getProgressColor = (progress: number, threshold: number) => {
+    const percentage = (progress / threshold) * 100;
+    if (percentage >= 80) return 'success';
+    if (percentage >= 60) return 'warning';
+    return 'default';
+  };
+
+  const handleAchievementClick = (achievement: Achievement) => {
+    setShowParticles(true);
+    if (achievement.progress >= achievement.threshold * 0.8) {
+      setCelebratingAchievement(achievement);
+      setShowCelebration(true);
     }
   };
 
-  const nearCompletionAchievements = achievements.filter(
-    achievement => (achievement.progress / achievement.total) >= 0.6
-  );
-
-  const handleViewDetails = (achievement: Achievement) => {
-    // Simulate achievement completion for demo
-    if (achievement.progress / achievement.total > 0.8) {
-      setCelebratingAchievement({
-        ...achievement,
-        category: achievement.category as 'visits' | 'mocktails' | 'social' | 'special'
-      });
-    }
-  };
-
-  if (nearCompletionAchievements.length === 0) {
-    return null;
-  }
-
-  const AchievementsList = () => (
+  const AlertsContent = () => (
     <div className="space-y-4">
-      {nearCompletionAchievements.map((achievement, index) => {
-        const Icon = getIcon(achievement.icon);
-        const progressPercentage = (achievement.progress / achievement.total) * 100;
-        
-        return (
-          <div 
-            key={achievement.id} 
-            className={`p-4 border rounded-lg bg-muted/30 hover:bg-muted/50 transition-all duration-300 hover:scale-[1.02] ${isMobile ? 'min-h-[120px]' : ''}`}
-            style={{ animationDelay: `${index * 0.1}s` }}
-          >
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex items-center gap-3 flex-1">
-                <div className={`p-2 rounded-full bg-primary/10 animate-pulse ${isMobile ? 'min-w-[40px]' : ''}`}>
-                  <Icon className="h-4 w-4 text-primary" />
+      <div className="space-y-3">
+        {nearbyAchievements.map((achievement, index) => {
+          const IconComponent = getIcon(achievement.category);
+          const progressPercentage = (achievement.progress / achievement.threshold) * 100;
+          const isCloseToCompletion = progressPercentage >= 80;
+          
+          return (
+            <div
+              key={achievement.id}
+              className={`p-3 border rounded-lg cursor-pointer transition-all duration-200 hover:shadow-md hover:scale-[1.02] ${
+                isCloseToCompletion 
+                  ? 'bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border-amber-200 dark:border-amber-800' 
+                  : 'bg-muted/30 hover:bg-muted/50'
+              } ${isMobile ? 'min-h-[100px]' : ''}`}
+              onClick={() => handleAchievementClick(achievement)}
+              style={{ animationDelay: `${index * 0.1}s` }}
+            >
+              <div className="flex items-start justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <IconComponent 
+                    className={`h-5 w-5 ${
+                      isCloseToCompletion 
+                        ? 'text-amber-600 dark:text-amber-400 animate-pulse' 
+                        : 'text-primary'
+                    }`}
+                  />
+                  <div>
+                    <h4 className={`font-medium ${isMobile ? 'text-sm' : 'text-base'}`}>
+                      {achievement.name}
+                    </h4>
+                    <p className={`text-muted-foreground ${isMobile ? 'text-xs' : 'text-sm'}`}>
+                      {achievement.description}
+                    </p>
+                  </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className={`font-semibold text-foreground ${isMobile ? 'text-sm' : ''}`}>{achievement.name}</h3>
-                  <p className={`text-sm text-muted-foreground ${isMobile ? 'text-xs line-clamp-2' : ''}`}>{achievement.description}</p>
+                <div className="flex flex-col items-end gap-1">
+                  <Badge 
+                    variant={isCloseToCompletion ? 'default' : 'outline'} 
+                    className={`text-xs ${isCloseToCompletion ? 'animate-pulse bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300' : ''}`}
+                  >
+                    +{achievement.pointsReward}
+                  </Badge>
+                  {isCloseToCompletion && (
+                    <span className="text-xs text-amber-600 dark:text-amber-400 font-medium animate-bounce">
+                      Almost there!
+                    </span>
+                  )}
                 </div>
               </div>
-              <Badge 
-                variant="outline" 
-                className={`text-white animate-pulse ${getUrgencyColor(achievement.urgency)} ${isMobile ? 'text-xs' : ''}`}
-              >
-                {achievement.urgency}
-              </Badge>
-            </div>
-            
-            <div className="mb-3">
-              <div className="flex justify-between text-sm mb-1">
-                <span className={isMobile ? 'text-xs' : ''}>Progress: {achievement.progress}/{achievement.total}</span>
-                <span className={`font-medium ${isMobile ? 'text-xs' : ''}`}>{Math.round(progressPercentage)}%</span>
+              
+              <div className="space-y-2">
+                <div className="flex justify-between text-xs">
+                  <span>Progress</span>
+                  <span className="font-medium">
+                    {achievement.progress}/{achievement.threshold}
+                  </span>
+                </div>
+                <AnimatedProgressBar
+                  value={achievement.progress}
+                  max={achievement.threshold}
+                  className={isMobile ? 'h-2.5' : 'h-2'}
+                  showGlow={isCloseToCompletion}
+                  color={getProgressColor(achievement.progress, achievement.threshold)}
+                />
               </div>
-              <AnimatedProgressBar 
-                value={progressPercentage} 
-                max={100}
-                className={`${isMobile ? 'h-3' : 'h-2'}`}
-                showGlow={progressPercentage > 80}
-                color={progressPercentage > 90 ? 'success' : progressPercentage > 70 ? 'warning' : 'default'}
-              />
             </div>
+          );
+        })}
+      </div>
 
-            {achievement.suggestion && (
-              <div className={`flex items-center gap-2 text-blue-600 mb-2 ${isMobile ? 'text-xs' : 'text-sm'}`}>
-                <Target className="h-4 w-4 flex-shrink-0 animate-bounce" />
-                <span className={isMobile ? 'line-clamp-2' : ''}>{achievement.suggestion}</span>
-              </div>
-            )}
-
-            {achievement.estimatedCompletion && (
-              <div className={`flex items-center gap-2 text-muted-foreground mb-3 ${isMobile ? 'text-xs' : 'text-sm'}`}>
-                <Clock className="h-4 w-4 flex-shrink-0" />
-                <span>Est. completion: {achievement.estimatedCompletion}</span>
-              </div>
-            )}
-
-            <div className="flex items-center justify-between">
-              <span className={`font-medium text-primary animate-pulse ${isMobile ? 'text-xs' : 'text-sm'}`}>
-                +{achievement.pointsReward} points
-              </span>
-              <Button 
-                size={isMobile ? "sm" : "sm"} 
-                variant="outline" 
-                className={`transition-all duration-200 hover:scale-105 ${isMobile ? 'text-xs px-3 py-1 h-8' : ''}`}
-                onClick={() => handleViewDetails(achievement)}
-              >
-                View Details
-              </Button>
-            </div>
-          </div>
-        );
-      })}
-
-      <AchievementCelebration
-        achievement={celebratingAchievement}
-        isVisible={!!celebratingAchievement}
-        onClose={() => setCelebratingAchievement(null)}
+      <ParticleEffect 
+        trigger={showParticles} 
+        points={50}
+        onComplete={() => setShowParticles(false)}
       />
+      
+      {celebratingAchievement && (
+        <AchievementCelebration
+          achievement={celebratingAchievement}
+          isVisible={showCelebration}
+          onComplete={() => {
+            setShowCelebration(false);
+            setCelebratingAchievement(null);
+          }}
+        />
+      )}
     </div>
   );
 
   if (isMobile) {
     return (
-      <Card className="w-full">
+      <Card className={`w-full ${className}`}>
         <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
           <CollapsibleTrigger asChild>
             <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors min-h-[64px] flex flex-row items-center justify-between space-y-0 pb-3">
               <CardTitle className="text-lg font-semibold flex items-center gap-2">
                 <Target className="h-5 w-5 text-primary animate-pulse" />
-                Achievements ({nearCompletionAchievements.length})
+                Achievements ({nearbyAchievements.length} close)
               </CardTitle>
               {isExpanded ? (
                 <ChevronUp className="h-5 w-5 text-muted-foreground" />
@@ -168,7 +201,7 @@ const AchievementProximityAlerts: React.FC<AchievementProximityAlertsProps> = ({
           </CollapsibleTrigger>
           <CollapsibleContent>
             <CardContent className="pt-0">
-              <AchievementsList />
+              <AlertsContent />
             </CardContent>
           </CollapsibleContent>
         </Collapsible>
@@ -177,15 +210,15 @@ const AchievementProximityAlerts: React.FC<AchievementProximityAlertsProps> = ({
   }
 
   return (
-    <Card className="w-full">
+    <Card className={`w-full ${className}`}>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+        <CardTitle className="text-xl font-semibold flex items-center gap-2">
           <Target className="h-5 w-5 text-primary animate-pulse" />
-          Achievement Progress Alerts
+          Achievement Alerts
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <AchievementsList />
+        <AlertsContent />
       </CardContent>
     </Card>
   );
