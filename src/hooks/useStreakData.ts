@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useStreakRewards } from './useStreakRewards';
 
 export interface StreakDay {
-  date: string;
+  date: Date;
   hasVisit: boolean;
   visitCount: number;
   points?: number;
@@ -33,7 +33,7 @@ export const useStreakData = () => {
         const hasVisit = i < 5; // Last 5 days have visits (current streak)
         
         data.push({
-          date: date.toISOString().split('T')[0],
+          date: new Date(date), // Ensure it's a Date object
           hasVisit,
           visitCount: hasVisit ? 1 : 0,
           points: hasVisit ? 25 : 0
