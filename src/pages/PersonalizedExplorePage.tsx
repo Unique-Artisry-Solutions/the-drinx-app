@@ -8,8 +8,6 @@ import ActivityFeedWidget from '@/components/explore/personalized/ActivityFeedWi
 import QuickActionCards from '@/components/explore/personalized/QuickActionCards';
 import NearbyEstablishmentsWidget from '@/components/explore/personalized/NearbyEstablishmentsWidget';
 import UpcomingEventsWidget from '@/components/explore/personalized/UpcomingEventsWidget';
-import TrendingMocktailsWidget from '@/components/explore/personalized/TrendingMocktailsWidget';
-import AchievementProximityAlerts from '@/components/rewards/AchievementProximityAlerts';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const PersonalizedExplorePage: React.FC = () => {
@@ -27,11 +25,11 @@ const PersonalizedExplorePage: React.FC = () => {
   if (loading) {
     return (
       <Layout>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-          <Skeleton className="h-10 w-64" />
+        <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
+          <Skeleton className="h-8 w-64" />
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <Skeleton key={i} className="h-64 w-full" />
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Skeleton key={i} className="h-48 w-full" />
             ))}
           </div>
         </div>
@@ -41,13 +39,13 @@ const PersonalizedExplorePage: React.FC = () => {
 
   return (
     <Layout>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      <div className="max-w-7xl mx-auto px-4 py-6">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-3">
+          <h1 className="text-3xl font-bold text-foreground mb-2">
             {isAuthenticated ? 'Your Dashboard' : 'Discover Amazing Mocktails'}
           </h1>
-          <p className="text-muted-foreground text-lg">
+          <p className="text-muted-foreground">
             {isAuthenticated 
               ? 'Welcome back! Here\'s what\'s happening in your mocktail world.'
               : 'Explore the best non-alcoholic experiences in your area.'
@@ -60,17 +58,10 @@ const PersonalizedExplorePage: React.FC = () => {
           <QuickActionCards actions={quickActions} />
         </div>
 
-        {/* Achievement Proximity Alerts - For authenticated users */}
-        {isAuthenticated && (
-          <div className="mb-8">
-            <AchievementProximityAlerts />
-          </div>
-        )}
-
         {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column */}
-          <div className="lg:col-span-2 space-y-8">
+          <div className="lg:col-span-2 space-y-6">
             {/* User Stats - Only for authenticated users */}
             {isAuthenticated && userStats && (
               <QuickStatsWidget stats={userStats} />
@@ -79,15 +70,12 @@ const PersonalizedExplorePage: React.FC = () => {
             {/* Recommendations */}
             <RecommendationsWidget recommendations={recommendations} />
 
-            {/* Trending Mocktails */}
-            <TrendingMocktailsWidget />
-
             {/* Nearby Establishments */}
             <NearbyEstablishmentsWidget establishments={nearbyEstablishments} />
           </div>
 
           {/* Right Column */}
-          <div className="space-y-8">
+          <div className="space-y-6">
             {/* Recent Activity - Only for authenticated users */}
             {isAuthenticated && (
               <ActivityFeedWidget activities={recentActivity} />
