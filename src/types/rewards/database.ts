@@ -36,8 +36,9 @@ export interface RewardTransactionRow {
   transaction_type: 'earn' | 'redeem';
   source: string;
   description?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, any> | string | null;
   created_at: string;
+  version?: number;
 }
 
 export interface UserRewardRow {

@@ -35,7 +35,8 @@ export async function getRewardAnalytics(establishmentId?: string): Promise<Rewa
     // Transform raw database transactions to expected format
     const transformedTransactions = transactions.map(tx => transformRewardTransaction({
       ...tx,
-      transaction_type: tx.transaction_type as 'earn' | 'redeem'
+      transaction_type: tx.transaction_type as 'earn' | 'redeem',
+      metadata: typeof tx.metadata === 'object' ? tx.metadata as Record<string, any> : {}
     }));
     
     const analytics = processRewardAnalytics(transformedTransactions);

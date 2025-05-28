@@ -75,7 +75,7 @@ export const AchievementsList: React.FC<AchievementsListProps> = ({
         </div>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue={achievementCategories[0]?.id || 'visits'}>
+        <Tabs defaultValue={achievementCategories[0]?.id || 'engagement'}>
           <TabsList className="grid grid-cols-5 mb-4">
             {achievementCategories.map((category) => (
               <TabsTrigger key={category.id} value={category.id} className="text-xs">

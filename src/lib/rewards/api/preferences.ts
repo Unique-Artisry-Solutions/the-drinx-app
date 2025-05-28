@@ -35,17 +35,24 @@ export async function getUserPreference(
     if (!data) return null;
 
     // Transform database response to match UserRewardPreference interface
-    return {
+    const preference: UserRewardPreference = {
       id: data.id,
       user_id: data.user_id,
       preference_key: data.preference_key,
       preference_value: data.preference_value,
       created_at: data.created_at,
-      updated_at: data.updated_at,
-      // Add structured properties for backward compatibility
-      notification_settings: key === 'notification_settings' ? data.preference_value : undefined,
-      display_settings: key === 'display_settings' ? data.preference_value : undefined
+      updated_at: data.updated_at
     };
+
+    // Add structured properties for backward compatibility
+    if (key === 'notification_settings' && typeof data.preference_value === 'object') {
+      preference.notification_settings = data.preference_value as any;
+    }
+    if (key === 'display_settings' && typeof data.preference_value === 'object') {
+      preference.display_settings = data.preference_value as any;
+    }
+
+    return preference;
   } catch (error) {
     console.error('Unexpected error in getUserPreference:', error);
     return null;

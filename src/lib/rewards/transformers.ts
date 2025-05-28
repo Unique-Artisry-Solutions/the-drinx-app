@@ -74,27 +74,27 @@ export function transformRewardTransaction(row: RewardTransactionRow): RewardTra
     timestamp: row.created_at,
     date: row.created_at,
     created_at: row.created_at,
-    metadata: row.metadata
+    metadata: typeof row.metadata === 'object' ? row.metadata as Record<string, any> : {}
   };
 }
 
-export function transformUserRewardProfile(row: UserRewardRow & { 
+export function transformUserRewardProfile(data: Partial<UserRewardProfile> & { 
   tier?: RewardTierRow;
   offerings?: RewardOfferingRow[];
   transactions?: RewardTransactionRow[];
 }): UserRewardProfile {
   return {
-    id: row.id,
-    user_id: row.user_id,
-    points: row.points,
-    lifetime_points: row.lifetime_points,
-    lifetimePoints: row.lifetime_points,
-    currentTier: row.tier ? transformRewardTier(row.tier) : undefined,
-    availableRewards: row.offerings?.map(transformRewardOffering) || [],
-    transactionHistory: row.transactions?.map(transformRewardTransaction) || [],
-    redemptionHistory: [],
-    created_at: row.created_at,
-    updated_at: row.updated_at
+    id: data.id || '',
+    user_id: data.user_id,
+    points: data.points || 0,
+    lifetime_points: data.lifetime_points || 0,
+    lifetimePoints: data.lifetime_points || data.lifetimePoints || 0,
+    currentTier: data.tier ? transformRewardTier(data.tier) : data.currentTier,
+    availableRewards: data.offerings?.map(transformRewardOffering) || data.availableRewards || [],
+    transactionHistory: data.transactions?.map(transformRewardTransaction) || data.transactionHistory || [],
+    redemptionHistory: data.redemptionHistory || [],
+    created_at: data.created_at || new Date().toISOString(),
+    updated_at: data.updated_at || new Date().toISOString()
   };
 }
 

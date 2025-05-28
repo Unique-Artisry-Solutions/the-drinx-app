@@ -86,7 +86,19 @@ export interface RewardAnalytics {
   totalUsers: number;
   activeUsers: number;
   averagePointsPerUser: number;
-  tierDistribution?: Record<string, number>; // Added missing property
+  tierDistribution?: Record<string, number>;
+  // Campaign performance metrics
+  total_users_reached?: number;
+  total_rewards_claimed?: number;
+  engagement_rate?: number;
+  total_points_awarded?: number;
+  roi_estimate?: number;
+  daily_metrics?: Array<{
+    date: string;
+    users_reached: number;
+    rewards_claimed: number;
+    points_awarded: number;
+  }>;
 }
 
 export interface Achievement {
@@ -114,6 +126,8 @@ export interface RewardCampaign {
   end_date?: string;
   budget?: number;
   target_audience?: AudienceFilter[];
+  audience_filters?: AudienceFilter[]; // Alternative naming
+  establishment_id?: string;
   rewards: CampaignReward[];
   trigger_conditions?: TriggerCondition[];
   performance_metrics?: {
@@ -121,6 +135,17 @@ export interface RewardCampaign {
     clicks: number;
     conversions: number;
     spend: number;
+    total_users_reached?: number;
+    total_rewards_claimed?: number;
+    engagement_rate?: number;
+    total_points_awarded?: number;
+    roi_estimate?: number;
+    daily_metrics?: Array<{
+      date: string;
+      users_reached: number;
+      rewards_claimed: number;
+      points_awarded: number;
+    }>;
   };
   created_at: string;
   updated_at: string;
