@@ -1,76 +1,113 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { MapPin, Star, Heart } from 'lucide-react';
-import { RecentActivity } from '@/hooks/usePersonalizedData';
+import { Badge } from '@/components/ui/badge';
+import { Clock, User, MapPin } from 'lucide-react';
 
-interface ActivityFeedWidgetProps {
-  activities: RecentActivity[];
+export interface Activity {
+  id: string;
+  type: 'check-in' | 'review' | 'recipe' | 'achievement';
+  title: string;
+  description: string;
+  timestamp: string;
+  user?: string;
+  location?: string;
 }
 
-const ActivityFeedWidget: React.FC<ActivityFeedWidgetProps> = ({ activities }) => {
-  const getActivityIcon = (type: string) => {
+export interface ActivityFeedWidgetProps {
+  activities?: Activity[];
+}
+
+const defaultActivities: Activity[] = [
+  {
+    id: '1',
+    type: 'check-in',
+    title: 'Sarah checked in',
+    description: 'At The Mocktail Lounge',
+    timestamp: '2 hours ago',
+    user: 'Sarah',
+    location: 'The Mocktail Lounge'
+  },
+  {
+    id: '2',
+    type: 'review',
+    title: 'New review posted',
+    description: 'Amazing virgin piña colada!',
+    timestamp: '4 hours ago',
+    user: 'Mike'
+  },
+  {
+    id: '3',
+    type: 'recipe',
+    title: 'Recipe shared',
+    description: 'Cucumber Mint Refresher',
+    timestamp: '6 hours ago',
+    user: 'Emma'
+  }
+];
+
+export const ActivityFeedWidget: React.FC<ActivityFeedWidgetProps> = ({ 
+  activities = defaultActivities 
+}) => {
+  const getActivityIcon = (type: Activity['type']) => {
     switch (type) {
-      case 'visit':
-        return MapPin;
+      case 'check-in':
+        return <MapPin className="h-4 w-4" />;
       case 'review':
-        return Star;
-      case 'favorite':
-        return Heart;
+        return <User className="h-4 w-4" />;
+      case 'recipe':
+        return <User className="h-4 w-4" />;
+      case 'achievement':
+        return <User className="h-4 w-4" />;
       default:
-        return MapPin;
+        return <User className="h-4 w-4" />;
     }
   };
 
-  const getActivityColor = (type: string) => {
+  const getActivityColor = (type: Activity['type']) => {
     switch (type) {
-      case 'visit':
-        return 'text-blue-500';
+      case 'check-in':
+        return 'bg-blue-100 text-blue-800';
       case 'review':
-        return 'text-yellow-500';
-      case 'favorite':
-        return 'text-red-500';
+        return 'bg-green-100 text-green-800';
+      case 'recipe':
+        return 'bg-purple-100 text-purple-800';
+      case 'achievement':
+        return 'bg-yellow-100 text-yellow-800';
       default:
-        return 'text-gray-500';
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-xl font-semibold">Recent Activity</CardTitle>
+        <CardTitle>Community Activity</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {activities.map((activity) => {
-            const Icon = getActivityIcon(activity.type);
-            const colorClass = getActivityColor(activity.type);
-            
-            return (
-              <div key={activity.id} className="flex items-start gap-3">
-                <div className={`p-2 rounded-full bg-muted ${colorClass}`}>
-                  <Icon className="h-4 w-4" />
+          {activities.map((activity) => (
+            <div key={activity.id} className="flex items-start gap-3">
+              <div className={`p-2 rounded-full ${getActivityColor(activity.type)}`}>
+                {getActivityIcon(activity.type)}
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <p className="font-medium text-sm">{activity.title}</p>
+                  <Badge variant="outline" className="text-xs">
+                    {activity.type}
+                  </Badge>
                 </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-foreground">
-                    {activity.establishment}
-                  </p>
-                  {activity.details && (
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {activity.details}
-                    </p>
-                  )}
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {activity.timestamp}
-                  </p>
+                <p className="text-xs text-muted-foreground mb-1">{activity.description}</p>
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <Clock className="h-3 w-3" />
+                  <span>{activity.timestamp}</span>
                 </div>
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
       </CardContent>
     </Card>
   );
 };
-
-export default ActivityFeedWidget;

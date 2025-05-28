@@ -1,59 +1,50 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { MapPin, Heart, Star, TrendingUp } from 'lucide-react';
-import { UserStats } from '@/hooks/usePersonalizedData';
+import { Trophy, Star, TrendingUp } from 'lucide-react';
 
-interface QuickStatsWidgetProps {
-  stats: UserStats;
+export interface QuickStatsWidgetProps {
+  totalMocktailsTried: number;
+  totalPoints: number;
+  currentStreak: number;
 }
 
-const QuickStatsWidget: React.FC<QuickStatsWidgetProps> = ({ stats }) => {
-  const statItems = [
-    {
-      icon: MapPin,
-      label: 'Total Visits',
-      value: stats.totalVisits,
-      color: 'text-blue-600'
-    },
-    {
-      icon: Heart,
-      label: 'Favorites',
-      value: stats.favoriteEstablishments,
-      color: 'text-red-600'
-    },
-    {
-      icon: Star,
-      label: 'Reviews',
-      value: stats.reviewsWritten,
-      color: 'text-yellow-600'
-    },
-    {
-      icon: TrendingUp,
-      label: 'Avg Rating',
-      value: stats.averageRating.toFixed(1),
-      color: 'text-green-600'
-    }
-  ];
-
+export const QuickStatsWidget: React.FC<QuickStatsWidgetProps> = ({
+  totalMocktailsTried,
+  totalPoints,
+  currentStreak
+}) => {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-xl font-semibold">Your Activity</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {statItems.map((item, index) => (
-            <div key={index} className="text-center p-4 bg-muted/50 rounded-lg">
-              <item.icon className={`h-6 w-6 mx-auto mb-2 ${item.color}`} />
-              <div className="text-2xl font-bold text-foreground">{item.value}</div>
-              <div className="text-sm text-muted-foreground">{item.label}</div>
-            </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Mocktails Tried</CardTitle>
+          <Star className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{totalMocktailsTried}</div>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Total Points</CardTitle>
+          <Trophy className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{totalPoints}</div>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Current Streak</CardTitle>
+          <TrendingUp className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{currentStreak} days</div>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
-
-export default QuickStatsWidget;

@@ -33,17 +33,23 @@ export interface RewardTransaction extends BaseEntity {
   metadata?: Record<string, any>;
 }
 
+// For test compatibility
+export interface RewardTransactionRow extends RewardTransaction {
+  version: number;
+}
+
 // Flexible reward tier interface
 export interface RewardTier extends BaseEntity {
   name: string;
   points_required?: number;
   pointsRequired?: number;
   minimumPoints?: number;
-  benefits: string[];
+  benefits: string[] | { description: string }[];
   description?: string;
   color?: string;
   icon?: string;
   is_active?: boolean;
+  establishment_id?: string;
 }
 
 // Flexible reward offering interface
@@ -59,6 +65,8 @@ export interface RewardOffering extends BaseEntity {
   expiration_days?: number;
   is_active?: boolean;
   image_url?: string;
+  establishment_id?: string;
+  category?: string;
 }
 
 // Flexible user reward profile
@@ -70,6 +78,51 @@ export interface UserRewardProfile extends BaseEntity {
   availableRewards: RewardOffering[];
   transactionHistory: RewardTransaction[];
   redemptionHistory: RewardTransaction[];
+}
+
+// Campaign-related types
+export interface CampaignReward extends BaseEntity {
+  type: 'points' | 'offering' | 'tier';
+  value: string;
+  description: string;
+}
+
+export interface AudienceFilter extends BaseEntity {
+  type: 'all' | 'tier' | 'pointsRange' | 'activity' | 'joinDate' | 'demographics';
+  value: string;
+  description: string;
+}
+
+export interface TriggerCondition extends BaseEntity {
+  type: 'schedule' | 'event' | 'manual';
+  value: string;
+  description: string;
+}
+
+export interface RewardCampaign extends BaseEntity {
+  name: string;
+  description?: string;
+  status: 'draft' | 'active' | 'paused' | 'completed';
+  start_date?: string;
+  end_date?: string;
+  rewards: CampaignReward[];
+  audience_filters: AudienceFilter[];
+  trigger_conditions: TriggerCondition[];
+  establishment_id?: string;
+}
+
+// User preferences
+export interface UserRewardPreference extends BaseEntity {
+  user_id: string;
+  notification_settings: {
+    point_changes: boolean;
+    tier_updates: boolean;
+    reward_availability: boolean;
+  };
+  display_settings: {
+    points_format: 'standard' | 'compact';
+    show_tier_progress: boolean;
+  };
 }
 
 // Time series data for analytics
@@ -94,6 +147,7 @@ export interface RewardAnalytics {
   totalUsers: number;
   activeUsers: number;
   averagePointsPerUser: number;
+  tierDistribution?: Record<string, number>;
 }
 
 // Operation response types
@@ -140,6 +194,24 @@ export const transformRewardOffering = (data: any): RewardOffering => ({
   expiration_days: data.expiration_days,
   is_active: data.is_active !== false,
   image_url: data.image_url,
+  establishment_id: data.establishment_id,
+  category: data.category,
+  created_at: data.created_at || new Date().toISOString(),
+  updated_at: data.updated_at || new Date().toISOString()
+});
+
+export const transformRewardTier = (data: any): RewardTier => ({
+  id: data.id || '',
+  name: data.name || '',
+  points_required: data.points_required || data.pointsRequired || 0,
+  pointsRequired: data.pointsRequired || data.points_required || 0,
+  minimumPoints: data.minimumPoints || data.points_required || data.pointsRequired || 0,
+  benefits: Array.isArray(data.benefits) ? data.benefits : [],
+  description: data.description,
+  color: data.color,
+  icon: data.icon,
+  is_active: data.is_active !== false,
+  establishment_id: data.establishment_id,
   created_at: data.created_at || new Date().toISOString(),
   updated_at: data.updated_at || new Date().toISOString()
 });
@@ -185,14 +257,3 @@ export const getAchievementsByCategory = (achievements: Achievement[]): Record<s
     return acc;
   }, {} as Record<string, Achievement[]>);
 };
-
-// Backward compatibility exports
-export type { Achievement as RewardAchievement };
-export type { RewardTransaction };
-export type { RewardTier };
-export type { RewardOffering };
-export type { UserRewardProfile };
-export type { TimeSeriesData };
-export type { RewardAnalytics };
-export type { RewardOperationResponse };
-export type { BatchRewardOperationResponse };

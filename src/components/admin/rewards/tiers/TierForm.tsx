@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,7 +23,7 @@ export const TierForm = ({ tier, onSubmit, isSubmitting }: TierFormProps) => {
     color: '#4f46e5',
     icon: 'crown',
   });
-  const [benefitInputs, setBenefitInputs] = useState<{ description: string }[]>([{ description: '' }]);
+  const [benefitInputs, setBenefitInputs] = useState<string[]>(['']);
 
   // Initialize form with tier data if editing
   useEffect(() => {
@@ -36,11 +37,12 @@ export const TierForm = ({ tier, onSubmit, isSubmitting }: TierFormProps) => {
         icon: tier.icon || 'crown',
       });
       
-      // Set benefit inputs for editing
+      // Set benefit inputs for editing - handle both string[] and object[] formats
       if (tier.benefits && Array.isArray(tier.benefits) && tier.benefits.length > 0) {
-        setBenefitInputs(tier.benefits.map((benefit: any) => ({ 
-          description: benefit.description || benefit 
-        })));
+        const benefitStrings = tier.benefits.map((benefit: any) => 
+          typeof benefit === 'string' ? benefit : benefit.description || ''
+        );
+        setBenefitInputs(benefitStrings.length > 0 ? benefitStrings : ['']);
       }
     }
   }, [tier]);
@@ -65,12 +67,12 @@ export const TierForm = ({ tier, onSubmit, isSubmitting }: TierFormProps) => {
 
   const handleBenefitChange = (index: number, value: string) => {
     const newBenefits = [...benefitInputs];
-    newBenefits[index] = { description: value };
+    newBenefits[index] = value;
     setBenefitInputs(newBenefits);
   };
 
   const addBenefit = () => {
-    setBenefitInputs([...benefitInputs, { description: '' }]);
+    setBenefitInputs([...benefitInputs, '']);
   };
 
   const removeBenefit = (index: number) => {
@@ -82,10 +84,9 @@ export const TierForm = ({ tier, onSubmit, isSubmitting }: TierFormProps) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Format the benefits array
+    // Format the benefits array as simple strings
     const formattedBenefits = benefitInputs
-      .filter(benefit => benefit.description.trim() !== '')
-      .map(benefit => ({ description: benefit.description }));
+      .filter(benefit => benefit.trim() !== '');
     
     // Submit the form data with formatted benefits
     onSubmit({
@@ -162,7 +163,7 @@ export const TierForm = ({ tier, onSubmit, isSubmitting }: TierFormProps) => {
             {benefitInputs.map((benefit, index) => (
               <div key={index} className="flex items-center gap-2">
                 <Input
-                  value={benefit.description}
+                  value={benefit}
                   onChange={(e) => handleBenefitChange(index, e.target.value)}
                   placeholder={`Benefit ${index + 1}`}
                   className="flex-1"

@@ -8,13 +8,13 @@ import AllCocktails from '@/components/home/AllCocktails';
 import FeaturedEstablishmentsSection from '@/components/explore/FeaturedEstablishmentsSection';
 import CocktailsSection from '@/components/explore/CocktailsSection';
 import BarCrawlSection from '@/components/explore/BarCrawlSection';
-import NearbyEstablishmentsWidget from '@/components/explore/personalized/NearbyEstablishmentsWidget';
-import QuickStatsWidget from '@/components/explore/personalized/QuickStatsWidget';
-import RecommendationsWidget from '@/components/explore/personalized/RecommendationsWidget';
-import ActivityFeedWidget from '@/components/explore/personalized/ActivityFeedWidget';
-import UpcomingEventsWidget from '@/components/explore/personalized/UpcomingEventsWidget';
+import { QuickStatsWidget } from '@/components/explore/personalized/QuickStatsWidget';
+import { QuickActionCards } from '@/components/explore/personalized/QuickActionCards';
+import { RecommendationsWidget } from '@/components/explore/personalized/RecommendationsWidget';
+import { ActivityFeedWidget } from '@/components/explore/personalized/ActivityFeedWidget';
+import { NearbyEstablishmentsWidget } from '@/components/explore/personalized/NearbyEstablishmentsWidget';
+import { UpcomingEventsWidget } from '@/components/explore/personalized/UpcomingEventsWidget';
 import StreakMotivationWidget from '@/components/explore/personalized/StreakMotivationWidget';
-import QuickActionCards from '@/components/explore/personalized/QuickActionCards';
 import RewardsHighlightWidget from '@/components/rewards/RewardsHighlightWidget';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -59,10 +59,15 @@ const Explore: React.FC = () => {
           <div className="flex-1">
             <SearchInput 
               onSearch={handleSearch}
+              onFilterChange={() => {}}
+              onApplyFilters={() => {}}
               className="w-full"
             />
           </div>
-          <FilterPanel />
+          <FilterPanel 
+            viewMode="grid"
+            onViewModeChange={() => {}}
+          />
         </div>
 
         {/* Main Content */}
@@ -84,17 +89,17 @@ const Explore: React.FC = () => {
                   totalPoints={userStats.totalPoints}
                   currentStreak={userStats.currentStreak}
                 />
-                <QuickActionCards />
-                <RecommendationsWidget />
-                <ActivityFeedWidget />
+                <QuickActionCards actions={[]} />
+                <RecommendationsWidget recommendations={[]} />
+                <ActivityFeedWidget activities={[]} />
               </div>
 
               {/* Right Column - Secondary Widgets */}
               <div className="space-y-6">
                 <RewardsHighlightWidget />
                 <StreakMotivationWidget />
-                <NearbyEstablishmentsWidget />
-                <UpcomingEventsWidget />
+                <NearbyEstablishmentsWidget establishments={[]} />
+                <UpcomingEventsWidget events={[]} />
               </div>
             </div>
 
@@ -107,11 +112,20 @@ const Explore: React.FC = () => {
           </TabsContent>
 
           <TabsContent value="establishments">
-            <EstablishmentList establishments={establishments} />
+            <EstablishmentList 
+              establishments={establishments} 
+              selectedEstablishment={null}
+              favoriteEstablishments={[]}
+              onToggleFavorite={() => {}}
+              onEstablishmentClick={() => {}}
+            />
           </TabsContent>
 
           <TabsContent value="cocktails">
-            <AllCocktails cocktails={cocktails} />
+            <AllCocktails 
+              cocktails={cocktails} 
+              onResetFilters={resetFilters}
+            />
           </TabsContent>
 
           <TabsContent value="events">

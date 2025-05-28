@@ -3,46 +3,81 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Star, MapPin } from 'lucide-react';
-import { PersonalizedRecommendation } from '@/hooks/usePersonalizedData';
 
-interface RecommendationsWidgetProps {
-  recommendations: PersonalizedRecommendation[];
+export interface Recommendation {
+  id: string;
+  title: string;
+  description: string;
+  type: 'establishment' | 'cocktail' | 'event';
+  rating?: number;
+  distance?: string;
+  imageUrl?: string;
 }
 
-const RecommendationsWidget: React.FC<RecommendationsWidgetProps> = ({ recommendations }) => {
+export interface RecommendationsWidgetProps {
+  recommendations?: Recommendation[];
+}
+
+const defaultRecommendations: Recommendation[] = [
+  {
+    id: '1',
+    title: 'The Mocktail Lounge',
+    description: 'Trendy spot with creative non-alcoholic drinks',
+    type: 'establishment',
+    rating: 4.8,
+    distance: '0.3 miles'
+  },
+  {
+    id: '2',
+    title: 'Virgin Mojito Supreme',
+    description: 'Refreshing mint and lime combination',
+    type: 'cocktail',
+    rating: 4.6
+  },
+  {
+    id: '3',
+    title: 'Sober Social Hour',
+    description: 'Weekly meetup for mocktail enthusiasts',
+    type: 'event',
+    distance: '1.2 miles'
+  }
+];
+
+export const RecommendationsWidget: React.FC<RecommendationsWidgetProps> = ({ 
+  recommendations = defaultRecommendations 
+}) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-xl font-semibold">Recommended for You</CardTitle>
+        <CardTitle>Recommended for You</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
           {recommendations.map((rec) => (
-            <div key={rec.id} className="flex items-center gap-4 p-4 bg-muted/50 rounded-lg hover:bg-muted/70 transition-colors cursor-pointer">
-              <div className="w-12 h-12 bg-gradient-to-br from-primary/20 to-primary/5 rounded-lg flex items-center justify-center">
-                {rec.type === 'cocktail' ? '🍹' : '🏪'}
-              </div>
+            <div key={rec.id} className="flex items-start gap-3 p-3 rounded-lg border">
               <div className="flex-1">
-                <h3 className="font-semibold text-foreground">{rec.name}</h3>
-                <p className="text-sm text-muted-foreground">{rec.reason}</p>
-                <div className="flex items-center gap-2 mt-2">
+                <div className="flex items-center gap-2 mb-1">
+                  <h4 className="font-medium text-sm">{rec.title}</h4>
+                  <Badge variant="secondary" className="text-xs">
+                    {rec.type}
+                  </Badge>
+                </div>
+                <p className="text-xs text-muted-foreground mb-2">{rec.description}</p>
+                <div className="flex items-center gap-3 text-xs">
                   {rec.rating && (
                     <div className="flex items-center gap-1">
-                      <Star className="h-4 w-4 text-yellow-500 fill-current" />
-                      <span className="text-sm">{rec.rating}</span>
+                      <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                      <span>{rec.rating}</span>
                     </div>
                   )}
                   {rec.distance && (
                     <div className="flex items-center gap-1">
-                      <MapPin className="h-4 w-4 text-blue-500" />
-                      <span className="text-sm">{rec.distance}</span>
+                      <MapPin className="h-3 w-3" />
+                      <span>{rec.distance}</span>
                     </div>
                   )}
                 </div>
               </div>
-              <Badge variant="outline" className="capitalize">
-                {rec.type}
-              </Badge>
             </div>
           ))}
         </div>
@@ -50,5 +85,3 @@ const RecommendationsWidget: React.FC<RecommendationsWidgetProps> = ({ recommend
     </Card>
   );
 };
-
-export default RecommendationsWidget;

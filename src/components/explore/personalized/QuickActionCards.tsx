@@ -1,50 +1,78 @@
 
 import React from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { MapPin, GlassWater, Calendar, Search } from 'lucide-react';
-import { QuickAction } from '@/hooks/usePersonalizedData';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Plus, MapPin, Camera, Share } from 'lucide-react';
 
-interface QuickActionCardsProps {
-  actions: QuickAction[];
+export interface QuickAction {
+  id: string;
+  title: string;
+  description: string;
+  icon: React.ReactNode;
+  onClick: () => void;
 }
 
-const QuickActionCards: React.FC<QuickActionCardsProps> = ({ actions }) => {
-  const getIcon = (iconName: string) => {
-    switch (iconName) {
-      case 'map-pin':
-        return MapPin;
-      case 'glass-water':
-        return GlassWater;
-      case 'calendar':
-        return Calendar;
-      case 'search':
-        return Search;
-      default:
-        return Search;
-    }
-  };
+export interface QuickActionCardsProps {
+  actions?: QuickAction[];
+}
 
+const defaultActions: QuickAction[] = [
+  {
+    id: 'add-recipe',
+    title: 'Create Recipe',
+    description: 'Share your mocktail creation',
+    icon: <Plus className="h-5 w-5" />,
+    onClick: () => console.log('Create recipe')
+  },
+  {
+    id: 'find-places',
+    title: 'Find Places',
+    description: 'Discover nearby establishments',
+    icon: <MapPin className="h-5 w-5" />,
+    onClick: () => console.log('Find places')
+  },
+  {
+    id: 'check-in',
+    title: 'Check In',
+    description: 'Log your visit',
+    icon: <Camera className="h-5 w-5" />,
+    onClick: () => console.log('Check in')
+  },
+  {
+    id: 'share',
+    title: 'Share Experience',
+    description: 'Tell friends about your visit',
+    icon: <Share className="h-5 w-5" />,
+    onClick: () => console.log('Share')
+  }
+];
+
+export const QuickActionCards: React.FC<QuickActionCardsProps> = ({ 
+  actions = defaultActions 
+}) => {
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-      {actions.map((action) => {
-        const Icon = getIcon(action.icon);
-        
-        return (
-          <Card 
-            key={action.id} 
-            className="cursor-pointer hover:shadow-md transition-all duration-200 hover:scale-[1.02]"
-            onClick={action.action}
-          >
-            <CardContent className="p-6 text-center">
-              <Icon className="h-8 w-8 mx-auto mb-3 text-primary" />
-              <h3 className="font-semibold text-foreground mb-1">{action.title}</h3>
-              <p className="text-sm text-muted-foreground">{action.description}</p>
-            </CardContent>
-          </Card>
-        );
-      })}
-    </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>Quick Actions</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-2 gap-3">
+          {actions.map((action) => (
+            <Button
+              key={action.id}
+              variant="outline"
+              className="h-auto p-4 flex flex-col items-center gap-2"
+              onClick={action.onClick}
+            >
+              {action.icon}
+              <div className="text-center">
+                <div className="font-medium text-sm">{action.title}</div>
+                <div className="text-xs text-muted-foreground">{action.description}</div>
+              </div>
+            </Button>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
   );
 };
-
-export default QuickActionCards;

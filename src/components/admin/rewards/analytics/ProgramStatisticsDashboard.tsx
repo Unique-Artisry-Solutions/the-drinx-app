@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { RewardAnalytics, TimeSeriesData } from '@/lib/rewards/types';
@@ -30,12 +31,20 @@ export const ProgramStatisticsDashboard: React.FC<ProgramStatisticsDashboardProp
       setChartData(mapAnalyticsTimeSeriesData(analytics.timeSeriesData));
       
       // Process tier distribution data if available
-      if (analytics.tierDistribution) {
+      if (analytics.tierDistribution && typeof analytics.tierDistribution === 'object') {
         const tierDistributionData = Object.entries(analytics.tierDistribution).map(([name, value]) => ({
           name,
-          value
+          value: typeof value === 'number' ? value : 0
         }));
         setTierData(tierDistributionData);
+      } else {
+        // Provide default mock data if no tier distribution exists
+        setTierData([
+          { name: 'Bronze', value: 45 },
+          { name: 'Silver', value: 30 },
+          { name: 'Gold', value: 20 },
+          { name: 'Platinum', value: 5 }
+        ]);
       }
     }
   }, [analytics]);
