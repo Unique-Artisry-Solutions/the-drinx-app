@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -7,15 +6,23 @@ import { Flame, Star, Trophy, TrendingUp } from 'lucide-react';
 import { usePersonalizedData } from '@/hooks/usePersonalizedData';
 import { useStreakData } from '@/hooks/useStreakData';
 import StreakMotivationCard from './StreakMotivationCard';
-
 interface PersonalizedProgressHeaderProps {
   className?: string;
 }
-
-const PersonalizedProgressHeader: React.FC<PersonalizedProgressHeaderProps> = ({ className }) => {
-  const { loading, userStats, isAuthenticated } = usePersonalizedData();
-  const { currentStreak, longestStreak, streakData, isLoading: streakLoading } = useStreakData();
-
+const PersonalizedProgressHeader: React.FC<PersonalizedProgressHeaderProps> = ({
+  className
+}) => {
+  const {
+    loading,
+    userStats,
+    isAuthenticated
+  } = usePersonalizedData();
+  const {
+    currentStreak,
+    longestStreak,
+    streakData,
+    isLoading: streakLoading
+  } = useStreakData();
   if (loading || streakLoading || !isAuthenticated) {
     return null;
   }
@@ -28,19 +35,24 @@ const PersonalizedProgressHeader: React.FC<PersonalizedProgressHeaderProps> = ({
     nextTier: 'Gold Adventurer',
     tierProgress: 65,
     pointsToNextTier: 750,
-    nearbyAchievements: [
-      { name: 'Social Butterfly', progress: 8, total: 10, reward: '50 pts' },
-      { name: 'Circuit Master', progress: 2, total: 3, reward: '100 pts' }
-    ]
+    nearbyAchievements: [{
+      name: 'Social Butterfly',
+      progress: 8,
+      total: 10,
+      reward: '50 pts'
+    }, {
+      name: 'Circuit Master',
+      progress: 2,
+      total: 3,
+      reward: '100 pts'
+    }]
   };
-
-  return (
-    <div className={`space-y-4 ${className}`}>
+  return <div className={`space-y-4 ${className}`}>
       {/* Main Progress Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Points Balance */}
-        <Card>
-          <CardContent className="p-4">
+        <Card className="my-0 py-[5px]">
+          <CardContent className="p-4 my-0">
             <div className="flex items-center justify-between">
               <div>
                 <div className="flex items-center gap-2">
@@ -58,9 +70,9 @@ const PersonalizedProgressHeader: React.FC<PersonalizedProgressHeaderProps> = ({
         </Card>
 
         {/* Current Streak */}
-        <Card>
+        <Card className="my-0 py-[5px]">
           <CardContent className="p-4">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between my-0">
               <div>
                 <div className="flex items-center gap-2">
                   <Flame className="h-4 w-4 text-orange-500" />
@@ -76,7 +88,7 @@ const PersonalizedProgressHeader: React.FC<PersonalizedProgressHeaderProps> = ({
         </Card>
 
         {/* Tier Progress */}
-        <Card>
+        <Card className="py-[5px]">
           <CardContent className="p-4">
             <div className="space-y-2">
               <div className="flex items-center gap-2">
@@ -99,16 +111,14 @@ const PersonalizedProgressHeader: React.FC<PersonalizedProgressHeaderProps> = ({
       </div>
 
       {/* Achievement Proximity Alerts */}
-      {mockData.nearbyAchievements.length > 0 && (
-        <Card>
+      {mockData.nearbyAchievements.length > 0 && <Card>
           <CardContent className="p-4">
             <h4 className="font-medium text-sm mb-3 flex items-center gap-2">
               <Trophy className="h-4 w-4 text-amber-500" />
               Almost There!
             </h4>
             <div className="space-y-3">
-              {mockData.nearbyAchievements.map((achievement, index) => (
-                <div key={index} className="space-y-2">
+              {mockData.nearbyAchievements.map((achievement, index) => <div key={index} className="space-y-2">
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-medium">{achievement.name}</span>
                     <Badge variant="secondary" className="text-xs">
@@ -118,25 +128,17 @@ const PersonalizedProgressHeader: React.FC<PersonalizedProgressHeaderProps> = ({
                   <div className="space-y-1">
                     <div className="flex justify-between text-xs text-muted-foreground">
                       <span>{achievement.progress}/{achievement.total}</span>
-                      <span>{Math.round((achievement.progress / achievement.total) * 100)}%</span>
+                      <span>{Math.round(achievement.progress / achievement.total * 100)}%</span>
                     </div>
-                    <Progress value={(achievement.progress / achievement.total) * 100} className="h-1.5" />
+                    <Progress value={achievement.progress / achievement.total * 100} className="h-1.5" />
                   </div>
-                </div>
-              ))}
+                </div>)}
             </div>
           </CardContent>
-        </Card>
-      )}
+        </Card>}
 
       {/* Streak Motivation Card */}
-      <StreakMotivationCard
-        currentStreak={currentStreak}
-        longestStreak={longestStreak}
-        streakData={streakData}
-      />
-    </div>
-  );
+      <StreakMotivationCard currentStreak={currentStreak} longestStreak={longestStreak} streakData={streakData} />
+    </div>;
 };
-
 export default PersonalizedProgressHeader;
