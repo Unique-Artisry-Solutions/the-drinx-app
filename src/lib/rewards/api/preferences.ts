@@ -19,7 +19,20 @@ export async function getUserPreference(
       return null;
     }
 
-    return data;
+    if (!data) return null;
+
+    // Transform database response to match UserRewardPreference interface
+    return {
+      id: data.id,
+      user_id: data.user_id,
+      preference_key: data.preference_key,
+      preference_value: data.preference_value,
+      created_at: data.created_at,
+      updated_at: data.updated_at,
+      // Add structured properties for backward compatibility
+      notification_settings: key === 'notification_settings' ? data.preference_value : undefined,
+      display_settings: key === 'display_settings' ? data.preference_value : undefined
+    };
   } catch (error) {
     console.error('Unexpected error in getUserPreference:', error);
     return null;

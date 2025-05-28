@@ -18,11 +18,12 @@ import StreakMotivationWidget from '@/components/explore/personalized/StreakMoti
 import RewardsHighlightWidget from '@/components/rewards/RewardsHighlightWidget';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { UserStats } from '@/types/ExploreTypes';
+import { UserStats, ViewMode } from '@/types/ExploreTypes';
 
 const Explore: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeView, setActiveView] = useState('personalized');
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [userStats] = useState<UserStats>({
     totalMocktailsTried: 12,
     totalPoints: 1250,
@@ -65,8 +66,8 @@ const Explore: React.FC = () => {
             />
           </div>
           <FilterPanel 
-            viewMode="grid"
-            onViewModeChange={() => {}}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
           />
         </div>
 

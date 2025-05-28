@@ -2,10 +2,11 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Map, List } from 'lucide-react';
+import { ViewMode } from '@/types/ExploreTypes';
 
 export interface ViewModeToggleProps {
-  viewMode: 'map' | 'list';
-  onViewModeChange: (mode: 'map' | 'list') => void;
+  viewMode: ViewMode;
+  onViewModeChange: (mode: ViewMode) => void;
 }
 
 const ViewModeToggle: React.FC<ViewModeToggleProps> = ({ viewMode, onViewModeChange }) => {

@@ -2,12 +2,12 @@
 import React from 'react';
 import Layout from '@/components/Layout';
 import { usePersonalizedData } from '@/hooks/usePersonalizedData';
-import QuickStatsWidget from '@/components/explore/personalized/QuickStatsWidget';
-import RecommendationsWidget from '@/components/explore/personalized/RecommendationsWidget';
-import ActivityFeedWidget from '@/components/explore/personalized/ActivityFeedWidget';
-import QuickActionCards from '@/components/explore/personalized/QuickActionCards';
-import NearbyEstablishmentsWidget from '@/components/explore/personalized/NearbyEstablishmentsWidget';
-import UpcomingEventsWidget from '@/components/explore/personalized/UpcomingEventsWidget';
+import { QuickStatsWidget } from '@/components/explore/personalized/QuickStatsWidget';
+import { RecommendationsWidget } from '@/components/explore/personalized/RecommendationsWidget';
+import { ActivityFeedWidget } from '@/components/explore/personalized/ActivityFeedWidget';
+import { QuickActionCards } from '@/components/explore/personalized/QuickActionCards';
+import { NearbyEstablishmentsWidget } from '@/components/explore/personalized/NearbyEstablishmentsWidget';
+import { UpcomingEventsWidget } from '@/components/explore/personalized/UpcomingEventsWidget';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const PersonalizedExplorePage: React.FC = () => {
@@ -64,7 +64,11 @@ const PersonalizedExplorePage: React.FC = () => {
           <div className="lg:col-span-2 space-y-6">
             {/* User Stats - Only for authenticated users */}
             {isAuthenticated && userStats && (
-              <QuickStatsWidget stats={userStats} />
+              <QuickStatsWidget 
+                totalMocktailsTried={userStats.totalMocktailsTried}
+                totalPoints={userStats.totalPoints}
+                currentStreak={userStats.currentStreak}
+              />
             )}
 
             {/* Recommendations */}
