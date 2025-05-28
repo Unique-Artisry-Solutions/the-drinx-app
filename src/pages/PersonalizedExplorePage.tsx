@@ -8,6 +8,8 @@ import ActivityFeedWidget from '@/components/explore/personalized/ActivityFeedWi
 import QuickActionCards from '@/components/explore/personalized/QuickActionCards';
 import NearbyEstablishmentsWidget from '@/components/explore/personalized/NearbyEstablishmentsWidget';
 import UpcomingEventsWidget from '@/components/explore/personalized/UpcomingEventsWidget';
+import TrendingMocktailsWidget from '@/components/explore/personalized/TrendingMocktailsWidget';
+import AchievementProximityAlerts from '@/components/rewards/AchievementProximityAlerts';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const PersonalizedExplorePage: React.FC = () => {
@@ -28,7 +30,7 @@ const PersonalizedExplorePage: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
           <Skeleton className="h-10 w-64" />
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {Array.from({ length: 6 }).map((_, i) => (
+            {Array.from({ length: 8 }).map((_, i) => (
               <Skeleton key={i} className="h-64 w-full" />
             ))}
           </div>
@@ -58,6 +60,13 @@ const PersonalizedExplorePage: React.FC = () => {
           <QuickActionCards actions={quickActions} />
         </div>
 
+        {/* Achievement Proximity Alerts - For authenticated users */}
+        {isAuthenticated && (
+          <div className="mb-8">
+            <AchievementProximityAlerts />
+          </div>
+        )}
+
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column */}
@@ -69,6 +78,9 @@ const PersonalizedExplorePage: React.FC = () => {
 
             {/* Recommendations */}
             <RecommendationsWidget recommendations={recommendations} />
+
+            {/* Trending Mocktails */}
+            <TrendingMocktailsWidget />
 
             {/* Nearby Establishments */}
             <NearbyEstablishmentsWidget establishments={nearbyEstablishments} />
