@@ -10,6 +10,9 @@ import CocktailsSection from '@/components/explore/CocktailsSection';
 import EventsSection from '@/components/explore/EventsSection';
 import PersonalizedProgressHeader from '@/components/explore/PersonalizedProgressHeader';
 import DailyChallenges from '@/components/rewards/DailyChallenges';
+import AchievementProximityAlerts from '@/components/rewards/AchievementProximityAlerts';
+import AchievementCelebration from '@/components/rewards/AchievementCelebration';
+import { useAchievementTracking } from '@/hooks/useAchievementTracking';
 
 // Sample data - would be fetched from API in a real application
 import { sampleCocktails, sampleEstablishments, sampleBarCrawls } from '@/data/sampleData';
@@ -23,8 +26,16 @@ const Explore = () => {
     priceRange: [0, 25] as [number, number],
     distance: 10,
   });
+  const [celebratingAchievement, setCelebratingAchievement] = useState(null);
+  
   const { user, isAuthenticated } = useDevAuthBypass();
   const { toast } = useToast();
+  const { 
+    achievements, 
+    trackActivity, 
+    getProximityAchievements,
+    getContextualSuggestions 
+  } = useAchievementTracking();
 
   // Apply search filter when search query changes
   useEffect(() => {
@@ -95,11 +106,31 @@ const Explore = () => {
   };
 
   const handleChallengeComplete = (challengeId: string) => {
+    // Track challenge completion as activity
+    trackActivity({
+      type: 'check_in',
+      metadata: { challengeId, timestamp: new Date().toISOString() }
+    });
+    
     toast({
       title: "Challenge Completed! 🎉",
       description: "You've earned points and unlocked new rewards!",
     });
   };
+
+  const handleAchievementComplete = (achievementId: string) => {
+    const completedAchievement = achievements.find(a => a.id === achievementId);
+    if (completedAchievement) {
+      setCelebratingAchievement(completedAchievement);
+    }
+  };
+
+  const handleCelebrationComplete = () => {
+    setCelebratingAchievement(null);
+  };
+
+  // Get proximity achievements with contextual suggestions
+  const proximityAchievements = getContextualSuggestions();
 
   return (
     <Layout>
@@ -115,6 +146,22 @@ const Explore = () => {
           {/* Personalized Progress Header - Only show for authenticated users */}
           {isAuthenticated && (
             <PersonalizedProgressHeader className="mb-6" />
+          )}
+
+          {/* Achievement Proximity Alerts - Only show for authenticated users */}
+          {isAuthenticated && proximityAchievements.length > 0 && (
+            <div className="mb-6">
+              <h3 className="text-lg font-medium mb-3 flex items-center gap-2">
+                🎯 Almost There!
+                <span className="text-sm text-muted-foreground font-normal">
+                  {proximityAchievements.length} achievement{proximityAchievements.length !== 1 ? 's' : ''} within reach
+                </span>
+              </h3>
+              <AchievementProximityAlerts 
+                achievements={proximityAchievements}
+                onAchievementComplete={handleAchievementComplete}
+              />
+            </div>
           )}
 
           <SearchFilter 
@@ -158,6 +205,12 @@ const Explore = () => {
           </div>
         </div>
       </div>
+
+      {/* Achievement Celebration Modal */}
+      <AchievementCelebration
+        achievement={celebratingAchievement}
+        onComplete={handleCelebrationComplete}
+      />
     </Layout>
   );
 };
