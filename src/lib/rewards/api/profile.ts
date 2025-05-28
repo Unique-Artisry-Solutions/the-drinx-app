@@ -1,6 +1,6 @@
 
 import { supabase } from '@/lib/supabase';
-import { UserRewardProfile, transformUserRewardProfile, transformRewardOffering } from '@/types/rewards';
+import { UserRewardProfile, transformUserRewardProfile } from '@/types/rewards';
 import { RewardsCache } from '../system/RewardsCache';
 
 export async function getUserRewardProfile(userId: string): Promise<UserRewardProfile | null> {
@@ -22,50 +22,44 @@ export async function getUserRewardProfile(userId: string): Promise<UserRewardPr
       points: 150,
       lifetime_points: 500,
       lifetimePoints: 500,
-      currentTier: {
+      tier: {
         id: 'tier-1',
+        establishment_id: 'est-1',
         name: 'Silver',
-        points_required: 100,
-        pointsRequired: 100,
-        minimumPoints: 100,
-        benefits: ['Free drink on birthday', '10% off weekday purchases'],
         description: 'Silver tier rewards',
+        points_required: 100,
+        benefits: ['Free drink on birthday', '10% off weekday purchases'],
         color: '#C0C0C0',
         icon: 'award',
-        is_active: true
+        is_active: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       },
-      availableRewards: [
+      offerings: [
         {
           id: 'reward-1',
+          establishment_id: 'est-1',
           name: 'Free Mocktail',
           description: 'Redeem for any mocktail of your choice',
           points_required: 100,
-          pointsRequired: 100,
-          pointCost: 100,
-          pointValue: 100,
           quantity_available: 50,
-          availableQuantity: 50,
           expiration_days: 30,
           is_active: true,
           image_url: '/images/mocktail.jpg',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         }
-      ].map(transformRewardOffering),
-      transactionHistory: [
+      ],
+      transactions: [
         {
           id: 'trans-1',
           user_id: userId,
-          userId: userId,
           points: 50,
-          pointsAmount: 50,
-          transaction_type: 'EARN',
-          type: 'EARN',
-          description: 'Check-in reward',
+          transaction_type: 'earn' as const,
           source: 'check-in',
+          description: 'Check-in reward',
           created_at: new Date().toISOString(),
-          timestamp: new Date().toISOString(),
-          date: new Date().toISOString()
+          metadata: {}
         }
       ],
       redemptionHistory: [],

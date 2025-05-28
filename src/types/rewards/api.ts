@@ -131,10 +131,10 @@ export interface RewardCampaign {
   rewards: CampaignReward[];
   trigger_conditions?: TriggerCondition[];
   performance_metrics?: {
-    impressions: number;
-    clicks: number;
-    conversions: number;
-    spend: number;
+    impressions?: number;
+    clicks?: number;
+    conversions?: number;
+    spend?: number;
     total_users_reached?: number;
     total_rewards_claimed?: number;
     engagement_rate?: number;
