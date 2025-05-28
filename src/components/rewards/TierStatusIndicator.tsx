@@ -1,9 +1,11 @@
 
-import React from 'react';
-import { Card, CardContent } from '@/components/ui/card';
+import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Award } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Award, ChevronDown, ChevronUp } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface TierStatusIndicatorProps {
   currentTier: number;
@@ -11,8 +13,11 @@ interface TierStatusIndicatorProps {
 }
 
 export function TierStatusIndicator({ currentTier, points }: TierStatusIndicatorProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const isMobile = useIsMobile();
+  
   // Determine points needed for next tier
-  const pointsForNextTier = currentTier * 1000; // Example calculation
+  const pointsForNextTier = currentTier * 1000;
   const nextTierPoints = currentTier * 1000 + 1000;
   
   // Calculate progress percentage toward next tier
@@ -31,6 +36,95 @@ export function TierStatusIndicator({ currentTier, points }: TierStatusIndicator
   
   // Calculate remaining points needed for next tier
   const remainingPoints = nextTierPoints - points;
+
+  const TierContent = () => (
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <div>
+          <div className="text-2xl font-bold text-orange-600">{currentTier}</div>
+          <div className="text-sm text-muted-foreground">Current Tier</div>
+        </div>
+        <div className="text-right">
+          <div className="text-lg font-semibold text-orange-500">{tierName()}</div>
+          <div className="text-sm text-muted-foreground">
+            {remainingPoints > 0 
+              ? `${remainingPoints} to go`
+              : "Max tier"}
+          </div>
+        </div>
+      </div>
+      
+      <div className="space-y-2">
+        <div className="flex justify-between items-center text-sm">
+          <span className="text-muted-foreground">Progress to next tier</span>
+          <span className="font-medium">{Math.round(progressToNextTier)}%</span>
+        </div>
+        <Progress 
+          value={progressToNextTier} 
+          className={`transition-all duration-700 ${isMobile ? 'h-3' : 'h-2.5'}`}
+        />
+        
+        <div className="flex justify-between text-xs text-muted-foreground mt-2">
+          <span>{points} points</span>
+          <span>{nextTierPoints} points</span>
+        </div>
+      </div>
+      
+      <div className={`grid gap-1 mt-6 ${isMobile ? 'grid-cols-3' : 'grid-cols-5'}`}>
+        {[1, 2, 3, 4, 5].map(tier => (
+          <div 
+            key={tier} 
+            className={`text-center py-2 rounded-md transition-colors text-xs sm:text-sm ${isMobile ? 'min-h-[40px]' : 'min-h-[36px]'} ${
+              tier <= currentTier 
+                ? 'bg-primary/20 text-primary font-medium' 
+                : 'bg-muted text-muted-foreground'
+            } ${isMobile && tier > 3 ? 'hidden' : ''}`}
+          >
+            {tier}
+          </div>
+        ))}
+        {isMobile && (
+          <div className="text-center py-2 rounded-md bg-muted/50 text-muted-foreground text-xs min-h-[40px] flex items-center justify-center">
+            +2
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  if (isMobile) {
+    return (
+      <Card className="overflow-hidden shadow-md border-t-4 border-t-primary">
+        <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
+          <CollapsibleTrigger asChild>
+            <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors min-h-[64px] flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                <motion.div 
+                  className="p-2 bg-primary/10 rounded-full"
+                  initial={{ scale: 0.8 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                >
+                  <Award className="h-5 w-5 text-primary" />
+                </motion.div>
+                {tierName()} Tier
+              </CardTitle>
+              {isExpanded ? (
+                <ChevronUp className="h-5 w-5 text-muted-foreground" />
+              ) : (
+                <ChevronDown className="h-5 w-5 text-muted-foreground" />
+              )}
+            </CardHeader>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <CardContent className="pt-0">
+              <TierContent />
+            </CardContent>
+          </CollapsibleContent>
+        </Collapsible>
+      </Card>
+    );
+  }
 
   return (
     <Card className="overflow-hidden shadow-md border-t-4 border-t-primary">
@@ -57,36 +151,7 @@ export function TierStatusIndicator({ currentTier, points }: TierStatusIndicator
           <span className="text-2xl font-bold text-primary">{currentTier}</span>
         </div>
         
-        <div className="space-y-2">
-          <div className="flex justify-between items-center text-sm">
-            <span className="text-muted-foreground">Progress to next tier</span>
-            <span className="font-medium">{Math.round(progressToNextTier)}%</span>
-          </div>
-          <Progress 
-            value={progressToNextTier} 
-            className="h-2.5 transition-all duration-700"
-          />
-          
-          <div className="flex justify-between text-xs text-muted-foreground mt-2">
-            <span>{points} points</span>
-            <span>{nextTierPoints} points</span>
-          </div>
-        </div>
-        
-        <div className="grid grid-cols-5 gap-1 mt-6">
-          {[1, 2, 3, 4, 5].map(tier => (
-            <div 
-              key={tier} 
-              className={`text-center py-2 rounded-md transition-colors ${
-                tier <= currentTier 
-                  ? 'bg-primary/20 text-primary font-medium' 
-                  : 'bg-muted text-muted-foreground'
-              }`}
-            >
-              {tier}
-            </div>
-          ))}
-        </div>
+        <TierContent />
       </CardContent>
     </Card>
   );

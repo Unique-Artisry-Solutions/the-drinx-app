@@ -1,4 +1,3 @@
-
 import React from 'react';
 import Layout from '@/components/Layout';
 import QuickActionCards from '@/components/explore/personalized/QuickActionCards';
@@ -173,39 +172,35 @@ const ExplorePage: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 py-6">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">
-            Explore Amazing Mocktails
-          </h1>
-          <p className="text-muted-foreground">
-            Discover the best non-alcoholic experiences in your area.
-          </p>
+          <h1 className="text-3xl font-bold text-foreground mb-2">Explore</h1>
+          <p className="text-muted-foreground">Discover amazing mocktails, bars, and events in your area</p>
         </div>
 
         {/* Quick Actions */}
-        <div className="mb-8">
+        <div className="mb-6 lg:mb-8">
           <QuickActionCards actions={mockQuickActions} />
         </div>
 
-        {/* Rewards and Progress Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        {/* Rewards and Progress Section - Responsive Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 mb-6 lg:mb-8">
           <RewardsHighlightWidget />
           <StreakMotivationWidget />
         </div>
 
         {/* Tier Progress */}
-        <div className="mb-8">
+        <div className="mb-6 lg:mb-8">
           <TierStatusIndicator currentTier={2} points={750} />
         </div>
 
         {/* Achievement Alerts */}
-        <div className="mb-8">
+        <div className="mb-6 lg:mb-8">
           <AchievementProximityAlerts achievements={mockAchievements} />
         </div>
 
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Main Content Grid - Responsive */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
           {/* Left Column */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-4 lg:space-y-6">
             {/* User Stats */}
             <QuickStatsWidget stats={mockUserStats} />
 
@@ -217,7 +212,7 @@ const ExplorePage: React.FC = () => {
           </div>
 
           {/* Right Column */}
-          <div className="space-y-6">
+          <div className="space-y-4 lg:space-y-6">
             {/* Recent Activity */}
             <ActivityFeedWidget activities={mockRecentActivity} />
 

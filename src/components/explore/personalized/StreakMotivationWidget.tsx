@@ -1,17 +1,21 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Flame, Target, Trophy } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Flame, Target, Trophy, ChevronDown, ChevronUp } from 'lucide-react';
 import { useStreakData } from '@/hooks/useStreakData';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const StreakMotivationWidget: React.FC = () => {
   const { currentStreak, longestStreak, isLoading } = useStreakData();
+  const [isExpanded, setIsExpanded] = useState(false);
+  const isMobile = useIsMobile();
 
   if (isLoading) {
     return (
       <Card>
-        <CardContent className="p-6">
-          <div className="h-16 flex items-center justify-center">
+        <CardContent className={`${isMobile ? 'p-4' : 'p-6'}`}>
+          <div className={`${isMobile ? 'h-12' : 'h-16'} flex items-center justify-center`}>
             <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
           </div>
         </CardContent>
@@ -39,6 +43,54 @@ const StreakMotivationWidget: React.FC = () => {
 
   const StreakIcon = getStreakIcon();
 
+  const StreakContent = () => (
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <div className={`text-center ${isMobile ? 'flex-1' : ''}`}>
+          <div className={`${isMobile ? 'text-xl' : 'text-2xl'} font-bold text-orange-600`}>{currentStreak}</div>
+          <div className="text-sm text-muted-foreground">Current Streak</div>
+        </div>
+        <div className={`text-center ${isMobile ? 'flex-1' : ''}`}>
+          <div className={`${isMobile ? 'text-lg' : 'text-lg'} font-semibold text-orange-500`}>{longestStreak}</div>
+          <div className="text-sm text-muted-foreground">Best Streak</div>
+        </div>
+      </div>
+      
+      <div className={`bg-white/60 dark:bg-gray-800/60 rounded-md ${isMobile ? 'p-3' : 'p-3'}`}>
+        <p className={`${isMobile ? 'text-sm' : 'text-sm'} text-orange-700 dark:text-orange-300 font-medium`}>
+          {getMotivationalMessage()}
+        </p>
+      </div>
+    </div>
+  );
+
+  if (isMobile) {
+    return (
+      <Card className="bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 border-orange-100 dark:border-orange-800">
+        <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
+          <CollapsibleTrigger asChild>
+            <CardHeader className="cursor-pointer hover:bg-orange-100/50 dark:hover:bg-orange-900/30 transition-colors min-h-[64px] flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                <StreakIcon className="h-5 w-5 text-orange-600" />
+                Streak ({currentStreak} days)
+              </CardTitle>
+              {isExpanded ? (
+                <ChevronUp className="h-5 w-5 text-orange-600" />
+              ) : (
+                <ChevronDown className="h-5 w-5 text-orange-600" />
+              )}
+            </CardHeader>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <CardContent className="pt-0">
+              <StreakContent />
+            </CardContent>
+          </CollapsibleContent>
+        </Collapsible>
+      </Card>
+    );
+  }
+
   return (
     <Card className="bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 border-orange-100 dark:border-orange-800">
       <CardHeader className="pb-3">
@@ -48,24 +100,7 @@ const StreakMotivationWidget: React.FC = () => {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <div>
-              <div className="text-2xl font-bold text-orange-600">{currentStreak}</div>
-              <div className="text-sm text-muted-foreground">Current Streak</div>
-            </div>
-            <div className="text-right">
-              <div className="text-lg font-semibold text-orange-500">{longestStreak}</div>
-              <div className="text-sm text-muted-foreground">Best Streak</div>
-            </div>
-          </div>
-          
-          <div className="bg-white/60 dark:bg-gray-800/60 rounded-md p-3">
-            <p className="text-sm text-orange-700 dark:text-orange-300 font-medium">
-              {getMotivationalMessage()}
-            </p>
-          </div>
-        </div>
+        <StreakContent />
       </CardContent>
     </Card>
   );
