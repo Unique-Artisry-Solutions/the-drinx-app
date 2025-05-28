@@ -5,8 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { achievementCategories } from '@/lib/rewards/achievements';
-import { Achievement } from '@/lib/rewards/types';
+import { Achievement, achievementCategories } from '@/types/rewards';
 import { Award, Check, MapPin, GlassWater, Users, PenTool, Route } from 'lucide-react';
 
 interface AchievementsListProps {
@@ -24,11 +23,14 @@ export const AchievementsList: React.FC<AchievementsListProps> = ({
   const getIcon = (iconName: string) => {
     switch (iconName) {
       case 'Award': return <Award className="h-5 w-5 text-amber-500" />;
-      case 'MapPin': return <MapPin className="h-5 w-5 text-blue-500" />;
-      case 'GlassWater': return <GlassWater className="h-5 w-5 text-cyan-500" />;
+      case 'MapPin': 
+      case 'map-pin': return <MapPin className="h-5 w-5 text-blue-500" />;
+      case 'GlassWater': 
+      case 'glass-water': return <GlassWater className="h-5 w-5 text-cyan-500" />;
       case 'Users': return <Users className="h-5 w-5 text-indigo-500" />;
       case 'PenTool': return <PenTool className="h-5 w-5 text-violet-500" />;
       case 'Route': return <Route className="h-5 w-5 text-green-500" />;
+      case 'star': return <Award className="h-5 w-5 text-yellow-500" />;
       default: return <Award className="h-5 w-5 text-gray-500" />;
     }
   };

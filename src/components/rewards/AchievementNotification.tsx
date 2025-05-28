@@ -3,7 +3,7 @@ import React from 'react';
 import { Trophy, Award, Star, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
-import { Achievement } from '@/lib/rewards/types';
+import { Achievement } from '@/types/rewards';
 
 interface AchievementNotificationProps {
   achievement: Achievement;

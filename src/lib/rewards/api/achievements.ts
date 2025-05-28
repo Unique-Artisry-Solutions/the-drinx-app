@@ -1,6 +1,6 @@
 
 import { supabase } from '@/lib/supabase';
-import { Achievement } from '../types';
+import { Achievement } from '@/types/rewards';
 import { addPoints } from './operations';
 import { RewardsCache } from '../system/RewardsCache';
 import { trackRewardEvent } from './tracking';
@@ -13,12 +13,12 @@ const dummyAchievements: Achievement[] = [
     description: 'Visit your first establishment',
     category: 'visits',
     icon: 'map-pin',
-    pointValue: 50,
     pointsReward: 50,
     threshold: 1,
     isCompleted: true,
     progress: 1,
-    maxProgress: 1
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
   },
   {
     id: '2',
@@ -26,12 +26,12 @@ const dummyAchievements: Achievement[] = [
     description: 'Try 5 different mocktails',
     category: 'mocktails',
     icon: 'glass-water',
-    pointValue: 100,
     pointsReward: 100,
     threshold: 5,
     isCompleted: false,
     progress: 3,
-    maxProgress: 5
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
   },
   {
     id: '3',
@@ -39,12 +39,12 @@ const dummyAchievements: Achievement[] = [
     description: 'Leave 3 reviews',
     category: 'reviews',
     icon: 'star',
-    pointValue: 75,
     pointsReward: 75,
     threshold: 3,
     isCompleted: false,
     progress: 1,
-    maxProgress: 3
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
   }
 ];
 

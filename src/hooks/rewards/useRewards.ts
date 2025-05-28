@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { UserRewardProfile } from '@/lib/rewards/types';
+import { UserRewardProfile, transformRewardOffering } from '@/types/rewards';
 import { toast } from 'sonner';
 
 export const useRewards = () => {
@@ -13,16 +13,16 @@ export const useRewards = () => {
     const fetchRewards = async () => {
       try {
         // In a real implementation, this would call an API
-        setRewardProfile({
+        const mockProfile: UserRewardProfile = {
           id: '1',
           points: 150,
-          lifetimePoints: 500,
           lifetime_points: 500,
+          lifetimePoints: 500,
           currentTier: {
             id: 'tier-1',
             name: 'Silver',
-            minimumPoints: 100,
             points_required: 100,
+            minimumPoints: 100,
             benefits: ['Free drink on birthday', '10% off weekday purchases'],
             description: 'Silver tier rewards',
             color: '#C0C0C0',
@@ -30,37 +30,39 @@ export const useRewards = () => {
             is_active: true
           },
           availableRewards: [
-            {
+            transformRewardOffering({
               id: 'reward-1',
               name: 'Free Mocktail',
               description: 'Redeem for any mocktail of your choice',
-              pointCost: 100,
-              pointsRequired: 100,
               points_required: 100,
-              availableQuantity: 50,
               quantity_available: 50,
               expiration_days: 30,
               is_active: true,
               image_url: '/images/mocktail.jpg'
-            }
+            })
           ],
           transactionHistory: [
             {
               id: 'trans-1',
-              userId: '1',
               user_id: '1',
-              pointsAmount: 50,
+              userId: '1',
               points: 50,
-              type: 'EARN',
+              pointsAmount: 50,
               transaction_type: 'EARN',
-              timestamp: new Date().toISOString(),
+              type: 'EARN',
               description: 'Check-in reward',
-              date: new Date().toISOString(),
-              source: 'check-in'
+              source: 'check-in',
+              created_at: new Date().toISOString(),
+              timestamp: new Date().toISOString(),
+              date: new Date().toISOString()
             }
           ],
-          redemptionHistory: []
-        } as any);
+          redemptionHistory: [],
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+        
+        setRewardProfile(mockProfile);
       } catch (err) {
         setError(err instanceof Error ? err : new Error('Failed to fetch rewards'));
       } finally {
@@ -90,9 +92,9 @@ export const useRewards = () => {
         if (rewardToRedeem) {
           const mockUpdatedProfile = {
             ...rewardProfile,
-            points: Math.max(0, rewardProfile.points - (rewardToRedeem.pointCost || 100))
+            points: Math.max(0, rewardProfile.points - rewardToRedeem.points_required)
           };
-          setRewardProfile(mockUpdatedProfile as any);
+          setRewardProfile(mockUpdatedProfile);
         }
       }
       

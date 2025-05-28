@@ -3,8 +3,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/auth';
 import { rewardsApi } from '@/lib/rewards/api';
 import { useToast } from '@/hooks/use-toast';
-import { Achievement } from '@/lib/rewards/types';
-import { getAchievementsByCategory } from '@/lib/rewards/achievements';
+import { Achievement, getAchievementsByCategory } from '@/types/rewards';
 
 export const useAchievements = () => {
   const { user } = useAuth();
