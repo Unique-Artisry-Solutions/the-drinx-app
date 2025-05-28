@@ -1,11 +1,13 @@
 
 import { supabase } from '@/lib/supabase';
-import { UserRewardPreference } from '../types';
+import { DbUserRewardPreference } from '@/types/database';
+import { ApiUserRewardPreference } from '@/types/api';
+import { dbToApiPreference } from '@/lib/adapters/rewardAdapters';
 
 export async function getUserPreference(
   userId: string, 
   key: string
-): Promise<UserRewardPreference | null> {
+): Promise<ApiUserRewardPreference | null> {
   try {
     const { data, error } = await supabase
       .from('user_reward_preferences')
@@ -21,18 +23,8 @@ export async function getUserPreference(
 
     if (!data) return null;
 
-    // Transform database response to match UserRewardPreference interface
-    return {
-      id: data.id,
-      user_id: data.user_id,
-      preference_key: data.preference_key,
-      preference_value: data.preference_value,
-      created_at: data.created_at,
-      updated_at: data.updated_at,
-      // Add structured properties for backward compatibility
-      notification_settings: key === 'notification_settings' ? data.preference_value : undefined,
-      display_settings: key === 'display_settings' ? data.preference_value : undefined
-    };
+    // Transform database response using adapter
+    return dbToApiPreference(data as DbUserRewardPreference);
   } catch (error) {
     console.error('Unexpected error in getUserPreference:', error);
     return null;
