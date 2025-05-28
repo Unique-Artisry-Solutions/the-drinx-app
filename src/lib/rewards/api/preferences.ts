@@ -1,85 +1,66 @@
 
-import { supabase } from '@/lib/supabase';
-import { DbUserRewardPreference } from '@/types/database';
+import { ComponentUserPreferences } from '@/types/components';
 import { ApiUserRewardPreference } from '@/types/api';
-import { dbToApiPreference } from '@/lib/adapters/rewardAdapters';
 
-export async function getUserPreference(
-  userId: string, 
-  key: string
-): Promise<ApiUserRewardPreference | null> {
-  try {
-    const { data, error } = await supabase
-      .from('user_reward_preferences')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('preference_key', key)
-      .maybeSingle();
-
-    if (error) {
-      console.error('Error fetching user preference:', error);
-      return null;
-    }
-
-    if (!data) return null;
-
-    // Transform database response using adapter
-    return dbToApiPreference(data as DbUserRewardPreference);
-  } catch (error) {
-    console.error('Unexpected error in getUserPreference:', error);
-    return null;
-  }
-}
-
-export async function setUserPreference(
-  userId: string,
-  key: string,
-  value: any
-): Promise<boolean> {
-  try {
-    const preferenceValue = typeof value === 'object' ? value : JSON.stringify(value);
-    
-    // Check if preference exists
-    const { data: existing } = await supabase
-      .from('user_reward_preferences')
-      .select('id')
-      .eq('user_id', userId)
-      .eq('preference_key', key)
-      .maybeSingle();
-    
-    if (existing) {
-      // Update existing preference
-      const { error } = await supabase
-        .from('user_reward_preferences')
-        .update({
-          preference_value: preferenceValue,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', existing.id);
-      
-      if (error) {
-        console.error('Error updating user preference:', error);
-        return false;
+// Mock implementation for user preferences
+export const rewardsApi = {
+  async getUserPreference(userId: string, key: string): Promise<ApiUserRewardPreference | null> {
+    // Mock implementation - replace with actual API call
+    const mockPreferences: Record<string, any> = {
+      notification_settings: {
+        id: `pref-${userId}-notifications`,
+        user_id: userId,
+        preference_key: 'notification_settings',
+        preference_value: {
+          point_changes: true,
+          tier_updates: true,
+          reward_availability: true
+        },
+        notification_settings: {
+          point_changes: true,
+          tier_updates: true,
+          reward_availability: true
+        },
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      },
+      display_settings: {
+        id: `pref-${userId}-display`,
+        user_id: userId,
+        preference_key: 'display_settings',
+        preference_value: {
+          points_format: 'standard' as const,
+          show_tier_progress: true
+        },
+        display_settings: {
+          points_format: 'standard' as const,
+          show_tier_progress: true
+        },
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       }
-    } else {
-      // Insert new preference
-      const { error } = await supabase
-        .from('user_reward_preferences')
-        .insert({
-          user_id: userId,
-          preference_key: key,
-          preference_value: preferenceValue
-        });
-      
-      if (error) {
-        console.error('Error inserting user preference:', error);
-        return false;
-      }
-    }
-    
-    return true;
-  } catch (error) {
-    console.error('Unexpected error in setUserPreference:', error);
-    return false;
+    };
+
+    return mockPreferences[key] || null;
+  },
+
+  async setUserPreference(userId: string, key: string, value: any): Promise<void> {
+    // Mock implementation - replace with actual API call
+    console.log(`Setting preference ${key} for user ${userId}:`, value);
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 100));
+  },
+
+  async getUserAchievements(userId: string) {
+    // Mock implementation
+    return [];
+  },
+
+  async recordActivity(userId: string, activityType: string, metadata?: Record<string, any>) {
+    // Mock implementation
+    return {
+      success: true,
+      completedAchievements: []
+    };
   }
-}
+};
