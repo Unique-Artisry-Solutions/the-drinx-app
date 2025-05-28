@@ -68,6 +68,7 @@ export interface RewardTier {
   color: string;
   icon: string;
   is_active: boolean;
+  establishment_id?: string;
 }
 
 // Enhanced TimeSeriesData interface
@@ -89,6 +90,8 @@ export interface RewardAnalytics {
   averagePointsPerUser: number;
   pointsEconomyBalance: number;
   redemptionRate: number;
+  activeUsers: number;
+  transactionCount: number;
   tierDistribution: Array<{
     tier: string;
     userCount: number;
@@ -99,6 +102,26 @@ export interface RewardAnalytics {
     userCount: number;
   }>;
   timeSeriesData: TimeSeriesData[];
+}
+
+// RewardOffering interface
+export interface RewardOffering {
+  id: string;
+  name: string;
+  description?: string;
+  pointCost: number;
+  availableQuantity?: number;
+  points_required: number;
+  pointsRequired: number;
+  pointValue: number;
+  quantity_available?: number;
+  expiration_days?: number;
+  is_active: boolean;
+  image_url?: string;
+  establishment_id?: string;
+  category?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 // Achievement categories and helper functions
@@ -128,11 +151,17 @@ export const transformRewardOffering = (offering: any): RewardOffering => {
     description: offering.description,
     pointCost: offering.points_required || offering.pointCost || 0,
     availableQuantity: offering.quantity_available || offering.availableQuantity,
-    expirationDays: offering.expiration_days,
-    isActive: offering.is_active,
-    imageUrl: offering.image_url,
-    establishmentId: offering.establishment_id,
-    category: offering.category
+    points_required: offering.points_required || offering.pointCost || 0,
+    pointsRequired: offering.pointsRequired || offering.points_required || offering.pointCost || 0,
+    pointValue: offering.pointValue || offering.points_required || offering.pointCost || 0,
+    quantity_available: offering.quantity_available || offering.availableQuantity,
+    expiration_days: offering.expiration_days,
+    is_active: offering.is_active,
+    image_url: offering.image_url,
+    establishment_id: offering.establishment_id,
+    category: offering.category,
+    created_at: offering.created_at,
+    updated_at: offering.updated_at
   };
 };
 
@@ -180,3 +209,6 @@ export const transformUserRewardProfile = (profile: any): UserRewardProfile => {
     updated_at: profile.updated_at || new Date().toISOString()
   };
 };
+
+// Alias for backward compatibility
+export type RewardTransactionRow = RewardTransaction;

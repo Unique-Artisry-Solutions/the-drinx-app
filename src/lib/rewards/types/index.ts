@@ -25,6 +25,7 @@ export interface RewardOperationResponse {
   success: boolean;
   message: string;
   data?: any;
+  error?: string;
 }
 
 export interface BatchRewardOperationResponse {
@@ -45,4 +46,15 @@ export const transformRewardTier = (tier: any): RewardTier => {
     icon: tier.icon || 'award',
     is_active: tier.is_active !== undefined ? tier.is_active : true
   };
+};
+
+export const transformTimeSeriesData = (data: any[]): TimeSeriesData[] => {
+  return data.map(item => ({
+    date: item.date,
+    pointsEarned: item.earned || item.pointsEarned || 0,
+    pointsRedeemed: item.redeemed || item.pointsRedeemed || 0,
+    netPoints: (item.earned || item.pointsEarned || 0) - (item.redeemed || item.pointsRedeemed || 0),
+    earned: item.earned || item.pointsEarned || 0,
+    redeemed: item.redeemed || item.pointsRedeemed || 0
+  }));
 };

@@ -1,56 +1,43 @@
+
 import { Achievement } from '@/types/rewards';
 
 // Mock implementation for achievements API
-export const rewardsApi = {
-  async getUserAchievements(userId: string): Promise<Achievement[]> {
-    // Mock implementation - replace with actual API call
-    console.log(`Fetching achievements for user ${userId}`);
-    await new Promise(resolve => setTimeout(resolve, 500)); // Simulate API delay
-    
-    // Simulate progress and completion based on user ID
-    const userAchievements = mockAchievements.map(achievement => {
-      const progress = Math.floor(Math.random() * achievement.threshold);
-      const isCompleted = progress >= achievement.threshold - 1;
-      
-      return {
-        ...achievement,
-        progress: isCompleted ? achievement.threshold : progress,
-        isCompleted: isCompleted,
-        unlockedAt: isCompleted ? new Date().toISOString() : undefined
-      };
-    });
-    
-    return userAchievements;
-  },
+export const getUserAchievements = async (userId: string): Promise<Achievement[]> => {
+  // Mock implementation - replace with actual API call
+  console.log(`Fetching achievements for user ${userId}`);
+  await new Promise(resolve => setTimeout(resolve, 500)); // Simulate API delay
   
-  async recordActivity(userId: string, activityType: ActivityType, metadata?: Record<string, any>): Promise<{ success: boolean; completedAchievements: Achievement[] }> {
-    console.log(`Recording activity ${activityType} for user ${userId} with metadata:`, metadata);
-    await new Promise(resolve => setTimeout(resolve, 500)); // Simulate API delay
+  // Simulate progress and completion based on user ID
+  const userAchievements = mockAchievements.map(achievement => {
+    const progress = Math.floor(Math.random() * achievement.threshold);
+    const isCompleted = progress >= achievement.threshold - 1;
     
-    // Get current achievements
-    const currentAchievements = await this.getUserAchievements(userId);
-    
-    // Update achievement progress
-    const { updatedAchievements, completedAchievements } = updateAchievementProgress(currentAchievements, activityType, metadata);
-    
-    // For now, just return the completed achievements
     return {
-      success: true,
-      completedAchievements: completedAchievements
+      ...achievement,
+      progress: isCompleted ? achievement.threshold : progress,
+      isCompleted: isCompleted,
+      unlockedAt: isCompleted ? new Date().toISOString() : undefined
     };
-  },
+  });
   
-  async setUserPreference(userId: string, key: string, value: any): Promise<void> {
-    // Mock implementation - replace with actual API call
-    console.log(`Setting preference ${key} for user ${userId}:`, value);
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 100));
-  },
+  return userAchievements;
+};
 
-  async getUserPreference(userId: string, key: string) {
-    // Mock implementation
-    return null;
-  }
+export const recordActivity = async (userId: string, activityType: ActivityType, metadata?: Record<string, any>): Promise<{ success: boolean; completedAchievements: Achievement[] }> => {
+  console.log(`Recording activity ${activityType} for user ${userId} with metadata:`, metadata);
+  await new Promise(resolve => setTimeout(resolve, 500)); // Simulate API delay
+  
+  // Get current achievements
+  const currentAchievements = await getUserAchievements(userId);
+  
+  // Update achievement progress
+  const { updatedAchievements, completedAchievements } = updateAchievementProgress(currentAchievements, activityType, metadata);
+  
+  // For now, just return the completed achievements
+  return {
+    success: true,
+    completedAchievements: completedAchievements
+  };
 };
 
 // Define possible activity types
@@ -129,4 +116,22 @@ const updateAchievementProgress = (achievements: Achievement[], activityType: Ac
   });
   
   return { updatedAchievements, completedAchievements };
+};
+
+// Export all functions used in the rewards API
+export const rewardsApi = {
+  getUserAchievements,
+  recordActivity,
+  
+  async setUserPreference(userId: string, key: string, value: any): Promise<void> {
+    // Mock implementation - replace with actual API call
+    console.log(`Setting preference ${key} for user ${userId}:`, value);
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 100));
+  },
+
+  async getUserPreference(userId: string, key: string) {
+    // Mock implementation
+    return null;
+  }
 };
