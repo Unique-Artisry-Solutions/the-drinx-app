@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trophy, Star, Award, Sparkles } from 'lucide-react';
@@ -17,12 +16,14 @@ interface AchievementCelebrationProps {
   achievement: Achievement | null;
   isVisible: boolean;
   onClose: () => void;
+  onComplete?: () => void;
 }
 
 export const AchievementCelebration: React.FC<AchievementCelebrationProps> = ({
   achievement,
   isVisible,
-  onClose
+  onClose,
+  onComplete
 }) => {
   if (!achievement) return null;
 
@@ -37,6 +38,11 @@ export const AchievementCelebration: React.FC<AchievementCelebrationProps> = ({
       default:
         return <Sparkles className="h-12 w-12 text-pink-500" />;
     }
+  };
+
+  const handleClose = () => {
+    onClose();
+    onComplete?.();
   };
 
   const backgroundVariants = {
@@ -81,7 +87,7 @@ export const AchievementCelebration: React.FC<AchievementCelebrationProps> = ({
           initial="hidden"
           animate="visible"
           exit="exit"
-          onClick={onClose}
+          onClick={handleClose}
         >
           <motion.div
             variants={modalVariants}
