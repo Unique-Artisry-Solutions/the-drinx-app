@@ -3,7 +3,7 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render } from '@testing-library/react';
 import { screen } from '@/test/testing-library-extensions';
-import { RewardTier, RewardOffering, RewardTransaction, Achievement, RewardTrackingEvents } from '@/lib/rewards/types';
+import { RewardTier, RewardOffering, RewardTransaction, Achievement } from '@/types/rewards';
 import { useRewardsModule, useAchievementsModule, useToastModule } from '@/lib/utils/testMocks';
 
 // Mock the modules used in tests

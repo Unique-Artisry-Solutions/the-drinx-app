@@ -1,6 +1,6 @@
 
 import { supabase } from '@/lib/supabase';
-import { RewardAnalytics, TimeSeriesData } from '../types';
+import { RewardAnalytics, TimeSeriesData, transformTimeSeriesData } from '@/types/rewards';
 import { RewardsCache } from '../system/RewardsCache';
 
 export async function getRewardAnalytics(establishmentId?: string): Promise<RewardAnalytics | null> {
@@ -46,7 +46,6 @@ export async function getRewardAnalytics(establishmentId?: string): Promise<Rewa
       description: tx.description || tx.source,
       source: tx.source,
       created_at: tx.created_at,
-      // Add other fields needed for compatibility
       metadata: tx.metadata
     }));
     
@@ -138,13 +137,16 @@ export function processRewardAnalytics(transactions: any[]): RewardAnalytics {
   analytics.averagePointsPerUser = analytics.totalUsers > 0 ? 
     totalUserPoints / analytics.totalUsers : 0;
   
-  // Convert daily data to time series
+  // Convert daily data to time series with proper transformation
   analytics.timeSeriesData = [...dailyDataMap.entries()]
     .sort(([dateA], [dateB]) => dateA.localeCompare(dateB))
-    .map(([date, data]) => ({
+    .map(([date, data]) => transformTimeSeriesData({
       date,
       earned: data.earned,
-      redeemed: data.redeemed
+      redeemed: data.redeemed,
+      pointsEarned: data.earned,
+      pointsRedeemed: data.redeemed,
+      netPoints: data.earned - data.redeemed
     }));
   
   return analytics;
@@ -152,13 +154,5 @@ export function processRewardAnalytics(transactions: any[]): RewardAnalytics {
 
 // Helper function to convert analytics to TimeSeriesData format expected by charts
 export function convertToTimeSeriesData(analytics: RewardAnalytics): TimeSeriesData[] {
-  return analytics.timeSeriesData.map(point => ({
-    date: point.date,
-    pointsEarned: point.earned,
-    pointsRedeemed: point.redeemed,
-    netPoints: point.earned - point.redeemed,
-    // Keep compatibility with both formats
-    earned: point.earned,
-    redeemed: point.redeemed
-  }));
+  return analytics.timeSeriesData.map(point => transformTimeSeriesData(point));
 }

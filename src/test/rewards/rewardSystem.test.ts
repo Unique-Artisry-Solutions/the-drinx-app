@@ -2,7 +2,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { supabase } from '@/lib/supabase';
 import { rewardsApi } from '@/lib/rewards/api';
-import { UserRewardProfile } from '@/lib/rewards/types';
+import { transformUserRewardProfile } from '@/types/rewards';
 import { createMockQueryBuilder } from '../utils/supabaseTestUtils';
 
 vi.mock('@/lib/supabase', () => ({
@@ -30,7 +30,6 @@ describe('Reward System', () => {
         eq: vi.fn(),
         single: vi.fn(),
         maybeSingle: vi.fn(),
-        // Add missing properties to satisfy TypeScript
         upsert: vi.fn(),
         delete: vi.fn(),
         url: '',
@@ -56,7 +55,6 @@ describe('Reward System', () => {
         eq: vi.fn(),
         single: vi.fn(),
         maybeSingle: vi.fn(),
-        // Add missing properties to satisfy TypeScript
         upsert: vi.fn(),
         delete: vi.fn(),
         url: '',
@@ -71,8 +69,10 @@ describe('Reward System', () => {
 
   describe('Tier Progression', () => {
     it('should update tier based on lifetime points', async () => {
-      const mockProfile: UserRewardProfile = {
+      const mockProfileData = {
+        id: 'test-user',
         points: 1000,
+        lifetime_points: 5000,
         lifetimePoints: 5000,
         currentTier: null,
         availableRewards: [],
@@ -82,7 +82,7 @@ describe('Reward System', () => {
 
       vi.mocked(supabase.from).mockImplementation(() => ({
         select: vi.fn().mockResolvedValue({ 
-          data: mockProfile, 
+          data: mockProfileData, 
           error: null 
         }),
         insert: vi.fn(),
@@ -90,7 +90,6 @@ describe('Reward System', () => {
         eq: vi.fn(),
         single: vi.fn(),
         maybeSingle: vi.fn(),
-        // Add missing properties to satisfy TypeScript
         upsert: vi.fn(),
         delete: vi.fn(),
         url: '',
@@ -98,7 +97,9 @@ describe('Reward System', () => {
       } as any));
 
       const profile = await rewardsApi.getUserRewardProfile('test-user-id');
-      expect(profile?.lifetimePoints).toBe(5000);
+      const transformedProfile = transformUserRewardProfile(mockProfileData);
+      expect(transformedProfile.lifetimePoints).toBe(5000);
+      expect(transformedProfile.lifetime_points).toBe(5000);
     });
   });
 
@@ -124,7 +125,6 @@ describe('Reward System', () => {
           error: null
         }),
         maybeSingle: vi.fn(),
-        // Add missing properties to satisfy TypeScript
         upsert: vi.fn(),
         delete: vi.fn(),
         url: '',
@@ -142,7 +142,6 @@ describe('Reward System', () => {
       const mockUserId = 'test-user-id';
       const initialPoints = 1000;
       const pointsToAdd = 500;
-      const pointsToRedeem = 300;
 
       // Mock initial balance
       vi.mocked(supabase.from).mockImplementation(() => ({
@@ -155,7 +154,6 @@ describe('Reward System', () => {
         eq: vi.fn(),
         single: vi.fn(),
         maybeSingle: vi.fn(),
-        // Add missing properties to satisfy TypeScript
         upsert: vi.fn(),
         delete: vi.fn(),
         url: '',
@@ -176,7 +174,6 @@ describe('Reward System', () => {
         eq: vi.fn(),
         single: vi.fn(),
         maybeSingle: vi.fn(),
-        // Add missing properties to satisfy TypeScript
         upsert: vi.fn(),
         delete: vi.fn(),
         url: '',
