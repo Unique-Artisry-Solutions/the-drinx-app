@@ -1,91 +1,5 @@
-
 import { useState, useEffect } from 'react';
-import useDevAuthBypass from '@/hooks/useDevAuthBypass';
-import { sampleEstablishments, sampleCocktails } from '@/data/sampleData';
-
-export interface UserStats {
-  totalVisits: number;
-  favoriteEstablishments: number;
-  reviewsWritten: number;
-  averageRating: number;
-  currentPoints: number;
-  lifetimePoints: number;
-}
-
-export interface StreakData {
-  currentStreak: number;
-  longestStreak: number;
-  lastVisitDate: string;
-  streakMultiplier: number;
-  streakTarget: number;
-  isStreakActive: boolean;
-  daysUntilStreakBreak: number;
-}
-
-export interface AchievementProgress {
-  id: string;
-  name: string;
-  description: string;
-  category: 'visits' | 'mocktails' | 'social' | 'special';
-  current: number;
-  total: number;
-  progress: number;
-  pointsReward: number;
-  isCompleted: boolean;
-  isNearCompletion: boolean;
-}
-
-export interface TierStatus {
-  currentTier: {
-    id: string;
-    name: string;
-    color: string;
-    icon: string;
-    minimumPoints: number;
-  };
-  nextTier: {
-    id: string;
-    name: string;
-    color: string;
-    icon: string;
-    minimumPoints: number;
-  } | null;
-  progress: number;
-  pointsToNext: number;
-  benefits: string[];
-}
-
-export interface PointsOpportunity {
-  id: string;
-  type: 'visit' | 'review' | 'checkin' | 'social' | 'challenge';
-  title: string;
-  description: string;
-  potentialPoints: number;
-  difficulty: 'easy' | 'medium' | 'hard';
-  estimatedTime: string;
-  actionRequired: string;
-  multiplier?: number;
-}
-
-export interface RecentActivity {
-  id: string;
-  type: 'visit' | 'review' | 'favorite' | 'achievement' | 'streak';
-  establishment: string;
-  timestamp: string;
-  details?: string;
-  pointsEarned?: number;
-}
-
-export interface PersonalizedRecommendation {
-  id: string;
-  name: string;
-  type: 'cocktail' | 'establishment';
-  reason: string;
-  image?: string;
-  rating?: number;
-  distance?: string;
-  potentialPoints?: number;
-}
+import { useAuth } from '@/contexts/auth';
 
 export interface QuickAction {
   id: string;
@@ -93,330 +7,306 @@ export interface QuickAction {
   description: string;
   icon: string;
   action: () => void;
-  pointsAvailable?: number;
+}
+
+export interface UserStats {
+  totalVisits: number;
+  favoriteEstablishments: number;
+  reviewsWritten: number;
+  averageRating: number;
+}
+
+export interface RecentActivity {
+  id: string;
+  type: 'visit' | 'review' | 'favorite';
+  establishment: string;
+  details?: string;
+  timestamp: string;
+}
+
+export interface PersonalizedRecommendation {
+  id: string;
+  type: 'cocktail' | 'establishment';
+  name: string;
+  reason: string;
+  rating?: number;
+  distance?: string;
 }
 
 export interface UpcomingEvent {
   id: string;
   title: string;
+  type: string;
   date: string;
   location: string;
-  type: string;
-  bonusPoints?: number;
+}
+
+export interface Achievement {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  progress: number;
+  total: number;
+  target: number; // Added missing target property
+  pointsReward: number;
+  icon: string;
+  urgency: 'low' | 'medium' | 'high';
+  suggestion?: string;
+  estimatedCompletion?: string;
+}
+
+export interface TrendingMocktail {
+  id: string;
+  name: string;
+  description: string;
+  popularity: number;
+  image?: string;
+  establishmentName: string;
 }
 
 export const usePersonalizedData = () => {
-  const { user, isAuthenticated } = useDevAuthBypass();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [userStats, setUserStats] = useState<UserStats | null>(null);
-  const [streakData, setStreakData] = useState<StreakData | null>(null);
-  const [achievementProgress, setAchievementProgress] = useState<AchievementProgress[]>([]);
-  const [tierStatus, setTierStatus] = useState<TierStatus | null>(null);
-  const [pointsOpportunities, setPointsOpportunities] = useState<PointsOpportunity[]>([]);
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
   const [recommendations, setRecommendations] = useState<PersonalizedRecommendation[]>([]);
   const [quickActions, setQuickActions] = useState<QuickAction[]>([]);
   const [nearbyEstablishments, setNearbyEstablishments] = useState<any[]>([]);
   const [upcomingEvents, setUpcomingEvents] = useState<UpcomingEvent[]>([]);
+  const [trendingMocktails, setTrendingMocktails] = useState<TrendingMocktail[]>([]);
 
   useEffect(() => {
-    const loadPersonalizedData = async () => {
-      setLoading(true);
-      
-      if (isAuthenticated && user) {
-        // Enhanced user stats with points
-        setUserStats({
-          totalVisits: 12,
-          favoriteEstablishments: 5,
-          reviewsWritten: 8,
-          averageRating: 4.2,
-          currentPoints: 1250,
-          lifetimePoints: 2400
-        });
-
-        // Streak tracking data
-        setStreakData({
-          currentStreak: 5,
-          longestStreak: 12,
-          lastVisitDate: new Date(Date.now() - 86400000).toISOString(), // Yesterday
-          streakMultiplier: 1.5,
-          streakTarget: 7,
-          isStreakActive: true,
-          daysUntilStreakBreak: 2
-        });
-
-        // Achievement progress tracking
-        setAchievementProgress([
-          {
-            id: 'social-butterfly',
-            name: 'Social Butterfly',
-            description: 'Visit 10 different establishments',
-            category: 'visits',
-            current: 8,
-            total: 10,
-            progress: 80,
-            pointsReward: 100,
-            isCompleted: false,
-            isNearCompletion: true
-          },
-          {
-            id: 'mocktail-master',
-            name: 'Mocktail Master',
-            description: 'Try 25 different mocktails',
-            category: 'mocktails',
-            current: 18,
-            total: 25,
-            progress: 72,
-            pointsReward: 150,
-            isCompleted: false,
-            isNearCompletion: false
-          },
-          {
-            id: 'reviewer',
-            name: 'Helpful Reviewer',
-            description: 'Write 15 establishment reviews',
-            category: 'social',
-            current: 8,
-            total: 15,
-            progress: 53,
-            pointsReward: 75,
-            isCompleted: false,
-            isNearCompletion: false
-          },
-          {
-            id: 'streak-warrior',
-            name: 'Streak Warrior',
-            description: 'Maintain a 7-day visit streak',
-            category: 'special',
-            current: 5,
-            total: 7,
-            progress: 71,
-            pointsReward: 200,
-            isCompleted: false,
-            isNearCompletion: true
-          }
-        ]);
-
-        // Tier status and progress
-        setTierStatus({
-          currentTier: {
-            id: 'silver',
-            name: 'Silver Explorer',
-            color: '#C0C0C0',
-            icon: 'award',
-            minimumPoints: 1000
-          },
-          nextTier: {
-            id: 'gold',
-            name: 'Gold Adventurer',
-            color: '#FFD700',
-            icon: 'crown',
-            minimumPoints: 2000
-          },
-          progress: 33,
-          pointsToNext: 750,
-          benefits: [
-            '20% bonus points on reviews',
-            'Priority event notifications',
-            'Exclusive mocktail recipes'
-          ]
-        });
-
-        // Points earning opportunities
-        setPointsOpportunities([
-          {
-            id: 'visit-new',
-            type: 'visit',
-            title: 'Visit a New Establishment',
-            description: 'Discover and check in to an establishment you haven\'t visited before',
-            potentialPoints: 50,
-            difficulty: 'easy',
-            estimatedTime: '30 minutes',
-            actionRequired: 'Check in at a new location',
-            multiplier: 1.5
-          },
-          {
-            id: 'write-review',
-            type: 'review',
-            title: 'Write a Detailed Review',
-            description: 'Share your experience with a thorough review',
-            potentialPoints: 30,
-            difficulty: 'medium',
-            estimatedTime: '10 minutes',
-            actionRequired: 'Write and submit a review'
-          },
-          {
-            id: 'daily-checkin',
-            type: 'checkin',
-            title: 'Complete Daily Check-in',
-            description: 'Maintain your streak with today\'s check-in',
-            potentialPoints: 25,
-            difficulty: 'easy',
-            estimatedTime: '5 minutes',
-            actionRequired: 'Check in at any establishment',
-            multiplier: 1.5
-          },
-          {
-            id: 'share-experience',
-            type: 'social',
-            title: 'Share Your Experience',
-            description: 'Share a mocktail or establishment on social media',
-            potentialPoints: 20,
-            difficulty: 'easy',
-            estimatedTime: '2 minutes',
-            actionRequired: 'Share content with app link'
-          }
-        ]);
-
-        // Enhanced recent activity with points
-        setRecentActivity([
-          {
-            id: '1',
-            type: 'visit',
-            establishment: 'The Gin Garden',
-            timestamp: '2 hours ago',
-            details: 'Checked in for happy hour',
-            pointsEarned: 25
-          },
-          {
-            id: '2',
-            type: 'achievement',
-            establishment: 'System',
-            timestamp: '1 day ago',
-            details: 'Unlocked "Flavor Explorer" achievement',
-            pointsEarned: 100
-          },
-          {
-            id: '3',
-            type: 'review',
-            establishment: 'Mocktail Lounge',
-            timestamp: '1 day ago',
-            details: 'Left a 5-star review',
-            pointsEarned: 30
-          },
-          {
-            id: '4',
-            type: 'streak',
-            establishment: 'System',
-            timestamp: '2 days ago',
-            details: 'Extended streak to 5 days',
-            pointsEarned: 15
-          }
-        ]);
-
-        // Enhanced recommendations with points
-        setRecommendations([
-          {
-            id: '1',
-            name: 'Virgin Mojito Supreme',
-            type: 'cocktail',
-            reason: 'Based on your love of mint drinks',
-            rating: 4.8,
-            potentialPoints: 35
-          },
-          {
-            id: '2',
-            name: 'The Botanical Bar',
-            type: 'establishment',
-            reason: 'Similar to your favorites',
-            distance: '0.5 miles',
-            potentialPoints: 50
-          }
-        ]);
-      } else {
-        // Guest user - show generic recommendations
-        setRecommendations([
-          {
-            id: '1',
-            name: 'Popular Mocktails',
-            type: 'cocktail',
-            reason: 'Trending in your area',
-            potentialPoints: 25
-          },
-          {
-            id: '2',
-            name: 'Nearby Establishments',
-            type: 'establishment',
-            reason: 'Highly rated venues',
-            potentialPoints: 40
-          }
-        ]);
-      }
-
-      // Enhanced quick actions with points
-      setQuickActions([
-        {
-          id: '1',
-          title: 'Find Nearby',
-          description: 'Discover establishments near you',
-          icon: 'map-pin',
-          action: () => console.log('Navigate to map'),
-          pointsAvailable: 50
-        },
-        {
-          id: '2',
-          title: 'Browse Cocktails',
-          description: 'Explore mocktail recipes',
-          icon: 'glass-water',
-          action: () => console.log('Browse cocktails'),
-          pointsAvailable: 25
-        },
-        {
-          id: '3',
-          title: 'Write Review',
-          description: 'Share your latest experience',
-          icon: 'star',
-          action: () => console.log('Write review'),
-          pointsAvailable: 30
-        }
-      ]);
-
-      // Nearby establishments using sample data
-      const nearby = sampleEstablishments.slice(0, 3).map(est => ({
-        ...est,
-        image_url: est.image || '/placeholder-establishment.jpg',
-        distance: `${(Math.random() * 2 + 0.1).toFixed(1)} miles`
-      }));
-      setNearbyEstablishments(nearby);
-
-      // Enhanced upcoming events with bonus points
-      setUpcomingEvents([
-        {
-          id: '1',
-          title: 'Mocktail Monday',
-          date: 'Tonight 6-9 PM',
-          location: 'The Gin Garden',
-          type: 'Happy Hour',
-          bonusPoints: 25
-        },
-        {
-          id: '2',
-          title: 'Swig Circuit',
-          date: 'This Weekend',
-          location: 'Downtown District',
-          type: 'Bar Crawl',
-          bonusPoints: 100
-        }
-      ]);
-
+    // Simulate API call with a delay
+    const timer = setTimeout(() => {
+      setUserStats(mockUserStats);
+      setRecentActivity(mockRecentActivity);
+      setRecommendations(mockRecommendations);
+      setQuickActions(mockQuickActions);
+      setNearbyEstablishments(mockNearbyEstablishments);
+      setUpcomingEvents(mockUpcomingEvents);
+      setTrendingMocktails(mockTrendingMocktails);
       setLoading(false);
-    };
+    }, 1500);
 
-    loadPersonalizedData();
-  }, [user, isAuthenticated]);
+    return () => clearTimeout(timer);
+  }, [user]);
+
+  // Mock data
+  const mockUserStats: UserStats = {
+    totalVisits: 12,
+    favoriteEstablishments: 5,
+    reviewsWritten: 8,
+    averageRating: 4.2
+  };
+
+  const mockRecentActivity: RecentActivity[] = [
+    {
+      id: '1',
+      type: 'visit',
+      establishment: 'The Sober Parrot',
+      timestamp: '2 days ago'
+    },
+    {
+      id: '2',
+      type: 'review',
+      establishment: 'Mocktail Lounge',
+      details: 'Rated 5 stars',
+      timestamp: '1 week ago'
+    },
+    {
+      id: '3',
+      type: 'favorite',
+      establishment: 'Zero Proof Bar',
+      timestamp: '2 weeks ago'
+    }
+  ];
+
+  const mockRecommendations: PersonalizedRecommendation[] = [
+    {
+      id: '1',
+      type: 'cocktail',
+      name: 'Virgin Mojito',
+      reason: 'Based on your taste preferences',
+      rating: 4.8
+    },
+    {
+      id: '2',
+      type: 'establishment',
+      name: 'Sober Social Club',
+      reason: 'Popular in your area',
+      distance: '1.2 miles'
+    },
+    {
+      id: '3',
+      type: 'cocktail',
+      name: 'Berry Blast',
+      reason: 'Trending this week',
+      rating: 4.5
+    }
+  ];
+
+  const mockQuickActions: QuickAction[] = [
+    {
+      id: '1',
+      title: 'Find Nearby',
+      description: 'Discover establishments near you',
+      icon: 'map-pin',
+      action: () => console.log('Navigate to map')
+    },
+    {
+      id: '2',
+      title: 'Explore Drinks',
+      description: 'Browse popular mocktails',
+      icon: 'glass-water',
+      action: () => console.log('Navigate to mocktails')
+    },
+    {
+      id: '3',
+      title: 'Upcoming Events',
+      description: 'See what\'s happening',
+      icon: 'calendar',
+      action: () => console.log('Navigate to events')
+    },
+    {
+      id: '4',
+      title: 'Search',
+      description: 'Find specific items',
+      icon: 'search',
+      action: () => console.log('Open search')
+    }
+  ];
+
+  const mockNearbyEstablishments = [
+    {
+      id: '1',
+      name: 'The Sober Parrot',
+      address: '123 Main St, Anytown',
+      distance: '0.5 miles',
+      image_url: '/images/establishments/sober-parrot.jpg'
+    },
+    {
+      id: '2',
+      name: 'Mocktail Lounge',
+      address: '456 Oak Ave, Anytown',
+      distance: '1.2 miles',
+      image_url: '/images/establishments/mocktail-lounge.jpg'
+    },
+    {
+      id: '3',
+      name: 'Zero Proof Bar',
+      address: '789 Pine Rd, Anytown',
+      distance: '2.0 miles',
+      image_url: '/images/establishments/zero-proof.jpg'
+    }
+  ];
+
+  const mockUpcomingEvents: UpcomingEvent[] = [
+    {
+      id: '1',
+      title: 'Mocktail Masterclass',
+      type: 'Workshop',
+      date: 'Sat, Jun 15, 2:00 PM',
+      location: 'The Sober Parrot'
+    },
+    {
+      id: '2',
+      title: 'Sober Social Mixer',
+      type: 'Social',
+      date: 'Fri, Jun 21, 7:00 PM',
+      location: 'Community Center'
+    },
+    {
+      id: '3',
+      title: 'Alcohol-Free Festival',
+      type: 'Festival',
+      date: 'Sat-Sun, Jul 2-3',
+      location: 'City Park'
+    }
+  ];
+
+  const mockAchievements: Achievement[] = [
+    {
+      id: '1',
+      name: 'Establishment Explorer',
+      description: 'Visit 5 different establishments',
+      category: 'exploration',
+      progress: 3,
+      total: 5,
+      target: 5,
+      pointsReward: 100,
+      icon: 'map-pin',
+      urgency: 'medium',
+      suggestion: 'Visit 2 more establishments',
+      estimatedCompletion: '3 days'
+    },
+    {
+      id: '2',
+      name: 'Review Master',
+      description: 'Write 10 reviews',
+      category: 'engagement',
+      progress: 7,
+      total: 10,
+      target: 10,
+      pointsReward: 150,
+      icon: 'star',
+      urgency: 'high',
+      suggestion: 'Write 3 more reviews',
+      estimatedCompletion: '1 week'
+    },
+    {
+      id: '3',
+      name: 'Social Butterfly',
+      description: 'Share 5 mocktails on social media',
+      category: 'social',
+      progress: 2,
+      total: 5,
+      target: 5,
+      pointsReward: 75,
+      icon: 'share',
+      urgency: 'low',
+      suggestion: 'Share 3 more mocktails',
+      estimatedCompletion: '2 weeks'
+    }
+  ];
+
+  const mockTrendingMocktails: TrendingMocktail[] = [
+    {
+      id: '1',
+      name: 'Virgin Mojito',
+      description: 'Fresh mint, lime, and soda water',
+      popularity: 95,
+      image: '/images/mocktails/virgin-mojito.jpg',
+      establishmentName: 'The Sober Parrot'
+    },
+    {
+      id: '2',
+      name: 'Berry Blast',
+      description: 'Mixed berries with a hint of basil',
+      popularity: 87,
+      image: '/images/mocktails/berry-blast.jpg',
+      establishmentName: 'Mocktail Lounge'
+    },
+    {
+      id: '3',
+      name: 'Cucumber Cooler',
+      description: 'Refreshing cucumber and mint',
+      popularity: 82,
+      image: '/images/mocktails/cucumber-cooler.jpg',
+      establishmentName: 'Zero Proof Bar'
+    }
+  ];
 
   return {
     loading,
-    userStats,
-    streakData,
-    achievementProgress,
-    tierStatus,
-    pointsOpportunities,
-    recentActivity,
-    recommendations,
-    quickActions,
-    nearbyEstablishments,
-    upcomingEvents,
-    isAuthenticated
+    userStats: mockUserStats,
+    recentActivity: mockRecentActivity,
+    recommendations: mockRecommendations,
+    quickActions: mockQuickActions,
+    nearbyEstablishments: mockNearbyEstablishments,
+    upcomingEvents: mockUpcomingEvents,
+    achievements: mockAchievements,
+    trendingMocktails: mockTrendingMocktails,
+    isAuthenticated: !!user
   };
 };
