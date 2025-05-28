@@ -81,45 +81,6 @@ const Explore: React.FC = () => {
           </TabsList>
 
           <TabsContent value="personalized" className="space-y-6">
-            {/* New UI Elements Section */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-              {/* Quick Actions */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    Quick Actions
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <QuickActionCards actions={[]} />
-                </CardContent>
-              </Card>
-
-              {/* Recommended for You */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    Recommended for You
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <RecommendationsWidget recommendations={[]} />
-                </CardContent>
-              </Card>
-
-              {/* Community Activity */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    Community Activity
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ActivityFeedWidget activities={[]} />
-                </CardContent>
-              </Card>
-            </div>
-
             {/* Personalized Dashboard */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Left Column - Main Widgets */}
@@ -129,6 +90,7 @@ const Explore: React.FC = () => {
                   totalPoints={userStats.totalPoints}
                   currentStreak={userStats.currentStreak}
                 />
+                <QuickActionCards actions={[]} />
                 <RecommendationsWidget recommendations={[]} />
                 <ActivityFeedWidget activities={[]} />
               </div>
