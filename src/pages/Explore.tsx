@@ -1,222 +1,106 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState } from 'react';
 import Layout from '@/components/Layout';
-import SearchInput from '@/components/SearchFilter';
-import FilterPanel from '@/components/ViewModeToggle'; 
-import EstablishmentList from '@/components/EstablishmentList';
-import AllCocktails from '@/components/home/AllCocktails';
-import FeaturedEstablishmentsSection from '@/components/explore/FeaturedEstablishmentsSection';
-import CocktailsSection from '@/components/explore/CocktailsSection';
-import BarCrawlSection from '@/components/explore/BarCrawlSection';
-import { QuickStatsWidget } from '@/components/explore/personalized/QuickStatsWidget';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Map, List, Search } from 'lucide-react';
+import { usePersonalizedRecommendations } from '@/hooks/usePersonalizedRecommendations';
+import { useRealtimeActivity } from '@/hooks/useRealtimeActivity';
 import { QuickActionCards } from '@/components/explore/personalized/QuickActionCards';
 import { RecommendationsWidget } from '@/components/explore/personalized/RecommendationsWidget';
 import { ActivityFeedWidget } from '@/components/explore/personalized/ActivityFeedWidget';
-import { NearbyEstablishmentsWidget } from '@/components/explore/personalized/NearbyEstablishmentsWidget';
-import { UpcomingEventsWidget } from '@/components/explore/personalized/UpcomingEventsWidget';
-import StreakMotivationWidget from '@/components/explore/personalized/StreakMotivationWidget';
-import RewardsHighlightWidget from '@/components/rewards/RewardsHighlightWidget';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { UserStats, ViewMode } from '@/types/ExploreTypes';
-import { NotificationService } from '@/services/NotificationService';
-import { OfflineService } from '@/services/OfflineService';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Wifi, WifiOff } from 'lucide-react';
+import { DevRoleSwitcher } from '@/components/development/DevRoleSwitcher';
 
 const Explore: React.FC = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [activeView, setActiveView] = useState('personalized');
-  const [viewMode, setViewMode] = useState<ViewMode>('list');
-  const [isOffline, setIsOffline] = useState(!navigator.onLine);
-  const [queuedActions, setQueuedActions] = useState(OfflineService.getQueuedActions());
-  const [userStats] = useState<UserStats>({
-    totalMocktailsTried: 12,
-    totalPoints: 1250,
-    currentStreak: 5,
-    establishmentsVisited: 8,
-    favoriteEstablishments: 3
-  });
+  const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
+  const [searchQuery, setSearchQuery] = useState('');
+  
+  const {
+    recommendations,
+    isLoading: recommendationsLoading,
+    activeCategory,
+    setActiveCategory,
+    saveRecommendation,
+    dismissRecommendation,
+    shareRecommendation
+  } = usePersonalizedRecommendations();
 
-  // Mock data
-  const establishments = [];
-  const cocktails = [];
-  const barCrawls = [];
-  const isAuthenticated = true;
-
-  useEffect(() => {
-    // Listen for online/offline events
-    const handleOnline = () => setIsOffline(false);
-    const handleOffline = () => setIsOffline(true);
-
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
-    // Subscribe to notification service
-    const unsubscribe = NotificationService.subscribe((notifications) => {
-      // Handle notifications if needed
-    });
-
-    // Update queued actions periodically
-    const interval = setInterval(() => {
-      setQueuedActions(OfflineService.getQueuedActions());
-    }, 1000);
-
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-      unsubscribe();
-      clearInterval(interval);
-    };
-  }, []);
-
-  const handleSearch = (term: string) => {
-    setSearchTerm(term);
-  };
-
-  const resetFilters = () => {
-    setSearchTerm('');
-  };
+  const { activities, isLoading: activitiesLoading } = useRealtimeActivity();
 
   return (
     <Layout>
-      <div className="container mx-auto px-4 py-6 max-w-7xl">
-        {/* Header */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold mb-2">Explore</h1>
-              <p className="text-muted-foreground">Discover new experiences, track your journey</p>
-            </div>
-            
-            {/* Connection status */}
-            <div className="flex items-center gap-2">
-              {isOffline ? (
-                <Badge variant="destructive" className="flex items-center gap-1">
-                  <WifiOff className="h-3 w-3" />
-                  Offline
-                </Badge>
-              ) : (
-                <Badge variant="outline" className="flex items-center gap-1">
-                  <Wifi className="h-3 w-3" />
-                  Online
-                </Badge>
-              )}
-              
-              {queuedActions.length > 0 && (
-                <Badge variant="secondary">
-                  {queuedActions.length} queued
-                </Badge>
-              )}
-            </div>
-          </div>
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        {/* Header Section */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-foreground mb-2">
+            Explore Amazing Mocktails
+          </h1>
+          <p className="text-muted-foreground">
+            Discover the best non-alcoholic experiences in your area.
+          </p>
         </div>
 
-        {/* Offline banner */}
-        <AnimatePresence>
-          {isOffline && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg"
+        {/* Search and View Controls */}
+        <div className="flex flex-col sm:flex-row gap-4 mb-8">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search establishments, cocktails, events..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant={viewMode === 'list' ? 'default' : 'outline'}
+              onClick={() => setViewMode('list')}
+              size="sm"
             >
-              <div className="flex items-center gap-2 text-yellow-800">
-                <WifiOff className="h-5 w-5" />
-                <div>
-                  <p className="font-medium">You're currently offline</p>
-                  <p className="text-sm">Some features may be limited. Actions will sync when you reconnect.</p>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Search and Filters */}
-        <div className="mb-6 flex flex-col sm:flex-row gap-4">
-          <div className="flex-1">
-            <SearchInput 
-              onSearch={handleSearch}
-              onFilterChange={() => {}}
-              onApplyFilters={() => {}}
-              className="w-full"
-            />
+              <List className="h-4 w-4 mr-2" />
+              List
+            </Button>
+            <Button
+              variant={viewMode === 'map' ? 'default' : 'outline'}
+              onClick={() => setViewMode('map')}
+              size="sm"
+            >
+              <Map className="h-4 w-4 mr-2" />
+              Map
+            </Button>
           </div>
-          <FilterPanel 
-            viewMode={viewMode}
-            onViewModeChange={setViewMode}
-          />
         </div>
 
-        {/* Main Content */}
-        <Tabs value={activeView} onValueChange={setActiveView} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="personalized">For You</TabsTrigger>
-            <TabsTrigger value="establishments">Places</TabsTrigger>
-            <TabsTrigger value="cocktails">Drinks</TabsTrigger>
-            <TabsTrigger value="events">Events</TabsTrigger>
-          </TabsList>
+        {/* Development Tools */}
+        <div className="mb-8">
+          <DevRoleSwitcher />
+        </div>
 
-          <TabsContent value="personalized" className="space-y-6">
-            {/* Personalized Dashboard */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Left Column - Main Widgets */}
-              <div className="lg:col-span-2 space-y-6">
-                <QuickStatsWidget 
-                  totalMocktailsTried={userStats.totalMocktailsTried}
-                  totalPoints={userStats.totalPoints}
-                  currentStreak={userStats.currentStreak}
-                />
-                <QuickActionCards actions={[]} />
-                <RecommendationsWidget recommendations={[]} />
-                <ActivityFeedWidget activities={[]} />
-              </div>
+        {/* Quick Actions Section */}
+        <div className="mb-8">
+          <QuickActionCards />
+        </div>
 
-              {/* Right Column - Secondary Widgets */}
-              <div className="space-y-6">
-                <RewardsHighlightWidget />
-                <StreakMotivationWidget />
-                <NearbyEstablishmentsWidget establishments={[]} />
-                <UpcomingEventsWidget events={[]} />
-              </div>
-            </div>
-
-            {/* Featured Sections */}
-            <div className="space-y-6">
-              <FeaturedEstablishmentsSection establishments={establishments} />
-              <CocktailsSection cocktails={cocktails} resetFilters={resetFilters} />
-              <BarCrawlSection barCrawls={barCrawls} isAuthenticated={isAuthenticated} />
-            </div>
-          </TabsContent>
-
-          <TabsContent value="establishments">
-            <EstablishmentList 
-              establishments={establishments} 
-              selectedEstablishment={null}
-              favoriteEstablishments={[]}
-              onToggleFavorite={() => {}}
-              onEstablishmentClick={() => {}}
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Column - Recommendations */}
+          <div className="lg:col-span-2">
+            <RecommendationsWidget
+              recommendations={recommendations}
+              isLoading={recommendationsLoading}
+              activeCategory={activeCategory}
+              setActiveCategory={setActiveCategory}
+              onSave={saveRecommendation}
+              onDismiss={dismissRecommendation}
+              onShare={shareRecommendation}
             />
-          </TabsContent>
+          </div>
 
-          <TabsContent value="cocktails">
-            <AllCocktails 
-              cocktails={cocktails} 
-              onResetFilters={resetFilters}
-            />
-          </TabsContent>
-
-          <TabsContent value="events">
-            <Card>
-              <CardHeader>
-                <CardTitle>Upcoming Events</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">Events coming soon...</p>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+          {/* Right Column - Activity Feed */}
+          <div>
+            <ActivityFeedWidget activities={activities} />
+          </div>
+        </div>
       </div>
     </Layout>
   );
