@@ -1,6 +1,19 @@
 
 import { supabase } from '@/lib/supabase';
-import { UserRewardPreference } from '../types';
+import { UserRewardPreferenceRow } from '@/types/rewards/database';
+
+// Define the interface here to avoid circular dependencies
+interface UserRewardPreference extends UserRewardPreferenceRow {
+  notification_settings?: {
+    point_changes: boolean;
+    tier_updates: boolean;
+    reward_availability: boolean;
+  };
+  display_settings?: {
+    points_format: 'standard' | 'compact';
+    show_tier_progress: boolean;
+  };
+}
 
 export async function getUserPreference(
   userId: string, 

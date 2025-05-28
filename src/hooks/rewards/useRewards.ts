@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { UserRewardProfile, transformRewardOffering } from '@/types/rewards';
+import { UserRewardProfile, transformRewardOffering, transformRewardTransaction } from '@/types/rewards';
 import { toast } from 'sonner';
 
 export const useRewards = () => {
@@ -15,47 +15,50 @@ export const useRewards = () => {
         // In a real implementation, this would call an API
         const mockProfile: UserRewardProfile = {
           id: '1',
+          user_id: '1',
           points: 150,
           lifetime_points: 500,
           lifetimePoints: 500,
           currentTier: {
             id: 'tier-1',
+            establishment_id: 'est-1',
             name: 'Silver',
             points_required: 100,
+            pointsRequired: 100,
             minimumPoints: 100,
             benefits: ['Free drink on birthday', '10% off weekday purchases'],
             description: 'Silver tier rewards',
             color: '#C0C0C0',
             icon: 'award',
-            is_active: true
+            is_active: true,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
           },
           availableRewards: [
             transformRewardOffering({
               id: 'reward-1',
+              establishment_id: 'est-1',
               name: 'Free Mocktail',
               description: 'Redeem for any mocktail of your choice',
               points_required: 100,
               quantity_available: 50,
               expiration_days: 30,
               is_active: true,
-              image_url: '/images/mocktail.jpg'
+              image_url: '/images/mocktail.jpg',
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
             })
           ],
           transactionHistory: [
-            {
+            transformRewardTransaction({
               id: 'trans-1',
               user_id: '1',
-              userId: '1',
               points: 50,
-              pointsAmount: 50,
-              transaction_type: 'EARN',
-              type: 'EARN',
+              transaction_type: 'earn',
               description: 'Check-in reward',
               source: 'check-in',
-              created_at: new Date().toISOString(),
-              timestamp: new Date().toISOString(),
-              date: new Date().toISOString()
-            }
+              created_at: new Date().toISOString()
+            })
           ],
           redemptionHistory: [],
           created_at: new Date().toISOString(),

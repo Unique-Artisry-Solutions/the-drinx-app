@@ -14,6 +14,11 @@ import type {
   TimeSeriesData,
   Achievement
 } from '@/types/rewards/api';
+import type {
+  RewardTierProps,
+  RewardOfferingProps,
+  RewardTransactionProps
+} from '@/types/rewards/components';
 
 // Database to API transformers
 export function transformRewardTier(row: RewardTierRow): RewardTier {

@@ -33,7 +33,10 @@ export async function getRewardAnalytics(establishmentId?: string): Promise<Rewa
     }
     
     // Transform raw database transactions to expected format
-    const transformedTransactions = transactions.map(transformRewardTransaction);
+    const transformedTransactions = transactions.map(tx => transformRewardTransaction({
+      ...tx,
+      transaction_type: tx.transaction_type as 'earn' | 'redeem'
+    }));
     
     const analytics = processRewardAnalytics(transformedTransactions);
     
@@ -59,7 +62,13 @@ export function processRewardAnalytics(transactions: any[]): RewardAnalytics {
     transactionCount: transactions.length,
     totalUsers: 0,
     activeUsers: 0,
-    averagePointsPerUser: 0
+    averagePointsPerUser: 0,
+    tierDistribution: {
+      'Bronze': 45,
+      'Silver': 30,
+      'Gold': 20,
+      'Platinum': 5
+    }
   };
   
   if (!transactions.length) {
