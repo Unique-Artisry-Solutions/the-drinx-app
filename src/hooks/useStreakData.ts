@@ -1,86 +1,62 @@
+
 import { useState, useEffect } from 'react';
-import useDevAuthBypass from '@/hooks/useDevAuthBypass';
-import { subDays, isToday } from 'date-fns';
+import { useStreakRewards } from './useStreakRewards';
 
-interface StreakDay {
-  date: Date;
+export interface StreakDay {
+  date: string;
   hasVisit: boolean;
-  isToday?: boolean;
+  visitCount: number;
+  points?: number;
 }
 
-interface StreakData {
-  currentStreak: number;
-  longestStreak: number;
-  streakData: StreakDay[];
-  isLoading: boolean;
-}
-
-export const useStreakData = (): StreakData => {
-  const { user, isAuthenticated } = useDevAuthBypass();
+export const useStreakData = () => {
+  const { 
+    streakStats, 
+    calculateStreak, 
+    isLoading: streakRewardsLoading 
+  } = useStreakRewards();
+  
   const [streakData, setStreakData] = useState<StreakDay[]>([]);
-  const [currentStreak, setCurrentStreak] = useState(0);
-  const [longestStreak, setLongestStreak] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const loadStreakData = async () => {
-      setIsLoading(true);
+    const generateStreakData = () => {
+      const data: StreakDay[] = [];
+      const today = new Date();
       
-      if (isAuthenticated && user) {
-        const mockStreakData: StreakDay[] = [];
-        const today = new Date();
+      // Generate last 30 days of streak data
+      for (let i = 29; i >= 0; i--) {
+        const date = new Date(today);
+        date.setDate(date.getDate() - i);
         
-        for (let i = 59; i >= 0; i--) {
-          const date = subDays(today, i);
-          const hasVisit = Math.random() > 0.3;
-          
-          mockStreakData.push({
-            date,
-            hasVisit,
-            isToday: isToday(date)
-          });
-        }
+        // Mock visit data - in real app would come from database
+        const hasVisit = i < 5; // Last 5 days have visits (current streak)
         
-        let currentStreakCount = 0;
-        for (let i = mockStreakData.length - 1; i >= 0; i--) {
-          if (mockStreakData[i].hasVisit) {
-            currentStreakCount++;
-          } else {
-            break;
-          }
-        }
-        
-        let longestStreakCount = 0;
-        let tempStreak = 0;
-        
-        mockStreakData.forEach(day => {
-          if (day.hasVisit) {
-            tempStreak++;
-            longestStreakCount = Math.max(longestStreakCount, tempStreak);
-          } else {
-            tempStreak = 0;
-          }
+        data.push({
+          date: date.toISOString().split('T')[0],
+          hasVisit,
+          visitCount: hasVisit ? 1 : 0,
+          points: hasVisit ? 25 : 0
         });
-        
-        setStreakData(mockStreakData);
-        setCurrentStreak(currentStreakCount);
-        setLongestStreak(longestStreakCount);
-      } else {
-        setStreakData([]);
-        setCurrentStreak(0);
-        setLongestStreak(0);
       }
       
-      setIsLoading(false);
+      setStreakData(data);
     };
 
-    loadStreakData();
-  }, [user, isAuthenticated]);
+    if (!streakRewardsLoading) {
+      generateStreakData();
+      setIsLoading(false);
+    }
+  }, [streakRewardsLoading]);
+
+  const currentStreak = streakStats?.currentStreak || 0;
+  const longestStreak = streakStats?.longestStreak || 0;
 
   return {
     currentStreak,
     longestStreak,
     streakData,
-    isLoading
+    isLoading: isLoading || streakRewardsLoading,
+    streakStats
   };
 };
