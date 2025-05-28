@@ -1,295 +1,330 @@
 
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Star, MapPin, Heart, Share2, Eye, TrendingUp, Clock, X } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { 
+  Star, 
+  MapPin, 
+  Clock, 
+  Heart, 
+  Share2, 
+  X, 
+  TrendingUp, 
+  DollarSign,
+  Eye,
+  Bookmark,
+  BookmarkCheck
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-
-export interface Recommendation {
-  id: string;
-  title: string;
-  description: string;
-  type: 'establishment' | 'cocktail' | 'event';
-  rating?: number;
-  distance?: string;
-  imageUrl?: string;
-  isTrending?: boolean;
-  isNew?: boolean;
-  priceRange?: string;
-  tags?: string[];
-}
+import { usePersonalizedRecommendations, PersonalizedRecommendation } from '@/hooks/usePersonalizedRecommendations';
+import { NotificationService } from '@/services/NotificationService';
 
 export interface RecommendationsWidgetProps {
-  recommendations?: Recommendation[];
+  recommendations?: PersonalizedRecommendation[];
 }
 
-const defaultRecommendations: Recommendation[] = [
-  {
-    id: '1',
-    title: 'The Mocktail Lounge',
-    description: 'Trendy spot with creative non-alcoholic drinks and vibrant atmosphere',
-    type: 'establishment',
-    rating: 4.8,
-    distance: '0.3 miles',
-    isTrending: true,
-    priceRange: '$$',
-    tags: ['Trendy', 'Instagram-worthy', 'Live Music']
-  },
-  {
-    id: '2',
-    title: 'Virgin Mojito Supreme',
-    description: 'Refreshing mint and lime combination with a twist of ginger',
-    type: 'cocktail',
-    rating: 4.6,
-    isNew: true,
-    tags: ['Refreshing', 'Minty', 'Popular']
-  },
-  {
-    id: '3',
-    title: 'Sober Social Hour',
-    description: 'Weekly meetup for mocktail enthusiasts and mindful drinkers',
-    type: 'event',
-    distance: '1.2 miles',
-    tags: ['Social', 'Weekly', 'Community']
-  }
-];
-
 export const RecommendationsWidget: React.FC<RecommendationsWidgetProps> = ({ 
-  recommendations = defaultRecommendations 
+  recommendations: propRecommendations 
 }) => {
-  const [selectedRec, setSelectedRec] = useState<Recommendation | null>(null);
-  const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
-  const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
+  const { 
+    recommendations, 
+    isLoading, 
+    activeCategory, 
+    setActiveCategory,
+    saveRecommendation,
+    dismissRecommendation,
+    shareRecommendation
+  } = usePersonalizedRecommendations();
+  
+  const [selectedRecommendation, setSelectedRecommendation] = useState<PersonalizedRecommendation | null>(null);
 
-  const visibleRecommendations = recommendations.filter(rec => !dismissedIds.has(rec.id));
+  const displayRecommendations = propRecommendations || recommendations;
 
-  const handleDismiss = (id: string) => {
-    setDismissedIds(prev => new Set([...prev, id]));
-  };
-
-  const handleSave = (id: string) => {
-    setSavedIds(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(id)) {
-        newSet.delete(id);
-      } else {
-        newSet.add(id);
-      }
-      return newSet;
+  const handleSave = async (rec: PersonalizedRecommendation) => {
+    await saveRecommendation(rec.id);
+    NotificationService.addNotification({
+      title: rec.isSaved ? 'Removed from saved' : 'Saved!',
+      message: `${rec.title} ${rec.isSaved ? 'removed from' : 'added to'} your saved items`,
+      type: 'success'
     });
   };
 
-  const getTypeColor = (type: Recommendation['type']) => {
-    switch (type) {
-      case 'establishment': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'cocktail': return 'bg-purple-100 text-purple-800 border-purple-200';
-      case 'event': return 'bg-green-100 text-green-800 border-green-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+  const handleDismiss = async (rec: PersonalizedRecommendation) => {
+    await dismissRecommendation(rec.id);
+    NotificationService.addNotification({
+      title: 'Recommendation dismissed',
+      message: 'We\'ll show you different suggestions',
+      type: 'info'
+    });
+  };
+
+  const handleShare = async (rec: PersonalizedRecommendation) => {
+    await shareRecommendation(rec.id);
+    NotificationService.addNotification({
+      title: 'Shared successfully!',
+      message: `${rec.title} has been shared`,
+      type: 'success'
+    });
+  };
+
+  const getAvailabilityColor = (availability?: string) => {
+    switch (availability) {
+      case 'open': return 'text-green-600';
+      case 'closing-soon': return 'text-yellow-600';
+      case 'closed': return 'text-red-600';
+      default: return 'text-muted-foreground';
     }
   };
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.15
-      }
+  const getAvailabilityText = (availability?: string) => {
+    switch (availability) {
+      case 'open': return 'Open now';
+      case 'closing-soon': return 'Closing soon';
+      case 'closed': return 'Closed';
+      default: return '';
     }
   };
 
-  const itemVariants = {
-    hidden: { opacity: 0, x: -20 },
-    visible: { opacity: 1, x: 0 },
-    exit: { opacity: 0, x: 20, transition: { duration: 0.2 } }
-  };
-
-  return (
-    <>
-      <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-blue-50 dark:from-gray-900 dark:to-blue-900/20">
-        <CardHeader className="pb-4">
-          <CardTitle className="flex items-center gap-2 text-xl font-bold">
-            <TrendingUp className="h-5 w-5 text-primary animate-bounce" />
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Heart className="h-5 w-5 text-primary" />
             Recommended for You
-            <Badge variant="secondary" className="ml-auto text-xs">
-              {visibleRecommendations.length} items
-            </Badge>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <motion.div 
-            className="space-y-4"
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            <AnimatePresence>
-              {visibleRecommendations.map((rec) => (
-                <motion.div
-                  key={rec.id}
-                  variants={itemVariants}
-                  exit="exit"
-                  layout
-                  className="group"
-                >
-                  <div className="relative p-4 rounded-xl border-2 border-gray-100 hover:border-primary/30 bg-white dark:bg-gray-800 hover:shadow-lg transition-all duration-300 cursor-pointer"
-                       onClick={() => setSelectedRec(rec)}>
-                    
-                    {/* Dismiss button */}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 p-0"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDismiss(rec.id);
-                      }}
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-
-                    <div className="flex items-start gap-3">
-                      {/* Placeholder image */}
-                      <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-primary/20 to-primary/40 flex items-center justify-center flex-shrink-0">
-                        <div className="text-primary font-bold text-lg">
-                          {rec.title.charAt(0)}
-                        </div>
-                      </div>
-
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-2">
-                          <h4 className="font-semibold text-sm truncate">{rec.title}</h4>
-                          <Badge variant="outline" className={`text-xs ${getTypeColor(rec.type)}`}>
-                            {rec.type}
-                          </Badge>
-                          {rec.isTrending && (
-                            <Badge variant="secondary" className="text-xs bg-orange-100 text-orange-800">
-                              Trending
-                            </Badge>
-                          )}
-                          {rec.isNew && (
-                            <Badge variant="secondary" className="text-xs bg-green-100 text-green-800">
-                              New
-                            </Badge>
-                          )}
-                        </div>
-                        
-                        <p className="text-xs text-muted-foreground mb-3 line-clamp-2">{rec.description}</p>
-                        
-                        {/* Tags */}
-                        {rec.tags && (
-                          <div className="flex flex-wrap gap-1 mb-3">
-                            {rec.tags.slice(0, 3).map((tag) => (
-                              <span key={tag} className="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full">
-                                {tag}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                        
-                        <div className="flex items-center justify-between text-xs">
-                          <div className="flex items-center gap-3">
-                            {rec.rating && (
-                              <div className="flex items-center gap-1">
-                                <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                                <span className="font-medium">{rec.rating}</span>
-                              </div>
-                            )}
-                            {rec.distance && (
-                              <div className="flex items-center gap-1 text-muted-foreground">
-                                <MapPin className="h-3 w-3" />
-                                <span>{rec.distance}</span>
-                              </div>
-                            )}
-                            {rec.priceRange && (
-                              <span className="text-muted-foreground">{rec.priceRange}</span>
-                            )}
-                          </div>
-                          
-                          <div className="flex items-center gap-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-6 w-6 p-0"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleSave(rec.id);
-                              }}
-                            >
-                              <Heart className={`h-3 w-3 ${savedIds.has(rec.id) ? 'fill-red-500 text-red-500' : ''}`} />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-6 w-6 p-0"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                console.log('Share', rec.title);
-                              }}
-                            >
-                              <Share2 className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </motion.div>
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="animate-pulse">
+                <div className="h-32 bg-muted rounded-lg mb-2"></div>
+                <div className="h-4 bg-muted rounded w-3/4 mb-1"></div>
+                <div className="h-3 bg-muted rounded w-1/2"></div>
+              </div>
+            ))}
+          </div>
         </CardContent>
       </Card>
+    );
+  }
 
-      <Dialog open={!!selectedRec} onOpenChange={() => setSelectedRec(null)}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Eye className="h-5 w-5" />
-              {selectedRec?.title}
-            </DialogTitle>
-            <DialogDescription>
-              {selectedRec?.description}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            {selectedRec?.tags && (
-              <div className="flex flex-wrap gap-2">
-                {selectedRec.tags.map((tag) => (
-                  <Badge key={tag} variant="outline">{tag}</Badge>
-                ))}
-              </div>
-            )}
-            <div className="flex items-center gap-4 text-sm">
-              {selectedRec?.rating && (
-                <div className="flex items-center gap-1">
-                  <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                  <span>{selectedRec.rating}</span>
+  return (
+    <Card className="overflow-hidden">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Heart className="h-5 w-5 text-primary" />
+          Recommended for You
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <Tabs value={activeCategory} onValueChange={(value: any) => setActiveCategory(value)} className="space-y-4">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="all">All</TabsTrigger>
+            <TabsTrigger value="establishments">Places</TabsTrigger>
+            <TabsTrigger value="cocktails">Drinks</TabsTrigger>
+            <TabsTrigger value="events">Events</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value={activeCategory} className="space-y-4">
+            <AnimatePresence mode="wait">
+              {displayRecommendations.length === 0 ? (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="text-center py-8 text-muted-foreground"
+                >
+                  <Heart className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No recommendations in this category yet</p>
+                </motion.div>
+              ) : (
+                <div className="space-y-4">
+                  {displayRecommendations.map((rec, index) => (
+                    <motion.div
+                      key={rec.id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: 20 }}
+                      transition={{ delay: index * 0.1 }}
+                      className="group"
+                    >
+                      <Card className="overflow-hidden hover:shadow-md transition-all duration-300 border-l-4 border-l-primary/20 hover:border-l-primary">
+                        <CardContent className="p-4">
+                          <div className="flex gap-4">
+                            {/* Image */}
+                            <div className="relative flex-shrink-0">
+                              <div className="w-20 h-20 rounded-lg bg-muted overflow-hidden">
+                                {rec.imageUrl && (
+                                  <img 
+                                    src={rec.imageUrl} 
+                                    alt={rec.title}
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                  />
+                                )}
+                              </div>
+                              {rec.trending && (
+                                <Badge className="absolute -top-1 -right-1 text-xs bg-red-500">
+                                  <TrendingUp className="h-3 w-3 mr-1" />
+                                  Hot
+                                </Badge>
+                              )}
+                            </div>
+
+                            {/* Content */}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-start justify-between mb-2">
+                                <div>
+                                  <h3 className="font-semibold text-sm mb-1 truncate">{rec.title}</h3>
+                                  <p className="text-xs text-muted-foreground mb-2 line-clamp-2">
+                                    {rec.description}
+                                  </p>
+                                </div>
+                                
+                                {/* Action buttons */}
+                                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleSave(rec)}
+                                    className="h-8 w-8 p-0"
+                                  >
+                                    {rec.isSaved ? (
+                                      <BookmarkCheck className="h-4 w-4 text-primary" />
+                                    ) : (
+                                      <Bookmark className="h-4 w-4" />
+                                    )}
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleShare(rec)}
+                                    className="h-8 w-8 p-0"
+                                  >
+                                    <Share2 className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleDismiss(rec)}
+                                    className="h-8 w-8 p-0 text-muted-foreground hover:text-red-500"
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </div>
+
+                              {/* Metadata */}
+                              <div className="flex items-center gap-3 text-xs text-muted-foreground mb-2">
+                                {rec.rating && (
+                                  <div className="flex items-center gap-1">
+                                    <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                                    <span>{rec.rating}</span>
+                                  </div>
+                                )}
+                                {rec.distance && (
+                                  <div className="flex items-center gap-1">
+                                    <MapPin className="h-3 w-3" />
+                                    <span>{rec.distance}</span>
+                                  </div>
+                                )}
+                                {rec.price && (
+                                  <div className="flex items-center gap-1">
+                                    <DollarSign className="h-3 w-3" />
+                                    <span>{rec.price}</span>
+                                  </div>
+                                )}
+                                {rec.availability && (
+                                  <div className="flex items-center gap-1">
+                                    <Clock className="h-3 w-3" />
+                                    <span className={getAvailabilityColor(rec.availability)}>
+                                      {getAvailabilityText(rec.availability)}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Tags and reason */}
+                              <div className="flex items-center justify-between">
+                                <div className="flex flex-wrap gap-1">
+                                  {rec.tags.slice(0, 2).map((tag) => (
+                                    <Badge key={tag} variant="outline" className="text-xs">
+                                      {tag}
+                                    </Badge>
+                                  ))}
+                                  {rec.tags.length > 2 && (
+                                    <Badge variant="outline" className="text-xs">
+                                      +{rec.tags.length - 2}
+                                    </Badge>
+                                  )}
+                                </div>
+                                
+                                <Dialog>
+                                  <DialogTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-6 text-xs text-primary"
+                                      onClick={() => setSelectedRecommendation(rec)}
+                                    >
+                                      <Eye className="h-3 w-3 mr-1" />
+                                      View
+                                    </Button>
+                                  </DialogTrigger>
+                                  <DialogContent>
+                                    <DialogHeader>
+                                      <DialogTitle>{rec.title}</DialogTitle>
+                                      <DialogDescription>{rec.description}</DialogDescription>
+                                    </DialogHeader>
+                                    <div className="space-y-4">
+                                      {rec.imageUrl && (
+                                        <img 
+                                          src={rec.imageUrl} 
+                                          alt={rec.title}
+                                          className="w-full h-48 object-cover rounded-lg"
+                                        />
+                                      )}
+                                      <div>
+                                        <h4 className="font-medium text-sm mb-2">Why we recommend this:</h4>
+                                        <p className="text-sm text-muted-foreground">{rec.reason}</p>
+                                      </div>
+                                      <div className="flex flex-wrap gap-2">
+                                        {rec.tags.map((tag) => (
+                                          <Badge key={tag} variant="outline">{tag}</Badge>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  </DialogContent>
+                                </Dialog>
+                              </div>
+
+                              {/* Reason */}
+                              <p className="text-xs text-primary/70 mt-2 italic">
+                                {rec.reason}
+                              </p>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  ))}
                 </div>
               )}
-              {selectedRec?.distance && (
-                <div className="flex items-center gap-1">
-                  <MapPin className="h-4 w-4" />
-                  <span>{selectedRec.distance}</span>
-                </div>
-              )}
-            </div>
-            <div className="flex gap-2 justify-end">
-              <Button variant="outline" onClick={() => setSelectedRec(null)}>
-                Close
-              </Button>
-              <Button onClick={() => {
-                console.log('View details', selectedRec?.title);
-                setSelectedRec(null);
-              }}>
-                View Details
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </>
+            </AnimatePresence>
+          </TabsContent>
+        </Tabs>
+      </CardContent>
+    </Card>
   );
 };
+
+export default RecommendationsWidget;

@@ -1,188 +1,207 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Plus, MapPin, Camera, Share, Zap, Clock } from 'lucide-react';
-import { motion } from 'framer-motion';
-
-export interface QuickAction {
-  id: string;
-  title: string;
-  description: string;
-  icon: React.ReactNode;
-  onClick: () => void;
-  color?: string;
-  isPopular?: boolean;
-}
+import { Badge } from '@/components/ui/badge';
+import { MapPin, Calendar, PlusCircle, Users, Share2, UserPlus, Zap, Loader2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useEnhancedQuickActions, EnhancedQuickAction } from '@/hooks/useEnhancedQuickActions';
+import { OfflineService } from '@/services/OfflineService';
 
 export interface QuickActionCardsProps {
-  actions?: QuickAction[];
+  actions?: EnhancedQuickAction[];
 }
 
-const defaultActions: QuickAction[] = [
-  {
-    id: 'add-recipe',
-    title: 'Create Recipe',
-    description: 'Share your mocktail creation',
-    icon: <Plus className="h-5 w-5" />,
-    onClick: () => console.log('Create recipe'),
-    color: 'from-purple-500 to-pink-500',
-    isPopular: true
-  },
-  {
-    id: 'find-places',
-    title: 'Find Places',
-    description: 'Discover nearby establishments',
-    icon: <MapPin className="h-5 w-5" />,
-    onClick: () => console.log('Find places'),
-    color: 'from-blue-500 to-cyan-500'
-  },
-  {
-    id: 'check-in',
-    title: 'Check In',
-    description: 'Log your visit',
-    icon: <Camera className="h-5 w-5" />,
-    onClick: () => console.log('Check in'),
-    color: 'from-green-500 to-emerald-500'
-  },
-  {
-    id: 'share',
-    title: 'Share Experience',
-    description: 'Tell friends about your visit',
-    icon: <Share className="h-5 w-5" />,
-    onClick: () => console.log('Share'),
-    color: 'from-orange-500 to-yellow-500'
-  }
-];
+export const QuickActionCards: React.FC<QuickActionCardsProps> = ({ actions: propActions }) => {
+  const { isLoading, handleActionClick, actions } = useEnhancedQuickActions();
 
-export const QuickActionCards: React.FC<QuickActionCardsProps> = ({ 
-  actions = defaultActions 
-}) => {
-  const [selectedAction, setSelectedAction] = useState<QuickAction | null>(null);
-  const [isLoading, setIsLoading] = useState<string | null>(null);
-
-  const handleActionClick = async (action: QuickAction) => {
-    setIsLoading(action.id);
-    
-    // Simulate loading state
-    setTimeout(() => {
-      setIsLoading(null);
-      setSelectedAction(action);
-    }, 800);
-  };
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1
-      }
+  const defaultActions: EnhancedQuickAction[] = [
+    {
+      id: 'check-in',
+      title: 'Check In Nearby',
+      description: 'Find and check into establishments around you',
+      icon: <MapPin className="h-5 w-5" />,
+      color: 'bg-gradient-to-br from-green-500 to-emerald-600',
+      isEnabled: !OfflineService.isOffline(),
+      badge: 'New',
+      shortcut: '⌘+1',
+      recentlyUsed: true,
+      onClick: actions.checkInNearby
+    },
+    {
+      id: 'find-events',
+      title: 'Find Events',
+      description: 'Discover upcoming events and activities',
+      icon: <Calendar className="h-5 w-5" />,
+      color: 'bg-gradient-to-br from-blue-500 to-cyan-600',
+      isEnabled: true,
+      shortcut: '⌘+2',
+      onClick: actions.findEvents
+    },
+    {
+      id: 'create-recipe',
+      title: 'Create Recipe',
+      description: 'Share your own mocktail creation',
+      icon: <PlusCircle className="h-5 w-5" />,
+      color: 'bg-gradient-to-br from-purple-500 to-violet-600',
+      isEnabled: true,
+      shortcut: '⌘+3',
+      onClick: actions.createRecipe
+    },
+    {
+      id: 'start-crawl',
+      title: 'Start Bar Crawl',
+      description: 'Begin a new bar crawling adventure',
+      icon: <Users className="h-5 w-5" />,
+      color: 'bg-gradient-to-br from-orange-500 to-red-600',
+      isEnabled: true,
+      badge: 'Popular',
+      onClick: actions.startBarCrawl
+    },
+    {
+      id: 'share-achievement',
+      title: 'Share Achievement',
+      description: 'Celebrate your latest accomplishment',
+      icon: <Share2 className="h-5 w-5" />,
+      color: 'bg-gradient-to-br from-pink-500 to-rose-600',
+      isEnabled: true,
+      onClick: actions.shareAchievement
+    },
+    {
+      id: 'find-friends',
+      title: 'Find Friends',
+      description: 'Connect with other swig enthusiasts',
+      icon: <UserPlus className="h-5 w-5" />,
+      color: 'bg-gradient-to-br from-indigo-500 to-blue-600',
+      isEnabled: true,
+      onClick: actions.findFriends
     }
-  };
+  ];
 
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 }
-  };
+  const displayActions = propActions || defaultActions;
 
-  return (
-    <>
-      <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800">
-        <CardHeader className="pb-4">
-          <CardTitle className="flex items-center gap-2 text-xl font-bold">
-            <Zap className="h-5 w-5 text-primary animate-pulse" />
-            Quick Actions
-            <Clock className="h-4 w-4 text-muted-foreground ml-auto" />
+  if (OfflineService.isOffline()) {
+    return (
+      <Card className="bg-yellow-50 border-yellow-200">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-yellow-800">
+            <Zap className="h-5 w-5" />
+            Quick Actions (Offline Mode)
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <motion.div 
-            className="grid grid-cols-2 gap-4"
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            {actions.map((action) => (
-              <motion.div key={action.id} variants={itemVariants}>
+          <p className="text-yellow-700 text-sm">
+            Some actions are unavailable while offline. They'll be available when you reconnect.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="overflow-hidden">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Zap className="h-5 w-5 text-primary" />
+          Quick Actions
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <AnimatePresence>
+            {displayActions.map((action, index) => (
+              <motion.div
+                key={action.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ 
+                  duration: 0.3, 
+                  delay: index * 0.1,
+                  type: "spring",
+                  stiffness: 100
+                }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
                 <Button
                   variant="outline"
                   className={`
-                    h-auto p-0 overflow-hidden group relative border-2
-                    hover:border-primary/50 hover:shadow-xl transition-all duration-300
-                    ${isLoading === action.id ? 'pointer-events-none' : ''}
+                    relative h-auto p-4 flex flex-col items-start gap-3 text-left w-full
+                    ${action.isEnabled 
+                      ? 'hover:shadow-lg transition-all duration-300 hover:border-primary/50' 
+                      : 'opacity-50 cursor-not-allowed'
+                    }
+                    ${action.recentlyUsed ? 'border-primary/30 bg-primary/5' : ''}
                   `}
-                  onClick={() => handleActionClick(action)}
-                  disabled={isLoading === action.id}
+                  onClick={() => action.isEnabled && handleActionClick(action)}
+                  disabled={!action.isEnabled || isLoading === action.id}
                 >
-                  <div className={`
-                    w-full h-full p-4 flex flex-col items-center gap-3 relative
-                    bg-gradient-to-br ${action.color || 'from-gray-100 to-gray-200'}
-                    dark:from-gray-800 dark:to-gray-700 group-hover:scale-105 transition-transform duration-300
-                  `}>
-                    {action.isPopular && (
-                      <div className="absolute top-2 right-2 bg-yellow-400 text-black text-xs px-2 py-1 rounded-full font-bold">
-                        Popular
-                      </div>
-                    )}
-                    
-                    <div className={`
-                      p-3 rounded-full bg-white/20 backdrop-blur-sm
-                      group-hover:bg-white/30 transition-all duration-300
-                      ${isLoading === action.id ? 'animate-spin' : 'group-hover:scale-110'}
-                    `}>
-                      {action.icon}
-                    </div>
-                    
-                    <div className="text-center text-white">
-                      <div className="font-semibold text-sm mb-1">{action.title}</div>
-                      <div className="text-xs opacity-90 leading-tight">{action.description}</div>
-                    </div>
+                  {/* Badge */}
+                  {action.badge && (
+                    <Badge 
+                      variant="secondary" 
+                      className="absolute -top-1 -right-1 text-xs animate-pulse"
+                    >
+                      {action.badge}
+                    </Badge>
+                  )}
 
-                    {isLoading === action.id && (
-                      <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
-                        <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      </div>
+                  {/* Icon with loading state */}
+                  <div className={`
+                    p-3 rounded-lg text-white transition-all duration-300
+                    ${action.color}
+                    ${isLoading === action.id ? 'animate-pulse' : ''}
+                  `}>
+                    {isLoading === action.id ? (
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                    ) : (
+                      action.icon
                     )}
                   </div>
+
+                  {/* Content */}
+                  <div className="space-y-1 w-full">
+                    <div className="flex items-center justify-between w-full">
+                      <h3 className="font-semibold text-sm">{action.title}</h3>
+                      {action.shortcut && (
+                        <kbd className="px-2 py-1 text-xs bg-muted rounded">
+                          {action.shortcut}
+                        </kbd>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      {action.description}
+                    </p>
+                  </div>
+
+                  {/* Progress indicator for recently used */}
+                  {action.recentlyUsed && (
+                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-primary/20">
+                      <div className="h-full w-1/3 bg-primary rounded-r"></div>
+                    </div>
+                  )}
                 </Button>
               </motion.div>
             ))}
-          </motion.div>
-        </CardContent>
-      </Card>
+          </AnimatePresence>
+        </div>
 
-      <Dialog open={!!selectedAction} onOpenChange={() => setSelectedAction(null)}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              {selectedAction?.icon}
-              {selectedAction?.title}
-            </DialogTitle>
-            <DialogDescription>
-              {selectedAction?.description}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex flex-col gap-4 py-4">
-            <p className="text-sm text-muted-foreground">
-              This action will help you {selectedAction?.title.toLowerCase()}. 
-              Would you like to continue?
+        {/* Offline queue indicator */}
+        {OfflineService.getQueuedActions().length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            className="mt-4 p-3 bg-yellow-50 rounded-lg border border-yellow-200"
+          >
+            <p className="text-sm text-yellow-700">
+              {OfflineService.getQueuedActions().length} action(s) queued for when you're back online
             </p>
-            <div className="flex gap-2 justify-end">
-              <Button variant="outline" onClick={() => setSelectedAction(null)}>
-                Cancel
-              </Button>
-              <Button onClick={() => {
-                selectedAction?.onClick();
-                setSelectedAction(null);
-              }}>
-                Continue
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </>
+          </motion.div>
+        )}
+      </CardContent>
+    </Card>
   );
 };
+
+export default QuickActionCards;

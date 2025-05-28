@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import SearchInput from '@/components/SearchFilter';
@@ -18,12 +17,19 @@ import StreakMotivationWidget from '@/components/explore/personalized/StreakMoti
 import RewardsHighlightWidget from '@/components/rewards/RewardsHighlightWidget';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { UserStats, ViewMode } from '@/types/ExploreTypes';
+import { NotificationService } from '@/services/NotificationService';
+import { OfflineService } from '@/services/OfflineService';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Wifi, WifiOff } from 'lucide-react';
 
 const Explore: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeView, setActiveView] = useState('personalized');
   const [viewMode, setViewMode] = useState<ViewMode>('list');
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
+  const [queuedActions, setQueuedActions] = useState(OfflineService.getQueuedActions());
   const [userStats] = useState<UserStats>({
     totalMocktailsTried: 12,
     totalPoints: 1250,
@@ -38,6 +44,32 @@ const Explore: React.FC = () => {
   const barCrawls = [];
   const isAuthenticated = true;
 
+  useEffect(() => {
+    // Listen for online/offline events
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    // Subscribe to notification service
+    const unsubscribe = NotificationService.subscribe((notifications) => {
+      // Handle notifications if needed
+    });
+
+    // Update queued actions periodically
+    const interval = setInterval(() => {
+      setQueuedActions(OfflineService.getQueuedActions());
+    }, 1000);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+      unsubscribe();
+      clearInterval(interval);
+    };
+  }, []);
+
   const handleSearch = (term: string) => {
     setSearchTerm(term);
   };
@@ -51,9 +83,54 @@ const Explore: React.FC = () => {
       <div className="container mx-auto px-4 py-6 max-w-7xl">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-3xl font-bold mb-2">Explore</h1>
-          <p className="text-muted-foreground">Discover new experiences, track your journey</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold mb-2">Explore</h1>
+              <p className="text-muted-foreground">Discover new experiences, track your journey</p>
+            </div>
+            
+            {/* Connection status */}
+            <div className="flex items-center gap-2">
+              {isOffline ? (
+                <Badge variant="destructive" className="flex items-center gap-1">
+                  <WifiOff className="h-3 w-3" />
+                  Offline
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="flex items-center gap-1">
+                  <Wifi className="h-3 w-3" />
+                  Online
+                </Badge>
+              )}
+              
+              {queuedActions.length > 0 && (
+                <Badge variant="secondary">
+                  {queuedActions.length} queued
+                </Badge>
+              )}
+            </div>
+          </div>
         </div>
+
+        {/* Offline banner */}
+        <AnimatePresence>
+          {isOffline && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg"
+            >
+              <div className="flex items-center gap-2 text-yellow-800">
+                <WifiOff className="h-5 w-5" />
+                <div>
+                  <p className="font-medium">You're currently offline</p>
+                  <p className="text-sm">Some features may be limited. Actions will sync when you reconnect.</p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Search and Filters */}
         <div className="mb-6 flex flex-col sm:flex-row gap-4">
