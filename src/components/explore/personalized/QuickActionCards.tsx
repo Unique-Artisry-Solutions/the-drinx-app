@@ -1,246 +1,207 @@
 
-import React, { useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
+import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
+import { MapPin, Calendar, PlusCircle, Users, Share2, UserPlus, Zap, Loader2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useEnhancedQuickActions, EnhancedQuickAction } from '@/hooks/useEnhancedQuickActions';
 import { OfflineService } from '@/services/OfflineService';
-import { 
-  MapPin, 
-  Calendar, 
-  Coffee, 
-  Route, 
-  Trophy, 
-  Users, 
-  Wifi, 
-  WifiOff,
-  Loader
-} from 'lucide-react';
-
-export interface QuickAction {
-  id: string;
-  title: string;
-  description: string;
-  icon: React.ReactNode;
-  onClick: () => void;
-}
 
 export interface QuickActionCardsProps {
-  actions?: QuickAction[];
+  actions?: EnhancedQuickAction[];
 }
 
 export const QuickActionCards: React.FC<QuickActionCardsProps> = ({ actions: propActions }) => {
-  const { isLoading, handleActionClick, actions: enhancedActions } = useEnhancedQuickActions();
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
-  const [completedActions, setCompletedActions] = useState<Set<string>>(new Set());
-
-  React.useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-    
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-    
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, []);
+  const { isLoading, handleActionClick, actions } = useEnhancedQuickActions();
 
   const defaultActions: EnhancedQuickAction[] = [
     {
       id: 'check-in',
       title: 'Check In Nearby',
-      description: 'Find and check into nearby establishments',
+      description: 'Find and check into establishments around you',
       icon: <MapPin className="h-5 w-5" />,
-      color: 'bg-blue-500',
-      isEnabled: true,
-      requiresAuth: false,
-      badge: 'Popular',
-      shortcut: 'Ctrl+1',
+      color: 'bg-gradient-to-br from-green-500 to-emerald-600',
+      isEnabled: !OfflineService.isOffline(),
+      badge: 'New',
+      shortcut: '⌘+1',
       recentlyUsed: true,
-      onClick: enhancedActions.checkInNearby
+      onClick: actions.checkInNearby
     },
     {
       id: 'find-events',
       title: 'Find Events',
-      description: 'Discover upcoming mocktail events',
+      description: 'Discover upcoming events and activities',
       icon: <Calendar className="h-5 w-5" />,
-      color: 'bg-green-500',
+      color: 'bg-gradient-to-br from-blue-500 to-cyan-600',
       isEnabled: true,
-      requiresAuth: false,
-      badge: 'New',
-      shortcut: 'Ctrl+2',
-      recentlyUsed: false,
-      onClick: enhancedActions.findEvents
+      shortcut: '⌘+2',
+      onClick: actions.findEvents
     },
     {
       id: 'create-recipe',
       title: 'Create Recipe',
-      description: 'Share your mocktail creation',
-      icon: <Coffee className="h-5 w-5" />,
-      color: 'bg-purple-500',
+      description: 'Share your own mocktail creation',
+      icon: <PlusCircle className="h-5 w-5" />,
+      color: 'bg-gradient-to-br from-purple-500 to-violet-600',
       isEnabled: true,
-      requiresAuth: true,
-      shortcut: 'Ctrl+3',
-      recentlyUsed: false,
-      onClick: enhancedActions.createRecipe
+      shortcut: '⌘+3',
+      onClick: actions.createRecipe
     },
     {
       id: 'start-crawl',
       title: 'Start Bar Crawl',
-      description: 'Begin a swig circuit adventure',
-      icon: <Route className="h-5 w-5" />,
-      color: 'bg-orange-500',
+      description: 'Begin a new bar crawling adventure',
+      icon: <Users className="h-5 w-5" />,
+      color: 'bg-gradient-to-br from-orange-500 to-red-600',
       isEnabled: true,
-      requiresAuth: false,
-      badge: 'Featured',
-      shortcut: 'Ctrl+4',
-      recentlyUsed: false,
-      onClick: enhancedActions.startBarCrawl
+      badge: 'Popular',
+      onClick: actions.startBarCrawl
     },
     {
       id: 'share-achievement',
       title: 'Share Achievement',
-      description: 'Show off your latest milestone',
-      icon: <Trophy className="h-5 w-5" />,
-      color: 'bg-yellow-500',
+      description: 'Celebrate your latest accomplishment',
+      icon: <Share2 className="h-5 w-5" />,
+      color: 'bg-gradient-to-br from-pink-500 to-rose-600',
       isEnabled: true,
-      requiresAuth: true,
-      shortcut: 'Ctrl+5',
-      recentlyUsed: false,
-      onClick: enhancedActions.shareAchievement
+      onClick: actions.shareAchievement
     },
     {
       id: 'find-friends',
       title: 'Find Friends',
-      description: 'Connect with other mocktail enthusiasts',
-      icon: <Users className="h-5 w-5" />,
-      color: 'bg-pink-500',
+      description: 'Connect with other swig enthusiasts',
+      icon: <UserPlus className="h-5 w-5" />,
+      color: 'bg-gradient-to-br from-indigo-500 to-blue-600',
       isEnabled: true,
-      requiresAuth: true,
-      shortcut: 'Ctrl+6',
-      recentlyUsed: false,
-      onClick: enhancedActions.findFriends
+      onClick: actions.findFriends
     }
   ];
 
-  const actions = propActions || defaultActions;
+  const displayActions = propActions || defaultActions;
 
-  const handleClick = async (action: EnhancedQuickAction) => {
-    if (!isOnline && action.requiresAuth) {
-      OfflineService.queueAction('quick_action', { actionId: action.id });
-      return;
-    }
-
-    try {
-      await handleActionClick(action);
-      setCompletedActions(prev => new Set([...prev, action.id]));
-      
-      // Remove from completed after 3 seconds
-      setTimeout(() => {
-        setCompletedActions(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(action.id);
-          return newSet;
-        });
-      }, 3000);
-    } catch (error) {
-      console.error('Action failed:', error);
-    }
-  };
-
-  const getProgressValue = (actionId: string) => {
-    if (isLoading === actionId) return 100;
-    if (completedActions.has(actionId)) return 100;
-    return 0;
-  };
+  if (OfflineService.isOffline()) {
+    return (
+      <Card className="bg-yellow-50 border-yellow-200">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-yellow-800">
+            <Zap className="h-5 w-5" />
+            Quick Actions (Offline Mode)
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-yellow-700 text-sm">
+            Some actions are unavailable while offline. They'll be available when you reconnect.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Quick Actions</h3>
-        <div className="flex items-center gap-2">
-          {isOnline ? (
-            <Badge variant="secondary" className="flex items-center gap-1">
-              <Wifi className="h-3 w-3" />
-              Online
-            </Badge>
-          ) : (
-            <Badge variant="destructive" className="flex items-center gap-1">
-              <WifiOff className="h-3 w-3" />
-              Offline
-            </Badge>
-          )}
-          {OfflineService.getQueuedActions().length > 0 && (
-            <Badge variant="outline">
-              {OfflineService.getQueuedActions().length} queued
-            </Badge>
-          )}
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {actions.map((action) => (
-          <Card 
-            key={action.id} 
-            className={`relative overflow-hidden transition-all hover:scale-105 hover:shadow-lg ${
-              !action.isEnabled ? 'opacity-50' : ''
-            } ${action.recentlyUsed ? 'ring-2 ring-blue-200' : ''}`}
-          >
-            <CardContent className="p-4">
-              <div className="flex items-start justify-between mb-3">
-                <div className={`p-2 rounded-lg ${action.color} text-white`}>
-                  {action.icon}
-                </div>
-                <div className="flex flex-col gap-1">
+    <Card className="overflow-hidden">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Zap className="h-5 w-5 text-primary" />
+          Quick Actions
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <AnimatePresence>
+            {displayActions.map((action, index) => (
+              <motion.div
+                key={action.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ 
+                  duration: 0.3, 
+                  delay: index * 0.1,
+                  type: "spring",
+                  stiffness: 100
+                }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <Button
+                  variant="outline"
+                  className={`
+                    relative h-auto p-4 flex flex-col items-start gap-3 text-left w-full
+                    ${action.isEnabled 
+                      ? 'hover:shadow-lg transition-all duration-300 hover:border-primary/50' 
+                      : 'opacity-50 cursor-not-allowed'
+                    }
+                    ${action.recentlyUsed ? 'border-primary/30 bg-primary/5' : ''}
+                  `}
+                  onClick={() => action.isEnabled && handleActionClick(action)}
+                  disabled={!action.isEnabled || isLoading === action.id}
+                >
+                  {/* Badge */}
                   {action.badge && (
-                    <Badge variant="secondary" className="text-xs">
+                    <Badge 
+                      variant="secondary" 
+                      className="absolute -top-1 -right-1 text-xs animate-pulse"
+                    >
                       {action.badge}
                     </Badge>
                   )}
-                  {action.shortcut && (
-                    <Badge variant="outline" className="text-xs">
-                      {action.shortcut}
-                    </Badge>
+
+                  {/* Icon with loading state */}
+                  <div className={`
+                    p-3 rounded-lg text-white transition-all duration-300
+                    ${action.color}
+                    ${isLoading === action.id ? 'animate-pulse' : ''}
+                  `}>
+                    {isLoading === action.id ? (
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                    ) : (
+                      action.icon
+                    )}
+                  </div>
+
+                  {/* Content */}
+                  <div className="space-y-1 w-full">
+                    <div className="flex items-center justify-between w-full">
+                      <h3 className="font-semibold text-sm">{action.title}</h3>
+                      {action.shortcut && (
+                        <kbd className="px-2 py-1 text-xs bg-muted rounded">
+                          {action.shortcut}
+                        </kbd>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      {action.description}
+                    </p>
+                  </div>
+
+                  {/* Progress indicator for recently used */}
+                  {action.recentlyUsed && (
+                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-primary/20">
+                      <div className="h-full w-1/3 bg-primary rounded-r"></div>
+                    </div>
                   )}
-                </div>
-              </div>
-              
-              <h4 className="font-medium mb-1">{action.title}</h4>
-              <p className="text-sm text-muted-foreground mb-3">{action.description}</p>
-              
-              {(isLoading === action.id || completedActions.has(action.id)) && (
-                <div className="mb-3">
-                  <Progress 
-                    value={getProgressValue(action.id)} 
-                    className="h-2"
-                  />
-                </div>
-              )}
-              
-              <Button
-                onClick={() => handleClick(action)}
-                disabled={!action.isEnabled || isLoading === action.id}
-                className="w-full"
-                size="sm"
-              >
-                {isLoading === action.id ? (
-                  <Loader className="h-4 w-4 animate-spin mr-2" />
-                ) : null}
-                {completedActions.has(action.id) ? 'Completed!' : 'Start'}
-              </Button>
-              
-              {action.requiresAuth && !isOnline && (
-                <p className="text-xs text-orange-600 mt-2">
-                  Will sync when online
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    </div>
+                </Button>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
+
+        {/* Offline queue indicator */}
+        {OfflineService.getQueuedActions().length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            className="mt-4 p-3 bg-yellow-50 rounded-lg border border-yellow-200"
+          >
+            <p className="text-sm text-yellow-700">
+              {OfflineService.getQueuedActions().length} action(s) queued for when you're back online
+            </p>
+          </motion.div>
+        )}
+      </CardContent>
+    </Card>
   );
 };
+
+export default QuickActionCards;

@@ -1,53 +1,116 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Star, MapPin, Clock, Heart, Share2, X, Sparkles } from 'lucide-react';
-import { PersonalizedRecommendation } from '@/hooks/usePersonalizedRecommendations';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { 
+  Star, 
+  MapPin, 
+  Clock, 
+  Heart, 
+  Share2, 
+  X, 
+  TrendingUp, 
+  DollarSign,
+  Eye,
+  Bookmark,
+  BookmarkCheck
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { usePersonalizedRecommendations, PersonalizedRecommendation } from '@/hooks/usePersonalizedRecommendations';
+import { NotificationService } from '@/services/NotificationService';
 
 export interface RecommendationsWidgetProps {
-  recommendations: PersonalizedRecommendation[];
-  isLoading?: boolean;
-  activeCategory?: 'all' | 'establishments' | 'cocktails' | 'events';
-  setActiveCategory?: (category: 'all' | 'establishments' | 'cocktails' | 'events') => void;
-  onSave: (recommendationId: string) => Promise<void>;
-  onDismiss: (recommendationId: string) => Promise<void>;
-  onShare: (recommendationId: string) => Promise<void>;
+  recommendations?: PersonalizedRecommendation[];
 }
 
-export const RecommendationsWidget: React.FC<RecommendationsWidgetProps> = ({
-  recommendations,
-  isLoading = false,
-  activeCategory = 'all',
-  setActiveCategory,
-  onSave,
-  onDismiss,
-  onShare
+export const RecommendationsWidget: React.FC<RecommendationsWidgetProps> = ({ 
+  recommendations: propRecommendations 
 }) => {
-  const filteredRecommendations = recommendations.filter(rec => {
-    if (activeCategory === 'all') return true;
-    if (activeCategory === 'establishments') return rec.type === 'establishment';
-    if (activeCategory === 'cocktails') return rec.type === 'cocktail';
-    if (activeCategory === 'events') return rec.type === 'event';
-    return true;
-  });
+  const { 
+    recommendations, 
+    isLoading, 
+    activeCategory, 
+    setActiveCategory,
+    saveRecommendation,
+    dismissRecommendation,
+    shareRecommendation
+  } = usePersonalizedRecommendations();
+  
+  const [selectedRecommendation, setSelectedRecommendation] = useState<PersonalizedRecommendation | null>(null);
+
+  const displayRecommendations = propRecommendations || recommendations;
+
+  const handleSave = async (rec: PersonalizedRecommendation) => {
+    await saveRecommendation(rec.id);
+    NotificationService.addNotification({
+      title: rec.isSaved ? 'Removed from saved' : 'Saved!',
+      message: `${rec.title} ${rec.isSaved ? 'removed from' : 'added to'} your saved items`,
+      type: 'success'
+    });
+  };
+
+  const handleDismiss = async (rec: PersonalizedRecommendation) => {
+    await dismissRecommendation(rec.id);
+    NotificationService.addNotification({
+      title: 'Recommendation dismissed',
+      message: 'We\'ll show you different suggestions',
+      type: 'info'
+    });
+  };
+
+  const handleShare = async (rec: PersonalizedRecommendation) => {
+    await shareRecommendation(rec.id);
+    NotificationService.addNotification({
+      title: 'Shared successfully!',
+      message: `${rec.title} has been shared`,
+      type: 'success'
+    });
+  };
+
+  const getAvailabilityColor = (availability?: string) => {
+    switch (availability) {
+      case 'open': return 'text-green-600';
+      case 'closing-soon': return 'text-yellow-600';
+      case 'closed': return 'text-red-600';
+      default: return 'text-muted-foreground';
+    }
+  };
+
+  const getAvailabilityText = (availability?: string) => {
+    switch (availability) {
+      case 'open': return 'Open now';
+      case 'closing-soon': return 'Closing soon';
+      case 'closed': return 'Closed';
+      default: return '';
+    }
+  };
 
   if (isLoading) {
     return (
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5" />
+            <Heart className="h-5 w-5 text-primary" />
             Recommended for You
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {Array.from({ length: 3 }).map((_, i) => (
+            {[1, 2, 3].map((i) => (
               <div key={i} className="animate-pulse">
-                <div className="h-20 bg-muted rounded"></div>
+                <div className="h-32 bg-muted rounded-lg mb-2"></div>
+                <div className="h-4 bg-muted rounded w-3/4 mb-1"></div>
+                <div className="h-3 bg-muted rounded w-1/2"></div>
               </div>
             ))}
           </div>
@@ -57,117 +120,211 @@ export const RecommendationsWidget: React.FC<RecommendationsWidgetProps> = ({
   }
 
   return (
-    <Card>
+    <Card className="overflow-hidden">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Sparkles className="h-5 w-5" />
+          <Heart className="h-5 w-5 text-primary" />
           Recommended for You
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {setActiveCategory && (
-          <Tabs value={activeCategory} onValueChange={setActiveCategory} className="mb-4">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="all">All</TabsTrigger>
-              <TabsTrigger value="establishments">Places</TabsTrigger>
-              <TabsTrigger value="cocktails">Drinks</TabsTrigger>
-              <TabsTrigger value="events">Events</TabsTrigger>
-            </TabsList>
-          </Tabs>
-        )}
-        
-        <div className="space-y-4">
-          {filteredRecommendations.map((recommendation) => (
-            <div key={recommendation.id} className="p-4 rounded-lg border bg-card">
-              <div className="flex justify-between items-start mb-2">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h4 className="font-medium">{recommendation.title}</h4>
-                    {recommendation.trending && (
-                      <Badge variant="secondary" className="text-xs">Trending</Badge>
-                    )}
-                  </div>
-                  <p className="text-sm text-muted-foreground mb-2">{recommendation.description}</p>
-                  
-                  <div className="flex items-center gap-4 text-xs text-muted-foreground mb-2">
-                    {recommendation.rating && (
-                      <div className="flex items-center gap-1">
-                        <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                        <span>{recommendation.rating}</span>
-                      </div>
-                    )}
-                    {recommendation.distance && (
-                      <div className="flex items-center gap-1">
-                        <MapPin className="h-3 w-3" />
-                        <span>{recommendation.distance}</span>
-                      </div>
-                    )}
-                    {recommendation.availability && (
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        <span className={
-                          recommendation.availability === 'open' ? 'text-green-600' :
-                          recommendation.availability === 'closing-soon' ? 'text-orange-600' :
-                          'text-red-600'
-                        }>
-                          {recommendation.availability === 'open' ? 'Open' :
-                           recommendation.availability === 'closing-soon' ? 'Closing Soon' :
-                           'Closed'}
-                        </span>
-                      </div>
-                    )}
-                  </div>
+        <Tabs value={activeCategory} onValueChange={(value: any) => setActiveCategory(value)} className="space-y-4">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="all">All</TabsTrigger>
+            <TabsTrigger value="establishments">Places</TabsTrigger>
+            <TabsTrigger value="cocktails">Drinks</TabsTrigger>
+            <TabsTrigger value="events">Events</TabsTrigger>
+          </TabsList>
 
-                  <div className="flex flex-wrap gap-1 mb-3">
-                    {recommendation.tags.map((tag) => (
-                      <Badge key={tag} variant="outline" className="text-xs">
-                        {tag}
-                      </Badge>
-                    ))}
-                  </div>
-
-                  <p className="text-xs text-blue-600 italic">{recommendation.reason}</p>
-                </div>
-
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => onDismiss(recommendation.id)}
-                  className="ml-2"
+          <TabsContent value={activeCategory} className="space-y-4">
+            <AnimatePresence mode="wait">
+              {displayRecommendations.length === 0 ? (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="text-center py-8 text-muted-foreground"
                 >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
+                  <Heart className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No recommendations in this category yet</p>
+                </motion.div>
+              ) : (
+                <div className="space-y-4">
+                  {displayRecommendations.map((rec, index) => (
+                    <motion.div
+                      key={rec.id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: 20 }}
+                      transition={{ delay: index * 0.1 }}
+                      className="group"
+                    >
+                      <Card className="overflow-hidden hover:shadow-md transition-all duration-300 border-l-4 border-l-primary/20 hover:border-l-primary">
+                        <CardContent className="p-4">
+                          <div className="flex gap-4">
+                            {/* Image */}
+                            <div className="relative flex-shrink-0">
+                              <div className="w-20 h-20 rounded-lg bg-muted overflow-hidden">
+                                {rec.imageUrl && (
+                                  <img 
+                                    src={rec.imageUrl} 
+                                    alt={rec.title}
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                  />
+                                )}
+                              </div>
+                              {rec.trending && (
+                                <Badge className="absolute -top-1 -right-1 text-xs bg-red-500">
+                                  <TrendingUp className="h-3 w-3 mr-1" />
+                                  Hot
+                                </Badge>
+                              )}
+                            </div>
 
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Button
-                    size="sm"
-                    variant={recommendation.isSaved ? "default" : "outline"}
-                    onClick={() => onSave(recommendation.id)}
-                    className="text-xs"
-                  >
-                    <Heart className={`h-3 w-3 mr-1 ${recommendation.isSaved ? 'fill-current' : ''}`} />
-                    {recommendation.isSaved ? 'Saved' : 'Save'}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => onShare(recommendation.id)}
-                    className="text-xs"
-                  >
-                    <Share2 className="h-3 w-3 mr-1" />
-                    Share
-                  </Button>
+                            {/* Content */}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-start justify-between mb-2">
+                                <div>
+                                  <h3 className="font-semibold text-sm mb-1 truncate">{rec.title}</h3>
+                                  <p className="text-xs text-muted-foreground mb-2 line-clamp-2">
+                                    {rec.description}
+                                  </p>
+                                </div>
+                                
+                                {/* Action buttons */}
+                                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleSave(rec)}
+                                    className="h-8 w-8 p-0"
+                                  >
+                                    {rec.isSaved ? (
+                                      <BookmarkCheck className="h-4 w-4 text-primary" />
+                                    ) : (
+                                      <Bookmark className="h-4 w-4" />
+                                    )}
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleShare(rec)}
+                                    className="h-8 w-8 p-0"
+                                  >
+                                    <Share2 className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleDismiss(rec)}
+                                    className="h-8 w-8 p-0 text-muted-foreground hover:text-red-500"
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </div>
+
+                              {/* Metadata */}
+                              <div className="flex items-center gap-3 text-xs text-muted-foreground mb-2">
+                                {rec.rating && (
+                                  <div className="flex items-center gap-1">
+                                    <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                                    <span>{rec.rating}</span>
+                                  </div>
+                                )}
+                                {rec.distance && (
+                                  <div className="flex items-center gap-1">
+                                    <MapPin className="h-3 w-3" />
+                                    <span>{rec.distance}</span>
+                                  </div>
+                                )}
+                                {rec.price && (
+                                  <div className="flex items-center gap-1">
+                                    <DollarSign className="h-3 w-3" />
+                                    <span>{rec.price}</span>
+                                  </div>
+                                )}
+                                {rec.availability && (
+                                  <div className="flex items-center gap-1">
+                                    <Clock className="h-3 w-3" />
+                                    <span className={getAvailabilityColor(rec.availability)}>
+                                      {getAvailabilityText(rec.availability)}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Tags and reason */}
+                              <div className="flex items-center justify-between">
+                                <div className="flex flex-wrap gap-1">
+                                  {rec.tags.slice(0, 2).map((tag) => (
+                                    <Badge key={tag} variant="outline" className="text-xs">
+                                      {tag}
+                                    </Badge>
+                                  ))}
+                                  {rec.tags.length > 2 && (
+                                    <Badge variant="outline" className="text-xs">
+                                      +{rec.tags.length - 2}
+                                    </Badge>
+                                  )}
+                                </div>
+                                
+                                <Dialog>
+                                  <DialogTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-6 text-xs text-primary"
+                                      onClick={() => setSelectedRecommendation(rec)}
+                                    >
+                                      <Eye className="h-3 w-3 mr-1" />
+                                      View
+                                    </Button>
+                                  </DialogTrigger>
+                                  <DialogContent>
+                                    <DialogHeader>
+                                      <DialogTitle>{rec.title}</DialogTitle>
+                                      <DialogDescription>{rec.description}</DialogDescription>
+                                    </DialogHeader>
+                                    <div className="space-y-4">
+                                      {rec.imageUrl && (
+                                        <img 
+                                          src={rec.imageUrl} 
+                                          alt={rec.title}
+                                          className="w-full h-48 object-cover rounded-lg"
+                                        />
+                                      )}
+                                      <div>
+                                        <h4 className="font-medium text-sm mb-2">Why we recommend this:</h4>
+                                        <p className="text-sm text-muted-foreground">{rec.reason}</p>
+                                      </div>
+                                      <div className="flex flex-wrap gap-2">
+                                        {rec.tags.map((tag) => (
+                                          <Badge key={tag} variant="outline">{tag}</Badge>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  </DialogContent>
+                                </Dialog>
+                              </div>
+
+                              {/* Reason */}
+                              <p className="text-xs text-primary/70 mt-2 italic">
+                                {rec.reason}
+                              </p>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  ))}
                 </div>
-                <Badge variant="secondary" className="text-xs">
-                  {recommendation.type}
-                </Badge>
-              </div>
-            </div>
-          ))}
-        </div>
+              )}
+            </AnimatePresence>
+          </TabsContent>
+        </Tabs>
       </CardContent>
     </Card>
   );
 };
+
+export default RecommendationsWidget;
