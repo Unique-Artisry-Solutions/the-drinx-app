@@ -9,6 +9,7 @@ import BarCrawlSection from '@/components/explore/BarCrawlSection';
 import CocktailsSection from '@/components/explore/CocktailsSection';
 import EventsSection from '@/components/explore/EventsSection';
 import PersonalizedProgressHeader from '@/components/explore/PersonalizedProgressHeader';
+import DailyChallenges from '@/components/rewards/DailyChallenges';
 
 // Sample data - would be fetched from API in a real application
 import { sampleCocktails, sampleEstablishments, sampleBarCrawls } from '@/data/sampleData';
@@ -93,6 +94,13 @@ const Explore = () => {
     setFilteredCocktails(cocktails);
   };
 
+  const handleChallengeComplete = (challengeId: string) => {
+    toast({
+      title: "Challenge Completed! 🎉",
+      description: "You've earned points and unlocked new rewards!",
+    });
+  };
+
   return (
     <Layout>
       <div className="min-h-screen bg-background">
@@ -118,6 +126,14 @@ const Explore = () => {
             cocktails={cocktails}
             establishments={establishments}
           />
+
+          {/* Daily Challenges Section */}
+          <div className="mb-8">
+            <DailyChallenges 
+              onChallengeComplete={handleChallengeComplete}
+              className="max-w-md mx-auto md:max-w-none"
+            />
+          </div>
 
           {/* Events Section */}
           <EventsSection />
