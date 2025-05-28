@@ -1,0 +1,115 @@
+
+// API layer types - normalized for business logic
+export interface RewardTier {
+  id: string;
+  establishment_id: string;
+  name: string;
+  description?: string;
+  points_required: number;
+  pointsRequired: number; // Backward compatibility
+  minimumPoints: number; // Backward compatibility
+  benefits: string[];
+  color?: string;
+  icon?: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface RewardOffering {
+  id: string;
+  establishment_id: string;
+  name: string;
+  description?: string;
+  points_required: number;
+  pointsRequired: number; // Backward compatibility
+  pointCost: number; // Backward compatibility
+  pointValue: number; // Backward compatibility
+  quantity_available?: number;
+  availableQuantity?: number; // Backward compatibility
+  expiration_days?: number;
+  is_active: boolean;
+  image_url?: string;
+  category?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface RewardTransaction {
+  id: string;
+  user_id: string;
+  userId: string; // Backward compatibility
+  establishment_id?: string;
+  points: number;
+  pointsAmount: number; // Backward compatibility
+  transaction_type: 'earn' | 'redeem';
+  type: 'earned' | 'redeemed'; // Component-expected format
+  source: string;
+  description?: string;
+  timestamp: string;
+  date: string; // Backward compatibility
+  created_at: string;
+  metadata?: Record<string, any>;
+}
+
+export interface UserRewardProfile {
+  id: string;
+  user_id?: string;
+  points: number;
+  lifetime_points: number;
+  lifetimePoints: number; // Backward compatibility
+  currentTier?: RewardTier;
+  availableRewards: RewardOffering[];
+  transactionHistory: RewardTransaction[];
+  redemptionHistory: any[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TimeSeriesData {
+  date: string;
+  pointsEarned: number;
+  pointsRedeemed: number;
+  netPoints: number;
+  earned: number; // Backward compatibility
+  redeemed: number; // Backward compatibility
+}
+
+export interface RewardAnalytics {
+  totalPointsEarned: number;
+  totalPointsRedeemed: number;
+  pointsEconomyBalance: number;
+  redemptionRate: number;
+  sourcesBreakdown: Record<string, number>;
+  timeSeriesData: TimeSeriesData[];
+  transactionCount: number;
+  totalUsers: number;
+  activeUsers: number;
+  averagePointsPerUser: number;
+}
+
+export interface Achievement {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  icon: string;
+  pointsReward: number;
+  threshold: number;
+  isCompleted: boolean;
+  progress: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface RewardOperationResponse {
+  success: boolean;
+  error?: string;
+  message?: string;
+}
+
+export interface BatchRewardOperationResponse extends RewardOperationResponse {
+  userId?: string;
+  pointsChanged?: number;
+  newBalance?: number;
+}

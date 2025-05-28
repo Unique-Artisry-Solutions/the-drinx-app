@@ -3,7 +3,6 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { supabase } from '@/lib/supabase';
 import { rewardsApi } from '@/lib/rewards/api';
 import { createMockQueryBuilder } from '../utils/supabaseTestUtils';
-import { RewardOperationResponse } from '@/lib/rewards/types';
 
 vi.mock('@/lib/supabase', () => ({
   supabase: {

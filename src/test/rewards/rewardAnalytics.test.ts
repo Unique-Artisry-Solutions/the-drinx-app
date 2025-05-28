@@ -1,27 +1,9 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { rewardsApi } from '@/lib/rewards/api';
+import { processRewardAnalytics } from '@/lib/rewards/api/analytics';
 import { supabase } from '@/lib/supabase';
 import { createMockQueryBuilder } from '../utils/supabaseTestUtils';
-import { RewardTransactionRow } from '@/lib/rewards/types';
-
-// Create an extended type for test purposes that includes all required fields
-interface TestRewardTransaction {
-  id: string;
-  user_id: string;
-  userId: string;
-  transaction_type: 'EARN' | 'REDEEM';
-  type: 'EARN' | 'REDEEM';
-  points: number;
-  pointsAmount: number;
-  source: string;
-  metadata: Record<string, any>;
-  version: number;
-  created_at: string;
-  timestamp: string;
-  date: string;
-  description: string;
-}
+import { RewardTransaction } from '@/types/rewards';
 
 vi.mock('@/lib/supabase', () => ({
   supabase: {
@@ -36,60 +18,55 @@ describe('Reward Analytics', () => {
 
   describe('Data Processing', () => {
     it('should calculate metrics correctly', () => {
-      // Create properly typed mock transactions
-      const mockTransactions: TestRewardTransaction[] = [
+      const mockTransactions: RewardTransaction[] = [
         { 
           id: '1', 
           user_id: 'user1', 
           userId: 'user1',
-          transaction_type: 'EARN',
-          type: 'EARN',
+          transaction_type: 'earn',
+          type: 'earned',
           points: 100,
           pointsAmount: 100,
           source: 'purchase',
-          metadata: {},
-          version: 1,
-          created_at: '2025-01-01T12:00:00Z',
           timestamp: '2025-01-01T12:00:00Z',
           date: '2025-01-01T12:00:00Z',
-          description: 'Test transaction'
+          created_at: '2025-01-01T12:00:00Z',
+          description: 'Test transaction',
+          metadata: {}
         },
         { 
           id: '2', 
           user_id: 'user1',
           userId: 'user1',
-          transaction_type: 'EARN',
-          type: 'EARN',
+          transaction_type: 'earn',
+          type: 'earned',
           points: 50,
           pointsAmount: 50,
           source: 'referral',
-          metadata: {},
-          version: 1,
-          created_at: '2025-01-01T13:00:00Z',
           timestamp: '2025-01-01T13:00:00Z',
           date: '2025-01-01T13:00:00Z',
-          description: 'Test transaction'
+          created_at: '2025-01-01T13:00:00Z',
+          description: 'Test transaction',
+          metadata: {}
         },
         { 
           id: '3', 
           user_id: 'user1',
           userId: 'user1',
-          transaction_type: 'REDEEM',
-          type: 'REDEEM',
+          transaction_type: 'redeem',
+          type: 'redeemed',
           points: 75,
           pointsAmount: 75,
           source: 'reward',
-          metadata: {},
-          version: 1,
-          created_at: '2025-01-01T14:00:00Z',
           timestamp: '2025-01-01T14:00:00Z',
           date: '2025-01-01T14:00:00Z',
-          description: 'Test transaction'
+          created_at: '2025-01-01T14:00:00Z',
+          description: 'Test transaction',
+          metadata: {}
         }
       ];
 
-      // Type assertion to allow the test to pass
-      const analytics = rewardsApi.processRewardAnalytics(mockTransactions as RewardTransactionRow[]);
+      const analytics = processRewardAnalytics(mockTransactions);
       
       expect(analytics.totalPointsEarned).toBe(150);
       expect(analytics.totalPointsRedeemed).toBe(75);
@@ -97,7 +74,7 @@ describe('Reward Analytics', () => {
     });
 
     it('should handle empty transaction data', () => {
-      const analytics = rewardsApi.processRewardAnalytics([]);
+      const analytics = processRewardAnalytics([]);
       
       expect(analytics.totalPointsEarned).toBe(0);
       expect(analytics.totalPointsRedeemed).toBe(0);
@@ -108,63 +85,58 @@ describe('Reward Analytics', () => {
 
   describe('Time Series Data', () => {
     it('should group transactions by date correctly', () => {
-      // Create properly typed mock transactions
-      const mockTransactions: TestRewardTransaction[] = [
+      const mockTransactions: RewardTransaction[] = [
         { 
           id: '1', 
           user_id: 'user1',
           userId: 'user1',
-          transaction_type: 'EARN',
-          type: 'EARN',
+          transaction_type: 'earn',
+          type: 'earned',
           points: 100,
           pointsAmount: 100,
           source: 'purchase',
-          metadata: {},
-          version: 1,
-          created_at: '2025-01-01T12:00:00Z',
           timestamp: '2025-01-01T12:00:00Z',
           date: '2025-01-01T12:00:00Z',
-          description: 'Purchase points'
+          created_at: '2025-01-01T12:00:00Z',
+          description: 'Purchase points',
+          metadata: {}
         },
         {
           id: '2',
           user_id: 'user1',
           userId: 'user1',
-          transaction_type: 'EARN',
-          type: 'EARN',
+          transaction_type: 'earn',
+          type: 'earned',
           points: 50,
           pointsAmount: 50,
           source: 'referral',
-          metadata: {},
-          version: 1,
-          created_at: '2025-01-01T14:00:00Z',
           timestamp: '2025-01-01T14:00:00Z',
           date: '2025-01-01T14:00:00Z',
-          description: 'Referral bonus'
+          created_at: '2025-01-01T14:00:00Z',
+          description: 'Referral bonus',
+          metadata: {}
         },
         {
           id: '3',
           user_id: 'user1',
           userId: 'user1', 
-          transaction_type: 'REDEEM',
-          type: 'REDEEM',
+          transaction_type: 'redeem',
+          type: 'redeemed',
           points: 75,
           pointsAmount: 75,
           source: 'reward',
-          metadata: {},
-          version: 1,
-          created_at: '2025-01-02T12:00:00Z',
           timestamp: '2025-01-02T12:00:00Z',
           date: '2025-01-02T12:00:00Z',
-          description: 'Redemption'
+          created_at: '2025-01-02T12:00:00Z',
+          description: 'Redemption',
+          metadata: {}
         }
       ];
 
-      // Type assertion to allow the test to pass
-      const timeSeriesData = rewardsApi.processRewardAnalytics(mockTransactions as RewardTransactionRow[]);
+      const analytics = processRewardAnalytics(mockTransactions);
       
-      expect(timeSeriesData.totalPointsEarned).toBe(150);
-      expect(timeSeriesData.totalPointsRedeemed).toBe(75);
+      expect(analytics.totalPointsEarned).toBe(150);
+      expect(analytics.totalPointsRedeemed).toBe(75);
     });
   });
 });

@@ -39,7 +39,7 @@ export const UserRewardDashboard: React.FC = () => {
       id: 'trans-1',
       user_id: profile?.id || 'user-1',
       userId: profile?.id || 'user-1',
-      transaction_type: 'EARN' as const,
+      transaction_type: 'earn' as const,
       points: 50,
       description: 'Check-in reward',
       created_at: new Date().toISOString(),
@@ -49,7 +49,7 @@ export const UserRewardDashboard: React.FC = () => {
       id: 'trans-2', 
       user_id: profile?.id || 'user-1',
       userId: profile?.id || 'user-1',
-      transaction_type: 'EARN' as const,
+      transaction_type: 'earn' as const,
       points: 25,
       description: 'Review reward',
       created_at: new Date(Date.now() - 86400000).toISOString(),
@@ -122,7 +122,7 @@ export const UserRewardDashboard: React.FC = () => {
               type="next-tier"
               tier={profile?.currentTier}
               currentPoints={profile?.points || 0}
-              pointsRequired={profile?.currentTier?.points_required || profile?.currentTier?.pointsRequired || 500}
+              pointsRequired={profile?.currentTier?.points_required || 500}
             />
             
             <Card>

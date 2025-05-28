@@ -1,6 +1,6 @@
 
 import { supabase } from '@/lib/supabase';
-import { RewardAnalytics, TimeSeriesData, transformTimeSeriesData } from '@/types/rewards';
+import { RewardAnalytics, transformTimeSeriesData, transformRewardTransaction } from '@/types/rewards';
 import { RewardsCache } from '../system/RewardsCache';
 
 export async function getRewardAnalytics(establishmentId?: string): Promise<RewardAnalytics | null> {
@@ -33,21 +33,7 @@ export async function getRewardAnalytics(establishmentId?: string): Promise<Rewa
     }
     
     // Transform raw database transactions to expected format
-    const transformedTransactions = transactions.map(tx => ({
-      id: tx.id,
-      userId: tx.user_id,
-      user_id: tx.user_id,
-      pointsAmount: tx.points,
-      points: tx.points,
-      type: tx.transaction_type,
-      transaction_type: tx.transaction_type,
-      timestamp: tx.created_at,
-      date: tx.created_at,
-      description: tx.description || tx.source,
-      source: tx.source,
-      created_at: tx.created_at,
-      metadata: tx.metadata
-    }));
+    const transformedTransactions = transactions.map(transformRewardTransaction);
     
     const analytics = processRewardAnalytics(transformedTransactions);
     
@@ -91,14 +77,14 @@ export function processRewardAnalytics(transactions: any[]): RewardAnalytics {
     const userId = tx.userId || tx.user_id || 'unknown';
     
     // Track points by type
-    if (txType === 'earn') {
+    if (txType === 'earned' || txType === 'earn') {
       analytics.totalPointsEarned += points;
       
       // Track source
       const source = tx.source || 'unknown';
       analytics.sourcesBreakdown[source] = (analytics.sourcesBreakdown[source] || 0) + points;
     } 
-    else if (txType === 'redeem') {
+    else if (txType === 'redeemed' || txType === 'redeem') {
       analytics.totalPointsRedeemed += Math.abs(points);
     }
     
@@ -117,9 +103,9 @@ export function processRewardAnalytics(transactions: any[]): RewardAnalytics {
       dailyDataMap.set(date, { earned: 0, redeemed: 0 });
     }
     
-    if (txType === 'earn') {
+    if (txType === 'earned' || txType === 'earn') {
       dailyDataMap.get(date)!.earned += points;
-    } else if (txType === 'redeem') {
+    } else if (txType === 'redeemed' || txType === 'redeem') {
       dailyDataMap.get(date)!.redeemed += Math.abs(points);
     }
   });
@@ -150,9 +136,4 @@ export function processRewardAnalytics(transactions: any[]): RewardAnalytics {
     }));
   
   return analytics;
-}
-
-// Helper function to convert analytics to TimeSeriesData format expected by charts
-export function convertToTimeSeriesData(analytics: RewardAnalytics): TimeSeriesData[] {
-  return analytics.timeSeriesData.map(point => transformTimeSeriesData(point));
 }
