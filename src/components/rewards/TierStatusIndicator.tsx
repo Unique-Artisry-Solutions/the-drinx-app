@@ -6,6 +6,8 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Award, ChevronDown, ChevronUp } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { AnimatedProgressBar } from '@/components/animations/AnimatedProgressBar';
+import { ParticleEffect } from '@/components/animations/ParticleEffect';
 
 interface TierStatusIndicatorProps {
   currentTier: number;
@@ -14,6 +16,7 @@ interface TierStatusIndicatorProps {
 
 export function TierStatusIndicator({ currentTier, points }: TierStatusIndicatorProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [showParticles, setShowParticles] = useState(false);
   const isMobile = useIsMobile();
   
   // Determine points needed for next tier
@@ -37,11 +40,15 @@ export function TierStatusIndicator({ currentTier, points }: TierStatusIndicator
   // Calculate remaining points needed for next tier
   const remainingPoints = nextTierPoints - points;
 
+  const handleTierClick = () => {
+    setShowParticles(true);
+  };
+
   const TierContent = () => (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <div>
-          <div className="text-2xl font-bold text-orange-600">{currentTier}</div>
+        <div onClick={handleTierClick} className="cursor-pointer hover:scale-110 transition-transform">
+          <div className="text-2xl font-bold text-orange-600 animate-pulse">{currentTier}</div>
           <div className="text-sm text-muted-foreground">Current Tier</div>
         </div>
         <div className="text-right">
@@ -59,9 +66,12 @@ export function TierStatusIndicator({ currentTier, points }: TierStatusIndicator
           <span className="text-muted-foreground">Progress to next tier</span>
           <span className="font-medium">{Math.round(progressToNextTier)}%</span>
         </div>
-        <Progress 
+        <AnimatedProgressBar 
           value={progressToNextTier} 
+          max={100}
           className={`transition-all duration-700 ${isMobile ? 'h-3' : 'h-2.5'}`}
+          showGlow={progressToNextTier > 70}
+          color={progressToNextTier > 80 ? 'success' : 'warning'}
         />
         
         <div className="flex justify-between text-xs text-muted-foreground mt-2">
@@ -72,16 +82,20 @@ export function TierStatusIndicator({ currentTier, points }: TierStatusIndicator
       
       <div className={`grid gap-1 mt-6 ${isMobile ? 'grid-cols-3' : 'grid-cols-5'}`}>
         {[1, 2, 3, 4, 5].map(tier => (
-          <div 
+          <motion.div 
             key={tier} 
-            className={`text-center py-2 rounded-md transition-colors text-xs sm:text-sm ${isMobile ? 'min-h-[40px]' : 'min-h-[36px]'} ${
+            className={`text-center py-2 rounded-md transition-all duration-300 text-xs sm:text-sm ${isMobile ? 'min-h-[40px]' : 'min-h-[36px]'} ${
               tier <= currentTier 
-                ? 'bg-primary/20 text-primary font-medium' 
+                ? 'bg-primary/20 text-primary font-medium animate-pulse' 
                 : 'bg-muted text-muted-foreground'
             } ${isMobile && tier > 3 ? 'hidden' : ''}`}
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: tier * 0.1 }}
+            whileHover={{ scale: 1.05 }}
           >
             {tier}
-          </div>
+          </motion.div>
         ))}
         {isMobile && (
           <div className="text-center py-2 rounded-md bg-muted/50 text-muted-foreground text-xs min-h-[40px] flex items-center justify-center">
@@ -89,6 +103,12 @@ export function TierStatusIndicator({ currentTier, points }: TierStatusIndicator
           </div>
         )}
       </div>
+
+      <ParticleEffect 
+        trigger={showParticles} 
+        points={currentTier * 100}
+        onComplete={() => setShowParticles(false)}
+      />
     </div>
   );
 
@@ -104,8 +124,9 @@ export function TierStatusIndicator({ currentTier, points }: TierStatusIndicator
                   initial={{ scale: 0.8 }}
                   animate={{ scale: 1 }}
                   transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                  whileHover={{ scale: 1.1 }}
                 >
-                  <Award className="h-5 w-5 text-primary" />
+                  <Award className="h-5 w-5 text-primary animate-pulse" />
                 </motion.div>
                 {tierName()} Tier
               </CardTitle>
@@ -136,8 +157,9 @@ export function TierStatusIndicator({ currentTier, points }: TierStatusIndicator
               initial={{ scale: 0.8 }}
               animate={{ scale: 1 }}
               transition={{ type: "spring", stiffness: 300, damping: 20 }}
+              whileHover={{ scale: 1.1 }}
             >
-              <Award className="h-6 w-6 text-primary" />
+              <Award className="h-6 w-6 text-primary animate-pulse" />
             </motion.div>
             <div>
               <h3 className="font-semibold">{tierName()} Tier</h3>
@@ -148,7 +170,7 @@ export function TierStatusIndicator({ currentTier, points }: TierStatusIndicator
               </p>
             </div>
           </div>
-          <span className="text-2xl font-bold text-primary">{currentTier}</span>
+          <span className="text-2xl font-bold text-primary animate-pulse">{currentTier}</span>
         </div>
         
         <TierContent />
