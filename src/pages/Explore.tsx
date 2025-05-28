@@ -8,6 +8,9 @@ import RecommendationsWidget from '@/components/explore/personalized/Recommendat
 import NearbyEstablishmentsWidget from '@/components/explore/personalized/NearbyEstablishmentsWidget';
 import UpcomingEventsWidget from '@/components/explore/personalized/UpcomingEventsWidget';
 import ActivityFeedWidget from '@/components/explore/personalized/ActivityFeedWidget';
+import RewardsHighlightWidget from '@/components/rewards/RewardsHighlightWidget';
+import StreakMotivationWidget from '@/components/explore/personalized/StreakMotivationWidget';
+import { TierStatusIndicator } from '@/components/rewards/TierStatusIndicator';
 import { Achievement, QuickAction, UserStats, PersonalizedRecommendation, RecentActivity, UpcomingEvent } from '@/hooks/usePersonalizedData';
 
 const ExplorePage: React.FC = () => {
@@ -181,6 +184,17 @@ const ExplorePage: React.FC = () => {
         {/* Quick Actions */}
         <div className="mb-8">
           <QuickActionCards actions={mockQuickActions} />
+        </div>
+
+        {/* Rewards and Progress Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <RewardsHighlightWidget />
+          <StreakMotivationWidget />
+        </div>
+
+        {/* Tier Progress */}
+        <div className="mb-8">
+          <TierStatusIndicator currentTier={2} points={750} />
         </div>
 
         {/* Achievement Alerts */}
