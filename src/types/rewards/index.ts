@@ -27,13 +27,13 @@ export type { RewardOperationResponse, BatchRewardOperationResponse } from './ap
 export { achievementCategories } from './components';
 export type { AchievementCategory } from './components';
 
-// Helper functions for backward compatibility
-export function getAchievementsByCategory(achievements: Achievement[]): Record<string, Achievement[]> {
+// Helper functions for backward compatibility using the Achievement type from api
+export function getAchievementsByCategory(achievements: import('./api').Achievement[]): Record<string, import('./api').Achievement[]> {
   return achievements.reduce((acc, achievement) => {
     if (!acc[achievement.category]) {
       acc[achievement.category] = [];
     }
     acc[achievement.category].push(achievement);
     return acc;
-  }, {} as Record<string, Achievement[]>);
+  }, {} as Record<string, import('./api').Achievement[]>);
 }

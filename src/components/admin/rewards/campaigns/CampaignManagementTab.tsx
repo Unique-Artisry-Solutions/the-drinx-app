@@ -1,30 +1,21 @@
 
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, Target, Users, Clock, ChartBar } from 'lucide-react';
-import { useCampaigns } from '@/hooks/rewards/useCampaigns';
-import { CampaignList } from './CampaignList';
-import { CampaignForm } from './CampaignForm';
-import { CampaignPerformance } from './CampaignPerformance';
-import { CampaignScheduler } from './CampaignScheduler';
-import { AudienceTargeting } from './AudienceTargeting';
 import { Badge } from '@/components/ui/badge';
-import { RewardCampaign } from '@/lib/rewards/types';
-import { useToast } from '@/hooks/use-toast';
+import { Plus, Play, Pause, Trash2, RefreshCw } from 'lucide-react';
+import { useCampaigns } from '@/hooks/rewards/useCampaigns';
+import { RewardCampaign } from '@/types/rewards';
 
-export const CampaignManagementTab = () => {
-  const [activeView, setActiveView] = useState<'list' | 'create' | 'edit'>('list');
-  const [selectedCampaign, setSelectedCampaign] = useState<RewardCampaign | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const { toast } = useToast();
-  
-  const { 
+interface CampaignManagementTabProps {
+  establishmentId?: string;
+}
+
+export const CampaignManagementTab: React.FC<CampaignManagementTabProps> = ({ establishmentId }) => {
+  const {
     campaigns,
     isLoading,
+    error,
     createCampaign,
     updateCampaign,
     deleteCampaign,
@@ -33,181 +24,149 @@ export const CampaignManagementTab = () => {
     fetchCampaigns
   } = useCampaigns();
 
-  const filteredCampaigns = campaigns.filter(campaign => {
-    const matchesSearch = campaign.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         (campaign.description || '').toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || campaign.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
-  
-  const handleCreateCampaign = async (campaignData: Partial<RewardCampaign>) => {
+  const handleCreateCampaign = async () => {
     try {
-      await createCampaign(campaignData);
-      toast({
-        title: "Campaign Created",
-        description: "The campaign was created successfully.",
+      await createCampaign({
+        name: 'New Campaign',
+        description: 'Campaign description',
+        status: 'draft'
       });
-      setActiveView('list');
     } catch (error) {
-      console.error('Error creating campaign:', error);
-      toast({
-        title: "Error",
-        description: "Failed to create campaign. Please try again.",
-        variant: "destructive",
-      });
+      console.error('Failed to create campaign:', error);
     }
   };
-  
-  const handleUpdateCampaign = async (campaignId: string, campaignData: Partial<RewardCampaign>) => {
+
+  const handleActivateCampaign = async (campaignId: string) => {
     try {
-      await updateCampaign(campaignId, campaignData);
-      toast({
-        title: "Campaign Updated",
-        description: "The campaign was updated successfully.",
-      });
-      setActiveView('list');
-      setSelectedCampaign(null);
+      await activateCampaign(campaignId);
     } catch (error) {
-      console.error('Error updating campaign:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update campaign. Please try again.",
-        variant: "destructive",
-      });
+      console.error('Failed to activate campaign:', error);
     }
   };
-  
+
+  const handleDeactivateCampaign = async (campaignId: string) => {
+    try {
+      await deactivateCampaign(campaignId);
+    } catch (error) {
+      console.error('Failed to deactivate campaign:', error);
+    }
+  };
+
   const handleDeleteCampaign = async (campaignId: string) => {
     try {
       await deleteCampaign(campaignId);
-      toast({
-        title: "Campaign Deleted",
-        description: "The campaign was deleted successfully.",
-      });
     } catch (error) {
-      console.error('Error deleting campaign:', error);
-      toast({
-        title: "Error",
-        description: "Failed to delete campaign. Please try again.",
-        variant: "destructive",
-      });
+      console.error('Failed to delete campaign:', error);
     }
   };
-  
-  const handleToggleActivation = async (campaign: RewardCampaign) => {
-    try {
-      if (campaign.is_active) {
-        await deactivateCampaign(campaign.id);
-        toast({
-          title: "Campaign Deactivated",
-          description: "The campaign has been deactivated.",
-        });
-      } else {
-        await activateCampaign(campaign.id);
-        toast({
-          title: "Campaign Activated",
-          description: "The campaign has been activated.",
-        });
-      }
-    } catch (error) {
-      console.error('Error toggling campaign activation:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update campaign status. Please try again.",
-        variant: "destructive",
-      });
+
+  const getStatusBadgeVariant = (status: RewardCampaign['status']) => {
+    switch (status) {
+      case 'active': return 'default';
+      case 'paused': return 'secondary';
+      case 'completed': return 'outline';
+      case 'cancelled': return 'destructive';
+      default: return 'secondary';
     }
   };
-  
-  const handleEditCampaign = (campaign: RewardCampaign) => {
-    setSelectedCampaign(campaign);
-    setActiveView('edit');
-  };
-  
-  const handleRefresh = () => {
-    fetchCampaigns();
-  };
-  
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <div className="h-10 bg-muted animate-pulse rounded-md" />
+        <div className="space-y-2">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-24 bg-muted animate-pulse rounded-md" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <Card>
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <div>
-              <CardTitle>Reward Campaign Management</CardTitle>
-              <CardDescription>
-                Create, manage and track time-limited reward campaigns
-              </CardDescription>
-            </div>
-            {activeView === 'list' ? (
-              <Button onClick={() => setActiveView('create')}>
-                Create Campaign
-              </Button>
-            ) : (
-              <Button variant="outline" onClick={() => {
-                setActiveView('list');
-                setSelectedCampaign(null);
-              }}>
-                Back to Campaigns
-              </Button>
-            )}
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Reward Campaigns</CardTitle>
+          <div className="flex gap-2">
+            <Button onClick={fetchCampaigns} variant="outline" size="sm">
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Refresh
+            </Button>
+            <Button onClick={handleCreateCampaign}>
+              <Plus className="mr-2 h-4 w-4" />
+              Create Campaign
+            </Button>
           </div>
         </CardHeader>
         <CardContent>
-          {activeView === 'list' && (
-            <>
-              <div className="flex items-center space-x-2 mb-4">
-                <Input
-                  placeholder="Search campaigns..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="max-w-sm"
-                />
-                
-                <Tabs defaultValue={statusFilter} onValueChange={setStatusFilter}>
-                  <TabsList>
-                    <TabsTrigger value="all">All</TabsTrigger>
-                    <TabsTrigger value="draft">Draft</TabsTrigger>
-                    <TabsTrigger value="scheduled">Scheduled</TabsTrigger>
-                    <TabsTrigger value="active">Active</TabsTrigger>
-                    <TabsTrigger value="completed">Completed</TabsTrigger>
-                  </TabsList>
-                </Tabs>
-                
-                <Button variant="outline" size="sm" onClick={handleRefresh}>
-                  Refresh
-                </Button>
-              </div>
-              
-              <CampaignList 
-                campaigns={filteredCampaigns} 
-                isLoading={isLoading}
-                onEdit={handleEditCampaign}
-                onDelete={handleDeleteCampaign}
-                onToggleActivation={handleToggleActivation}
-              />
-            </>
-          )}
-          
-          {activeView === 'create' && (
-            <CampaignForm
-              onSubmit={handleCreateCampaign}
-              onCancel={() => setActiveView('list')}
-            />
-          )}
-          
-          {activeView === 'edit' && selectedCampaign && (
-            <CampaignForm
-              campaign={selectedCampaign}
-              onSubmit={(data) => handleUpdateCampaign(selectedCampaign.id, data)}
-              onCancel={() => {
-                setActiveView('list');
-                setSelectedCampaign(null);
-              }}
-            />
+          {campaigns.length === 0 ? (
+            <p className="text-muted-foreground">
+              No campaigns found. Create your first campaign to get started.
+            </p>
+          ) : (
+            <div className="space-y-4">
+              {campaigns.map((campaign) => (
+                <Card key={campaign.id} className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <h3 className="font-medium">{campaign.name}</h3>
+                        <Badge variant={getStatusBadgeVariant(campaign.status)}>
+                          {campaign.status}
+                        </Badge>
+                      </div>
+                      {campaign.description && (
+                        <p className="text-sm text-muted-foreground mb-2">
+                          {campaign.description}
+                        </p>
+                      )}
+                      <div className="flex gap-4 text-xs text-muted-foreground">
+                        {campaign.budget && (
+                          <span>Budget: ${campaign.budget}</span>
+                        )}
+                        {campaign.performance_metrics && (
+                          <span>
+                            Reached: {campaign.performance_metrics.total_users_reached || 0} users
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      {campaign.status === 'active' ? (
+                        <Button
+                          onClick={() => handleDeactivateCampaign(campaign.id)}
+                          variant="outline"
+                          size="sm"
+                        >
+                          <Pause className="h-4 w-4" />
+                        </Button>
+                      ) : (
+                        <Button
+                          onClick={() => handleActivateCampaign(campaign.id)}
+                          variant="outline"
+                          size="sm"
+                        >
+                          <Play className="h-4 w-4" />
+                        </Button>
+                      )}
+                      <Button
+                        onClick={() => handleDeleteCampaign(campaign.id)}
+                        variant="outline"
+                        size="sm"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
           )}
         </CardContent>
       </Card>
     </div>
   );
 };
+
+export default CampaignManagementTab;
