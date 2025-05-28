@@ -1,259 +1,165 @@
-
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { 
-  Heart, 
-  MessageCircle, 
-  Share, 
-  User, 
-  MapPin, 
-  Trophy, 
-  Camera,
-  ChefHat,
-  Navigation
-} from 'lucide-react';
-import { useRealtimeActivity, RealtimeActivity } from '@/hooks/useRealtimeActivity';
-import { NotificationService } from '@/services/NotificationService';
-import { OfflineService } from '@/services/OfflineService';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Heart, MessageCircle, Share, Clock } from 'lucide-react';
+import { useRealtimeActivity } from '@/hooks/useRealtimeActivity';
+import { useIsMobile } from '@/hooks/use-mobile';
 
-interface ActivityFeedWidgetProps {
-  activities?: RealtimeActivity[];
-  className?: string;
-}
+// export interface RealtimeActivity {
+//   id: string;
+//   type: 'check-in' | 'review' | 'recipe' | 'achievement' | 'bar-crawl' | 'photo-share';
+//   title: string;
+//   description: string;
+//   timestamp: string;
+//   user: {
+//     id: string;
+//     name: string;
+//     avatar?: string;
+//   };
+//   location?: string;
+//   imageUrl?: string;
+//   likes: number;
+//   isLiked: boolean;
+//   metadata?: Record<string, any>;
+// }
 
-const ActivityFeedWidget: React.FC<ActivityFeedWidgetProps> = ({ 
-  activities: propActivities,
-  className = "" 
-}) => {
-  const { activities: hookActivities, isLoading, likeActivity, shareActivity } = useRealtimeActivity();
-  const [expandedActivity, setExpandedActivity] = useState<string | null>(null);
-  
-  // Use prop activities if provided, otherwise use hook activities
-  const activities = propActivities || hookActivities;
-
-  const getActivityIcon = (activityType: RealtimeActivity['type']) => {
-    const iconProps = { className: "h-4 w-4" };
-    
-    switch (activityType) {
-      case 'photo-share':
-        return <Camera {...iconProps} className="h-4 w-4 text-pink-500" />;
-      case 'achievement':
-        return <Trophy {...iconProps} className="h-4 w-4 text-yellow-500" />;
-      case 'bar-crawl':
-        return <Navigation {...iconProps} className="h-4 w-4 text-blue-500" />;
-      case 'recipe':
-        return <ChefHat {...iconProps} className="h-4 w-4 text-green-500" />;
-      case 'check-in':
-        return <MapPin {...iconProps} className="h-4 w-4 text-red-500" />;
-      case 'review':
-        return <MessageCircle {...iconProps} className="h-4 w-4 text-purple-500" />;
-      default:
-        return <User {...iconProps} />;
-    }
-  };
-
-  const handleLike = async (activityId: string) => {
-    try {
-      if (OfflineService.isOffline()) {
-        OfflineService.queueAction('like_activity', { activityId });
-        NotificationService.addNotification({
-          title: 'Action Queued',
-          message: 'Like will be processed when online',
-          type: 'info'
-        });
-      }
-      await likeActivity(activityId);
-    } catch (error) {
-      NotificationService.addNotification({
-        title: 'Error',
-        message: 'Failed to like activity',
-        type: 'error'
-      });
-    }
-  };
-
-  const handleShare = async (activityId: string) => {
-    try {
-      await shareActivity(activityId);
-      NotificationService.addNotification({
-        title: 'Shared!',
-        message: 'Activity shared successfully',
-        type: 'success'
-      });
-    } catch (error) {
-      NotificationService.addNotification({
-        title: 'Error',
-        message: 'Failed to share activity',
-        type: 'error'
-      });
-    }
-  };
-
-  const toggleExpanded = (activityId: string) => {
-    setExpandedActivity(expandedActivity === activityId ? null : activityId);
-  };
+const ActivityFeedWidget: React.FC = () => {
+  const { activities, isLoading, likeActivity, shareActivity } = useRealtimeActivity();
+  const isMobile = useIsMobile();
 
   if (isLoading) {
     return (
-      <Card className={`animate-pulse ${className}`}>
+      <Card>
         <CardHeader>
-          <div className="h-6 bg-muted rounded" />
+          <CardTitle>Community Activity</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="flex items-center space-x-3">
-              <div className="h-10 w-10 bg-muted rounded-full" />
-              <div className="flex-1 space-y-2">
-                <div className="h-4 bg-muted rounded w-3/4" />
-                <div className="h-3 bg-muted rounded w-1/2" />
-              </div>
-            </div>
-          ))}
+        <CardContent>
+          <div className="text-center py-8">
+            <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
+            <p className="text-sm text-muted-foreground mt-2">Loading activity...</p>
+          </div>
         </CardContent>
       </Card>
     );
   }
 
+  const getActivityIcon = (type: string) => {
+    switch (type) {
+      case 'photo-share':
+        return '📸';
+      case 'achievement':
+        return '🏆';
+      case 'bar-crawl':
+        return '🚶';
+      case 'recipe':
+        return '🍹';
+      case 'check-in':
+        return '📍';
+      case 'review':
+        return '⭐';
+      default:
+        return '📱';
+    }
+  };
+
+  const formatTimeAgo = (timestamp: string) => {
+    const now = new Date();
+    const time = new Date(timestamp);
+    const diffMs = now.getTime() - time.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    
+    if (diffMins < 1) return 'just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffMins < 1440) return `${Math.floor(diffMins / 60)}h ago`;
+    return `${Math.floor(diffMins / 1440)}d ago`;
+  };
+
   return (
-    <Card className={`hover:shadow-lg transition-shadow duration-200 ${className}`}>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-lg font-semibold flex items-center gap-2">
-          <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse" />
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <span className="text-lg">🌊</span>
           Community Activity
-          <Badge variant="secondary" className="ml-auto">
-            Live
-          </Badge>
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        {activities.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            <User className="h-12 w-12 mx-auto mb-3 opacity-50" />
-            <p>No recent activity</p>
-            <p className="text-sm">Check back later for updates!</p>
-          </div>
-        ) : (
-          activities.map((currentActivity) => (
-            <div
-              key={currentActivity.id}
-              className="group border rounded-lg p-4 hover:bg-muted/30 transition-colors duration-200 cursor-pointer"
-              onClick={() => toggleExpanded(currentActivity.id)}
-            >
+      <CardContent>
+        <div className="space-y-4">
+          {activities.map((activity) => (
+            <div key={activity.id} className="border rounded-lg p-4 space-y-3">
               <div className="flex items-start gap-3">
-                <Avatar className="h-10 w-10 border-2 border-primary/20">
-                  <AvatarImage src={currentActivity.user.avatar} />
-                  <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10">
-                    {currentActivity.user.name.split(' ').map(n => n[0]).join('')}
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={activity.user.avatar} />
+                  <AvatarFallback>
+                    {activity.user.name.charAt(0)}
                   </AvatarFallback>
                 </Avatar>
-                
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    {getActivityIcon(currentActivity.type)}
-                    <span className="font-medium text-sm">
-                      {currentActivity.user.name}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {new Date(currentActivity.timestamp).toLocaleTimeString([], { 
-                        hour: '2-digit', 
-                        minute: '2-digit' 
-                      })}
-                    </span>
+                    <span className="text-sm font-medium">{activity.user.name}</span>
+                    <span className="text-lg">{getActivityIcon(activity.type)}</span>
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <Clock className="h-3 w-3" />
+                      {formatTimeAgo(activity.timestamp)}
+                    </div>
                   </div>
-                  
-                  <h4 className="font-medium text-sm mb-1 group-hover:text-primary transition-colors">
-                    {currentActivity.title}
-                  </h4>
-                  
-                  <p className="text-sm text-muted-foreground mb-2">
-                    {currentActivity.description}
-                  </p>
-                  
-                  {currentActivity.location && (
-                    <div className="flex items-center gap-1 mb-2">
-                      <MapPin className="h-3 w-3 text-muted-foreground" />
-                      <span className="text-xs text-muted-foreground">
-                        {currentActivity.location}
-                      </span>
-                    </div>
+                  <h4 className="text-sm font-medium text-gray-900">{activity.title}</h4>
+                  <p className="text-sm text-muted-foreground">{activity.description}</p>
+                  {activity.location && (
+                    <p className="text-xs text-muted-foreground mt-1">📍 {activity.location}</p>
                   )}
-
-                  {currentActivity.imageUrl && (
-                    <div className="mt-2 mb-3">
-                      <img 
-                        src={currentActivity.imageUrl} 
-                        alt="Activity"
-                        className="rounded-lg max-w-full h-32 object-cover border"
-                      />
-                    </div>
-                  )}
-
-                  {/* Expanded content */}
-                  {expandedActivity === currentActivity.id && (
-                    <div className="mt-3 pt-3 border-t space-y-2 animate-in slide-in-from-top-2 duration-200">
-                      {currentActivity.metadata && (
-                        <div className="text-xs text-muted-foreground">
-                          <p>Additional details about this activity...</p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  
-                  {/* Action buttons */}
-                  <div className="flex items-center justify-between mt-3">
-                    <div className="flex items-center gap-4">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className={`h-8 px-2 ${currentActivity.isLiked ? 'text-red-500' : 'text-muted-foreground'} hover:text-red-500 transition-colors`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleLike(currentActivity.id);
-                        }}
-                      >
-                        <Heart className={`h-4 w-4 mr-1 ${currentActivity.isLiked ? 'fill-current' : ''}`} />
-                        <span className="text-xs">{currentActivity.likes}</span>
-                      </Button>
-                      
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 px-2 text-muted-foreground hover:text-primary transition-colors"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleShare(currentActivity.id);
-                        }}
-                      >
-                        <Share className="h-4 w-4 mr-1" />
-                        <span className="text-xs">Share</span>
-                      </Button>
-                    </div>
-                    
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 px-2 text-muted-foreground hover:text-primary transition-colors"
-                    >
-                      <MessageCircle className="h-4 w-4 mr-1" />
-                      <span className="text-xs">Comment</span>
-                    </Button>
-                  </div>
                 </div>
               </div>
+              
+              {activity.imageUrl && (
+                <div className="rounded-md overflow-hidden">
+                  <img 
+                    src={activity.imageUrl} 
+                    alt="Activity" 
+                    className="w-full h-32 object-cover"
+                  />
+                </div>
+              )}
+              
+              <div className="flex items-center justify-between pt-2 border-t">
+                <div className="flex items-center gap-4">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => likeActivity(activity.id)}
+                    className={`h-8 px-2 ${activity.isLiked ? 'text-red-500' : 'text-muted-foreground'}`}
+                  >
+                    <Heart className={`h-4 w-4 mr-1 ${activity.isLiked ? 'fill-current' : ''}`} />
+                    {activity.likes}
+                  </Button>
+                  
+                  <Button variant="ghost" size="sm" className="h-8 px-2 text-muted-foreground">
+                    <MessageCircle className="h-4 w-4 mr-1" />
+                    Comment
+                  </Button>
+                </div>
+                
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => shareActivity(activity.id)}
+                  className="h-8 px-2 text-muted-foreground"
+                >
+                  <Share className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
-          ))
-        )}
-        
-        {activities.length > 0 && (
-          <div className="text-center pt-2">
-            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary">
-              View all activity
-            </Button>
-          </div>
-        )}
+          ))}
+          
+          {activities.length === 0 && (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground">No recent activity</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Be the first to check in or share something!
+              </p>
+            </div>
+          )}
+        </div>
       </CardContent>
     </Card>
   );
