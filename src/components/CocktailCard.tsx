@@ -3,6 +3,8 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
 import { useTheme } from '@/contexts/ThemeContext';
+import { Star, Flame, Trophy } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 interface CocktailCardProps {
   id: string;
@@ -17,6 +19,18 @@ interface CocktailCardProps {
     distance?: string;
   } | undefined;
   className?: string;
+  // New reward-related props
+  potentialPoints?: number;
+  streakBonus?: number;
+  achievementProgress?: {
+    name: string;
+    current: number;
+    total: number;
+  };
+  mocktailContribution?: {
+    weeklyGoal: number;
+    monthlyGoal: number;
+  };
 }
 
 const CocktailCard: React.FC<CocktailCardProps> = ({
@@ -27,12 +41,15 @@ const CocktailCard: React.FC<CocktailCardProps> = ({
   ingredients,
   image,
   establishment,
-  className
+  className,
+  potentialPoints = 15,
+  streakBonus,
+  achievementProgress,
+  mocktailContribution
 }) => {
   const { theme } = useTheme();
   const isLightTheme = theme === 'light';
   
-  // Default establishment data if it's undefined
   const establishmentName = establishment?.name || 'Unknown Venue';
   const establishmentDistance = establishment?.distance;
   
@@ -57,8 +74,16 @@ const CocktailCard: React.FC<CocktailCardProps> = ({
               </div>
             )}
           </div>
-          <div className="absolute top-3 right-3 bg-spiritless-pink text-white px-3 py-1 rounded-full text-sm font-medium">
-            {price}
+          
+          {/* Price and Points Badge */}
+          <div className="absolute top-3 right-3 flex flex-col gap-1">
+            <div className="bg-spiritless-pink text-white px-3 py-1 rounded-full text-sm font-medium">
+              {price}
+            </div>
+            <div className="bg-purple-600 text-white px-2 py-1 rounded-full text-xs font-medium flex items-center">
+              <Star className="h-3 w-3 mr-1" />
+              +{potentialPoints}
+            </div>
           </div>
         </div>
 
@@ -73,6 +98,44 @@ const CocktailCard: React.FC<CocktailCardProps> = ({
           <p className="text-sm line-clamp-2 mb-2 text-foreground">
             {description}
           </p>
+
+          {/* Reward Information */}
+          <div className="space-y-2 mb-3">
+            {/* Streak Bonus */}
+            {streakBonus && (
+              <div className="flex items-center text-xs text-orange-600">
+                <Flame className="h-3 w-3 mr-1" />
+                <span>+{streakBonus} streak bonus available</span>
+              </div>
+            )}
+
+            {/* Achievement Progress */}
+            {achievementProgress && (
+              <div className="flex items-center justify-between text-xs">
+                <div className="flex items-center text-amber-600">
+                  <Trophy className="h-3 w-3 mr-1" />
+                  <span>{achievementProgress.name}</span>
+                </div>
+                <Badge variant="secondary" className="text-xs">
+                  {achievementProgress.current}/{achievementProgress.total}
+                </Badge>
+              </div>
+            )}
+
+            {/* Mocktail Contribution */}
+            {mocktailContribution && (
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="bg-muted/30 rounded px-2 py-1">
+                  <span className="text-muted-foreground">Weekly: </span>
+                  <span className="font-medium">+{mocktailContribution.weeklyGoal}%</span>
+                </div>
+                <div className="bg-muted/30 rounded px-2 py-1">
+                  <span className="text-muted-foreground">Monthly: </span>
+                  <span className="font-medium">+{mocktailContribution.monthlyGoal}%</span>
+                </div>
+              </div>
+            )}
+          </div>
 
           {ingredients && ingredients.length > 0 && (
             <div className="mt-3">

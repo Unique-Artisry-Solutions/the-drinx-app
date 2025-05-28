@@ -23,6 +23,27 @@ const FeaturedEstablishmentsSection: React.FC<FeaturedEstablishmentsSectionProps
   const scrollToTop = () => {
     window.scrollTo(0, 0);
   };
+
+  // Mock reward data generator for demonstrations
+  const generateRewardData = (index: number) => {
+    const basePoints = 20 + (index * 5);
+    const hasStreak = Math.random() > 0.5;
+    const hasAchievement = Math.random() > 0.6;
+    
+    return {
+      potentialPoints: basePoints,
+      streakBonus: hasStreak ? Math.floor(basePoints * 0.3) : undefined,
+      achievementProgress: hasAchievement ? {
+        name: index % 2 === 0 ? 'Social Explorer' : 'Venue Hopper',
+        current: Math.floor(Math.random() * 8) + 2,
+        total: 10
+      } : undefined,
+      visitContribution: {
+        weeklyGoal: Math.floor(Math.random() * 15) + 10,
+        monthlyGoal: Math.floor(Math.random() * 8) + 5
+      }
+    };
+  };
   
   return (
     <div className="mb-6">
@@ -42,17 +63,22 @@ const FeaturedEstablishmentsSection: React.FC<FeaturedEstablishmentsSectionProps
       </div>
       
       <div className="flex flex-col space-y-3 px-3">
-        {establishments.slice(0, 4).map((establishment) => (
-          <EstablishmentCard 
-            key={establishment.id}
-            id={establishment.id}
-            name={establishment.name}
-            address={establishment.address}
-            image={establishment.image}
-            distance={establishment.distance}
-            cocktailCount={establishment.cocktailCount}
-          />
-        ))}
+        {establishments.slice(0, 4).map((establishment, index) => {
+          const rewardData = generateRewardData(index);
+          
+          return (
+            <EstablishmentCard 
+              key={establishment.id}
+              id={establishment.id}
+              name={establishment.name}
+              address={establishment.address}
+              image={establishment.image}
+              distance={establishment.distance}
+              cocktailCount={establishment.cocktailCount}
+              {...rewardData}
+            />
+          );
+        })}
       </div>
     </div>
   );

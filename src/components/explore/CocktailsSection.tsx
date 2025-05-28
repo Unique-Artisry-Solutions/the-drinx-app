@@ -29,6 +29,27 @@ const CocktailsSection: React.FC<CocktailsSectionProps> = ({
 }) => {
   const { theme } = useTheme();
   const isLightTheme = theme === 'light';
+
+  // Mock reward data generator for demonstrations
+  const generateCocktailRewardData = (index: number) => {
+    const basePoints = 10 + (index * 3);
+    const hasStreak = Math.random() > 0.4;
+    const hasAchievement = Math.random() > 0.7;
+    
+    return {
+      potentialPoints: basePoints,
+      streakBonus: hasStreak ? Math.floor(basePoints * 0.4) : undefined,
+      achievementProgress: hasAchievement ? {
+        name: index % 3 === 0 ? 'Mocktail Master' : index % 3 === 1 ? 'Flavor Explorer' : 'Ingredient Hunter',
+        current: Math.floor(Math.random() * 12) + 3,
+        total: 15
+      } : undefined,
+      mocktailContribution: {
+        weeklyGoal: Math.floor(Math.random() * 20) + 15,
+        monthlyGoal: Math.floor(Math.random() * 10) + 8
+      }
+    };
+  };
   
   return (
     <div>
@@ -41,18 +62,23 @@ const CocktailsSection: React.FC<CocktailsSectionProps> = ({
         <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 ${
           isLightTheme ? 'bg-card/50' : 'bg-card/30 backdrop-blur-sm'
         }`}>
-          {cocktails.map(cocktail => (
-            <CocktailCard 
-              key={cocktail.id} 
-              id={cocktail.id} 
-              name={cocktail.name} 
-              price={cocktail.price} 
-              description={cocktail.description} 
-              ingredients={cocktail.ingredients} 
-              image={cocktail.image} 
-              establishment={cocktail.establishment} 
-            />
-          ))}
+          {cocktails.map((cocktail, index) => {
+            const rewardData = generateCocktailRewardData(index);
+            
+            return (
+              <CocktailCard 
+                key={cocktail.id} 
+                id={cocktail.id} 
+                name={cocktail.name} 
+                price={cocktail.price} 
+                description={cocktail.description} 
+                ingredients={cocktail.ingredients} 
+                image={cocktail.image} 
+                establishment={cocktail.establishment}
+                {...rewardData}
+              />
+            );
+          })}
         </div>
       ) : (
         <div className="text-center py-6 border border-dashed rounded-lg">
