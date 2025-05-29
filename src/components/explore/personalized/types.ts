@@ -1,49 +1,6 @@
 
-export interface Activity {
-  id: string;
-  type: 'check-in' | 'review' | 'recipe' | 'achievement';
-  title: string;
-  description: string;
-  timestamp: string;
-  user?: string;
-  location?: string;
-}
+// Re-export all types from the unified explore types for backward compatibility
+export * from '@/types/explore';
 
-export interface Recommendation {
-  id: string;
-  title: string;
-  description: string;
-  type: 'establishment' | 'cocktail' | 'event';
-  rating?: number;
-  distance?: string;
-  imageUrl?: string;
-}
-
-export interface QuickAction {
-  id: string;
-  title: string;
-  description: string;
-  icon: React.ReactNode;
-  onClick: () => void;
-}
-
-export interface NearbyEstablishment {
-  id: string;
-  name: string;
-  description: string;
-  distance: string;
-  rating: number;
-  isOpen: boolean;
-  imageUrl?: string;
-}
-
-export interface UpcomingEvent {
-  id: string;
-  title: string;
-  description: string;
-  date: string;
-  time: string;
-  location: string;
-  attendees: number;
-  imageUrl?: string;
-}
+// This file is maintained for backward compatibility
+// All new explore-related types should be added to src/types/explore/index.ts
