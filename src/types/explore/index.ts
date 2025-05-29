@@ -1,10 +1,9 @@
-
 import { ReactNode } from 'react';
 
 // Unified Activity interface - base interface for all activity types
 export interface Activity {
   id: string;
-  type: 'check-in' | 'review' | 'recipe' | 'achievement';
+  type: 'check-in' | 'review' | 'recipe' | 'achievement' | 'bar-crawl' | 'photo-share';
   title: string;
   description: string;
   timestamp: string;
@@ -14,7 +13,6 @@ export interface Activity {
 
 // Extended RealtimeActivity interface - includes social features
 export interface RealtimeActivity extends Activity {
-  type: 'check-in' | 'review' | 'recipe' | 'achievement' | 'bar-crawl' | 'photo-share';
   user: {
     id: string;
     name: string;
