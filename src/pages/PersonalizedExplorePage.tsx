@@ -5,7 +5,7 @@ import { usePersonalizedData } from '@/hooks/usePersonalizedData';
 import { QuickStatsWidget } from '@/components/explore/personalized/QuickStatsWidget';
 import { RecommendationsWidget } from '@/components/explore/personalized/RecommendationsWidget';
 import ActivityFeedWidget from '@/components/explore/personalized/ActivityFeedWidget';
-import { QuickActionCards } from '@/components/explore/personalized/QuickActionCards';
+import QuickActionCards from '@/components/explore/personalized/QuickActionCards';
 import { NearbyEstablishmentsWidget } from '@/components/explore/personalized/NearbyEstablishmentsWidget';
 import { UpcomingEventsWidget } from '@/components/explore/personalized/UpcomingEventsWidget';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -36,20 +36,6 @@ const PersonalizedExplorePage: React.FC = () => {
       </Layout>
     );
   }
-
-  // Transform data to match expected types
-  const transformedRecommendations = recommendations.map(rec => ({
-    ...rec,
-    reason: `Recommended based on your preferences`,
-    tags: ['popular', 'nearby'],
-    isSaved: false
-  }));
-
-  const transformedActivities = recentActivity.map(activity => ({
-    ...activity,
-    likes: Math.floor(Math.random() * 20),
-    isLiked: Math.random() > 0.5
-  }));
 
   return (
     <Layout>
@@ -86,7 +72,7 @@ const PersonalizedExplorePage: React.FC = () => {
             )}
 
             {/* Recommendations */}
-            <RecommendationsWidget recommendations={transformedRecommendations} />
+            <RecommendationsWidget recommendations={recommendations} />
 
             {/* Nearby Establishments */}
             <NearbyEstablishmentsWidget establishments={nearbyEstablishments} />
@@ -95,7 +81,7 @@ const PersonalizedExplorePage: React.FC = () => {
           {/* Right Column */}
           <div className="space-y-6">
             {/* Recent Activity - Enhanced Activity Feed */}
-            <ActivityFeedWidget activities={transformedActivities} />
+            <ActivityFeedWidget activities={recentActivity} />
 
             {/* Upcoming Events */}
             <UpcomingEventsWidget events={upcomingEvents} />
