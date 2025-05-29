@@ -7,7 +7,7 @@ export interface EnhancedQuickAction {
   id: string;
   title: string;
   description: string;
-  icon: React.ReactNode;
+  iconName: string; // Changed from icon: React.ReactNode to iconName: string
   color: string;
   isEnabled: boolean;
   requiresAuth?: boolean;

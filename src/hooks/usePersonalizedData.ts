@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react';
 import { UserStats } from '@/types/ExploreTypes';
 import { PersonalizedData, QuickAction } from '@/types/explore';
-import { Search, MapPin, Plus, Users, Share, UserPlus } from 'lucide-react';
 
 export const usePersonalizedData = (): PersonalizedData => {
   const [loading, setLoading] = useState(true);
@@ -25,7 +24,7 @@ export const usePersonalizedData = (): PersonalizedData => {
           id: '1',
           title: 'Check In Nearby',
           description: 'Find and check into nearby establishments',
-          icon: <MapPin className="h-5 w-5" />,
+          iconName: 'MapPin',
           color: 'bg-blue-500',
           isEnabled: true,
           onClick: () => console.log('Check in clicked')
@@ -34,7 +33,7 @@ export const usePersonalizedData = (): PersonalizedData => {
           id: '2',
           title: 'Find Events',
           description: 'Discover upcoming swig events',
-          icon: <Search className="h-5 w-5" />,
+          iconName: 'Search',
           color: 'bg-green-500',
           isEnabled: true,
           onClick: () => console.log('Find events clicked')
@@ -43,7 +42,7 @@ export const usePersonalizedData = (): PersonalizedData => {
           id: '3',
           title: 'Create Recipe',
           description: 'Share your mocktail creation',
-          icon: <Plus className="h-5 w-5" />,
+          iconName: 'Plus',
           color: 'bg-purple-500',
           isEnabled: true,
           onClick: () => console.log('Create recipe clicked')
@@ -52,7 +51,7 @@ export const usePersonalizedData = (): PersonalizedData => {
           id: '4',
           title: 'Start Bar Crawl',
           description: 'Begin a new adventure',
-          icon: <Users className="h-5 w-5" />,
+          iconName: 'Users',
           color: 'bg-orange-500',
           isEnabled: true,
           onClick: () => console.log('Start bar crawl clicked')
@@ -61,7 +60,7 @@ export const usePersonalizedData = (): PersonalizedData => {
           id: '5',
           title: 'Share Achievement',
           description: 'Show off your latest milestone',
-          icon: <Share className="h-5 w-5" />,
+          iconName: 'Share',
           color: 'bg-pink-500',
           isEnabled: true,
           onClick: () => console.log('Share achievement clicked')
@@ -70,7 +69,7 @@ export const usePersonalizedData = (): PersonalizedData => {
           id: '6',
           title: 'Find Friends',
           description: 'Connect with other swig enthusiasts',
-          icon: <UserPlus className="h-5 w-5" />,
+          iconName: 'UserPlus',
           color: 'bg-teal-500',
           isEnabled: true,
           onClick: () => console.log('Find friends clicked')

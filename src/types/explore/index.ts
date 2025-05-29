@@ -30,12 +30,12 @@ export interface Recommendation {
   metadata?: Record<string, any>;
 }
 
-// Unified QuickAction interface
+// Updated QuickAction interface with icon metadata instead of ReactNode
 export interface QuickAction {
   id: string;
   title: string;
   description: string;
-  icon: ReactNode;
+  iconName: string; // Changed from icon: ReactNode to iconName: string
   color: string;
   isEnabled: boolean;
   requiresAuth?: boolean;

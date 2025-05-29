@@ -3,6 +3,25 @@ import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { QuickAction } from '@/types/explore';
+import { 
+  MapPin, 
+  Search, 
+  Plus, 
+  Users, 
+  Share, 
+  UserPlus,
+  LucideIcon
+} from 'lucide-react';
+
+// Icon mapping for converting string names to components
+const iconMap: Record<string, LucideIcon> = {
+  MapPin,
+  Search,
+  Plus,
+  Users,
+  Share,
+  UserPlus
+};
 
 interface QuickActionCardsProps {
   actions?: QuickAction[];
@@ -23,28 +42,32 @@ export const QuickActionCards: React.FC<QuickActionCardsProps> = ({ actions = []
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-      {actions.map((action) => (
-        <Card key={action.id} className="hover:shadow-md transition-shadow">
-          <CardContent className="p-4">
-            <Button
-              variant="ghost"
-              className="w-full h-auto flex flex-col gap-2 p-4"
-              onClick={action.onClick}
-              disabled={!action.isEnabled}
-            >
-              <div className={`p-3 rounded-lg ${action.color} text-white`}>
-                {action.icon}
-              </div>
-              <div className="text-center">
-                <div className="font-medium text-sm">{action.title}</div>
-                <div className="text-xs text-muted-foreground mt-1">
-                  {action.description}
+      {actions.map((action) => {
+        const IconComponent = iconMap[action.iconName];
+        
+        return (
+          <Card key={action.id} className="hover:shadow-md transition-shadow">
+            <CardContent className="p-4">
+              <Button
+                variant="ghost"
+                className="w-full h-auto flex flex-col gap-2 p-4"
+                onClick={action.onClick}
+                disabled={!action.isEnabled}
+              >
+                <div className={`p-3 rounded-lg ${action.color} text-white`}>
+                  {IconComponent && <IconComponent className="h-5 w-5" />}
                 </div>
-              </div>
-            </Button>
-          </CardContent>
-        </Card>
-      ))}
+                <div className="text-center">
+                  <div className="font-medium text-sm">{action.title}</div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    {action.description}
+                  </div>
+                </div>
+              </Button>
+            </CardContent>
+          </Card>
+        );
+      })}
     </div>
   );
 };
