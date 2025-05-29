@@ -1,11 +1,10 @@
-
 import { useState, useEffect } from 'react';
 import { UserStats } from '@/types/ExploreTypes';
 import { PersonalizedData, QuickAction, Activity } from '@/types/explore';
 
 export const usePersonalizedData = (): PersonalizedData => {
   const [loading, setLoading] = useState(true);
-  const [isAuthenticated] = useState(true); // Set to true to show all widgets
+  const [isAuthenticated] = useState(true); // Fixed: Set to true to show all widgets
 
   const [data, setData] = useState<Omit<PersonalizedData, 'loading' | 'isAuthenticated'>>({
     userStats: null,
