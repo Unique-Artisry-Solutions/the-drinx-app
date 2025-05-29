@@ -6,9 +6,15 @@ import { Input } from '@/components/ui/input';
 import { Map, List, Search } from 'lucide-react';
 import { usePersonalizedRecommendations } from '@/hooks/usePersonalizedRecommendations';
 import { useRealtimeActivity } from '@/hooks/useRealtimeActivity';
+import { usePersonalizedData } from '@/hooks/usePersonalizedData';
 import { QuickActionCards } from '@/components/explore/personalized/QuickActionCards';
 import { RecommendationsWidget } from '@/components/explore/personalized/RecommendationsWidget';
 import { ActivityFeedWidget } from '@/components/explore/personalized/ActivityFeedWidget';
+import { QuickStatsWidget } from '@/components/explore/personalized/QuickStatsWidget';
+import { RewardsHighlightWidget } from '@/components/explore/personalized/RewardsHighlightWidget';
+import StreakMotivationWidget from '@/components/explore/personalized/StreakMotivationWidget';
+import { NearbyEstablishmentsWidget } from '@/components/explore/personalized/NearbyEstablishmentsWidget';
+import { UpcomingEventsWidget } from '@/components/explore/personalized/UpcomingEventsWidget';
 import DevRoleSwitcher from '@/components/development/DevRoleSwitcher';
 import { RecommendationCategoryType } from '@/types/explore';
 
@@ -27,6 +33,14 @@ const Explore: React.FC = () => {
   } = usePersonalizedRecommendations();
 
   const { activities, isLoading: activitiesLoading } = useRealtimeActivity();
+  
+  const {
+    loading: personalizedDataLoading,
+    isAuthenticated,
+    userStats,
+    nearbyEstablishments,
+    upcomingEvents
+  } = usePersonalizedData();
 
   // Type-safe category handler
   const handleCategoryChange = (category: RecommendationCategoryType) => {
@@ -87,10 +101,35 @@ const Explore: React.FC = () => {
           <QuickActionCards />
         </div>
 
+        {/* Personalized Stats Section - Only show if authenticated and have user stats */}
+        {isAuthenticated && userStats && !personalizedDataLoading && (
+          <div className="mb-8">
+            <QuickStatsWidget
+              totalMocktailsTried={userStats.totalMocktailsTried}
+              totalPoints={userStats.totalPoints}
+              currentStreak={userStats.currentStreak}
+            />
+          </div>
+        )}
+
         {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column - Recommendations */}
-          <div className="lg:col-span-2">
+        <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+          {/* Left Column - Main Content */}
+          <div className="xl:col-span-3 space-y-6">
+            {/* Rewards and Streak Row - Only show if authenticated */}
+            {isAuthenticated && !personalizedDataLoading && (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <RewardsHighlightWidget
+                  totalPoints={userStats?.totalPoints || 1250}
+                  currentTier="Silver"
+                  nextTier="Gold"
+                  progressToNextTier={83}
+                />
+                <StreakMotivationWidget />
+              </div>
+            )}
+
+            {/* Recommendations Widget */}
             <RecommendationsWidget
               recommendations={recommendations}
               isLoading={recommendationsLoading}
@@ -100,11 +139,21 @@ const Explore: React.FC = () => {
               onDismiss={dismissRecommendation}
               onShare={shareRecommendation}
             />
+
+            {/* Nearby Establishments - Only show if authenticated */}
+            {isAuthenticated && !personalizedDataLoading && (
+              <NearbyEstablishmentsWidget establishments={nearbyEstablishments} />
+            )}
           </div>
 
-          {/* Right Column - Activity Feed */}
-          <div>
+          {/* Right Column - Activity and Events */}
+          <div className="space-y-6">
             <ActivityFeedWidget activities={activities} isLoading={activitiesLoading} />
+            
+            {/* Upcoming Events - Only show if authenticated */}
+            {isAuthenticated && !personalizedDataLoading && (
+              <UpcomingEventsWidget events={upcomingEvents} />
+            )}
           </div>
         </div>
       </div>
