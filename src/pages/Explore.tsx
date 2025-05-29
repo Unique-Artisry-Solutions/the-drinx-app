@@ -1,177 +1,157 @@
-import React from 'react';
-import { useAuth } from '@/hooks/useAuth';
-import { usePersonalizedData } from '@/hooks/usePersonalizedData';
-import { useRecentActivity } from '@/hooks/useRecentActivity';
-import StreakMotivationWidget from '@/components/explore/personalized/StreakMotivationWidget';
-import { QuickStatsWidget } from '@/components/explore/personalized/QuickStatsWidget';
-import RecommendationsWidget from '@/components/explore/personalized/RecommendationsWidget';
-import RewardsHighlightWidget from '@/components/rewards/RewardsHighlightWidget';
+
+import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { MapPin, Search, Filter } from 'lucide-react';
 import { NearbyEstablishmentsWidget } from '@/components/explore/personalized/NearbyEstablishmentsWidget';
-import { UpcomingEventsWidget } from '@/components/explore/personalized/UpcomingEventsWidget';
-import ActivityFeedWidget from '@/components/explore/personalized/ActivityFeedWidget';
-import EstablishmentCard from '@/components/EstablishmentCard';
-import CocktailCard from '@/components/CocktailCard';
-import FeaturedEstablishmentsSection from '@/components/explore/FeaturedEstablishmentsSection';
-import CocktailsSection from '@/components/explore/CocktailsSection';
-import EventsSection from '@/components/explore/EventsSection';
-import BarCrawlSection from '@/components/explore/BarCrawlSection';
+import { ActivityFeedWidget } from '@/components/explore/personalized/ActivityFeedWidget';
 
 const Explore: React.FC = () => {
-  const { user } = useAuth();
-  const { personalizedData, isLoading } = usePersonalizedData();
-  const { activities, isLoading: activitiesLoading } = useRecentActivity();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeFilter, setActiveFilter] = useState('all');
 
-  // Mock data for personalized widgets
-  const mockRecommendations = [
-    {
-      id: '1',
-      type: 'establishment' as const,
-      title: 'Try The Mocktail Lounge',
-      description: 'Based on your recent visits',
-      confidence: 0.9,
-      imageUrl: undefined
-    },
-    {
-      id: '2',
-      type: 'cocktail' as const,
-      title: 'Virgin Bloody Mary',
-      description: 'Popular among users like you',
-      confidence: 0.85,
-      imageUrl: undefined
-    }
+  const filters = [
+    { id: 'all', label: 'All' },
+    { id: 'establishments', label: 'Establishments' },
+    { id: 'events', label: 'Events' },
+    { id: 'cocktails', label: 'Cocktails' }
   ];
-
-  const mockEstablishments = [
-    {
-      id: '1',
-      name: 'The Mocktail Lounge',
-      address: '123 Main St, Downtown',
-      rating: 4.8,
-      cocktailCount: 15,
-      image: '/api/placeholder/400/300',
-      distance: '0.3 miles',
-      latitude: 40.7128,
-      longitude: -74.0060
-    },
-    {
-      id: '2',
-      name: 'Sober Social Club',
-      address: '456 Oak Ave, Midtown',
-      rating: 4.5,
-      cocktailCount: 12,
-      image: '/api/placeholder/400/300',
-      distance: '0.7 miles',
-      latitude: 40.7580,
-      longitude: -73.9855
-    }
-  ];
-
-  const mockCocktails = [
-    {
-      id: '1',
-      name: 'Virgin Mojito',
-      establishment: 'The Mocktail Lounge',
-      rating: 4.9,
-      image: '/api/placeholder/300/200',
-      ingredients: ['Fresh mint', 'Lime juice', 'Club soda', 'Simple syrup']
-    },
-    {
-      id: '2',
-      name: 'Cucumber Basil Smash',
-      establishment: 'Sober Social Club',
-      rating: 4.7,
-      image: '/api/placeholder/300/200',
-      ingredients: ['Cucumber', 'Fresh basil', 'Lime', 'Tonic water']
-    }
-  ];
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background">
-        <div className="container mx-auto px-4 py-8">
-          <div className="text-center">Loading your personalized experience...</div>
-        </div>
-      </div>
-    );
-  }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
       <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">
-            {user ? `Welcome back, ${user.email?.split('@')[0]}!` : 'Explore'}
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
+            Explore Swig
           </h1>
-          <p className="text-muted-foreground">
-            Discover amazing mocktails and sober-friendly establishments near you
+          <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+            Discover amazing non-alcoholic experiences, establishments, and events near you
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Main Content - Left Side */}
-          <div className="lg:col-span-8 space-y-6">
-            {/* Quick Stats */}
-            <QuickStatsWidget 
-              totalMocktailsTried={personalizedData?.totalMocktailsTried || 0}
-              totalPoints={personalizedData?.totalPoints || 0}
-              currentStreak={personalizedData?.currentStreak || 0}
-            />
-
-            {/* Recommendations */}
-            <RecommendationsWidget recommendations={mockRecommendations} />
-
-            {/* Nearby Establishments */}
-            <div className="space-y-4">
-              <h2 className="text-xl font-semibold">Nearby Places</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {mockEstablishments.map((establishment) => (
-                  <EstablishmentCard
-                    key={establishment.id}
-                    id={establishment.id}
-                    name={establishment.name}
-                    address={establishment.address}
-                    distance={establishment.distance}
-                    cocktailCount={establishment.cocktailCount}
-                    image={establishment.image}
-                  />
-                ))}
-              </div>
+        {/* Search and Filters */}
+        <div className="max-w-4xl mx-auto mb-8">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+              <input
+                type="text"
+                placeholder="Search establishments, events, cocktails..."
+                className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
             </div>
+            <Button variant="outline" className="flex items-center gap-2">
+              <Filter className="h-4 w-4" />
+              Filters
+            </Button>
+          </div>
 
-            {/* Recent Activity */}
-            <ActivityFeedWidget activities={activities} isLoading={activitiesLoading} />
+          {/* Filter Tabs */}
+          <div className="flex flex-wrap gap-2 mt-4">
+            {filters.map((filter) => (
+              <Button
+                key={filter.id}
+                variant={activeFilter === filter.id ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setActiveFilter(filter.id)}
+              >
+                {filter.label}
+              </Button>
+            ))}
+          </div>
+        </div>
 
-            {/* Featured Cocktails */}
-            <div className="space-y-4">
-              <h2 className="text-xl font-semibold">Trending Mocktails</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {mockCocktails.map((cocktail) => (
-                  <CocktailCard
-                    key={cocktail.id}
-                    id={cocktail.id}
-                    name={cocktail.name}
-                    establishment={cocktail.establishment}
-                    rating={cocktail.rating}
-                    image={cocktail.image}
-                    ingredients={cocktail.ingredients}
-                  />
-                ))}
-              </div>
-            </div>
+        {/* Main Content Grid */}
+        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Left Column - Main Content */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Featured Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MapPin className="h-5 w-5" />
+                  Featured This Week
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {[1, 2, 3, 4].map((item) => (
+                    <div key={item} className="p-4 border rounded-lg hover:shadow-md transition-shadow">
+                      <div className="w-full h-32 bg-gradient-to-r from-blue-200 to-purple-200 rounded-md mb-3"></div>
+                      <h3 className="font-semibold mb-1">Featured Item {item}</h3>
+                      <p className="text-sm text-gray-600 mb-2">
+                        Amazing non-alcoholic experience awaits
+                      </p>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-gray-500">0.{item} miles away</span>
+                        <Button size="sm" variant="outline">View</Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
 
-            {/* Other Sections */}
-            <FeaturedEstablishmentsSection />
-            <CocktailsSection />
-            <EventsSection />
-            <BarCrawlSection />
+            {/* Results Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Search Results</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {[1, 2, 3].map((item) => (
+                    <div key={item} className="flex gap-4 p-4 border rounded-lg">
+                      <div className="w-20 h-20 bg-gradient-to-r from-green-200 to-blue-200 rounded-md flex-shrink-0"></div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold mb-1">Search Result {item}</h3>
+                        <p className="text-sm text-gray-600 mb-2">
+                          Great place for non-alcoholic beverages and socializing
+                        </p>
+                        <div className="flex items-center gap-4 text-xs text-gray-500">
+                          <span>★ 4.{item}</span>
+                          <span>1.{item} miles</span>
+                          <span>Open until 10 PM</span>
+                        </div>
+                      </div>
+                      <Button size="sm" variant="outline">View Details</Button>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Right Sidebar */}
-          <div className="lg:col-span-4 space-y-6">
-            <StreakMotivationWidget />
-            <RewardsHighlightWidget />
-            <UpcomingEventsWidget />
+          <div className="space-y-6">
+            {/* Nearby Places */}
             <NearbyEstablishmentsWidget />
+
+            {/* Recent Activity */}
+            <ActivityFeedWidget />
+
+            {/* Quick Actions */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Quick Actions</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Button className="w-full justify-start" variant="outline">
+                  <MapPin className="h-4 w-4 mr-2" />
+                  Find Nearby
+                </Button>
+                <Button className="w-full justify-start" variant="outline">
+                  <Search className="h-4 w-4 mr-2" />
+                  Browse Events
+                </Button>
+                <Button className="w-full justify-start" variant="outline">
+                  <Filter className="h-4 w-4 mr-2" />
+                  Create Alert
+                </Button>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>
