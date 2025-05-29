@@ -5,7 +5,7 @@ import { usePersonalizedData } from '@/hooks/usePersonalizedData';
 import { QuickStatsWidget } from '@/components/explore/personalized/QuickStatsWidget';
 import { RecommendationsWidget } from '@/components/explore/personalized/RecommendationsWidget';
 import ActivityFeedWidget from '@/components/explore/personalized/ActivityFeedWidget';
-import { QuickActionCards } from '@/components/explore/personalized/QuickActionCards';
+import QuickActionCards from '@/components/explore/personalized/QuickActionCards';
 import { NearbyEstablishmentsWidget } from '@/components/explore/personalized/NearbyEstablishmentsWidget';
 import { UpcomingEventsWidget } from '@/components/explore/personalized/UpcomingEventsWidget';
 import { Skeleton } from '@/components/ui/skeleton';

@@ -1,8 +1,8 @@
 
 import React from 'react';
-import { Redirect } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
-import { TopNavigation } from '@/components/TopNavigation';
+import TopNavigation from '@/components/TopNavigation';
 import { FeatureGate } from '@/components/FeatureGate';
 import { EnhancedExploreSection } from '@/components/home/EnhancedExploreSection';
 import DevRoleSwitcher from '@/components/development/DevRoleSwitcher';
@@ -10,8 +10,8 @@ import DevRoleSwitcher from '@/components/development/DevRoleSwitcher';
 const Explore: React.FC = () => {
   return (
     <FeatureGate 
-      featureName="explore" 
-      fallback={<Redirect to="/" />}
+      feature="explore" 
+      fallback={<Navigate to="/" replace />}
     >
       <Layout>
         <TopNavigation />
