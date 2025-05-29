@@ -4,8 +4,8 @@ import Layout from '@/components/Layout';
 import { usePersonalizedData } from '@/hooks/usePersonalizedData';
 import { QuickStatsWidget } from '@/components/explore/personalized/QuickStatsWidget';
 import { RecommendationsWidget } from '@/components/explore/personalized/RecommendationsWidget';
-import ActivityFeedWidget from '@/components/explore/personalized/ActivityFeedWidget';
-import QuickActionCards from '@/components/explore/personalized/QuickActionCards';
+import { ActivityFeedWidget } from '@/components/explore/personalized/ActivityFeedWidget';
+import { QuickActionCards } from '@/components/explore/personalized/QuickActionCards';
 import { NearbyEstablishmentsWidget } from '@/components/explore/personalized/NearbyEstablishmentsWidget';
 import { UpcomingEventsWidget } from '@/components/explore/personalized/UpcomingEventsWidget';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -80,8 +80,10 @@ const PersonalizedExplorePage: React.FC = () => {
 
           {/* Right Column */}
           <div className="space-y-6">
-            {/* Recent Activity - Enhanced Activity Feed */}
-            <ActivityFeedWidget activities={recentActivity} />
+            {/* Recent Activity - Only for authenticated users */}
+            {isAuthenticated && (
+              <ActivityFeedWidget activities={recentActivity} />
+            )}
 
             {/* Upcoming Events */}
             <UpcomingEventsWidget events={upcomingEvents} />
