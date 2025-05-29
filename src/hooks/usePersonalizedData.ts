@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { UserStats } from '@/types/ExploreTypes';
 import { PersonalizedData, QuickAction, Activity } from '@/types/explore';
@@ -104,6 +105,56 @@ export const usePersonalizedData = (): PersonalizedData => {
         }
       ];
 
+      // Mock nearby establishments data
+      const mockNearbyEstablishments = [
+        {
+          id: '1',
+          name: 'The Mocktail Lounge',
+          description: 'Creative non-alcoholic cocktails',
+          distance: '0.3 miles',
+          rating: 4.8,
+          isOpen: true
+        },
+        {
+          id: '2',
+          name: 'Sober Social Club',
+          description: 'Community-focused sober bar',
+          distance: '0.7 miles',
+          rating: 4.5,
+          isOpen: true
+        },
+        {
+          id: '3',
+          name: 'Zero Proof Kitchen',
+          description: 'Farm-to-table mocktails',
+          distance: '1.2 miles',
+          rating: 4.6,
+          isOpen: false
+        }
+      ];
+
+      // Mock upcoming events data
+      const mockUpcomingEvents = [
+        {
+          id: '1',
+          title: 'Mocktail Mixology Workshop',
+          description: 'Learn to craft the perfect virgin cocktails',
+          date: 'Dec 15',
+          time: '7:00 PM',
+          location: 'The Mocktail Lounge',
+          attendees: 12
+        },
+        {
+          id: '2',
+          title: 'Sober Social Hour',
+          description: 'Weekly community meetup',
+          date: 'Dec 17',
+          time: '6:00 PM',
+          location: 'Sober Social Club',
+          attendees: 8
+        }
+      ];
+
       setData({
         userStats: {
           totalMocktailsTried: 12,
@@ -115,8 +166,8 @@ export const usePersonalizedData = (): PersonalizedData => {
         recentActivity: mockRecentActivity,
         recommendations: [],
         quickActions: mockQuickActions,
-        nearbyEstablishments: [],
-        upcomingEvents: []
+        nearbyEstablishments: mockNearbyEstablishments,
+        upcomingEvents: mockUpcomingEvents
       });
       setLoading(false);
     }, 1000);
