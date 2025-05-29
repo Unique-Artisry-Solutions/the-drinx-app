@@ -1,3 +1,4 @@
+
 import { ReactNode } from 'react';
 
 // Unified Activity interface - base interface for all activity types
@@ -7,7 +8,11 @@ export interface Activity {
   title: string;
   description: string;
   timestamp: string;
-  user?: string;
+  user?: string | {
+    id: string;
+    name: string;
+    avatar?: string;
+  };
   location?: string;
 }
 

@@ -1,11 +1,11 @@
 
 import { useState, useEffect } from 'react';
 import { UserStats } from '@/types/ExploreTypes';
-import { PersonalizedData, QuickAction } from '@/types/explore';
+import { PersonalizedData, QuickAction, Activity } from '@/types/explore';
 
 export const usePersonalizedData = (): PersonalizedData => {
   const [loading, setLoading] = useState(true);
-  const [isAuthenticated] = useState(false); // Mock for now
+  const [isAuthenticated] = useState(true); // Set to true to show all widgets
 
   const [data, setData] = useState<Omit<PersonalizedData, 'loading' | 'isAuthenticated'>>({
     userStats: null,
@@ -76,15 +76,44 @@ export const usePersonalizedData = (): PersonalizedData => {
         }
       ];
 
+      // Mock recent activity data
+      const mockRecentActivity: Activity[] = [
+        {
+          id: '1',
+          type: 'check-in',
+          title: 'Checked in at The Mocktail Bar',
+          description: 'Had an amazing virgin mojito!',
+          timestamp: new Date(Date.now() - 300000).toISOString(),
+          user: 'You',
+          location: 'The Mocktail Bar'
+        },
+        {
+          id: '2',
+          type: 'achievement',
+          title: 'Unlocked Achievement',
+          description: 'First Check-in of the month!',
+          timestamp: new Date(Date.now() - 600000).toISOString(),
+          user: 'You'
+        },
+        {
+          id: '3',
+          type: 'recipe',
+          title: 'Created New Recipe',
+          description: 'Tropical Paradise Punch',
+          timestamp: new Date(Date.now() - 900000).toISOString(),
+          user: 'You'
+        }
+      ];
+
       setData({
-        userStats: isAuthenticated ? {
+        userStats: {
           totalMocktailsTried: 12,
           totalPoints: 1250,
           currentStreak: 5,
           establishmentsVisited: 8,
           favoriteEstablishments: 3
-        } : null,
-        recentActivity: [],
+        },
+        recentActivity: mockRecentActivity,
         recommendations: [],
         quickActions: mockQuickActions,
         nearbyEstablishments: [],

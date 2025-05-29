@@ -8,6 +8,8 @@ import { ActivityFeedWidget } from '@/components/explore/personalized/ActivityFe
 import QuickActionCards from '@/components/explore/personalized/QuickActionCards';
 import { NearbyEstablishmentsWidget } from '@/components/explore/personalized/NearbyEstablishmentsWidget';
 import { UpcomingEventsWidget } from '@/components/explore/personalized/UpcomingEventsWidget';
+import { RewardsHighlightWidget } from '@/components/explore/personalized/RewardsHighlightWidget';
+import StreakMotivationWidget from '@/components/explore/personalized/StreakMotivationWidget';
 import { Skeleton } from '@/components/ui/skeleton';
 import { RealtimeActivity } from '@/types/explore';
 
@@ -27,7 +29,9 @@ const PersonalizedExplorePage: React.FC = () => {
   const convertToRealtimeActivity = (activities: any[]): RealtimeActivity[] => {
     return activities.map(activity => ({
       ...activity,
-      user: activity.user || { id: 'unknown', name: 'Anonymous User' },
+      user: typeof activity.user === 'string' 
+        ? { id: 'user1', name: activity.user } 
+        : activity.user || { id: 'unknown', name: 'Anonymous User' },
       likes: 0,
       isLiked: false,
       metadata: {}
@@ -74,7 +78,7 @@ const PersonalizedExplorePage: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column */}
           <div className="lg:col-span-2 space-y-6">
-            {/* User Stats - Only for authenticated users */}
+            {/* User Stats - Always show when authenticated */}
             {isAuthenticated && userStats && (
               <QuickStatsWidget 
                 totalMocktailsTried={userStats.totalMocktailsTried}
@@ -92,7 +96,17 @@ const PersonalizedExplorePage: React.FC = () => {
 
           {/* Right Column */}
           <div className="space-y-6">
-            {/* Recent Activity - Only for authenticated users */}
+            {/* Rewards Highlight Widget */}
+            {isAuthenticated && (
+              <RewardsHighlightWidget />
+            )}
+
+            {/* Streak Motivation Widget */}
+            {isAuthenticated && (
+              <StreakMotivationWidget />
+            )}
+
+            {/* Activity Feed - Always show when authenticated */}
             {isAuthenticated && (
               <ActivityFeedWidget activities={convertToRealtimeActivity(recentActivity)} />
             )}
