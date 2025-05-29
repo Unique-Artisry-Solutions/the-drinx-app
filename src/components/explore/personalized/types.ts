@@ -1,12 +1,16 @@
 
 export interface Activity {
   id: string;
-  type: 'check-in' | 'review' | 'recipe' | 'achievement';
+  type: 'check-in' | 'review' | 'recipe' | 'achievement' | 'bar-crawl' | 'photo-share';
   title: string;
   description: string;
   timestamp: string;
   user?: string;
   location?: string;
+  likes: number;
+  isLiked: boolean;
+  metadata?: Record<string, any>;
+  imageUrl?: string;
 }
 
 export interface Recommendation {
@@ -17,6 +21,9 @@ export interface Recommendation {
   rating?: number;
   distance?: string;
   imageUrl?: string;
+  reason: string;
+  tags: string[];
+  isSaved: boolean;
 }
 
 export interface QuickAction {
@@ -25,6 +32,12 @@ export interface QuickAction {
   description: string;
   icon: React.ReactNode;
   onClick: () => void;
+  color?: string;
+  isEnabled?: boolean;
+  recentlyUsed?: boolean;
+  badge?: string;
+  shortcut?: string;
+  requiresAuth?: boolean;
 }
 
 export interface NearbyEstablishment {

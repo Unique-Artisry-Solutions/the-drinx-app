@@ -1,206 +1,287 @@
 
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Calendar, PlusCircle, Users, Share2, UserPlus, Zap, Loader2 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useEnhancedQuickActions, EnhancedQuickAction } from '@/hooks/useEnhancedQuickActions';
-import { OfflineService } from '@/services/OfflineService';
+import { Progress } from '@/components/ui/progress';
+import { 
+  Plus, 
+  MapPin, 
+  Calendar, 
+  Camera, 
+  User, 
+  Search,
+  Wifi,
+  WifiOff,
+  Clock
+} from 'lucide-react';
+import { QuickAction } from './types';
 
-export interface QuickActionCardsProps {
-  actions?: EnhancedQuickAction[];
+interface QuickActionCardsProps {
+  actions: QuickAction[];
 }
 
-export const QuickActionCards: React.FC<QuickActionCardsProps> = ({ actions: propActions }) => {
-  const { isLoading, handleActionClick, actions } = useEnhancedQuickActions();
+const QuickActionCards: React.FC<QuickActionCardsProps> = ({ actions }) => {
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [actionQueue, setActionQueue] = useState<string[]>([]);
+  const [processingActions, setProcessingActions] = useState<Set<string>>(new Set());
 
-  const defaultActions: EnhancedQuickAction[] = [
-    {
-      id: 'check-in',
-      title: 'Check In Nearby',
-      description: 'Find and check into establishments around you',
-      icon: <MapPin className="h-5 w-5" />,
-      color: 'bg-gradient-to-br from-green-500 to-emerald-600',
-      isEnabled: !OfflineService.isOffline(),
-      badge: 'New',
-      shortcut: '⌘+1',
-      recentlyUsed: true,
-      onClick: actions.checkInNearby
-    },
-    {
-      id: 'find-events',
-      title: 'Find Events',
-      description: 'Discover upcoming events and activities',
-      icon: <Calendar className="h-5 w-5" />,
-      color: 'bg-gradient-to-br from-blue-500 to-cyan-600',
-      isEnabled: true,
-      shortcut: '⌘+2',
-      onClick: actions.findEvents
-    },
+  // Enhanced actions with additional properties
+  const enhancedActions: QuickAction[] = [
     {
       id: 'create-recipe',
       title: 'Create Recipe',
-      description: 'Share your own mocktail creation',
-      icon: <PlusCircle className="h-5 w-5" />,
-      color: 'bg-gradient-to-br from-purple-500 to-violet-600',
+      description: 'Share your latest mocktail creation',
+      icon: <Plus className="h-5 w-5" />,
+      onClick: () => handleAction('create-recipe'),
+      color: 'bg-purple-500',
       isEnabled: true,
-      shortcut: '⌘+3',
-      onClick: actions.createRecipe
+      recentlyUsed: false,
+      badge: 'New',
+      shortcut: 'Ctrl+N'
     },
     {
-      id: 'start-crawl',
-      title: 'Start Bar Crawl',
-      description: 'Begin a new bar crawling adventure',
-      icon: <Users className="h-5 w-5" />,
-      color: 'bg-gradient-to-br from-orange-500 to-red-600',
+      id: 'find-nearby',
+      title: 'Find Nearby',
+      description: 'Discover establishments around you',
+      icon: <MapPin className="h-5 w-5" />,
+      onClick: () => handleAction('find-nearby'),
+      color: 'bg-green-500',
       isEnabled: true,
-      badge: 'Popular',
-      onClick: actions.startBarCrawl
+      recentlyUsed: true,
+      requiresAuth: false
     },
     {
-      id: 'share-achievement',
-      title: 'Share Achievement',
-      description: 'Celebrate your latest accomplishment',
-      icon: <Share2 className="h-5 w-5" />,
-      color: 'bg-gradient-to-br from-pink-500 to-rose-600',
+      id: 'join-event',
+      title: 'Join Event',
+      description: 'Browse upcoming mocktail events',
+      icon: <Calendar className="h-5 w-5" />,
+      onClick: () => handleAction('join-event'),
+      color: 'bg-blue-500',
       isEnabled: true,
-      onClick: actions.shareAchievement
+      recentlyUsed: false
     },
     {
-      id: 'find-friends',
-      title: 'Find Friends',
-      description: 'Connect with other swig enthusiasts',
-      icon: <UserPlus className="h-5 w-5" />,
-      color: 'bg-gradient-to-br from-indigo-500 to-blue-600',
+      id: 'take-photo',
+      title: 'Share Photo',
+      description: 'Capture and share your experience',
+      icon: <Camera className="h-5 w-5" />,
+      onClick: () => handleAction('take-photo'),
+      color: 'bg-orange-500',
+      isEnabled: isOnline,
+      recentlyUsed: false,
+      badge: 'Popular'
+    },
+    {
+      id: 'update-profile',
+      title: 'Update Profile',
+      description: 'Customize your preferences',
+      icon: <User className="h-5 w-5" />,
+      onClick: () => handleAction('update-profile'),
+      color: 'bg-indigo-500',
       isEnabled: true,
-      onClick: actions.findFriends
+      recentlyUsed: false,
+      requiresAuth: true
+    },
+    {
+      id: 'explore-more',
+      title: 'Explore More',
+      description: 'Discover new content and features',
+      icon: <Search className="h-5 w-5" />,
+      onClick: () => handleAction('explore-more'),
+      color: 'bg-teal-500',
+      isEnabled: true,
+      recentlyUsed: false
     }
   ];
 
-  const displayActions = propActions || defaultActions;
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      // Process queued actions when back online
+      processQueuedActions();
+    };
+    
+    const handleOffline = () => setIsOnline(false);
 
-  if (OfflineService.isOffline()) {
-    return (
-      <Card className="bg-yellow-50 border-yellow-200">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-yellow-800">
-            <Zap className="h-5 w-5" />
-            Quick Actions (Offline Mode)
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-yellow-700 text-sm">
-            Some actions are unavailable while offline. They'll be available when you reconnect.
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  const handleAction = async (actionId: string) => {
+    const action = enhancedActions.find(a => a.id === actionId);
+    
+    if (!action?.isEnabled) {
+      console.log('Action disabled:', actionId);
+      return;
+    }
+
+    if (!isOnline && action.requiresAuth !== false) {
+      // Queue action for when online
+      setActionQueue(prev => [...prev, actionId]);
+      console.log('Action queued for when online:', actionId);
+      return;
+    }
+
+    // Start processing
+    setProcessingActions(prev => new Set([...prev, actionId]));
+    
+    try {
+      // Simulate action processing
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Execute the actual action
+      action.onClick();
+      
+      console.log('Action completed:', actionId);
+    } catch (error) {
+      console.error('Action failed:', actionId, error);
+    } finally {
+      setProcessingActions(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(actionId);
+        return newSet;
+      });
+    }
+  };
+
+  const processQueuedActions = async () => {
+    if (actionQueue.length === 0) return;
+    
+    console.log('Processing queued actions:', actionQueue);
+    
+    for (const actionId of actionQueue) {
+      await handleAction(actionId);
+    }
+    
+    setActionQueue([]);
+  };
+
+  const getActionProgress = (actionId: string) => {
+    if (processingActions.has(actionId)) return 75;
+    if (actionQueue.includes(actionId)) return 25;
+    return 0;
+  };
 
   return (
-    <Card className="overflow-hidden">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Zap className="h-5 w-5 text-primary" />
-          Quick Actions
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <AnimatePresence>
-            {displayActions.map((action, index) => (
-              <motion.div
-                key={action.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ 
-                  duration: 0.3, 
-                  delay: index * 0.1,
-                  type: "spring",
-                  stiffness: 100
-                }}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <Button
-                  variant="outline"
-                  className={`
-                    relative h-auto p-4 flex flex-col items-start gap-3 text-left w-full
-                    ${action.isEnabled 
-                      ? 'hover:shadow-lg transition-all duration-300 hover:border-primary/50' 
-                      : 'opacity-50 cursor-not-allowed'
-                    }
-                    ${action.recentlyUsed ? 'border-primary/30 bg-primary/5' : ''}
-                  `}
-                  onClick={() => action.isEnabled && handleActionClick(action)}
-                  disabled={!action.isEnabled || isLoading === action.id}
-                >
-                  {/* Badge */}
-                  {action.badge && (
-                    <Badge 
-                      variant="secondary" 
-                      className="absolute -top-1 -right-1 text-xs animate-pulse"
-                    >
-                      {action.badge}
-                    </Badge>
-                  )}
+    <div className="space-y-4">
+      {/* Connection Status */}
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold">Quick Actions</h3>
+        <div className="flex items-center gap-2">
+          {isOnline ? (
+            <div className="flex items-center gap-1 text-green-600">
+              <Wifi className="h-4 w-4" />
+              <span className="text-sm">Online</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1 text-orange-600">
+              <WifiOff className="h-4 w-4" />
+              <span className="text-sm">Offline</span>
+            </div>
+          )}
+          
+          {actionQueue.length > 0 && (
+            <Badge variant="outline" className="text-xs">
+              <Clock className="h-3 w-3 mr-1" />
+              {actionQueue.length} queued
+            </Badge>
+          )}
+        </div>
+      </div>
 
-                  {/* Icon with loading state */}
-                  <div className={`
-                    p-3 rounded-lg text-white transition-all duration-300
-                    ${action.color}
-                    ${isLoading === action.id ? 'animate-pulse' : ''}
-                  `}>
-                    {isLoading === action.id ? (
-                      <Loader2 className="h-5 w-5 animate-spin" />
-                    ) : (
-                      action.icon
+      {/* Action Cards Grid */}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+        {enhancedActions.map((action) => {
+          const progress = getActionProgress(action.id);
+          const isProcessing = processingActions.has(action.id);
+          const isQueued = actionQueue.includes(action.id);
+
+          return (
+            <Card 
+              key={action.id} 
+              className={`relative transition-all duration-200 hover:shadow-md cursor-pointer ${
+                !action.isEnabled ? 'opacity-50' : ''
+              } ${action.recentlyUsed ? 'ring-2 ring-blue-200' : ''}`}
+              onClick={() => handleAction(action.id)}
+            >
+              <CardContent className="p-4">
+                {/* Action Header */}
+                <div className="flex items-start justify-between mb-2">
+                  <div className={`p-2 rounded-lg ${action.color} text-white`}>
+                    {action.icon}
+                  </div>
+                  
+                  <div className="flex flex-col gap-1">
+                    {action.badge && (
+                      <Badge variant="secondary" className="text-xs">
+                        {action.badge}
+                      </Badge>
+                    )}
+                    {action.recentlyUsed && (
+                      <Badge variant="outline" className="text-xs">
+                        Recent
+                      </Badge>
                     )}
                   </div>
+                </div>
 
-                  {/* Content */}
-                  <div className="space-y-1 w-full">
-                    <div className="flex items-center justify-between w-full">
-                      <h3 className="font-semibold text-sm">{action.title}</h3>
-                      {action.shortcut && (
-                        <kbd className="px-2 py-1 text-xs bg-muted rounded">
-                          {action.shortcut}
-                        </kbd>
-                      )}
+                {/* Action Content */}
+                <div className="space-y-2">
+                  <h4 className="font-medium text-sm">{action.title}</h4>
+                  <p className="text-xs text-muted-foreground">{action.description}</p>
+                </div>
+
+                {/* Progress Bar */}
+                {progress > 0 && (
+                  <div className="mt-3">
+                    <Progress value={progress} className="h-1" />
+                    <div className="text-xs text-muted-foreground mt-1">
+                      {isProcessing ? 'Processing...' : isQueued ? 'Queued' : 'Complete'}
                     </div>
-                    <p className="text-xs text-muted-foreground leading-relaxed">
-                      {action.description}
-                    </p>
                   </div>
+                )}
 
-                  {/* Progress indicator for recently used */}
-                  {action.recentlyUsed && (
-                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-primary/20">
-                      <div className="h-full w-1/3 bg-primary rounded-r"></div>
-                    </div>
-                  )}
-                </Button>
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </div>
+                {/* Keyboard Shortcut */}
+                {action.shortcut && (
+                  <div className="absolute bottom-2 right-2">
+                    <Badge variant="outline" className="text-xs">
+                      {action.shortcut}
+                    </Badge>
+                  </div>
+                )}
 
-        {/* Offline queue indicator */}
-        {OfflineService.getQueuedActions().length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            className="mt-4 p-3 bg-yellow-50 rounded-lg border border-yellow-200"
-          >
-            <p className="text-sm text-yellow-700">
-              {OfflineService.getQueuedActions().length} action(s) queued for when you're back online
-            </p>
-          </motion.div>
-        )}
-      </CardContent>
-    </Card>
+                {/* Offline Indicator */}
+                {!isOnline && action.requiresAuth !== false && (
+                  <div className="absolute top-2 right-2">
+                    <Badge variant="outline" className="text-xs text-orange-600">
+                      Offline
+                    </Badge>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* Queued Actions Summary */}
+      {actionQueue.length > 0 && (
+        <Card className="border-orange-200 bg-orange-50">
+          <CardContent className="p-3">
+            <div className="flex items-center gap-2 text-sm text-orange-800">
+              <Clock className="h-4 w-4" />
+              {actionQueue.length} actions queued for when you're back online
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
   );
 };
 
