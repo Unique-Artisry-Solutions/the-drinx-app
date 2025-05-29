@@ -1,214 +1,181 @@
-
-import React, { useState } from 'react';
-import Layout from '@/components/Layout';
-import { Search, Filter } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import EstablishmentCard from '@/components/EstablishmentCard';
-import CocktailCard from '@/components/CocktailCard';
-import ViewModeToggle from '@/components/ViewModeToggle';
-import { ViewMode } from '@/types/ExploreTypes';
+import React from 'react';
+import { useAuth } from '@/hooks/useAuth';
 import { usePersonalizedData } from '@/hooks/usePersonalizedData';
 import { useRecentActivity } from '@/hooks/useRecentActivity';
-import QuickStatsWidget from '@/components/explore/personalized/QuickStatsWidget';
-import RewardsHighlightWidget from '@/components/explore/personalized/RewardsHighlightWidget';
 import StreakMotivationWidget from '@/components/explore/personalized/StreakMotivationWidget';
-import ActivityFeedWidget from '@/components/explore/personalized/ActivityFeedWidget';
-import NearbyEstablishmentsWidget from '@/components/explore/personalized/NearbyEstablishmentsWidget';
-import UpcomingEventsWidget from '@/components/explore/personalized/UpcomingEventsWidget';
+import { QuickStatsWidget } from '@/components/explore/personalized/QuickStatsWidget';
 import RecommendationsWidget from '@/components/explore/personalized/RecommendationsWidget';
+import RewardsHighlightWidget from '@/components/rewards/RewardsHighlightWidget';
+import { NearbyEstablishmentsWidget } from '@/components/explore/personalized/NearbyEstablishmentsWidget';
+import { UpcomingEventsWidget } from '@/components/explore/personalized/UpcomingEventsWidget';
+import ActivityFeedWidget from '@/components/explore/personalized/ActivityFeedWidget';
+import EstablishmentCard from '@/components/EstablishmentCard';
+import CocktailCard from '@/components/CocktailCard';
+import FeaturedEstablishmentsSection from '@/components/explore/FeaturedEstablishmentsSection';
+import CocktailsSection from '@/components/explore/CocktailsSection';
+import EventsSection from '@/components/explore/EventsSection';
+import BarCrawlSection from '@/components/explore/BarCrawlSection';
 
 const Explore: React.FC = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState('relevance');
-  const [viewMode, setViewMode] = useState<ViewMode>('list');
-  
-  // Get personalized data
-  const {
-    loading: personalizedDataLoading,
-    isAuthenticated,
-    userStats,
-    recommendations,
-    nearbyEstablishments,
-    upcomingEvents
-  } = usePersonalizedData();
+  const { user } = useAuth();
+  const { personalizedData, isLoading } = usePersonalizedData();
+  const { activities, isLoading: activitiesLoading } = useRecentActivity();
 
-  // Get activity data
-  const {
-    data: activities = [],
-    isLoading: activitiesLoading
-  } = useRecentActivity();
-
-  // Mock data for establishments and cocktails
-  const establishments = [
+  // Mock data for personalized widgets
+  const mockRecommendations = [
     {
       id: '1',
-      name: 'The Spiritless Bar',
-      address: '123 Main St, Downtown',
-      rating: 4.8,
-      cocktailCount: 25,
-      image: '/api/placeholder/300/200',
-      distance: '0.3 miles'
+      type: 'establishment' as const,
+      title: 'Try The Mocktail Lounge',
+      description: 'Based on your recent visits',
+      confidence: 0.9,
+      imageUrl: undefined
     },
     {
       id: '2',
-      name: 'Zero Proof Lounge',
-      address: '456 Oak Ave, Midtown',
-      rating: 4.6,
-      cocktailCount: 18,
-      image: '/api/placeholder/300/200',
-      distance: '0.7 miles'
+      type: 'cocktail' as const,
+      title: 'Virgin Bloody Mary',
+      description: 'Popular among users like you',
+      confidence: 0.85,
+      imageUrl: undefined
     }
   ];
 
-  const cocktails = [
+  const mockEstablishments = [
     {
       id: '1',
-      name: 'Virgin Mojito Supreme',
-      establishment: 'The Spiritless Bar',
+      name: 'The Mocktail Lounge',
+      address: '123 Main St, Downtown',
+      rating: 4.8,
+      cocktailCount: 15,
+      image: '/api/placeholder/400/300',
+      distance: '0.3 miles',
+      latitude: 40.7128,
+      longitude: -74.0060
+    },
+    {
+      id: '2',
+      name: 'Sober Social Club',
+      address: '456 Oak Ave, Midtown',
+      rating: 4.5,
+      cocktailCount: 12,
+      image: '/api/placeholder/400/300',
+      distance: '0.7 miles',
+      latitude: 40.7580,
+      longitude: -73.9855
+    }
+  ];
+
+  const mockCocktails = [
+    {
+      id: '1',
+      name: 'Virgin Mojito',
+      establishment: 'The Mocktail Lounge',
       rating: 4.9,
-      image: '/api/placeholder/300/300',
+      image: '/api/placeholder/300/200',
       ingredients: ['Fresh mint', 'Lime juice', 'Club soda', 'Simple syrup']
     },
     {
       id: '2',
-      name: 'Elderflower Fizz',
-      establishment: 'Zero Proof Lounge',
+      name: 'Cucumber Basil Smash',
+      establishment: 'Sober Social Club',
       rating: 4.7,
-      image: '/api/placeholder/300/300',
-      ingredients: ['Elderflower cordial', 'Lemon juice', 'Sparkling water']
+      image: '/api/placeholder/300/200',
+      ingredients: ['Cucumber', 'Fresh basil', 'Lime', 'Tonic water']
     }
   ];
 
-  const filteredEstablishments = establishments.filter(establishment =>
-    establishment.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const filteredCocktails = cocktails.filter(cocktail =>
-    cocktail.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center">Loading your personalized experience...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <Layout>
-      <div className="container mx-auto px-4 py-6 max-w-7xl">
-        {/* Header */}
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-spiritless-pink to-spiritless-orange bg-clip-text text-transparent">
-            Explore Spiritless
+          <h1 className="text-3xl font-bold text-foreground mb-2">
+            {user ? `Welcome back, ${user.email?.split('@')[0]}!` : 'Explore'}
           </h1>
-          <p className="text-material-on-surface-variant text-lg">
-            Discover amazing mocktails and alcohol-free experiences near you
+          <p className="text-muted-foreground">
+            Discover amazing mocktails and sober-friendly establishments near you
           </p>
         </div>
 
-        {/* Quick Stats Widget - Show for all users */}
-        <div className="mb-6">
-          <QuickStatsWidget />
-        </div>
-
-        {/* Search and Filter Bar */}
-        <div className="bg-white rounded-lg shadow-sm border p-4 mb-6">
-          <div className="flex flex-col sm:flex-row gap-4 items-center">
-            <div className="relative flex-1 w-full">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input
-                placeholder="Search establishments or cocktails..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <div className="flex gap-2 w-full sm:w-auto">
-              <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-full sm:w-[150px]">
-                  <SelectValue placeholder="Sort by" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="relevance">Relevance</SelectItem>
-                  <SelectItem value="rating">Rating</SelectItem>
-                  <SelectItem value="distance">Distance</SelectItem>
-                  <SelectItem value="name">Name</SelectItem>
-                </SelectContent>
-              </Select>
-              <ViewModeToggle viewMode={viewMode} onViewModeChange={setViewMode} />
-              <Button variant="outline" size="icon">
-                <Filter className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        {/* Loading State */}
-        {personalizedDataLoading && (
-          <div className="text-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-spiritless-pink mx-auto"></div>
-            <p className="text-gray-500 mt-2">Loading your personalized content...</p>
-          </div>
-        )}
-
-        {/* Main Content Layout - Two Column with Right Sidebar */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Main Content - Left 3 Columns */}
-          <div className="lg:col-span-3 space-y-6">
-            {/* Recommendations Widget */}
-            <RecommendationsWidget
-              recommendations={recommendations}
-              onRecommendationClick={(id) => console.log('Recommendation clicked:', id)}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Main Content - Left Side */}
+          <div className="lg:col-span-8 space-y-6">
+            {/* Quick Stats */}
+            <QuickStatsWidget 
+              totalMocktailsTried={personalizedData?.totalMocktailsTried || 0}
+              totalPoints={personalizedData?.totalPoints || 0}
+              currentStreak={personalizedData?.currentStreak || 0}
             />
 
-            {/* Establishments Section */}
-            <section>
-              <h2 className="text-2xl font-semibold mb-4">Nearby Establishments</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {filteredEstablishments.map((establishment) => (
-                  <EstablishmentCard key={establishment.id} establishment={establishment} />
+            {/* Recommendations */}
+            <RecommendationsWidget recommendations={mockRecommendations} />
+
+            {/* Nearby Establishments */}
+            <div className="space-y-4">
+              <h2 className="text-xl font-semibold">Nearby Places</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {mockEstablishments.map((establishment) => (
+                  <EstablishmentCard
+                    key={establishment.id}
+                    id={establishment.id}
+                    name={establishment.name}
+                    address={establishment.address}
+                    distance={establishment.distance}
+                    cocktailCount={establishment.cocktailCount}
+                    image={establishment.image}
+                  />
                 ))}
               </div>
-            </section>
+            </div>
 
-            {/* Nearby Establishments Widget - Only show if authenticated */}
-            {isAuthenticated && !personalizedDataLoading && (
-              <NearbyEstablishmentsWidget establishments={nearbyEstablishments} />
-            )}
-
-            {/* Recent Activity - Center of layout */}
+            {/* Recent Activity */}
             <ActivityFeedWidget activities={activities} isLoading={activitiesLoading} />
 
-            {/* Cocktails Section */}
-            <section>
-              <h2 className="text-2xl font-semibold mb-4">Featured Mocktails</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredCocktails.map((cocktail) => (
-                  <CocktailCard key={cocktail.id} cocktail={cocktail} />
+            {/* Featured Cocktails */}
+            <div className="space-y-4">
+              <h2 className="text-xl font-semibold">Trending Mocktails</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {mockCocktails.map((cocktail) => (
+                  <CocktailCard
+                    key={cocktail.id}
+                    id={cocktail.id}
+                    name={cocktail.name}
+                    establishment={cocktail.establishment}
+                    rating={cocktail.rating}
+                    image={cocktail.image}
+                    ingredients={cocktail.ingredients}
+                  />
                 ))}
               </div>
-            </section>
+            </div>
+
+            {/* Other Sections */}
+            <FeaturedEstablishmentsSection />
+            <CocktailsSection />
+            <EventsSection />
+            <BarCrawlSection />
           </div>
 
-          {/* Right Sidebar - Personal Widgets */}
-          <div className="space-y-6">
-            {/* Personal Widgets Stack - Only show if authenticated */}
-            {isAuthenticated && !personalizedDataLoading && (
-              <>
-                <RewardsHighlightWidget
-                  totalPoints={userStats?.totalPoints || 1250}
-                  currentTier="Silver"
-                  nextTier="Gold"
-                  progressToNextTier={83}
-                />
-                <StreakMotivationWidget />
-              </>
-            )}
-            
-            {/* Upcoming Events - Only show if authenticated */}
-            {isAuthenticated && !personalizedDataLoading && (
-              <UpcomingEventsWidget events={upcomingEvents} />
-            )}
+          {/* Right Sidebar */}
+          <div className="lg:col-span-4 space-y-6">
+            <StreakMotivationWidget />
+            <RewardsHighlightWidget />
+            <UpcomingEventsWidget />
+            <NearbyEstablishmentsWidget />
           </div>
         </div>
       </div>
-    </Layout>
+    </div>
   );
 };
 
