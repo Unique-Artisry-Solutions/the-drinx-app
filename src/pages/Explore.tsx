@@ -4,13 +4,14 @@ import { Navigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import TopNavigation from '@/components/TopNavigation';
 import { FeatureGate } from '@/components/FeatureGate';
+import { FEATURES } from '@/lib/features/registry';
 import { EnhancedExploreSection } from '@/components/home/EnhancedExploreSection';
 import DevRoleSwitcher from '@/components/development/DevRoleSwitcher';
 
 const Explore: React.FC = () => {
   return (
     <FeatureGate 
-      feature="explore" 
+      feature={FEATURES.EXPLORE_PAGE} 
       fallback={<Navigate to="/" replace />}
     >
       <Layout>
