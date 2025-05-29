@@ -14,7 +14,7 @@ import { RecommendationsWidget } from '@/components/explore/personalized/Recomme
 import { ActivityFeedWidget } from '@/components/explore/personalized/ActivityFeedWidget';
 import { QuickActionCards } from '@/components/explore/personalized/QuickActionCards';
 import { RewardsHighlightWidget } from '@/components/explore/personalized/RewardsHighlightWidget';
-import { StreakMotivationWidget } from '@/components/explore/personalized/StreakMotivationWidget';
+import StreakMotivationWidget from '@/components/explore/personalized/StreakMotivationWidget';
 import { NearbyEstablishmentsWidget } from '@/components/explore/personalized/NearbyEstablishmentsWidget';
 import { UpcomingEventsWidget } from '@/components/explore/personalized/UpcomingEventsWidget';
 
@@ -45,6 +45,16 @@ const Explore: React.FC = () => {
       </Layout>
     );
   }
+
+  // Transform Activity[] to RealtimeActivity[] by adding required properties
+  const transformedActivity = recentActivity.map(activity => ({
+    ...activity,
+    user: typeof activity.user === 'string' 
+      ? { id: activity.user, name: activity.user } 
+      : activity.user || { id: 'unknown', name: 'Unknown User' },
+    likes: 0,
+    isLiked: false
+  }));
 
   return (
     <Layout>
@@ -89,10 +99,16 @@ const Explore: React.FC = () => {
         {/* Mobile Layout */}
         {isMobile ? (
           <div className="space-y-6">
-            {isAuthenticated && <QuickStatsWidget userStats={userStats} />}
-            <QuickActionCards quickActions={quickActions} />
+            {isAuthenticated && userStats && (
+              <QuickStatsWidget 
+                totalMocktailsTried={userStats.totalMocktailsTried || 0}
+                totalPoints={userStats.totalPoints || 0}
+                currentStreak={userStats.currentStreak || 0}
+              />
+            )}
+            <QuickActionCards actions={quickActions} />
             <RecommendationsWidget recommendations={recommendations} />
-            <ActivityFeedWidget activities={recentActivity} isLoading={loading} />
+            <ActivityFeedWidget activities={transformedActivity} isLoading={loading} />
             {isAuthenticated && (
               <>
                 <RewardsHighlightWidget />
@@ -107,10 +123,16 @@ const Explore: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             {/* Left Side - Main Content (3 columns) */}
             <div className="lg:col-span-3 space-y-6">
-              {isAuthenticated && <QuickStatsWidget userStats={userStats} />}
-              <QuickActionCards quickActions={quickActions} />
+              {isAuthenticated && userStats && (
+                <QuickStatsWidget 
+                  totalMocktailsTried={userStats.totalMocktailsTried || 0}
+                  totalPoints={userStats.totalPoints || 0}
+                  currentStreak={userStats.currentStreak || 0}
+                />
+              )}
+              <QuickActionCards actions={quickActions} />
               <RecommendationsWidget recommendations={recommendations} />
-              <ActivityFeedWidget activities={recentActivity} isLoading={loading} />
+              <ActivityFeedWidget activities={transformedActivity} isLoading={loading} />
             </div>
 
             {/* Right Side - Sidebar (1 column) */}
