@@ -112,23 +112,10 @@ const Explore: React.FC = () => {
           </div>
         )}
 
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
-          {/* Left Column - Main Content */}
-          <div className="xl:col-span-3 space-y-6">
-            {/* Rewards and Streak Row - Only show if authenticated */}
-            {isAuthenticated && !personalizedDataLoading && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <RewardsHighlightWidget
-                  totalPoints={userStats?.totalPoints || 1250}
-                  currentTier="Silver"
-                  nextTier="Gold"
-                  progressToNextTier={83}
-                />
-                <StreakMotivationWidget />
-              </div>
-            )}
-
+        {/* Main Content Layout - Two Column with Right Sidebar */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Main Content - Left 3 Columns */}
+          <div className="lg:col-span-3 space-y-6">
             {/* Recommendations Widget */}
             <RecommendationsWidget
               recommendations={recommendations}
@@ -144,11 +131,32 @@ const Explore: React.FC = () => {
             {isAuthenticated && !personalizedDataLoading && (
               <NearbyEstablishmentsWidget establishments={nearbyEstablishments} />
             )}
+
+            {/* Activity Feed on smaller screens */}
+            <div className="lg:hidden">
+              <ActivityFeedWidget activities={activities} isLoading={activitiesLoading} />
+            </div>
           </div>
 
-          {/* Right Column - Activity and Events */}
+          {/* Right Sidebar - Personal Widgets */}
           <div className="space-y-6">
-            <ActivityFeedWidget activities={activities} isLoading={activitiesLoading} />
+            {/* Personal Widgets Stack - Only show if authenticated */}
+            {isAuthenticated && !personalizedDataLoading && (
+              <>
+                <RewardsHighlightWidget
+                  totalPoints={userStats?.totalPoints || 1250}
+                  currentTier="Silver"
+                  nextTier="Gold"
+                  progressToNextTier={83}
+                />
+                <StreakMotivationWidget />
+              </>
+            )}
+
+            {/* Activity Feed on larger screens */}
+            <div className="hidden lg:block">
+              <ActivityFeedWidget activities={activities} isLoading={activitiesLoading} />
+            </div>
             
             {/* Upcoming Events - Only show if authenticated */}
             {isAuthenticated && !personalizedDataLoading && (
