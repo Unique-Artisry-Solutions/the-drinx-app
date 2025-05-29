@@ -1,125 +1,171 @@
-
 import { useState, useEffect } from 'react';
-import { UserStats } from '@/types/ExploreTypes';
-import { 
-  Activity, 
-  Recommendation, 
-  QuickAction, 
-  NearbyEstablishment, 
-  UpcomingEvent 
-} from '@/components/explore/personalized/types';
-import { 
-  MapPin, 
-  Calendar, 
-  PlusCircle, 
-  Route, 
-  Share2, 
-  Users 
-} from 'lucide-react';
+import { MapPin, Calendar, PlusCircle, Route, Share2, Users } from 'lucide-react';
 
-export interface PersonalizedData {
-  loading: boolean;
-  userStats: UserStats | null;
-  recentActivity: Activity[];
-  recommendations: Recommendation[];
-  quickActions: QuickAction[];
-  nearbyEstablishments: NearbyEstablishment[];
-  upcomingEvents: UpcomingEvent[];
-  isAuthenticated: boolean;
+export interface UserStats {
+  totalMocktailsTried: number;
+  totalPoints: number;
+  currentStreak: number;
+  establishmentsVisited: number;
+  favoriteEstablishments: number;
 }
 
-export const usePersonalizedData = (): PersonalizedData => {
-  const [loading, setLoading] = useState(true);
-  const [isAuthenticated] = useState(false); // Mock for now
+export interface Activity {
+  id: string;
+  type: 'check-in' | 'review' | 'recipe' | 'achievement' | 'bar-crawl' | 'photo-share';
+  title: string;
+  description: string;
+  timestamp: string;
+  user?: string;
+  location?: string;
+  likes: number;
+  isLiked: boolean;
+  imageUrl?: string;
+}
 
-  const [data, setData] = useState<Omit<PersonalizedData, 'loading' | 'isAuthenticated'>>({
-    userStats: null,
-    recentActivity: [],
-    recommendations: [],
-    quickActions: [],
-    nearbyEstablishments: [],
-    upcomingEvents: []
-  });
+export interface Recommendation {
+  id: string;
+  type: 'establishment' | 'cocktail' | 'event';
+  title: string;
+  description: string;
+  reason: string;
+  rating?: number;
+  distance?: string;
+  imageUrl?: string;
+  tags: string[];
+  isSaved: boolean;
+}
+
+export interface QuickAction {
+  id: string;
+  title: string;
+  description: string;
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+  color: string;
+  isEnabled: boolean;
+  badge?: string;
+  onClick: () => void;
+}
+
+export interface NearbyEstablishment {
+  id: string;
+  name: string;
+  description: string;
+  distance: string;
+  rating: number;
+  isOpen: boolean;
+  imageUrl?: string;
+}
+
+export interface UpcomingEvent {
+  id: string;
+  title: string;
+  description: string;
+  date: string;
+  time: string;
+  location: string;
+  attendees: number;
+  imageUrl?: string;
+}
+
+export const usePersonalizedData = () => {
+  const [loading, setLoading] = useState(true);
+  const [isAuthenticated] = useState(false); // Mock authentication state
+  const [userStats, setUserStats] = useState<UserStats | null>(null);
+  const [recentActivity, setRecentActivity] = useState<Activity[]>([]);
+  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
+  const [quickActions, setQuickActions] = useState<QuickAction[]>([]);
+  const [nearbyEstablishments, setNearbyEstablishments] = useState<NearbyEstablishment[]>([]);
+  const [upcomingEvents, setUpcomingEvents] = useState<UpcomingEvent[]>([]);
 
   useEffect(() => {
-    // Simulate loading and set mock data
-    const timer = setTimeout(() => {
-      const mockRecentActivity: Activity[] = [
+    // Simulate data loading
+    const loadData = async () => {
+      setLoading(true);
+      
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Mock user stats for authenticated users
+      if (isAuthenticated) {
+        setUserStats({
+          totalMocktailsTried: 42,
+          totalPoints: 1250,
+          currentStreak: 7,
+          establishmentsVisited: 15,
+          favoriteEstablishments: 5
+        });
+      }
+
+      // Mock recent activity data
+      setRecentActivity([
         {
           id: '1',
           type: 'check-in',
           title: 'Checked in at The Mocktail Lounge',
-          description: 'Enjoyed a refreshing Virgin Mojito',
-          timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-          user: 'Alex Johnson',
+          description: 'Tried the signature Virgin Mojito',
+          timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
+          user: 'You',
           location: 'Downtown',
-          likes: 12,
+          likes: 5,
           isLiked: true,
-          imageUrl: '/api/placeholder/300/200'
+          imageUrl: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=400&h=300&fit=crop'
         },
         {
           id: '2',
           type: 'recipe',
-          title: 'Created new recipe: Sunset Sparkler',
-          description: 'A vibrant orange and pink layered mocktail perfect for summer evenings',
-          timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
-          user: 'Sarah Chen',
-          likes: 8,
-          isLiked: false,
-          metadata: { ingredients: ['orange juice', 'cranberry juice', 'sparkling water'] }
+          title: 'Created new recipe: Tropical Sunset',
+          description: 'A refreshing blend of pineapple, orange, and cranberry',
+          timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
+          user: 'You',
+          likes: 12,
+          isLiked: false
         },
         {
           id: '3',
           type: 'achievement',
           title: 'Earned "Explorer" badge',
-          description: 'Visited 10 different establishments this month',
-          timestamp: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
-          user: 'Mike Rodriguez',
-          likes: 15,
+          description: 'Visited 10 different establishments',
+          timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
+          user: 'You',
+          likes: 8,
           isLiked: true
         }
-      ];
+      ]);
 
-      const mockRecommendations: Recommendation[] = [
+      // Mock recommendations
+      setRecommendations([
         {
-          id: 'rec-1',
-          title: 'The Garden Terrace',
-          description: 'A rooftop bar specializing in fresh herb-infused mocktails with a stunning city view',
+          id: '1',
           type: 'establishment',
+          title: 'Zero Proof Bar',
+          description: 'New mocktail bar with craft non-alcoholic spirits',
+          reason: 'Based on your love for craft cocktails',
           rating: 4.8,
-          distance: '0.3 miles',
-          imageUrl: '/api/placeholder/400/200',
-          reason: 'Based on your love for herb-infused drinks',
-          tags: ['rooftop', 'herbs', 'city view'],
+          distance: '0.5 miles',
+          imageUrl: 'https://images.unsplash.com/photo-1544124499-58912cbddaad?w=400&h=300&fit=crop',
+          tags: ['Craft', 'Upscale', 'New'],
           isSaved: false
         },
         {
-          id: 'rec-2',
-          title: 'Lavender Lemon Fizz',
-          description: 'A calming blend of lavender syrup, fresh lemon, and sparkling water',
+          id: '2',
           type: 'cocktail',
+          title: 'Lavender Lemon Spritz',
+          description: 'Refreshing lavender-infused mocktail with a citrus twist',
+          reason: 'Perfect for your taste preferences',
           rating: 4.6,
-          reason: 'Perfect for your taste in floral mocktails',
-          tags: ['floral', 'refreshing', 'summer'],
+          imageUrl: 'https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=400&h=300&fit=crop',
+          tags: ['Floral', 'Citrus', 'Light'],
           isSaved: true
-        },
-        {
-          id: 'rec-3',
-          title: 'Mocktail Mixology Workshop',
-          description: 'Learn advanced techniques from professional bartenders',
-          type: 'event',
-          reason: 'Continue your mixology journey',
-          tags: ['workshop', 'learning', 'hands-on'],
-          isSaved: false
         }
-      ];
+      ]);
 
-      const mockQuickActions: QuickAction[] = [
+      // Mock quick actions with proper icon creation
+      const createQuickActions = () => [
         {
           id: 'check-in',
           title: 'Check In Nearby',
           description: 'Find and check into establishments around you',
-          icon: <MapPin className="h-5 w-5" />,
+          icon: MapPin,
           color: 'bg-blue-500',
           isEnabled: true,
           onClick: () => console.log('Check in nearby')
@@ -128,90 +174,116 @@ export const usePersonalizedData = (): PersonalizedData => {
           id: 'find-events',
           title: 'Find Events',
           description: 'Discover upcoming mocktail events',
-          icon: <Calendar className="h-5 w-5" />,
+          icon: Calendar,
           color: 'bg-green-500',
           isEnabled: true,
-          badge: 'New',
           onClick: () => console.log('Find events')
         },
         {
           id: 'create-recipe',
           title: 'Create Recipe',
           description: 'Share your mocktail creation',
-          icon: <PlusCircle className="h-5 w-5" />,
+          icon: PlusCircle,
           color: 'bg-purple-500',
           isEnabled: true,
-          recentlyUsed: true,
           onClick: () => console.log('Create recipe')
+        },
+        {
+          id: 'start-crawl',
+          title: 'Start Bar Crawl',
+          description: 'Plan your next adventure',
+          icon: Route,
+          color: 'bg-orange-500',
+          isEnabled: true,
+          badge: 'Popular',
+          onClick: () => console.log('Start bar crawl')
+        },
+        {
+          id: 'share-achievement',
+          title: 'Share Achievement',
+          description: 'Show off your latest milestone',
+          icon: Share2,
+          color: 'bg-pink-500',
+          isEnabled: true,
+          onClick: () => console.log('Share achievement')
+        },
+        {
+          id: 'find-friends',
+          title: 'Find Friends',
+          description: 'Connect with other mocktail enthusiasts',
+          icon: Users,
+          color: 'bg-cyan-500',
+          isEnabled: true,
+          onClick: () => console.log('Find friends')
         }
       ];
 
-      const mockNearbyEstablishments: NearbyEstablishment[] = [
+      setQuickActions(createQuickActions());
+
+      // Mock nearby establishments
+      setNearbyEstablishments([
         {
-          id: 'est-1',
-          name: 'The Botanical Bar',
-          description: 'Fresh botanical mocktails in a garden setting',
-          distance: '0.2 miles',
-          rating: 4.7,
-          isOpen: true,
-          imageUrl: '/api/placeholder/300/200'
+          id: '1',
+          name: 'The Mocktail Lounge',
+          description: 'Creative non-alcoholic cocktails',
+          distance: '0.3 miles',
+          rating: 4.8,
+          isOpen: true
         },
         {
-          id: 'est-2',
-          name: 'Citrus & Sage',
-          description: 'Mediterranean-inspired alcohol-free cocktails',
-          distance: '0.5 miles',
+          id: '2',
+          name: 'Sober Social Club',
+          description: 'Community-focused sober bar',
+          distance: '0.7 miles',
           rating: 4.5,
-          isOpen: true,
-          imageUrl: '/api/placeholder/300/200'
-        }
-      ];
-
-      const mockUpcomingEvents: UpcomingEvent[] = [
-        {
-          id: 'event-1',
-          title: 'Summer Mocktail Festival',
-          description: 'A celebration of creative non-alcoholic cocktails',
-          date: 'June 15, 2024',
-          time: '2:00 PM',
-          location: 'Central Park',
-          attendees: 150,
-          imageUrl: '/api/placeholder/400/200'
+          isOpen: true
         },
         {
-          id: 'event-2',
-          title: 'Mixology Masterclass',
-          description: 'Learn from award-winning bartenders',
-          date: 'June 20, 2024',
-          time: '7:00 PM',
-          location: 'The Modern Cocktail Co.',
-          attendees: 25
+          id: '3',
+          name: 'Zero Proof Kitchen',
+          description: 'Farm-to-table mocktails',
+          distance: '1.2 miles',
+          rating: 4.6,
+          isOpen: false
         }
-      ];
+      ]);
 
-      setData({
-        userStats: isAuthenticated ? {
-          totalMocktailsTried: 47,
-          totalPoints: 2350,
-          currentStreak: 8,
-          establishmentsVisited: 15,
-          favoriteEstablishments: 5
-        } : null,
-        recentActivity: mockRecentActivity,
-        recommendations: mockRecommendations,
-        quickActions: mockQuickActions,
-        nearbyEstablishments: mockNearbyEstablishments,
-        upcomingEvents: mockUpcomingEvents
-      });
+      // Mock upcoming events
+      setUpcomingEvents([
+        {
+          id: '1',
+          title: 'Mocktail Mixology Workshop',
+          description: 'Learn to craft the perfect virgin cocktails',
+          date: 'Dec 15',
+          time: '7:00 PM',
+          location: 'The Mocktail Lounge',
+          attendees: 12
+        },
+        {
+          id: '2',
+          title: 'Sober Social Hour',
+          description: 'Weekly community meetup',
+          date: 'Dec 17',
+          time: '6:00 PM',
+          location: 'Sober Social Club',
+          attendees: 8
+        }
+      ]);
+
       setLoading(false);
-    }, 1000);
+    };
 
-    return () => clearTimeout(timer);
+    loadData();
   }, [isAuthenticated]);
 
   return {
     loading,
-    isAuthenticated,
-    ...data
+    userStats,
+    recentActivity,
+    recommendations,
+    quickActions,
+    nearbyEstablishments,
+    upcomingEvents,
+    isAuthenticated
   };
 };
