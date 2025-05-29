@@ -9,6 +9,7 @@ import QuickActionCards from '@/components/explore/personalized/QuickActionCards
 import { NearbyEstablishmentsWidget } from '@/components/explore/personalized/NearbyEstablishmentsWidget';
 import { UpcomingEventsWidget } from '@/components/explore/personalized/UpcomingEventsWidget';
 import { Skeleton } from '@/components/ui/skeleton';
+import { RealtimeActivity } from '@/types/explore';
 
 const PersonalizedExplorePage: React.FC = () => {
   const {
@@ -21,6 +22,17 @@ const PersonalizedExplorePage: React.FC = () => {
     upcomingEvents,
     isAuthenticated
   } = usePersonalizedData();
+
+  // Convert base Activity to RealtimeActivity format for the widget
+  const convertToRealtimeActivity = (activities: any[]): RealtimeActivity[] => {
+    return activities.map(activity => ({
+      ...activity,
+      user: activity.user || { id: 'unknown', name: 'Anonymous User' },
+      likes: 0,
+      isLiked: false,
+      metadata: {}
+    }));
+  };
 
   if (loading) {
     return (
@@ -82,7 +94,7 @@ const PersonalizedExplorePage: React.FC = () => {
           <div className="space-y-6">
             {/* Recent Activity - Only for authenticated users */}
             {isAuthenticated && (
-              <ActivityFeedWidget activities={recentActivity} />
+              <ActivityFeedWidget activities={convertToRealtimeActivity(recentActivity)} />
             )}
 
             {/* Upcoming Events */}

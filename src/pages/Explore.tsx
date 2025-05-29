@@ -9,7 +9,8 @@ import { useRealtimeActivity } from '@/hooks/useRealtimeActivity';
 import { QuickActionCards } from '@/components/explore/personalized/QuickActionCards';
 import { RecommendationsWidget } from '@/components/explore/personalized/RecommendationsWidget';
 import { ActivityFeedWidget } from '@/components/explore/personalized/ActivityFeedWidget';
-import { DevRoleSwitcher } from '@/components/development/DevRoleSwitcher';
+import DevRoleSwitcher from '@/components/development/DevRoleSwitcher';
+import { RecommendationCategoryType } from '@/types/explore';
 
 const Explore: React.FC = () => {
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
@@ -26,6 +27,11 @@ const Explore: React.FC = () => {
   } = usePersonalizedRecommendations();
 
   const { activities, isLoading: activitiesLoading } = useRealtimeActivity();
+
+  // Type-safe category handler
+  const handleCategoryChange = (category: RecommendationCategoryType) => {
+    setActiveCategory(category);
+  };
 
   return (
     <Layout>
@@ -89,7 +95,7 @@ const Explore: React.FC = () => {
               recommendations={recommendations}
               isLoading={recommendationsLoading}
               activeCategory={activeCategory}
-              setActiveCategory={setActiveCategory}
+              setActiveCategory={handleCategoryChange}
               onSave={saveRecommendation}
               onDismiss={dismissRecommendation}
               onShare={shareRecommendation}
@@ -98,7 +104,7 @@ const Explore: React.FC = () => {
 
           {/* Right Column - Activity Feed */}
           <div>
-            <ActivityFeedWidget activities={activities} />
+            <ActivityFeedWidget activities={activities} isLoading={activitiesLoading} />
           </div>
         </div>
       </div>

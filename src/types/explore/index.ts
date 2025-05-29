@@ -1,7 +1,7 @@
 
 import { ReactNode } from 'react';
 
-// Unified Activity interface
+// Unified Activity interface - base interface for all activity types
 export interface Activity {
   id: string;
   type: 'check-in' | 'review' | 'recipe' | 'achievement';
@@ -10,6 +10,20 @@ export interface Activity {
   timestamp: string;
   user?: string;
   location?: string;
+}
+
+// Extended RealtimeActivity interface - includes social features
+export interface RealtimeActivity extends Activity {
+  type: 'check-in' | 'review' | 'recipe' | 'achievement' | 'bar-crawl' | 'photo-share';
+  user: {
+    id: string;
+    name: string;
+    avatar?: string;
+  };
+  imageUrl?: string;
+  likes: number;
+  isLiked: boolean;
+  metadata?: Record<string, any>;
 }
 
 // Unified Recommendation interface
@@ -30,12 +44,16 @@ export interface Recommendation {
   metadata?: Record<string, any>;
 }
 
-// Updated QuickAction interface with icon metadata instead of ReactNode
+// Strict filter type definitions
+export type ActivityFilterType = 'all' | 'friends' | 'nearby';
+export type RecommendationCategoryType = 'all' | 'establishments' | 'cocktails' | 'events';
+
+// Updated QuickAction interface with strict types
 export interface QuickAction {
   id: string;
   title: string;
   description: string;
-  iconName: string; // Changed from icon: ReactNode to iconName: string
+  iconName: string;
   color: string;
   isEnabled: boolean;
   requiresAuth?: boolean;
@@ -67,7 +85,7 @@ export interface UpcomingEvent {
   imageUrl?: string;
 }
 
-// Personalized data interface
+// Personalized data interface with strict typing
 export interface PersonalizedData {
   loading: boolean;
   userStats: any | null;
@@ -77,4 +95,13 @@ export interface PersonalizedData {
   nearbyEstablishments: NearbyEstablishment[];
   upcomingEvents: UpcomingEvent[];
   isAuthenticated: boolean;
+}
+
+// Type-safe filter handler interfaces
+export interface ActivityFilterHandler {
+  (value: ActivityFilterType): void;
+}
+
+export interface RecommendationCategoryHandler {
+  (category: RecommendationCategoryType): void;
 }

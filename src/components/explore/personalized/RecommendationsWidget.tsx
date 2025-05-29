@@ -4,13 +4,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Star, Bookmark, Share, Clock } from 'lucide-react';
-import { Recommendation } from '@/types/explore';
+import { Recommendation, RecommendationCategoryType, RecommendationCategoryHandler } from '@/types/explore';
 
 interface RecommendationsWidgetProps {
   recommendations?: Recommendation[];
   isLoading?: boolean;
-  activeCategory?: string;
-  setActiveCategory?: (category: string) => void;
+  activeCategory?: RecommendationCategoryType;
+  setActiveCategory?: RecommendationCategoryHandler;
   onSave?: (id: string) => void;
   onDismiss?: (id: string) => void;
   onShare?: (id: string) => void;
@@ -25,12 +25,19 @@ export const RecommendationsWidget: React.FC<RecommendationsWidgetProps> = ({
   onDismiss,
   onShare
 }) => {
-  const categories = [
+  const categories: { id: RecommendationCategoryType; label: string }[] = [
     { id: 'all', label: 'All' },
     { id: 'establishments', label: 'Places' },
     { id: 'cocktails', label: 'Drinks' },
     { id: 'events', label: 'Events' }
   ];
+
+  // Type-safe category handler
+  const handleCategoryChange = (categoryId: RecommendationCategoryType) => {
+    if (setActiveCategory) {
+      setActiveCategory(categoryId);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -60,7 +67,7 @@ export const RecommendationsWidget: React.FC<RecommendationsWidgetProps> = ({
                 key={category.id}
                 variant={activeCategory === category.id ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => setActiveCategory(category.id)}
+                onClick={() => handleCategoryChange(category.id)}
               >
                 {category.label}
               </Button>

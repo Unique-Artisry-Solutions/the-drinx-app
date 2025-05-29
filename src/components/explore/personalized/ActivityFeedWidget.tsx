@@ -1,98 +1,70 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Heart, Share2, MessageCircle, User, MapPin, Trophy, Camera, Coffee } from 'lucide-react';
-import { useRealtimeActivity, RealtimeActivity } from '@/hooks/useRealtimeActivity';
-import { OfflineService } from '@/services/OfflineService';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { Heart, MessageCircle, Share, Clock } from 'lucide-react';
+import { formatDistance } from 'date-fns';
+import { RealtimeActivity, ActivityFilterType, ActivityFilterHandler } from '@/types/explore';
 
-export interface ActivityFeedWidgetProps {
+interface ActivityFeedWidgetProps {
   activities?: RealtimeActivity[];
+  isLoading?: boolean;
 }
 
-export const ActivityFeedWidget: React.FC<ActivityFeedWidgetProps> = ({ activities: propActivities }) => {
-  const { activities: realtimeActivities, isLoading, likeActivity, shareActivity } = useRealtimeActivity();
-  const [activeFilter, setActiveFilter] = useState<'all' | 'friends' | 'nearby'>('all');
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
+export const ActivityFeedWidget: React.FC<ActivityFeedWidgetProps> = ({
+  activities = [],
+  isLoading = false
+}) => {
+  const [filter, setFilter] = useState<ActivityFilterType>('all');
 
-  const activities = propActivities || realtimeActivities;
-
-  useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-    
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-    
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, []);
+  // Type-safe filter handler
+  const handleFilterChange: ActivityFilterHandler = (value: ActivityFilterType) => {
+    setFilter(value);
+  };
 
   const filteredActivities = activities.filter(activity => {
-    if (activeFilter === 'all') return true;
-    if (activeFilter === 'friends') return activity.metadata?.isFriend;
-    if (activeFilter === 'nearby') return activity.location;
+    if (filter === 'all') return true;
+    if (filter === 'friends') return activity.type !== 'check-in';
+    if (filter === 'nearby') return activity.location;
     return true;
   });
 
-  const handleLike = async (activityId: string) => {
-    if (!isOnline) {
-      OfflineService.queueAction('like_activity', { activityId });
-      return;
-    }
-    await likeActivity(activityId);
-  };
-
-  const handleShare = async (activityId: string) => {
-    if (!isOnline) {
-      OfflineService.queueAction('share_activity', { activityId });
-      return;
-    }
-    await shareActivity(activityId);
-  };
-
-  const getActivityIcon = (type: RealtimeActivity['type']) => {
+  const getActivityIcon = (type: string) => {
     switch (type) {
-      case 'check-in': return MapPin;
-      case 'review': return MessageCircle;
-      case 'recipe': return Coffee;
-      case 'achievement': return Trophy;
-      case 'bar-crawl': return MapPin;
-      case 'photo-share': return Camera;
-      default: return User;
+      case 'check-in': return '📍';
+      case 'review': return '⭐';
+      case 'recipe': return '🍹';
+      case 'achievement': return '🏆';
+      case 'bar-crawl': return '🚶';
+      case 'photo-share': return '📸';
+      default: return '📝';
     }
   };
 
-  const formatTimeAgo = (timestamp: string) => {
-    const now = new Date();
-    const time = new Date(timestamp);
-    const diffInMinutes = Math.floor((now.getTime() - time.getTime()) / (1000 * 60));
-    
-    if (diffInMinutes < 1) return 'Just now';
-    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
-    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
-    return `${Math.floor(diffInMinutes / 1440)}d ago`;
+  const getActivityColor = (type: string) => {
+    switch (type) {
+      case 'check-in': return 'bg-blue-100 text-blue-800';
+      case 'review': return 'bg-yellow-100 text-yellow-800';
+      case 'recipe': return 'bg-purple-100 text-purple-800';
+      case 'achievement': return 'bg-green-100 text-green-800';
+      case 'bar-crawl': return 'bg-orange-100 text-orange-800';
+      case 'photo-share': return 'bg-pink-100 text-pink-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
   };
 
   if (isLoading) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <User className="h-5 w-5" />
-            Activity Feed
-          </CardTitle>
+          <CardTitle>Recent Activity</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="animate-pulse">
-                <div className="h-16 bg-muted rounded"></div>
-              </div>
+              <div key={i} className="h-16 bg-muted rounded-lg animate-pulse" />
             ))}
           </div>
         </CardContent>
@@ -104,118 +76,81 @@ export const ActivityFeedWidget: React.FC<ActivityFeedWidgetProps> = ({ activiti
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <User className="h-5 w-5" />
-            Activity Feed
-          </div>
-          <div className="flex items-center gap-2">
-            {!isOnline && (
-              <Badge variant="destructive" className="text-xs">
-                Offline
-              </Badge>
-            )}
-            {OfflineService.getQueuedActions().length > 0 && (
-              <Badge variant="secondary" className="text-xs">
-                {OfflineService.getQueuedActions().length} queued
-              </Badge>
-            )}
+          Recent Activity
+          <div className="flex gap-1">
+            {(['all', 'friends', 'nearby'] as ActivityFilterType[]).map((filterType) => (
+              <Button
+                key={filterType}
+                variant={filter === filterType ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => handleFilterChange(filterType)}
+                className="text-xs px-2 py-1 h-6"
+              >
+                {filterType}
+              </Button>
+            ))}
           </div>
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <Tabs value={activeFilter} onValueChange={setActiveFilter} className="mb-4">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="all">All</TabsTrigger>
-            <TabsTrigger value="friends">Friends</TabsTrigger>
-            <TabsTrigger value="nearby">Nearby</TabsTrigger>
-          </TabsList>
-        </Tabs>
-
-        <div className="space-y-4 max-h-96 overflow-y-auto">
-          {filteredActivities.map((activity) => {
-            const IconComponent = getActivityIcon(activity.type);
-            
-            return (
-              <div key={activity.id} className="p-3 rounded-lg border bg-card/50 animate-fade-in">
-                <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0">
-                    {activity.user.avatar ? (
-                      <img 
-                        src={activity.user.avatar} 
-                        alt={activity.user.name}
-                        className="w-8 h-8 rounded-full"
-                      />
-                    ) : (
-                      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-                        <User className="h-4 w-4" />
-                      </div>
-                    )}
+        <div className="space-y-4">
+          {filteredActivities.length === 0 ? (
+            <div className="text-center text-muted-foreground py-8">
+              No recent activity
+            </div>
+          ) : (
+            filteredActivities.map((activity) => (
+              <div key={activity.id} className="flex items-start gap-3 p-3 rounded-lg border">
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={activity.user.avatar} />
+                  <AvatarFallback>{activity.user.name.charAt(0)}</AvatarFallback>
+                </Avatar>
+                
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-medium text-sm">{activity.user.name}</span>
+                    <Badge variant="outline" className={`text-xs ${getActivityColor(activity.type)}`}>
+                      {getActivityIcon(activity.type)} {activity.type}
+                    </Badge>
                   </div>
                   
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <IconComponent className="h-4 w-4 text-muted-foreground" />
-                      <h4 className="text-sm font-medium truncate">{activity.title}</h4>
-                      <span className="text-xs text-muted-foreground">
-                        {formatTimeAgo(activity.timestamp)}
-                      </span>
+                  <p className="text-sm text-muted-foreground mb-2">{activity.description}</p>
+                  
+                  {activity.imageUrl && (
+                    <img 
+                      src={activity.imageUrl} 
+                      alt="Activity" 
+                      className="w-full h-32 object-cover rounded-md mb-2"
+                    />
+                  )}
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <Clock className="h-3 w-3" />
+                      {formatDistance(new Date(activity.timestamp), new Date(), { addSuffix: true })}
                     </div>
                     
-                    <p className="text-sm text-muted-foreground mb-2">{activity.description}</p>
-                    
-                    {activity.location && (
-                      <div className="flex items-center gap-1 mb-2">
-                        <MapPin className="h-3 w-3 text-muted-foreground" />
-                        <span className="text-xs text-muted-foreground">{activity.location}</span>
-                      </div>
-                    )}
-                    
-                    {activity.imageUrl && (
-                      <div className="mb-3">
-                        <img 
-                          src={activity.imageUrl} 
-                          alt="Activity"
-                          className="w-full h-24 object-cover rounded-lg"
-                        />
-                      </div>
-                    )}
-                    
-                    <div className="flex items-center gap-4">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleLike(activity.id)}
-                        className={`h-6 px-2 text-xs ${activity.isLiked ? 'text-red-500' : ''}`}
-                      >
-                        <Heart className={`h-3 w-3 mr-1 ${activity.isLiked ? 'fill-current' : ''}`} />
+                    <div className="flex items-center gap-3">
+                      <button className="flex items-center gap-1 text-xs text-muted-foreground hover:text-red-500">
+                        <Heart className={`h-3 w-3 ${activity.isLiked ? 'fill-red-500 text-red-500' : ''}`} />
                         {activity.likes}
-                      </Button>
-                      
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleShare(activity.id)}
-                        className="h-6 px-2 text-xs"
-                      >
-                        <Share2 className="h-3 w-3 mr-1" />
-                        Share
-                      </Button>
+                      </button>
+                      <button className="text-xs text-muted-foreground hover:text-blue-500">
+                        <MessageCircle className="h-3 w-3" />
+                      </button>
+                      <button className="text-xs text-muted-foreground hover:text-green-500">
+                        <Share className="h-3 w-3" />
+                      </button>
                     </div>
                   </div>
                 </div>
               </div>
-            );
-          })}
-          
-          {filteredActivities.length === 0 && (
-            <div className="text-center py-8 text-muted-foreground">
-              <User className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>No activities to show</p>
-              <p className="text-sm">Check back later for updates!</p>
-            </div>
+            ))
           )}
         </div>
       </CardContent>
     </Card>
   );
 };
+
+export default ActivityFeedWidget;

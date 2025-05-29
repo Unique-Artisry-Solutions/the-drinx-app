@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from 'react';
+import { RecommendationCategoryType } from '@/types/explore';
 
 export interface PersonalizedRecommendation {
   id: string;
@@ -21,7 +22,7 @@ export interface PersonalizedRecommendation {
 export const usePersonalizedRecommendations = () => {
   const [recommendations, setRecommendations] = useState<PersonalizedRecommendation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeCategory, setActiveCategory] = useState<'all' | 'establishments' | 'cocktails' | 'events'>('all');
+  const [activeCategory, setActiveCategory] = useState<RecommendationCategoryType>('all');
 
   useEffect(() => {
     const loadRecommendations = async () => {
