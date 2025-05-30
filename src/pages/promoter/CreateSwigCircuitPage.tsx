@@ -8,7 +8,7 @@ import CreateSwigCircuitHeader from '@/components/swigCircuit/CreateSwigCircuitH
 import StepsNavigation from '@/components/swigCircuit/StepsNavigation';
 import BasicsTab from '@/components/swigCircuit/tabs/BasicsTab';
 import ThemeTab from '@/components/swigCircuit/tabs/ThemeTab';
-import VenuesTab from '@/components/swigCircuit/tabs/VenuesTab';
+import VenuesTabAdapter from '@/components/swigCircuit/tabs/VenuesTabAdapter';
 import DrinksTab from '@/components/swigCircuit/tabs/DrinksTab';
 import PairingsTab from '@/components/swigCircuit/tabs/PairingsTab';
 
@@ -72,7 +72,7 @@ const CreateSwigCircuitPage: React.FC = () => {
 
       case "venues":
         return (
-          <VenuesTab
+          <VenuesTabAdapter
             selectedEstablishments={swigCircuit.selectedEstablishments}
             onSaveEstablishments={swigCircuit.handleSaveEstablishments}
             maxDistance={swigCircuit.maxDistance}
