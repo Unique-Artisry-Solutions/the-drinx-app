@@ -8,6 +8,7 @@ import SectionContent from './SectionContent';
 import RecentActivityCard from './RecentActivityCard';
 import PendingActionsCard from './PendingActionsCard';
 import MocktailSuggestionsCard from './MocktailSuggestionsCard';
+import AnalyticsSection from './sections/AnalyticsSection';
 import { useVisitorStats } from '@/hooks/establishment/useVisitorStats';
 
 interface EstablishmentDashboardProps {
@@ -140,6 +141,12 @@ const EstablishmentDashboard: React.FC<EstablishmentDashboardProps> = ({
           </CardContent>
         </Card>
       </div>
+
+      {/* Analytics Dashboard Section - Restored */}
+      <AnalyticsSection 
+        visitorStats={visitorStats}
+        establishmentId={establishmentId}
+      />
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mx-4 md:mx-6 lg:mx-[10%]">
