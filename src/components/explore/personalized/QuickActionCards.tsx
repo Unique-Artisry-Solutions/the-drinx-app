@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,9 +14,11 @@ const iconMap: Record<string, LucideIcon> = {
   Share,
   UserPlus
 };
+
 interface QuickActionCardsProps {
   actions?: QuickAction[];
 }
+
 export const QuickActionCards: React.FC<QuickActionCardsProps> = ({
   actions = []
 }) => {
@@ -28,18 +31,19 @@ export const QuickActionCards: React.FC<QuickActionCardsProps> = ({
         </CardContent>
       </Card>;
   }
-  return <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+
+  return <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4">
       {actions.map(action => {
       const IconComponent = iconMap[action.iconName];
       return <Card key={action.id} className="hover:shadow-md transition-shadow">
-            <CardContent className="p-1">
-              <Button variant="ghost" className="w-full h-auto flex flex-col gap-2 p-4" onClick={action.onClick} disabled={!action.isEnabled}>
+            <CardContent className="p-4">
+              <Button variant="ghost" className="w-full h-auto flex flex-col gap-3 p-4" onClick={action.onClick} disabled={!action.isEnabled}>
                 <div className={`p-3 rounded-lg ${action.color} text-white`}>
-                  {IconComponent && <IconComponent className="h-5 w-5" />}
+                  {IconComponent && <IconComponent className="h-6 w-6" />}
                 </div>
                 <div className="text-center">
-                  <div className="font-medium text-sm">{action.title}</div>
-                  <div className="text-xs text-muted-foreground mt-1">
+                  <div className="font-medium text-sm leading-tight">{action.title}</div>
+                  <div className="text-xs text-muted-foreground mt-2 leading-relaxed">
                     {action.description}
                   </div>
                 </div>
@@ -49,4 +53,5 @@ export const QuickActionCards: React.FC<QuickActionCardsProps> = ({
     })}
     </div>;
 };
+
 export default QuickActionCards;
