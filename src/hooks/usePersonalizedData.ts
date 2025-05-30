@@ -1,7 +1,6 @@
-
 import { useState, useEffect } from 'react';
 import { UserStats } from '@/types/ExploreTypes';
-import { PersonalizedData, QuickAction, Activity } from '@/types/explore';
+import { PersonalizedData, QuickAction, Activity, Recommendation } from '@/types/explore';
 
 export const usePersonalizedData = (): PersonalizedData => {
   const [loading, setLoading] = useState(true);
@@ -19,6 +18,7 @@ export const usePersonalizedData = (): PersonalizedData => {
   useEffect(() => {
     // Simulate loading and set mock data
     const timer = setTimeout(() => {
+      // Mock quick actions
       const mockQuickActions: QuickAction[] = [
         {
           id: '1',
@@ -73,6 +73,111 @@ export const usePersonalizedData = (): PersonalizedData => {
           color: 'bg-teal-500',
           isEnabled: true,
           onClick: () => console.log('Find friends clicked')
+        }
+      ];
+
+      // Mock recommendations with diverse types and personalization
+      const mockRecommendations: Recommendation[] = [
+        {
+          id: '1',
+          title: 'The Zen Garden',
+          description: 'Peaceful atmosphere with meditation-inspired mocktails',
+          type: 'establishment',
+          rating: 4.8,
+          distance: '0.3 miles',
+          price: '$$',
+          imageUrl: '/api/placeholder/300/200',
+          reason: 'Based on your love for quiet spaces and wellness activities',
+          tags: ['peaceful', 'meditation', 'organic'],
+          isSaved: false,
+          availability: 'open',
+          trending: true
+        },
+        {
+          id: '2',
+          title: 'Spiced Pear Fizz',
+          description: 'Warming autumn flavors with ginger and cinnamon',
+          type: 'cocktail',
+          rating: 4.6,
+          imageUrl: '/api/placeholder/300/200',
+          reason: 'Perfect for your fall flavor preferences',
+          tags: ['seasonal', 'spiced', 'refreshing'],
+          isSaved: true
+        },
+        {
+          id: '3',
+          title: 'Mindful Mixology Workshop',
+          description: 'Learn to create mocktails with intention and mindfulness',
+          type: 'event',
+          rating: 4.9,
+          distance: '1.2 miles',
+          imageUrl: '/api/placeholder/300/200',
+          reason: 'Matches your interest in wellness and learning',
+          tags: ['workshop', 'mindfulness', 'learning'],
+          isSaved: false,
+          trending: false
+        },
+        {
+          id: '4',
+          title: 'Tropical Paradise Punch',
+          description: 'Community-shared recipe with coconut and pineapple',
+          type: 'recipe',
+          rating: 4.4,
+          imageUrl: '/api/placeholder/300/200',
+          reason: 'Similar to recipes you\'ve saved before',
+          tags: ['tropical', 'coconut', 'community'],
+          isSaved: false
+        },
+        {
+          id: '5',
+          title: 'Rooftop Sober Social',
+          description: 'Monthly rooftop gathering with city views',
+          type: 'event',
+          rating: 4.7,
+          distance: '2.1 miles',
+          imageUrl: '/api/placeholder/300/200',
+          reason: 'Popular among people with similar interests',
+          tags: ['social', 'rooftop', 'monthly'],
+          isSaved: false,
+          availability: 'closing-soon'
+        },
+        {
+          id: '6',
+          title: 'Lavender Dreams',
+          description: 'Calming lavender and chamomile blend',
+          type: 'cocktail',
+          rating: 4.5,
+          imageUrl: '/api/placeholder/300/200',
+          reason: 'Recommended for your evening preferences',
+          tags: ['calming', 'lavender', 'herbal'],
+          isSaved: false
+        },
+        {
+          id: '7',
+          title: 'The Modern Apothecary',
+          description: 'Botanical-focused establishment with house-made syrups',
+          type: 'establishment',
+          rating: 4.9,
+          distance: '0.8 miles',
+          price: '$$$',
+          imageUrl: '/api/placeholder/300/200',
+          reason: 'Known for innovative mocktails you might enjoy',
+          tags: ['botanical', 'innovative', 'premium'],
+          isSaved: false,
+          availability: 'open',
+          trending: true
+        },
+        {
+          id: '8',
+          title: 'Citrus Herb Garden Recipe',
+          description: 'Fresh basil and lime creation by local mixologist',
+          type: 'recipe',
+          rating: 4.3,
+          imageUrl: '/api/placeholder/300/200',
+          reason: 'Trending in your area this week',
+          tags: ['citrus', 'herbs', 'fresh'],
+          isSaved: false,
+          trending: true
         }
       ];
 
@@ -164,7 +269,7 @@ export const usePersonalizedData = (): PersonalizedData => {
           favoriteEstablishments: 3
         },
         recentActivity: mockRecentActivity,
-        recommendations: [],
+        recommendations: mockRecommendations,
         quickActions: mockQuickActions,
         nearbyEstablishments: mockNearbyEstablishments,
         upcomingEvents: mockUpcomingEvents
