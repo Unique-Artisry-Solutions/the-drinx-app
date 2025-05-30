@@ -21,7 +21,7 @@ export const QuickActions: React.FC = () => {
       title: "Create Event",
       description: "Set up a new event",
       icon: Calendar,
-      action: () => navigate('/promoter/events'),
+      action: () => navigate('/promoter/events/create'),
       color: "bg-blue-500 hover:bg-blue-600"
     },
     {
