@@ -1,4 +1,3 @@
-
 import { UserType } from '@/types/navigation';
 import { NavigationType } from '@/components/navigation/NavigationTypes';
 
@@ -52,18 +51,29 @@ export const resolveNavigationState = (
  * Gets the appropriate home path for a user type
  */
 export const getHomePathForUserType = (userType: UserType | null): string => {
+  console.log('getHomePathForUserType - Input userType:', userType);
+  
+  let homePath: string;
+  
   switch (userType) {
     case 'establishment':
-      return '/establishment/dashboard';
+      homePath = '/establishment/dashboard';
+      break;
     case 'promoter':
-      return '/promoter/dashboard';
+      homePath = '/promoter/dashboard';
+      break;
     case 'admin':
-      return '/admin/system-breakdown';
+      homePath = '/admin/system-breakdown';
+      break;
     case 'individual':
-      return '/explore';
+      homePath = '/explore';
+      break;
     default:
-      return '/landing';
+      homePath = '/landing';
   }
+  
+  console.log('getHomePathForUserType - Returning homePath:', homePath);
+  return homePath;
 };
 
 /**
