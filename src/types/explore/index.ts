@@ -49,7 +49,7 @@ export interface Recommendation {
 
 // Strict filter type definitions
 export type ActivityFilterType = 'all' | 'friends' | 'nearby';
-export type RecommendationCategoryType = 'all' | 'establishments' | 'cocktails' | 'events';
+export type RecommendationCategoryType = 'all' | 'establishments' | 'cocktails' | 'events' | 'recipes';
 
 // Updated QuickAction interface with strict types
 export interface QuickAction {
