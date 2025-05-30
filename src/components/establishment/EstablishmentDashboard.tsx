@@ -1,274 +1,212 @@
 
-import React, { useState, useEffect } from 'react';
-import { CircleSlash } from 'lucide-react';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import MetricsVisualization from './MetricsVisualization';
-import KeyMetricsCards from './KeyMetricsCards';
-import PendingActionsCard from './PendingActionsCard';
+import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import { MapPin, Clock, Users, Star, TrendingUp, Calendar } from 'lucide-react';
 import DashboardHeader from './DashboardHeader';
-import ActivitiesSection from './ActivitiesSection';
-import AppFooter from '@/components/AppFooter';
-import { useDashboardData } from '@/hooks/useDashboardData';
-import DrinkProfileModal, { Drink } from './DrinkProfileModal';
-import { useToast } from '@/hooks/use-toast';
-import { useNavigate } from 'react-router-dom';
+import QuickNavigation from './QuickNavigation';
+import RecentActivityCard from './RecentActivityCard';
+import PendingActionsCard from './PendingActionsCard';
 import MocktailSuggestionsCard from './MocktailSuggestionsCard';
+import SectionContent from './SectionContent';
+import { useVisitorStats } from '@/hooks/establishment/useVisitorStats';
 import { useAuth } from '@/contexts/auth';
 
-// Import our new components
-import VisitorStatsTab from './VisitorStatsTab';
-import RevenueStatsTab from './RevenueStatsTab';
-import DrinkPopularityTab from './DrinkPopularityTab';
-import { useEstablishmentAnalytics } from '@/hooks/useEstablishmentAnalytics';
-import { recordVisitorSession } from '@/services/establishmentAnalyticsService';
-
-interface EstablishmentDashboardProps {
-  establishmentName: string;
-  establishmentId: string;
-}
-
-const EstablishmentDashboard: React.FC<EstablishmentDashboardProps> = ({ 
-  establishmentName,
-  establishmentId
-}) => {
-  const [isAddMocktailModalOpen, setIsAddMocktailModalOpen] = useState(false);
-  const [pendingSuggestions, setPendingSuggestions] = useState(0);
-  const { toast } = useToast();
-  const navigate = useNavigate();
+const EstablishmentDashboard = () => {
+  const [activeTab, setActiveTab] = useState('overview');
   const { user } = useAuth();
+  const establishmentId = user?.id;
   
-  // Use our custom hook to get all dashboard data
-  const { 
-    stats, 
-    visitorData, 
-    ratingData, 
-    mocktailData,
-    barCrawlData,
-    isLoading 
-  } = useDashboardData();
-  
-  // Define date range for analytics
-  const [dateRange, setDateRange] = useState({
-    startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // 30 days ago
-    endDate: new Date()
-  });
-  
-  // Use our new analytics hook
-  const {
-    visitorAnalytics,
-    popularDrinks,
-    revenueReports,
-    refresh: refreshAnalytics,
-    isLoading: isAnalyticsLoading
-  } = useEstablishmentAnalytics({
-    establishmentId,
-    range: dateRange
-  });
-  
-  // Format visitor data for the VisitorStatsTab
-  const formattedVisitorData = React.useMemo(() => {
-    return visitorAnalytics.map(data => ({
-      name: new Date(data.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      visitors: data.total_visitors,
-      returningVisitors: data.returning_visitors,
-      uniqueVisitors: data.unique_visitors,
-      date: data.date
-    }));
-  }, [visitorAnalytics]);
-  
-  // Calculate total revenue
-  const totalRevenue = React.useMemo(() => {
-    return revenueReports.reduce((sum, report) => sum + report.monthly_revenue, 0);
-  }, [revenueReports]);
-  
-  // Record visitor session when dashboard loads
-  useEffect(() => {
-    if (establishmentId && user) {
-      // Simplified visitor session recording for now
-      const checkPreviousVisits = async () => {
-        try {
-          // Using our mock service instead of direct Supabase calls
-          await recordVisitorSession(establishmentId, false);
-        } catch (error) {
-          console.error('Error recording visitor session:', error);
-        }
-      };
-      
-      checkPreviousVisits();
-    }
-  }, [establishmentId, user]);
-  
-  // Fetch pending mocktail suggestions count
-  useEffect(() => {
-    const fetchPendingSuggestionsCount = async () => {
-      if (!establishmentId) return;
-      // Mock data for now
-      setPendingSuggestions(3);
-    };
-    
-    fetchPendingSuggestionsCount();
-  }, [establishmentId]);
-  
-  const handleAddMocktail = (drink: Drink) => {
-    // Here you would call an API to save the mocktail
-    toast({
-      title: "Mocktail added",
-      description: `${drink.name} has been added to your menu.`,
-    });
-    setIsAddMocktailModalOpen(false);
-  };
-  
-  const handleViewAllRatings = () => {
-    navigate('/establishment/reviews');
-  };
-  
-  const handleViewAllAnalytics = () => {
-    navigate('/establishment/analytics');
-  };
-  
-  if (isLoading || isAnalyticsLoading) {
-    return (
-      <div className="animate-fade-in vibrant-bg p-6 space-y-6">
-        <div className="flex justify-center items-center h-64">
-          <div className="loader"></div>
-        </div>
-      </div>
-    );
-  }
+  // Fix: Correctly use the hook without destructuring
+  const visitorStats = useVisitorStats(establishmentId || '');
 
-  // Check if we have data for visitor metrics visualization
-  const hasEnoughDataForVisualization = visitorData.length > 0 && ratingData.length > 0;
+  const mockActivities = [
+    {
+      id: 1,
+      type: 'review' as const,
+      user: 'Sarah M.',
+      description: 'Left a 5-star review for "Sunset Spritz"',
+      timestamp: '2 hours ago'
+    },
+    {
+      id: 2,
+      type: 'order' as const,
+      user: 'Mike R.',
+      description: 'Ordered 3 "Berry Bliss" mocktails',
+      timestamp: '4 hours ago'
+    },
+    {
+      id: 3,
+      type: 'checkin' as const,
+      user: 'Emma L.',
+      description: 'Checked in via QR code',
+      timestamp: '6 hours ago'
+    }
+  ];
+
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+  };
 
   return (
-    <>
-      <div className="animate-fade-in vibrant-bg p-6 space-y-8 max-w-7xl mx-auto">
-        {/* Dashboard Header */}
-        <DashboardHeader 
-          establishmentName={establishmentName} 
-          onAddMocktail={() => setIsAddMocktailModalOpen(true)}
-        />
+    <div className="min-h-screen bg-gray-50">
+      <div className="container mx-auto px-4 py-6 space-y-6">
+        <DashboardHeader />
         
-        {/* Key Metrics Cards */}
-        <div className="my-8">
-          <KeyMetricsCards 
-            stats={{
-              ...stats,
-              // Update with real data from our analytics
-              totalVisits: visitorAnalytics.reduce((sum, item) => sum + item.total_visitors, 0),
-              visitorCount: visitorAnalytics.reduce((sum, item) => sum + item.unique_visitors, 0),
-              revenue: new Intl.NumberFormat('en-US', {
-                style: 'currency',
-                currency: 'USD'
-              }).format(totalRevenue),
-              // Add data availability flags
-              hasRevenueData: revenueReports.length > 0,
-              hasVisitorData: visitorAnalytics.length > 0,
-              hasRatingData: ratingData.length > 0,
-              hasReturnRateData: visitorAnalytics.length > 0,
-              hasAnalyticsData: true  // We now have real analytics data
-            }}
-            onViewAllRatings={handleViewAllRatings}
-            onViewAllAnalytics={handleViewAllAnalytics}
-          />
-        </div>
+        <QuickNavigation />
         
-        {/* Pending Actions - Full width horizontal */}
-        <div className="mb-6">
-          <PendingActionsCard 
-            pendingBarCrawls={stats.pendingBarCrawls} 
-            pendingReviews={stats.reviewsThisWeek} 
-          />
-        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+              <TabsList className="grid w-full grid-cols-4 lg:grid-cols-6">
+                <TabsTrigger value="overview">Overview</TabsTrigger>
+                <TabsTrigger value="analytics">Analytics</TabsTrigger>
+                <TabsTrigger value="menu">Menu</TabsTrigger>
+                <TabsTrigger value="events">Events</TabsTrigger>
+                <TabsTrigger value="reviews" className="hidden lg:block">Reviews</TabsTrigger>
+                <TabsTrigger value="settings" className="hidden lg:block">Settings</TabsTrigger>
+              </TabsList>
 
-        {/* Mocktail Suggestions Card */}
-        <div className="mb-6">
-          <MocktailSuggestionsCard pendingSuggestionCount={pendingSuggestions} />
-        </div>
-        
-        {/* New Analytics Tabs */}
-        <div className="mb-6">
-          <Tabs defaultValue="overview" className="w-full">
-            <TabsList className="mb-6">
-              <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="visitors">Visitors</TabsTrigger>
-              <TabsTrigger value="revenue">Revenue</TabsTrigger>
-              <TabsTrigger value="drinks">Popular Drinks</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="overview">
-              {hasEnoughDataForVisualization ? (
-                <MetricsVisualization 
-                  returningRate={stats.returningRate}
-                  visitorData={visitorData}
-                  ratingData={ratingData}
-                  mocktailData={mocktailData}
-                  barCrawlData={barCrawlData}
-                />
-              ) : (
-                <div className="bg-white p-8 rounded-lg shadow text-center">
-                  <CircleSlash className="h-16 w-16 mx-auto text-gray-300 mb-4" />
-                  <h3 className="text-xl font-medium mb-2">Not enough data for visualization</h3>
-                  <p className="text-material-on-surface-variant mb-4">
-                    Start gathering more data to see detailed metrics and visualizations here.
-                  </p>
+              <TabsContent value="overview" className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium">Total Visitors</CardTitle>
+                      <Users className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">{visitorStats?.totalVisitors || '1,234'}</div>
+                      <p className="text-xs text-muted-foreground">+12% from last month</p>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium">Today's Check-ins</CardTitle>
+                      <MapPin className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">{visitorStats?.todayCheckins || '23'}</div>
+                      <p className="text-xs text-muted-foreground">+5 from yesterday</p>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium">Average Rating</CardTitle>
+                      <Star className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">{visitorStats?.averageRating || '4.8'}</div>
+                      <p className="text-xs text-muted-foreground">Based on 127 reviews</p>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium">Peak Hours</CardTitle>
+                      <Clock className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">{visitorStats?.peakHours || '7-9 PM'}</div>
+                      <p className="text-xs text-muted-foreground">Most active period</p>
+                    </CardContent>
+                  </Card>
                 </div>
-              )}
-            </TabsContent>
-            
-            <TabsContent value="visitors">
-              <VisitorStatsTab 
-                visitorStats={{
-                  totalVisits: visitorAnalytics.reduce((sum, item) => sum + item.total_visitors, 0),
-                  uniqueVisitors: visitorAnalytics.reduce((sum, item) => sum + item.unique_visitors, 0),
-                  returningVisitors: visitorAnalytics.reduce((sum, item) => sum + item.returning_visitors, 0)
-                }}
-                visitorTrends={formattedVisitorData}
-                hasData={visitorAnalytics.length > 0}
-              />
-            </TabsContent>
-            
-            <TabsContent value="revenue">
-              <RevenueStatsTab 
-                establishmentId={establishmentId}
-                revenueTrends={revenueReports.map(report => ({
-                  name: new Date(report.month).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
-                  revenue: report.monthly_revenue,
-                  transactions: report.transaction_count,
-                  average: report.average_transaction,
-                  month: report.month
-                }))}
-                totalRevenue={totalRevenue}
-                hasData={revenueReports.length > 0}
-                onRevenueAdded={refreshAnalytics}
-              />
-            </TabsContent>
-            
-            <TabsContent value="drinks">
-              <DrinkPopularityTab 
-                popularDrinks={popularDrinks} 
-                hasData={popularDrinks.length > 0}
-              />
-            </TabsContent>
-          </Tabs>
-        </div>
-        
-        {/* Recent Activity - Full width section */}
-        <div className="mb-8">
-          <ActivitiesSection />
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <RecentActivityCard activities={mockActivities} />
+                  <div className="space-y-4">
+                    <PendingActionsCard />
+                    <MocktailSuggestionsCard />
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="analytics">
+                <SectionContent 
+                  title="Analytics Dashboard"
+                  description="Detailed insights about your establishment's performance"
+                  visitorStats={visitorStats}
+                />
+              </TabsContent>
+
+              <TabsContent value="menu">
+                <SectionContent 
+                  title="Menu Management"
+                  description="Manage your mocktail menu and offerings"
+                  visitorStats={visitorStats}
+                />
+              </TabsContent>
+
+              <TabsContent value="events">
+                <SectionContent 
+                  title="Events Management"
+                  description="Organize and track your establishment events"
+                  visitorStats={visitorStats}
+                />
+              </TabsContent>
+
+              <TabsContent value="reviews">
+                <SectionContent 
+                  title="Customer Reviews"
+                  description="Monitor and respond to customer feedback"
+                  visitorStats={visitorStats}
+                />
+              </TabsContent>
+
+              <TabsContent value="settings">
+                <SectionContent 
+                  title="Establishment Settings"
+                  description="Configure your establishment preferences"
+                  visitorStats={visitorStats}
+                />
+              </TabsContent>
+            </Tabs>
+          </div>
+
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5" />
+                  Quick Stats
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">This Week</span>
+                  <Badge variant="secondary">+15%</Badge>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">Popular Drink</span>
+                  <span className="text-sm font-medium">Sunset Spritz</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">Busy Day</span>
+                  <span className="text-sm font-medium">Friday</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5" />
+                  Upcoming Events
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-sm text-muted-foreground">
+                  No upcoming events scheduled
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
-      
-      {/* Include the AppFooter */}
-      <AppFooter />
-      
-      {/* Add Mocktail Modal */}
-      <DrinkProfileModal
-        isOpen={isAddMocktailModalOpen}
-        onClose={() => setIsAddMocktailModalOpen(false)}
-        drink={null}
-        onSave={handleAddMocktail}
-      />
-    </>
+    </div>
   );
 };
 

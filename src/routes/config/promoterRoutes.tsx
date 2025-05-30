@@ -18,6 +18,16 @@ const MarketingAnalytics = lazy(() => import('@/pages/promoter/MarketingAnalytic
 const PromoterNotificationsPage = lazy(() => import('@/pages/promoter/notifications/PromoterNotificationsPage'));
 const NotificationTestingPage = lazy(() => import('@/pages/promoter/notifications/NotificationTestingPage'));
 
+// Create a placeholder component for the create event page
+const CreateEvent = lazy(() => Promise.resolve({ 
+  default: () => (
+    <div className="container mx-auto px-4 py-6">
+      <h1 className="text-2xl font-bold mb-4">Create Event</h1>
+      <p>Event creation form coming soon...</p>
+    </div>
+  )
+}));
+
 export const promoterRoutes: RouteObject[] = [
   { path: '/promoter/dashboard', element: <PromoterDashboard /> },
   { path: '/promoter/profile', element: <PromoterProfile /> },
@@ -26,6 +36,7 @@ export const promoterRoutes: RouteObject[] = [
   { path: '/promoter/notifications', element: <PromoterNotificationsPage /> },
   { path: '/promoter/notifications/testing', element: <NotificationTestingPage /> },
   { path: '/promoter/events', element: <PromoterEvents /> },
+  { path: '/promoter/events/create', element: <CreateEvent /> },
   { path: '/promoter/analytics', element: <PromoterAnalytics /> },
   { path: '/promoter/create-swig-circuit', element: <CreateSwigCircuit /> },
   { path: '/promoter/marketing-analytics', element: <MarketingAnalytics /> },
