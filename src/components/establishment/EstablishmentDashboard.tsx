@@ -1,84 +1,93 @@
+
 import React, { useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Users, Calendar, TrendingUp, Star, BarChart3, DollarSign, Trophy } from 'lucide-react';
+import DashboardHeader from './DashboardHeader';
 import PendingActionsCard from './PendingActionsCard';
 import MocktailSuggestionsCard from './MocktailSuggestionsCard';
 import RecentActivityCard from './RecentActivityCard';
 import SectionContent from './SectionContent';
-import VisitorStatsTab from './VisitorStatsTab';
-import DrinkPopularityTab from './DrinkPopularityTab';
 import { useVisitorStats } from '@/hooks/establishment/useVisitorStats';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Building2, Users, Calendar, TrendingUp } from 'lucide-react';
+import { useActivitiesData } from '@/hooks/useActivitiesData';
 
 interface EstablishmentDashboardProps {
-  establishmentName?: string;
+  establishmentName: string;
   establishmentId?: string;
 }
 
 const EstablishmentDashboard: React.FC<EstablishmentDashboardProps> = ({ 
-  establishmentName = "Your Establishment",
+  establishmentName, 
   establishmentId 
 }) => {
-  const [activeTab, setActiveTab] = useState("overview");
   const [activeSection, setActiveSection] = useState<string | null>(null);
-  const { visitorStats } = useVisitorStats(establishmentId || '');
-
-  // Mock data for pending actions and suggestions
-  const [pendingBarCrawls, setPendingBarCrawls] = useState(3);
-  const [pendingReviews, setPendingReviews] = useState(15);
-  const [pendingSuggestionCount, setPendingSuggestionCount] = useState(7);
+  const visitorStats = useVisitorStats(establishmentId || '');
+  const { activities } = useActivitiesData();
 
   const handleTabChange = (tab: string) => {
     setActiveSection(tab);
   };
 
+  if (activeSection) {
+    return (
+      <SectionContent 
+        activeSection={activeSection} 
+        handleTabChange={handleTabChange}
+        visitorStats={visitorStats}
+        establishmentId={establishmentId}
+      />
+    );
+  }
+
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Header Section */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">{establishmentName} Dashboard</h1>
-        <p className="text-gray-600 mt-2">Manage your establishment and track performance</p>
-      </div>
+    <div className="space-y-6 p-6">
+      <DashboardHeader establishmentName={establishmentName} />
       
       {/* Key Metrics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <Card>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card className="vibrant-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Visitors</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">1,234</div>
-            <p className="text-xs text-muted-foreground">+10.1% from last month</p>
+            <div className="text-2xl font-bold">{visitorStats.totalVisits}</div>
+            <p className="text-xs text-muted-foreground">
+              {visitorStats.hasData ? 'Yesterday' : 'Sample data'}
+            </p>
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="vibrant-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Events</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Unique Visitors</CardTitle>
+            <Star className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">8</div>
-            <p className="text-xs text-muted-foreground">3 this week</p>
+            <div className="text-2xl font-bold">{visitorStats.uniqueVisitors}</div>
+            <p className="text-xs text-muted-foreground">
+              {visitorStats.hasData ? 'Yesterday' : 'Sample data'}
+            </p>
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="vibrant-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Revenue</CardTitle>
+            <CardTitle className="text-sm font-medium">Returning Visitors</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">$12,234</div>
-            <p className="text-xs text-muted-foreground">+19% from last month</p>
+            <div className="text-2xl font-bold">{visitorStats.returningVisitors}</div>
+            <p className="text-xs text-muted-foreground">
+              {visitorStats.hasData ? 'Yesterday' : 'Sample data'}
+            </p>
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="vibrant-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Rating</CardTitle>
-            <Building2 className="h-4 w-4 text-muted-foreground" />
+            <Trophy className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">4.8</div>
@@ -86,87 +95,99 @@ const EstablishmentDashboard: React.FC<EstablishmentDashboardProps> = ({
           </CardContent>
         </Card>
       </div>
-      
+
       {/* Analytics Tabs Section - Moved above Pending Actions */}
-      <div className="mb-6">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="visitors">Visitors</TabsTrigger>
-            <TabsTrigger value="revenue">Revenue</TabsTrigger>
-            <TabsTrigger value="popular-drinks">Popular Drinks</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="overview" className="space-y-6 mt-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <VisitorStatsTab 
-                visitorStats={visitorStats}
-                hasData={visitorStats.hasData}
-              />
-              <DrinkPopularityTab hasData={false} />
-            </div>
+      <Card className="vibrant-card mb-6">
+        <CardHeader>
+          <CardTitle className="text-2xl">Analytics Dashboard</CardTitle>
+          <CardDescription>Track your establishment's performance</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Tabs defaultValue="overview" className="space-y-4">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="visitors">Visitors</TabsTrigger>
+              <TabsTrigger value="revenue">Revenue</TabsTrigger>
+              <TabsTrigger value="drinks">Popular Drinks</TabsTrigger>
+            </TabsList>
             
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="bg-gray-50 p-6 rounded-lg">
-                <h3 className="text-lg font-medium mb-4">Revenue Trends</h3>
-                <p className="text-gray-500">Revenue analytics coming soon...</p>
+            <TabsContent value="overview" className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm">Daily Average</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">87</div>
+                    <p className="text-xs text-muted-foreground">visitors per day</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm">Peak Hours</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">7-9 PM</div>
+                    <p className="text-xs text-muted-foreground">busiest time</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm">Customer Satisfaction</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">94%</div>
+                    <p className="text-xs text-muted-foreground">positive reviews</p>
+                  </CardContent>
+                </Card>
               </div>
-              <div className="bg-gray-50 p-6 rounded-lg">
-                <h3 className="text-lg font-medium mb-4">Customer Satisfaction</h3>
-                <p className="text-gray-500">Customer feedback metrics coming soon...</p>
+            </TabsContent>
+            
+            <TabsContent value="visitors" className="space-y-4">
+              <div className="h-[300px] flex items-center justify-center border rounded-lg">
+                <div className="text-center">
+                  <BarChart3 className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <p className="text-lg font-medium">Visitor Analytics</p>
+                  <p className="text-sm text-muted-foreground">Detailed visitor data visualization</p>
+                </div>
               </div>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="visitors" className="mt-6">
-            <VisitorStatsTab 
-              visitorStats={visitorStats}
-              hasData={visitorStats.hasData}
-            />
-          </TabsContent>
-          
-          <TabsContent value="revenue" className="mt-6">
-            <div className="bg-gray-50 p-8 rounded-lg text-center">
-              <h3 className="text-lg font-medium mb-2">Revenue Analytics</h3>
-              <p className="text-gray-500">Detailed revenue tracking and analytics coming soon...</p>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="popular-drinks" className="mt-6">
-            <DrinkPopularityTab hasData={false} />
-          </TabsContent>
-        </Tabs>
-      </div>
-      
+            </TabsContent>
+            
+            <TabsContent value="revenue" className="space-y-4">
+              <div className="h-[300px] flex items-center justify-center border rounded-lg">
+                <div className="text-center">
+                  <DollarSign className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <p className="text-lg font-medium">Revenue Analytics</p>
+                  <p className="text-sm text-muted-foreground">Revenue trends and insights</p>
+                </div>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="drinks" className="space-y-4">
+              <div className="h-[300px] flex items-center justify-center border rounded-lg">
+                <div className="text-center">
+                  <Trophy className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <p className="text-lg font-medium">Popular Drinks</p>
+                  <p className="text-sm text-muted-foreground">Most ordered mocktails and beverages</p>
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+
       {/* Pending Actions Card */}
       <div className="mb-6">
-        <PendingActionsCard 
-          pendingBarCrawls={pendingBarCrawls}
-          pendingReviews={pendingReviews}
-        />
+        <PendingActionsCard handleTabChange={handleTabChange} />
       </div>
-      
+
       {/* Mocktail Suggestions Card */}
       <div className="mb-6">
-        <MocktailSuggestionsCard 
-          pendingSuggestionCount={pendingSuggestionCount}
-        />
+        <MocktailSuggestionsCard handleTabChange={handleTabChange} />
       </div>
 
       {/* Recent Activity Card */}
-      <div className="mb-8">
-        <RecentActivityCard />
-      </div>
-
-      {/* Section Content */}
-      {activeSection && (
-        <SectionContent 
-          activeSection={activeSection}
-          handleTabChange={handleTabChange}
-          visitorStats={visitorStats}
-          establishmentId={establishmentId}
-        />
-      )}
+      <RecentActivityCard activities={activities} />
     </div>
   );
 };
