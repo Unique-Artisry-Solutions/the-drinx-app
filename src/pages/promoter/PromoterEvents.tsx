@@ -1,10 +1,21 @@
-
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calendar, Users, MapPin, Clock } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Calendar, Users, MapPin, Clock, Plus } from 'lucide-react';
 
 const PromoterEvents: React.FC = () => {
+  const navigate = useNavigate();
+
+  const handleCreateEvent = () => {
+    navigate('/promoter/events/create');
+  };
+
+  const handleCreateSwigCircuit = () => {
+    navigate('/promoter/create-swig-circuit');
+  };
+
   return (
     <Layout>
       <div className="container mx-auto px-4 py-6 space-y-6">
@@ -12,6 +23,23 @@ const PromoterEvents: React.FC = () => {
           <div>
             <h1 className="text-3xl font-bold text-purple-700">My Events</h1>
             <p className="text-muted-foreground">Manage and track your upcoming events</p>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+            <Button 
+              onClick={handleCreateEvent}
+              className="bg-spiritless-pink hover:bg-spiritless-pink/90 text-white"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Create Event
+            </Button>
+            <Button 
+              onClick={handleCreateSwigCircuit}
+              variant="outline"
+              className="border-spiritless-pink text-spiritless-pink hover:bg-spiritless-pink hover:text-white"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Create Swig Circuit
+            </Button>
           </div>
         </div>
 
