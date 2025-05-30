@@ -15,6 +15,11 @@ export const routes: Record<string, BreadcrumbConfig> = {
     label: 'Home',
     icon: React.createElement(Home, { className: "h-4 w-4" })
   },
+  '/landing': {
+    path: '/landing',
+    label: 'Home',
+    icon: React.createElement(Home, { className: "h-4 w-4" })
+  },
   '/explore': {
     path: '/explore',
     label: 'Explore',
@@ -45,10 +50,20 @@ export const routes: Record<string, BreadcrumbConfig> = {
     label: 'Events',
     icon: React.createElement(Calendar, { className: "h-4 w-4" })
   },
+  '/promoter/events/create': {
+    path: '/promoter/events/create',
+    label: 'Create Event',
+    icon: React.createElement(Calendar, { className: "h-4 w-4" })
+  },
   '/admin': {
     path: '/admin',
     label: 'Admin',
     icon: React.createElement(Settings, { className: "h-4 w-4" })
+  },
+  '/admin/system-breakdown': {
+    path: '/admin/system-breakdown',
+    label: 'System Breakdown',
+    icon: React.createElement(BarChart3, { className: "h-4 w-4" })
   },
   '/swig-circuits': {
     path: '/swig-circuits',

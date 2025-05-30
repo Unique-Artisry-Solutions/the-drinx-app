@@ -7,13 +7,14 @@ import SignupPage from '@/pages/SignupPage';
 import VerifyEmail from '@/pages/VerifyEmail';
 import ContactPage from '@/pages/ContactPage';
 import MapPage from '@/pages/MapPage';
+import IndexRedirect from '@/components/routing/IndexRedirect';
 
 const NotFound = lazy(() => import('@/pages/NotFound'));
 const SwigCircuitsPage = lazy(() => import('@/pages/SwigCircuitsPage'));
 const EventsPage = lazy(() => import('@/pages/EventsPage'));
 
 export const publicRoutes: RouteObject[] = [
-  { path: '/', element: <LandingPage /> },
+  { path: '/', element: <IndexRedirect /> },
   { path: '/landing', element: <LandingPage /> },
   { path: '/login', element: <LoginPage /> },
   { path: '/signup', element: <SignupPage /> },

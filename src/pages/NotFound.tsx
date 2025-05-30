@@ -3,7 +3,7 @@ import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { useTheme } from '@/contexts/ThemeContext';
-import { useAuth } from '@/contexts/auth'; // Fixed import path
+import { useAuth } from '@/contexts/auth/AuthProvider';
 
 const NotFound = () => {
   const location = useLocation();
@@ -33,6 +33,8 @@ const NotFound = () => {
         navigate('/establishment/dashboard');
       } else if (userType === 'promoter') {
         navigate('/promoter/dashboard');
+      } else if (userType === 'admin') {
+        navigate('/admin/system-breakdown');
       } else {
         navigate('/explore');
       }
