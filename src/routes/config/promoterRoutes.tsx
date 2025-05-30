@@ -3,7 +3,7 @@ import { lazy } from 'react';
 import { RouteObject } from 'react-router-dom';
 
 // Lazy loaded components
-const PromoterDashboard = lazy(() => import('@/pages/promoter/PromoterDashboard'));
+const PromoterDashboardPage = lazy(() => import('@/pages/promoter/PromoterDashboardPage'));
 const PromoterProfile = lazy(() => import('@/pages/promoter/PromoterProfile'));
 const PromoterProfileEdit = lazy(() => import('@/pages/promoter/PromoterProfileEdit'));
 const PromoterSettingsPage = lazy(() => import('@/pages/promoter/PromoterSettingsPage'));
@@ -20,7 +20,7 @@ const PromoterNotificationsPage = lazy(() => import('@/pages/promoter/notificati
 const NotificationTestingPage = lazy(() => import('@/pages/promoter/notifications/NotificationTestingPage'));
 
 export const promoterRoutes: RouteObject[] = [
-  { path: '/promoter/dashboard', element: <PromoterDashboard /> },
+  { path: '/promoter/dashboard', element: <PromoterDashboardPage /> },
   { path: '/promoter/profile', element: <PromoterProfile /> },
   { path: '/promoter/profile/edit', element: <PromoterProfileEdit /> },
   { path: '/promoter/settings', element: <PromoterSettingsPage /> },
