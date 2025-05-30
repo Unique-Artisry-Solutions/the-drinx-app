@@ -1,7 +1,8 @@
+
 import React from 'react';
 import Layout from '@/components/Layout';
-import { useUserLocation } from '@/hooks/useUserLocation';
-import { useEstablishments } from '@/hooks/useEstablishments';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card } from '@/components/ui/card';
 import { useSwigCircuitCreation } from '@/hooks/swigCircuit/useSwigCircuitCreation';
 import CreateSwigCircuitHeader from '@/components/swigCircuit/CreateSwigCircuitHeader';
 import StepsNavigation from '@/components/swigCircuit/StepsNavigation';
@@ -10,67 +11,9 @@ import ThemeTab from '@/components/swigCircuit/tabs/ThemeTab';
 import VenuesTab from '@/components/swigCircuit/tabs/VenuesTab';
 import DrinksTab from '@/components/swigCircuit/tabs/DrinksTab';
 import PairingsTab from '@/components/swigCircuit/tabs/PairingsTab';
-import TicketsTab from '@/components/swigCircuit/tabs/TicketsTab';
-import ProjectionsTab from '@/components/swigCircuit/tabs/ProjectionsTab';
-import { useAuth } from '@/contexts/auth';
 
 const CreateSwigCircuitPage: React.FC = () => {
-  const { user } = useAuth();
-  
-  const {
-    name,
-    setName,
-    startDate,
-    setStartDate,
-    endDate,
-    setEndDate,
-    description,
-    setDescription,
-    imageFile,
-    setImageFile,
-    previewUrl,
-    setPreviewUrl,
-    currentTab,
-    setCurrentTab,
-    selectedTheme,
-    setSelectedTheme,
-    maxDistance,
-    setMaxDistance,
-    drinkHighlights,
-    setDrinkHighlights,
-    pairings,
-    setPairings,
-    selectedEstablishments,
-    handleSaveEstablishments,
-    ticketTiers,
-    setTicketTiers,
-    addTicketTier,
-    updateTicketTier,
-    removeTicketTier,
-    projectedAttendance,
-    projectedRevenue,
-    calculateProjections,
-    isTabComplete,
-    handleSubmit,
-    isSubmitting
-  } = useSwigCircuitCreation();
-
-  const { userLocation, isLoading: isLocating } = useUserLocation();
-  
-  const { 
-    establishments: availableEstablishments, 
-    isLoading: isLoadingEstablishments,
-    updateMaxDistance
-  } = useEstablishments({
-    latitude: userLocation?.latitude,
-    longitude: userLocation?.longitude,
-    maxDistance
-  });
-
-  const handleDistanceChange = (distance: number) => {
-    setMaxDistance(distance);
-    updateMaxDistance(distance);
-  };
+  const swigCircuit = useSwigCircuitCreation();
 
   const tabs = [
     { id: "basics", label: "Basics" },
@@ -79,115 +22,115 @@ const CreateSwigCircuitPage: React.FC = () => {
     { id: "drinks", label: "Drinks" },
     { id: "pairings", label: "Pairings" },
     { id: "tickets", label: "Tickets" },
-    { id: "projections", label: "Projections" },
+    { id: "projections", label: "Projections" }
   ];
+
+  const handleNext = () => {
+    const currentIndex = tabs.findIndex(tab => tab.id === swigCircuit.currentTab);
+    if (currentIndex < tabs.length - 1) {
+      swigCircuit.setCurrentTab(tabs[currentIndex + 1].id);
+    }
+  };
+
+  const handleBack = () => {
+    const currentIndex = tabs.findIndex(tab => tab.id === swigCircuit.currentTab);
+    if (currentIndex > 0) {
+      swigCircuit.setCurrentTab(tabs[currentIndex - 1].id);
+    }
+  };
+
+  const renderTabContent = () => {
+    switch (swigCircuit.currentTab) {
+      case "basics":
+        return (
+          <BasicsTab
+            name={swigCircuit.name}
+            setName={swigCircuit.setName}
+            startDate={swigCircuit.startDate}
+            setStartDate={swigCircuit.setStartDate}
+            endDate={swigCircuit.endDate}
+            setEndDate={swigCircuit.setEndDate}
+            description={swigCircuit.description}
+            setDescription={swigCircuit.setDescription}
+            imageFile={swigCircuit.imageFile}
+            setImageFile={swigCircuit.setImageFile}
+            previewUrl={swigCircuit.previewUrl}
+            setPreviewUrl={swigCircuit.setPreviewUrl}
+            onContinue={handleNext}
+          />
+        );
+
+      case "theme":
+        return (
+          <ThemeTab
+            selectedTheme={swigCircuit.selectedTheme}
+            setSelectedTheme={swigCircuit.setSelectedTheme}
+            onBack={handleBack}
+            onContinue={handleNext}
+          />
+        );
+
+      case "venues":
+        return (
+          <VenuesTab
+            selectedEstablishments={swigCircuit.selectedEstablishments}
+            onSaveEstablishments={swigCircuit.handleSaveEstablishments}
+            maxDistance={swigCircuit.maxDistance}
+            setMaxDistance={swigCircuit.setMaxDistance}
+            onBack={handleBack}
+            onContinue={handleNext}
+          />
+        );
+
+      case "drinks":
+        return (
+          <DrinksTab
+            drinkHighlights={swigCircuit.drinkHighlights}
+            setDrinkHighlights={swigCircuit.setDrinkHighlights}
+            onBack={handleBack}
+            onContinue={handleNext}
+          />
+        );
+
+      case "pairings":
+        return (
+          <PairingsTab
+            pairings={swigCircuit.pairings}
+            setPairings={swigCircuit.setPairings}
+            onBack={handleBack}
+            onContinue={handleNext}
+          />
+        );
+
+      default:
+        return (
+          <Card className="p-6">
+            <div className="text-center text-muted-foreground">
+              This section is coming soon...
+            </div>
+          </Card>
+        );
+    }
+  };
 
   return (
     <Layout>
-      <div className="py-4 animate-fade-in max-w-4xl mx-auto">
+      <div className="container mx-auto px-4 py-6">
         <CreateSwigCircuitHeader />
         
-        {!user && (
-          <div className="mb-4 p-4 bg-yellow-50 border border-yellow-300 rounded-lg">
-            <p className="text-yellow-800">
-              <strong>Note:</strong> You are not logged in. For testing, your Swig Circuit will be saved to local storage.
-            </p>
-          </div>
-        )}
-        
-        <div className="flex flex-col md:flex-row gap-4">
-          <StepsNavigation 
-            currentTab={currentTab}
-            setCurrentTab={setCurrentTab}
+        <div className="flex flex-col lg:flex-row gap-6">
+          <StepsNavigation
+            currentTab={swigCircuit.currentTab}
+            setCurrentTab={swigCircuit.setCurrentTab}
             tabs={tabs}
-            isTabComplete={isTabComplete}
+            isTabComplete={swigCircuit.isTabComplete}
           />
           
-          {currentTab === "basics" && (
-            <BasicsTab 
-              name={name}
-              setName={setName}
-              startDate={startDate}
-              setStartDate={setStartDate}
-              endDate={endDate}
-              setEndDate={setEndDate}
-              description={description}
-              setDescription={setDescription}
-              imageFile={imageFile}
-              setImageFile={setImageFile}
-              previewUrl={previewUrl}
-              setPreviewUrl={setPreviewUrl}
-              onContinue={() => setCurrentTab("theme")}
-            />
-          )}
-          
-          {currentTab === "theme" && (
-            <ThemeTab 
-              selectedTheme={selectedTheme}
-              setSelectedTheme={setSelectedTheme}
-              onBack={() => setCurrentTab("basics")}
-              onContinue={() => setCurrentTab("venues")}
-            />
-          )}
-          
-          {currentTab === "venues" && (
-            <VenuesTab 
-              maxDistance={maxDistance}
-              onDistanceChange={handleDistanceChange}
-              isLocating={isLocating}
-              userLocation={userLocation}
-              isLoadingEstablishments={isLoadingEstablishments}
-              availableEstablishments={availableEstablishments}
-              selectedEstablishments={selectedEstablishments}
-              onSaveEstablishments={handleSaveEstablishments}
-              onBack={() => setCurrentTab("theme")}
-              onContinue={() => setCurrentTab("drinks")}
-            />
-          )}
-          
-          {currentTab === "drinks" && (
-            <DrinksTab 
-              drinkHighlights={drinkHighlights}
-              setDrinkHighlights={setDrinkHighlights}
-              onBack={() => setCurrentTab("venues")}
-              onContinue={() => setCurrentTab("pairings")}
-            />
-          )}
-          
-          {currentTab === "pairings" && (
-            <PairingsTab 
-              pairings={pairings}
-              setPairings={setPairings}
-              onBack={() => setCurrentTab("drinks")}
-              onContinue={() => setCurrentTab("tickets")}
-            />
-          )}
-
-          {currentTab === "tickets" && (
-            <TicketsTab 
-              ticketTiers={ticketTiers}
-              setTicketTiers={setTicketTiers}
-              addTicketTier={addTicketTier}
-              updateTicketTier={updateTicketTier}
-              removeTicketTier={removeTicketTier}
-              onBack={() => setCurrentTab("pairings")}
-              onContinue={() => setCurrentTab("projections")}
-            />
-          )}
-          
-          {currentTab === "projections" && (
-            <ProjectionsTab 
-              ticketTiers={ticketTiers}
-              selectedEstablishments={selectedEstablishments}
-              projectedAttendance={projectedAttendance}
-              projectedRevenue={projectedRevenue}
-              calculateProjections={calculateProjections}
-              onBack={() => setCurrentTab("tickets")}
-              onSubmit={handleSubmit}
-              isSubmitDisabled={!name || !startDate || !selectedTheme || selectedEstablishments.length < 2 || ticketTiers.length === 0}
-              isSubmitting={isSubmitting}
-            />
-          )}
+          <div className="flex-1">
+            <form onSubmit={swigCircuit.handleSubmit}>
+              {renderTabContent()}
+            </form>
+          </div>
         </div>
       </div>
     </Layout>
