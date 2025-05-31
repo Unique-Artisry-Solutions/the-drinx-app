@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,7 +17,7 @@ interface ReportBuilderProps {
 export function ReportBuilderComponent({ onGenerateReport, isGenerating }: ReportBuilderProps) {
   const [reportName, setReportName] = useState('');
   const [reportType, setReportType] = useState('');
-  const [dateRange, setDateRange] = useState<DateRange | undefined>();
+  const [dateRange] = useState<DateRange | undefined>();
   const [selectedMetrics, setSelectedMetrics] = useState<string[]>([]);
 
   // Available metrics - preserved as placeholder

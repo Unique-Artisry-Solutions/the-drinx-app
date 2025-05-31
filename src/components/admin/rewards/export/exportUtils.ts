@@ -1,6 +1,27 @@
 
 import { format } from 'date-fns';
 
+export interface RecentExport {
+  id: string;
+  type: string;
+  date: string;
+  fileName: string;
+}
+
+export interface DateRange {
+  from?: Date;
+  to?: Date;
+}
+
+export type ReportType = 'users' | 'transactions' | 'analytics' | 'campaigns';
+
+export const reportTypes = [
+  { value: 'users' as ReportType, label: 'Users Report' },
+  { value: 'transactions' as ReportType, label: 'Transactions Report' },
+  { value: 'analytics' as ReportType, label: 'Analytics Report' },
+  { value: 'campaigns' as ReportType, label: 'Campaigns Report' }
+];
+
 interface ExportData {
   format: string;
   data: any[];
@@ -74,7 +95,7 @@ const formatFieldValue = (value: any, type?: string) => {
     case 'percentage':
       return `${(value * 100).toFixed(2)}%`;
     default:
-      return value.toString();
+      return String(value);
   }
 };
 

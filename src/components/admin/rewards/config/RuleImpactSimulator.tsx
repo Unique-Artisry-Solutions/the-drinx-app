@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -136,7 +137,7 @@ export function RuleImpactSimulator({ rules, onSimulationRun }: RuleImpactSimula
             {rules.length === 0 ? (
               <Badge variant="outline">No rules configured</Badge>
             ) : (
-              rules.map((rule, index) => (
+              rules.map((_, index) => (
                 <Badge key={index} variant="default">
                   Rule {index + 1}
                 </Badge>

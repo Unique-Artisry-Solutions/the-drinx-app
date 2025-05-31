@@ -10,7 +10,6 @@ interface GuideTab {
 
 interface GuideTabsListProps {
   tabs: GuideTab[];
-  _activeTab?: string;
 }
 
 export function GuideTabsList({ tabs }: GuideTabsListProps) {

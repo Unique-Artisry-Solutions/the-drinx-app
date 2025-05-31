@@ -1,17 +1,16 @@
+
 import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { Plus, Trash2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Plus, X } from 'lucide-react';
 
 interface Criterion {
   id: string;
-  type: 'demographic' | 'behavior' | 'engagement' | 'transaction';
   field: string;
-  operator: 'equals' | 'not_equals' | 'greater_than' | 'less_than' | 'contains' | 'in_range';
-  value: string | number | string[];
+  operator: string;
+  value: string;
 }
 
 interface CriteriaBuilderProps {
@@ -20,175 +19,111 @@ interface CriteriaBuilderProps {
 }
 
 export function CriteriaBuilder({ criteria, onCriteriaChange }: CriteriaBuilderProps) {
-  const [editingCriterion, setEditingCriterion] = useState<string | null>(null);
+  const [availableFields] = useState([
+    { value: 'age', label: 'Age' },
+    { value: 'location', label: 'Location' },
+    { value: 'points', label: 'Points Balance' },
+    { value: 'tier', label: 'Tier Level' },
+    { value: 'last_visit', label: 'Last Visit' }
+  ]);
 
-  // Field options for different criterion types - preserved as placeholder
-  const fieldOptions = {
-    demographic: ['age', 'location', 'gender', 'occupation'],
-    behavior: ['visit_frequency', 'last_visit', 'favorite_establishments', 'check_ins'],
-    engagement: ['app_opens', 'recipe_saves', 'social_shares', 'review_count'],
-    transaction: ['total_spent', 'average_order', 'purchase_frequency', 'preferred_payment']
-  };
-
-  const operatorOptions = [
+  const [operators] = useState([
     { value: 'equals', label: 'Equals' },
-    { value: 'not_equals', label: 'Not Equals' },
     { value: 'greater_than', label: 'Greater Than' },
     { value: 'less_than', label: 'Less Than' },
-    { value: 'contains', label: 'Contains' },
-    { value: 'in_range', label: 'In Range' }
-  ];
+    { value: 'contains', label: 'Contains' }
+  ]);
 
   const addCriterion = () => {
     const newCriterion: Criterion = {
-      id: `criterion_${Date.now()}`,
-      type: 'demographic',
-      field: 'age',
-      operator: 'equals',
+      id: `criterion-${Date.now()}`,
+      field: '',
+      operator: '',
       value: ''
     };
     onCriteriaChange([...criteria, newCriterion]);
-    setEditingCriterion(newCriterion.id);
-  };
-
-  const updateCriterion = (id: string, updates: Partial<Criterion>) => {
-    const updatedCriteria = criteria.map(criterion =>
-      criterion.id === id ? { ...criterion, ...updates } : criterion
-    );
-    onCriteriaChange(updatedCriteria);
   };
 
   const removeCriterion = (id: string) => {
-    const filteredCriteria = criteria.filter(criterion => criterion.id !== id);
-    onCriteriaChange(filteredCriteria);
+    onCriteriaChange(criteria.filter(c => c.id !== id));
   };
 
-  const formatCriterionDisplay = (criterion: Criterion) => {
-    return `${criterion.field} ${criterion.operator.replace('_', ' ')} ${criterion.value}`;
+  const updateCriterion = (id: string, field: keyof Criterion, value: string) => {
+    onCriteriaChange(criteria.map(c => 
+      c.id === id ? { ...c, [field]: value } : c
+    ));
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h3 className="text-lg font-medium">Audience Criteria</h3>
-        <Button onClick={addCriterion} size="sm">
-          <Plus className="h-4 w-4 mr-2" />
-          Add Criterion
-        </Button>
-      </div>
+    <Card className="p-6">
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-medium">Audience Criteria</h3>
+          <Button onClick={addCriterion} size="sm">
+            <Plus className="h-4 w-4 mr-2" />
+            Add Criterion
+          </Button>
+        </div>
 
-      <div className="space-y-3">
-        {criteria.map((criterion) => (
-          <Card key={criterion.id} className="p-4">
-            {editingCriterion === criterion.id ? (
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <Select
-                    value={criterion.type}
-                    onValueChange={(value: Criterion['type']) => updateCriterion(criterion.id, { type: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="demographic">Demographic</SelectItem>
-                      <SelectItem value="behavior">Behavior</SelectItem>
-                      <SelectItem value="engagement">Engagement</SelectItem>
-                      <SelectItem value="transaction">Transaction</SelectItem>
-                    </SelectContent>
-                  </Select>
+        {criteria.length === 0 ? (
+          <p className="text-muted-foreground text-center py-8">
+            No criteria defined. Add criteria to segment your audience.
+          </p>
+        ) : (
+          <div className="space-y-3">
+            {criteria.map((criterion) => (
+              <div key={criterion.id} className="flex items-center gap-3 p-3 border rounded-lg">
+                <Select 
+                  value={criterion.field} 
+                  onValueChange={(value) => updateCriterion(criterion.id, 'field', value)}
+                >
+                  <SelectTrigger className="w-48">
+                    <SelectValue placeholder="Select field" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableFields.map((field) => (
+                      <SelectItem key={field.value} value={field.value}>
+                        {field.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
 
-                  <Select
-                    value={criterion.field}
-                    onValueChange={(value) => updateCriterion(criterion.id, { field: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {fieldOptions[criterion.type].map((field) => (
-                        <SelectItem key={field} value={field}>
-                          {field.replace('_', ' ').toUpperCase()}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                <Select 
+                  value={criterion.operator} 
+                  onValueChange={(value) => updateCriterion(criterion.id, 'operator', value)}
+                >
+                  <SelectTrigger className="w-40">
+                    <SelectValue placeholder="Operator" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {operators.map((op) => (
+                      <SelectItem key={op.value} value={op.value}>
+                        {op.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
 
-                  <Select
-                    value={criterion.operator}
-                    onValueChange={(value: Criterion['operator']) => updateCriterion(criterion.id, { operator: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {operatorOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                <Input
+                  placeholder="Value"
+                  value={criterion.value}
+                  onChange={(e) => updateCriterion(criterion.id, 'value', e.target.value)}
+                  className="flex-1"
+                />
 
-                  <Input
-                    value={criterion.value.toString()}
-                    onChange={(e) => updateCriterion(criterion.id, { value: e.target.value })}
-                    placeholder="Enter value"
-                  />
-                </div>
-
-                <div className="flex justify-end gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setEditingCriterion(null)}
-                  >
-                    Save
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => removeCriterion(criterion.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => removeCriterion(criterion.id)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
               </div>
-            ) : (
-              <div className="flex justify-between items-center">
-                <div className="flex items-center gap-2">
-                  <Badge variant="secondary">{criterion.type}</Badge>
-                  <span className="text-sm font-medium">
-                    {formatCriterionDisplay(criterion)}
-                  </span>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setEditingCriterion(criterion.id)}
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeCriterion(criterion.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            )}
-          </Card>
-        ))}
+            ))}
+          </div>
+        )}
       </div>
-
-      {criteria.length === 0 && (
-        <Card className="p-8 text-center">
-          <p className="text-muted-foreground">No criteria defined. Add criteria to build your audience segment.</p>
-        </Card>
-      )}
-    </div>
+    </Card>
   );
 }

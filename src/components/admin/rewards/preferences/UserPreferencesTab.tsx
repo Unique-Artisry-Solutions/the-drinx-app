@@ -7,7 +7,7 @@ import { PreferencesFormSkeleton } from './components/PreferencesFormSkeleton';
 import { PreferencesFormError } from './components/PreferencesFormError';
 
 export function UserPreferencesTab() {
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   if (isLoading) {

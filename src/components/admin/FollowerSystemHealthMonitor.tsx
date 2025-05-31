@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, CheckCircle, Clock } from 'lucide-react';
@@ -6,7 +7,7 @@ interface SystemHealthProps {
   onRefresh?: () => void;
 }
 
-export function FollowerSystemHealthMonitor({ onRefresh }: SystemHealthProps) {
+export function FollowerSystemHealthMonitor({ }: SystemHealthProps) {
   // Mock health data - preserved as placeholder
   const healthMetrics = [
     { name: 'System Status', status: 'healthy', value: '99.9%' },

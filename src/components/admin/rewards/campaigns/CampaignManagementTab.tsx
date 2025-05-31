@@ -13,7 +13,7 @@ interface CampaignManagementTabProps {
   _establishmentId: string;
 }
 
-export function CampaignManagementTab({ _establishmentId }: CampaignManagementTabProps) {
+export function CampaignManagementTab({ }: CampaignManagementTabProps) {
   const [campaigns, setCampaigns] = useState<RewardCampaign[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -34,9 +34,11 @@ export function CampaignManagementTab({ _establishmentId }: CampaignManagementTa
         name: campaignData.name || '',
         description: campaignData.description || '',
         status: campaignData.status || 'draft',
+        is_active: campaignData.status === 'active',
         start_date: campaignData.start_date || '',
         end_date: campaignData.end_date || '',
         budget: campaignData.budget || 0,
+        rewards: [],
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };

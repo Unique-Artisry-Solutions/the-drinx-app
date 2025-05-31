@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -7,7 +8,7 @@ interface RewardsAnalyticsPanelProps {
   establishmentId?: string;
 }
 
-export function RewardsAnalyticsPanel({ establishmentId }: RewardsAnalyticsPanelProps) {
+export function RewardsAnalyticsPanel({ }: RewardsAnalyticsPanelProps) {
   const [activeTab, setActiveTab] = useState('overview');
 
   // Mock analytics data - preserved as placeholder
