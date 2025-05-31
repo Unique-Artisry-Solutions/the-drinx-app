@@ -1,101 +1,101 @@
 
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { RewardAnalytics, TimeSeriesData } from '@/lib/rewards/types';
-import { mapAnalyticsTimeSeriesData } from '@/lib/rewards/utils/dataMappers';
-import { useQuery } from '@tanstack/react-query';
-import { rewardsApi } from '@/lib/rewards/api';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Skeleton } from '@/components/ui/skeleton';
-import TimeSeriesChart from './TimeSeriesChart';
-import StatisticsCard from './StatisticsCard';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import TierDistributionChart from './TierDistributionChart';
+import { FunnelVisualization } from './FunnelVisualization';
+import StatisticsCard from './StatisticsCard';
 
-interface ProgramStatisticsDashboardProps {
-  establishmentId?: string;
-}
+export function ProgramStatisticsDashboard() {
+  const [timeRange] = useState('7d');
 
-export const ProgramStatisticsDashboard: React.FC<ProgramStatisticsDashboardProps> = ({ establishmentId }) => {
-  const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d' | 'all'>('30d');
-  const [chartData, setChartData] = useState<TimeSeriesData[]>([]);
-  const [tierData, setTierData] = useState<{name: string, value: number}[]>([]);
-  
-  const { data: analytics, isLoading, error } = useQuery({
-    queryKey: ['rewardAnalytics', establishmentId, timeRange],
-    queryFn: () => rewardsApi.getRewardAnalytics(establishmentId)
-  });
-  
-  useEffect(() => {
-    if (analytics) {
-      // Convert analytics timeSeriesData to the expected format
-      setChartData(mapAnalyticsTimeSeriesData(analytics.timeSeriesData));
-      
-      // Process tier distribution data if available
-      if (analytics.tierDistribution && typeof analytics.tierDistribution === 'object') {
-        const tierDistributionData = Object.entries(analytics.tierDistribution).map(([name, value]) => ({
-          name,
-          value: typeof value === 'number' ? value : 0
-        }));
-        setTierData(tierDistributionData);
-      } else {
-        // Provide default mock data if no tier distribution exists
-        setTierData([
-          { name: 'Bronze', value: 45 },
-          { name: 'Silver', value: 30 },
-          { name: 'Gold', value: 20 },
-          { name: 'Platinum', value: 5 }
-        ]);
-      }
-    }
-  }, [analytics]);
+  // Mock data - preserved as placeholder for future functionality
+  const tierData = [
+    { name: 'Bronze', value: 450 },
+    { name: 'Silver', value: 280 },
+    { name: 'Gold', value: 120 },
+    { name: 'Platinum', value: 45 }
+  ];
+
+  const funnelData = [
+    { name: 'Signed Up', value: 1000, fill: '#8884d8' },
+    { name: 'First Purchase', value: 750, fill: '#82ca9d', dropOffRate: 25 },
+    { name: 'Second Purchase', value: 500, fill: '#ffc658', dropOffRate: 33 },
+    { name: 'Loyal Customer', value: 200, fill: '#ff7300', dropOffRate: 60 }
+  ];
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Program Statistics</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Tabs defaultValue="overview" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="trends">Trends</TabsTrigger>
-            <TabsTrigger value="tiers">Tier Distribution</TabsTrigger>
-          </TabsList>
-          <TabsContent value="overview">
-            {isLoading ? (
-              <Skeleton className="h-40 w-full" />
-            ) : error ? (
-              <p className="text-red-500">Error: {error.message}</p>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <StatisticsCard title="Total Points Earned" value={analytics?.totalPointsEarned || 0} />
-                <StatisticsCard title="Total Points Redeemed" value={analytics?.totalPointsRedeemed || 0} />
-                <StatisticsCard title="Redemption Rate" value={analytics?.redemptionRate || 0} />
-              </div>
-            )}
-          </TabsContent>
-          <TabsContent value="trends">
-            {isLoading ? (
-              <Skeleton className="h-64 w-full" />
-            ) : error ? (
-              <p className="text-red-500">Error: {error.message}</p>
-            ) : (
-              <TimeSeriesChart data={chartData} />
-            )}
-          </TabsContent>
-          <TabsContent value="tiers">
-            {isLoading ? (
-              <Skeleton className="h-64 w-full" />
-            ) : error ? (
-              <p className="text-red-500">Error: {error.message}</p>
-            ) : (
-              <TierDistributionChart data={tierData} />
-            )}
-          </TabsContent>
-        </Tabs>
-      </CardContent>
-    </Card>
-  );
-};
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold">Program Statistics</h2>
+        <Select value={timeRange}>
+          <SelectTrigger className="w-32">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="7d">Last 7 days</SelectItem>
+            <SelectItem value="30d">Last 30 days</SelectItem>
+            <SelectItem value="90d">Last 90 days</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
-export default ProgramStatisticsDashboard;
+      <div className="grid gap-4 md:grid-cols-4">
+        <StatisticsCard
+          title="Total Users"
+          value="1,245"
+          change={12.5}
+          icon="users"
+        />
+        <StatisticsCard
+          title="Active Users"
+          value="892"
+          change={8.2}
+          icon="activity"
+        />
+        <StatisticsCard
+          title="Rewards Earned"
+          value="3,456"
+          change={15.3}
+          icon="gift"
+        />
+        <StatisticsCard
+          title="Redemption Rate"
+          value="68.2%"
+          change={4.1}
+          icon="percent"
+        />
+      </div>
+
+      <Tabs defaultValue="overview" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="tiers">Tier Distribution</TabsTrigger>
+          <TabsTrigger value="funnel">User Funnel</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Program Overview</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">
+                Comprehensive statistics dashboard will be displayed here.
+              </p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="tiers" className="space-y-4">
+          <TierDistributionChart data={tierData} />
+        </TabsContent>
+
+        <TabsContent value="funnel" className="space-y-4">
+          <FunnelVisualization data={funnelData} />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}

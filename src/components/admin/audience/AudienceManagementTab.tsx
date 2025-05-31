@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Users, Plus, Search, Filter } from 'lucide-react';
-import AudienceSegmentList from './AudienceSegmentList';
+import { AudienceSegmentList } from './AudienceSegmentList';
 import { SegmentAnalyticsDashboard } from './analytics/SegmentAnalyticsDashboard';
 import { NetworkVisualization } from './relationships/NetworkVisualization';
 
@@ -122,7 +122,12 @@ export const AudienceManagementTab = () => {
         </TabsContent>
 
         <TabsContent value="relationships" className="space-y-4">
-          <NetworkVisualization />
+          <NetworkVisualization 
+            network={{ nodes: [], connections: [] }}
+            zoomLevel={1}
+            filterThreshold={0.5}
+            onNodeSelect={() => {}}
+          />
         </TabsContent>
       </Tabs>
     </div>
