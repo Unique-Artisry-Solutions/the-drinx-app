@@ -1,6 +1,18 @@
 
 import { UserRecipe, Ingredient } from '@/types/DatabaseTypes';
+import { BaseFormProps, BaseFormModalProps } from '@/types/shared/FormInterfaces';
+import { BaseListItem, BaseActionProps } from '@/types/shared/BaseInterfaces';
 
+// Recipe form state using shared patterns
+export interface RecipeFormState {
+  name: string;
+  description: string;
+  ingredients: Ingredient[];
+  instructions: string;
+  is_public: boolean;
+}
+
+// Recipe item props using shared action patterns
 export interface RecipeItemProps {
   recipe: UserRecipe;
   onEdit: (recipe: UserRecipe) => void;
@@ -11,9 +23,8 @@ export interface RecipeItemProps {
   deletingId?: string;
 }
 
-export interface RecipeFormProps {
-  formState: RecipeFormState;
-  setFormState: (state: RecipeFormState) => void;
+// Recipe form props using shared form interface
+export interface RecipeFormProps extends BaseFormProps<RecipeFormState> {
   newIngredient: string;
   setNewIngredient: (value: string) => void;
   newAmount: string;
@@ -25,19 +36,8 @@ export interface RecipeFormProps {
   handleRemoveIngredient: (index: number) => void;
 }
 
-export interface RecipeFormState {
-  name: string;
-  description: string;
-  ingredients: Ingredient[];
-  instructions: string;
-  is_public: boolean;
-}
-
-export interface CreateRecipeDialogProps {
-  isOpen: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSubmit: () => void;
-  isSubmitting: boolean;
+// Recipe dialog props using shared modal interface
+export interface CreateRecipeDialogProps extends BaseFormModalProps<RecipeFormState> {
   formProps: RecipeFormProps;
 }
 
