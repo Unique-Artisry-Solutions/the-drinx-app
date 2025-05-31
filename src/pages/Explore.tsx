@@ -8,7 +8,7 @@ import { MapPin, Grid, List } from 'lucide-react';
 import { usePersonalizedData } from '@/hooks/usePersonalizedData';
 import { useIsMobile } from '@/hooks/use-mobile';
 
-// Import widgets
+// Import widgets with defensive fallbacks
 import { QuickStatsWidget } from '@/components/explore/personalized/QuickStatsWidget';
 import { RecommendationsWidget } from '@/components/explore/personalized/RecommendationsWidget';
 import { ActivityFeedWidget } from '@/components/explore/personalized/ActivityFeedWidget';
@@ -21,17 +21,19 @@ import { UpcomingEventsWidget } from '@/components/explore/personalized/Upcoming
 const Explore: React.FC = () => {
   const [viewMode, setViewMode] = useState<'map' | 'list' | 'grid'>('grid');
   const isMobile = useIsMobile();
+  
   const {
-    loading,
-    userStats,
-    recentActivity,
-    recommendations,
-    quickActions,
-    nearbyEstablishments,
-    upcomingEvents,
-    isAuthenticated
-  } = usePersonalizedData();
+    loading = false,
+    userStats = null,
+    recentActivity = [],
+    recommendations = [],
+    quickActions = [],
+    nearbyEstablishments = [],
+    upcomingEvents = [],
+    isAuthenticated = false
+  } = usePersonalizedData() ?? {};
 
+  // Loading state with skeleton
   if (loading) {
     return (
       <Layout>
@@ -46,20 +48,31 @@ const Explore: React.FC = () => {
     );
   }
 
-  // Transform Activity[] to RealtimeActivity[] by adding required properties
-  const transformedActivity = recentActivity.map(activity => ({
+  // Safely transform activity data with fallbacks
+  const transformedActivity = (recentActivity ?? []).map(activity => ({
     ...activity,
-    user: typeof activity.user === 'string' 
+    user: typeof activity?.user === 'string' 
       ? { id: activity.user, name: activity.user } 
-      : activity.user || { id: 'unknown', name: 'Unknown User' },
-    likes: 0,
-    isLiked: false
+      : activity?.user ?? { id: 'unknown', name: 'Unknown User' },
+    likes: activity?.likes ?? 0,
+    isLiked: activity?.isLiked ?? false
   }));
+
+  // Safely extract stats with defaults
+  const safeUserStats = {
+    totalMocktailsTried: userStats?.totalMocktailsTried ?? 0,
+    totalPoints: userStats?.totalPoints ?? 0,
+    currentStreak: userStats?.currentStreak ?? 0
+  };
+
+  const handleViewModeChange = (mode: 'map' | 'list' | 'grid') => {
+    setViewMode(mode);
+  };
 
   return (
     <Layout>
       <div className="container mx-auto px-4 py-8">
-        {/* Header */}
+        {/* Header with defensive checks */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold mb-2">Explore</h1>
@@ -72,7 +85,7 @@ const Explore: React.FC = () => {
             <Button
               variant={viewMode === 'map' ? 'default' : 'outline'}
               size="sm"
-              onClick={() => setViewMode('map')}
+              onClick={() => handleViewModeChange('map')}
             >
               <MapPin className="h-4 w-4 mr-2" />
               Map
@@ -80,7 +93,7 @@ const Explore: React.FC = () => {
             <Button
               variant={viewMode === 'list' ? 'default' : 'outline'}
               size="sm"
-              onClick={() => setViewMode('list')}
+              onClick={() => handleViewModeChange('list')}
             >
               <List className="h-4 w-4 mr-2" />
               List
@@ -88,7 +101,7 @@ const Explore: React.FC = () => {
             <Button
               variant={viewMode === 'grid' ? 'default' : 'outline'}
               size="sm"
-              onClick={() => setViewMode('grid')}
+              onClick={() => handleViewModeChange('grid')}
             >
               <Grid className="h-4 w-4 mr-2" />
               Grid
@@ -100,14 +113,10 @@ const Explore: React.FC = () => {
         {isMobile ? (
           <div className="space-y-6">
             {isAuthenticated && userStats && (
-              <QuickStatsWidget 
-                totalMocktailsTried={userStats.totalMocktailsTried || 0}
-                totalPoints={userStats.totalPoints || 0}
-                currentStreak={userStats.currentStreak || 0}
-              />
+              <QuickStatsWidget {...safeUserStats} />
             )}
-            <QuickActionCards actions={quickActions} />
-            <RecommendationsWidget recommendations={recommendations} />
+            <QuickActionCards actions={quickActions ?? []} />
+            <RecommendationsWidget recommendations={recommendations ?? []} />
             <ActivityFeedWidget activities={transformedActivity} isLoading={loading} />
             {isAuthenticated && (
               <>
@@ -115,8 +124,8 @@ const Explore: React.FC = () => {
                 <StreakMotivationWidget />
               </>
             )}
-            <NearbyEstablishmentsWidget establishments={nearbyEstablishments} />
-            <UpcomingEventsWidget events={upcomingEvents} />
+            <NearbyEstablishmentsWidget establishments={nearbyEstablishments ?? []} />
+            <UpcomingEventsWidget events={upcomingEvents ?? []} />
           </div>
         ) : (
           /* Desktop Layout */
@@ -124,14 +133,10 @@ const Explore: React.FC = () => {
             {/* Left Side - Main Content (3 columns) */}
             <div className="lg:col-span-3 space-y-6">
               {isAuthenticated && userStats && (
-                <QuickStatsWidget 
-                  totalMocktailsTried={userStats.totalMocktailsTried || 0}
-                  totalPoints={userStats.totalPoints || 0}
-                  currentStreak={userStats.currentStreak || 0}
-                />
+                <QuickStatsWidget {...safeUserStats} />
               )}
-              <QuickActionCards actions={quickActions} />
-              <RecommendationsWidget recommendations={recommendations} />
+              <QuickActionCards actions={quickActions ?? []} />
+              <RecommendationsWidget recommendations={recommendations ?? []} />
               <ActivityFeedWidget activities={transformedActivity} isLoading={loading} />
             </div>
 
@@ -143,8 +148,8 @@ const Explore: React.FC = () => {
                   <StreakMotivationWidget />
                 </>
               )}
-              <NearbyEstablishmentsWidget establishments={nearbyEstablishments} />
-              <UpcomingEventsWidget events={upcomingEvents} />
+              <NearbyEstablishmentsWidget establishments={nearbyEstablishments ?? []} />
+              <UpcomingEventsWidget events={upcomingEvents ?? []} />
             </div>
           </div>
         )}

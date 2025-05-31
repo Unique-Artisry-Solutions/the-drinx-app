@@ -8,11 +8,14 @@ import { useForm } from 'react-hook-form';
 import { StarRating } from '@/components/StarRating';
 
 interface CommentFormProps {
-  onSubmit: (data: { text: string; rating: number }) => void;
+  onSubmit?: (data: { text: string; rating: number }) => void;
   isLoading?: boolean;
 }
 
-const CommentForm: React.FC<CommentFormProps> = ({ onSubmit, isLoading = false }) => {
+const CommentForm: React.FC<CommentFormProps> = ({ 
+  onSubmit = () => console.warn('No submit handler provided'), 
+  isLoading = false 
+}) => {
   const [rating, setRating] = useState(0);
   const { toast } = useToast();
   
@@ -32,9 +35,18 @@ const CommentForm: React.FC<CommentFormProps> = ({ onSubmit, isLoading = false }
       return;
     }
     
-    onSubmit({ text: data.text, rating });
-    form.reset();
-    setRating(0);
+    try {
+      onSubmit({ text: data.text ?? '', rating });
+      form.reset();
+      setRating(0);
+    } catch (error) {
+      console.error('Comment submission failed:', error);
+      toast({
+        title: 'Submission failed',
+        description: 'Failed to submit comment. Please try again.',
+        variant: 'destructive',
+      });
+    }
   });
 
   return (
@@ -42,7 +54,10 @@ const CommentForm: React.FC<CommentFormProps> = ({ onSubmit, isLoading = false }
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block text-sm font-medium mb-2">Your Rating</label>
-          <StarRating rating={rating} onRatingChange={setRating} />
+          <StarRating 
+            rating={rating} 
+            onRatingChange={setRating ?? (() => {})} 
+          />
         </div>
         
         <FormField
@@ -55,6 +70,7 @@ const CommentForm: React.FC<CommentFormProps> = ({ onSubmit, isLoading = false }
                   placeholder="Share your thoughts about this mocktail..."
                   rows={4}
                   {...field}
+                  value={field.value ?? ''}
                 />
               </FormControl>
             </FormItem>
