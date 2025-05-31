@@ -1,39 +1,31 @@
 
-import React from 'react';
-import { TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Info, Settings, ListCheck, Database, ChartBar, FileText } from "lucide-react";
+import { TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
 
-interface GuideTabsListProps {
-  activeTab: string;
+interface GuideTab {
+  value: string;
+  label: string;
+  badge?: string;
 }
 
-export function GuideTabsList({ activeTab }: GuideTabsListProps) {
+interface GuideTabsListProps {
+  tabs: GuideTab[];
+  _activeTab?: string;
+}
+
+export function GuideTabsList({ tabs }: GuideTabsListProps) {
   return (
-    <TabsList className="mb-4">
-      <TabsTrigger value="overview" className="flex items-center gap-1">
-        <Info className="h-4 w-4" />
-        Overview
-      </TabsTrigger>
-      <TabsTrigger value="configuration" className="flex items-center gap-1">
-        <Settings className="h-4 w-4" />
-        Configuration
-      </TabsTrigger>
-      <TabsTrigger value="rules" className="flex items-center gap-1">
-        <ListCheck className="h-4 w-4" />
-        Rules
-      </TabsTrigger>
-      <TabsTrigger value="bulk" className="flex items-center gap-1">
-        <Database className="h-4 w-4" />
-        Bulk Operations
-      </TabsTrigger>
-      <TabsTrigger value="statistics" className="flex items-center gap-1">
-        <ChartBar className="h-4 w-4" />
-        Statistics
-      </TabsTrigger>
-      <TabsTrigger value="export" className="flex items-center gap-1">
-        <FileText className="h-4 w-4" />
-        Export
-      </TabsTrigger>
+    <TabsList className="grid w-full grid-cols-6">
+      {tabs.map((tab) => (
+        <TabsTrigger key={tab.value} value={tab.value} className="relative">
+          <span>{tab.label}</span>
+          {tab.badge && (
+            <Badge variant="secondary" className="ml-1 text-xs">
+              {tab.badge}
+            </Badge>
+          )}
+        </TabsTrigger>
+      ))}
     </TabsList>
   );
 }

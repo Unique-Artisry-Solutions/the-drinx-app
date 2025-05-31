@@ -1,32 +1,49 @@
 
-import React from 'react';
-import { CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Book, ChevronDown } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { HelpCircle, BookOpen } from 'lucide-react';
 
 interface GuideHeaderProps {
-  isCollapsed: boolean;
-  setIsCollapsed: (value: boolean) => void;
+  title: string;
+  description: string;
+  version?: string;
+  lastUpdated?: string;
 }
 
-export function GuideHeader({ isCollapsed, setIsCollapsed }: GuideHeaderProps) {
+export function GuideHeader({ 
+  title, 
+  description, 
+  version = '1.0', 
+  lastUpdated = '2024-01-15' 
+}: GuideHeaderProps) {
   return (
-    <CardHeader className="flex flex-row items-center justify-between bg-muted/40 pb-2">
-      <CardTitle className="flex items-center gap-2">
-        <Book className="h-5 w-5 text-primary" />
-        Rewards Program Administration Guide
-      </CardTitle>
-      <div className="flex items-center gap-2">
-        <Badge variant="outline" className="bg-primary/10">Documentation</Badge>
-        <Button 
-          variant="ghost" 
-          size="sm"
-          onClick={() => setIsCollapsed(!isCollapsed)}
-        >
-          <ChevronDown className={`h-4 w-4 transition-transform ${isCollapsed ? 'rotate-180' : ''}`} />
-        </Button>
-      </div>
-    </CardHeader>
+    <Card>
+      <CardHeader>
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <BookOpen className="h-6 w-6 text-blue-600" />
+            </div>
+            <div>
+              <CardTitle className="text-xl">{title}</CardTitle>
+              <p className="text-muted-foreground mt-1">{description}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <HelpCircle className="h-5 w-5 text-muted-foreground" />
+            <Badge variant="outline">v{version}</Badge>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+          <span>Last updated: {lastUpdated}</span>
+          <span>•</span>
+          <span>6 sections available</span>
+          <span>•</span>
+          <span>~15 min read</span>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

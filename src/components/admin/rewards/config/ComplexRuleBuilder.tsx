@@ -1,20 +1,27 @@
 
-import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
-import { Wand, Plus, Trash, Save } from 'lucide-react';
-import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
+import { Plus, X, Rules, ChevronDown } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+
+interface Rule {
+  id: string;
+  name: string;
+  conditions: Condition[];
+  actions: Action[];
+  isActive: boolean;
+}
 
 interface Condition {
   id: string;
-  type: string;
+  field: string;
   operator: string;
   value: string;
-  conjunction?: 'and' | 'or';
 }
 
 interface Action {
@@ -23,302 +30,353 @@ interface Action {
   value: string;
 }
 
-export interface ComplexRuleBuilderProps {
-  onSave?: (rule: { name: string; description: string; conditions: Condition[]; actions: Action[] }) => void;
+interface ComplexRuleBuilderProps {
+  onRulesChange: (rules: Rule[]) => void;
 }
 
-export function ComplexRuleBuilder({ onSave }: ComplexRuleBuilderProps) {
-  const [ruleName, setRuleName] = useState('');
-  const [ruleDescription, setRuleDescription] = useState('');
-  const [conditions, setConditions] = useState<Condition[]>([
-    { id: '1', type: 'total_spend', operator: 'greater_than', value: '100' }
-  ]);
-  const [actions, setActions] = useState<Action[]>([
-    { id: '1', type: 'award_points', value: '500' }
-  ]);
+export function ComplexRuleBuilder({ onRulesChange }: ComplexRuleBuilderProps) {
+  const [rules, setRules] = useState<Rule[]>([]);
+  const [openRule, setOpenRule] = useState<string | null>(null);
 
-  const conditionTypes = [
-    { value: 'total_spend', label: 'User Total Spend' },
-    { value: 'visit_count', label: 'Number of Visits' },
-    { value: 'days_since_last_visit', label: 'Days Since Last Visit' },
-    { value: 'purchase_category', label: 'Purchase Category' },
+  const conditionFields = [
     { value: 'user_tier', label: 'User Tier' },
-    { value: 'time_of_day', label: 'Time of Day' },
-    { value: 'day_of_week', label: 'Day of Week' }
+    { value: 'visit_count', label: 'Visit Count' },
+    { value: 'spending_total', label: 'Total Spending' },
+    { value: 'points_balance', label: 'Points Balance' },
+    { value: 'last_visit', label: 'Last Visit' }
+  ];
+
+  const operators = [
+    { value: 'equals', label: 'Equals' },
+    { value: 'greater_than', label: 'Greater Than' },
+    { value: 'less_than', label: 'Less Than' },
+    { value: 'contains', label: 'Contains' }
   ];
 
   const actionTypes = [
     { value: 'award_points', label: 'Award Points' },
-    { value: 'multiply_points', label: 'Multiply Points' },
-    { value: 'send_notification', label: 'Send Notification' },
-    { value: 'create_offer', label: 'Create Special Offer' },
-    { value: 'upgrade_tier', label: 'Upgrade User Tier' }
+    { value: 'apply_multiplier', label: 'Apply Multiplier' },
+    { value: 'grant_tier', label: 'Grant Tier' },
+    { value: 'send_notification', label: 'Send Notification' }
   ];
 
-  const operators = [
-    { value: 'equal_to', label: 'Equal to' },
-    { value: 'not_equal_to', label: 'Not equal to' },
-    { value: 'greater_than', label: 'Greater than' },
-    { value: 'less_than', label: 'Less than' },
-    { value: 'contains', label: 'Contains' },
-    { value: 'in_list', label: 'In list' }
-  ];
-
-  const addCondition = () => {
-    const newCondition = {
-      id: Date.now().toString(),
-      type: 'total_spend',
-      operator: 'greater_than',
-      value: '',
-      conjunction: 'and' as const
+  const createNewRule = () => {
+    const newRule: Rule = {
+      id: `rule-${Date.now()}`,
+      name: 'New Rule',
+      conditions: [],
+      actions: [],
+      isActive: true
     };
-    setConditions([...conditions, newCondition]);
+    const updatedRules = [...rules, newRule];
+    setRules(updatedRules);
+    setOpenRule(newRule.id);
+    onRulesChange(updatedRules);
   };
 
-  const addAction = () => {
-    const newAction = {
-      id: Date.now().toString(),
-      type: 'award_points',
+  const updateRule = (ruleId: string, updates: Partial<Rule>) => {
+    const updatedRules = rules.map(rule =>
+      rule.id === ruleId ? { ...rule, ...updates } : rule
+    );
+    setRules(updatedRules);
+    onRulesChange(updatedRules);
+  };
+
+  const deleteRule = (ruleId: string) => {
+    const updatedRules = rules.filter(rule => rule.id !== ruleId);
+    setRules(updatedRules);
+    onRulesChange(updatedRules);
+  };
+
+  const addCondition = (ruleId: string) => {
+    const newCondition: Condition = {
+      id: `condition-${Date.now()}`,
+      field: '',
+      operator: '',
       value: ''
     };
-    setActions([...actions, newAction]);
+    
+    const updatedRules = rules.map(rule => {
+      if (rule.id === ruleId) {
+        return {
+          ...rule,
+          conditions: [...rule.conditions, newCondition]
+        };
+      }
+      return rule;
+    });
+    
+    setRules(updatedRules);
+    onRulesChange(updatedRules);
   };
 
-  const updateCondition = (id: string, field: keyof Condition, value: string) => {
-    setConditions(conditions.map(condition => 
-      condition.id === id ? { ...condition, [field]: value } : condition
-    ));
+  const updateCondition = (ruleId: string, conditionId: string, field: keyof Condition, value: string) => {
+    const updatedRules = rules.map(rule => {
+      if (rule.id === ruleId) {
+        return {
+          ...rule,
+          conditions: rule.conditions.map(condition =>
+            condition.id === conditionId
+              ? { ...condition, [field]: value }
+              : condition
+          )
+        };
+      }
+      return rule;
+    });
+    
+    setRules(updatedRules);
+    onRulesChange(updatedRules);
   };
 
-  const updateAction = (id: string, field: keyof Action, value: string) => {
-    setActions(actions.map(action => 
-      action.id === id ? { ...action, [field]: value } : action
-    ));
+  const removeCondition = (ruleId: string, conditionId: string) => {
+    const updatedRules = rules.map(rule => {
+      if (rule.id === ruleId) {
+        return {
+          ...rule,
+          conditions: rule.conditions.filter(condition => condition.id !== conditionId)
+        };
+      }
+      return rule;
+    });
+    
+    setRules(updatedRules);
+    onRulesChange(updatedRules);
   };
 
-  const removeCondition = (id: string) => {
-    if (conditions.length > 1) {
-      setConditions(conditions.filter(condition => condition.id !== id));
-    }
+  const addAction = (ruleId: string) => {
+    const newAction: Action = {
+      id: `action-${Date.now()}`,
+      type: '',
+      value: ''
+    };
+    
+    const updatedRules = rules.map(rule => {
+      if (rule.id === ruleId) {
+        return {
+          ...rule,
+          actions: [...rule.actions, newAction]
+        };
+      }
+      return rule;
+    });
+    
+    setRules(updatedRules);
+    onRulesChange(updatedRules);
   };
 
-  const removeAction = (id: string) => {
-    if (actions.length > 1) {
-      setActions(actions.filter(action => action.id !== id));
-    }
+  const updateAction = (ruleId: string, actionId: string, field: keyof Action, value: string) => {
+    const updatedRules = rules.map(rule => {
+      if (rule.id === ruleId) {
+        return {
+          ...rule,
+          actions: rule.actions.map(action =>
+            action.id === actionId
+              ? { ...action, [field]: value }
+              : action
+          )
+        };
+      }
+      return rule;
+    });
+    
+    setRules(updatedRules);
+    onRulesChange(updatedRules);
   };
 
-  const handleSave = () => {
-    if (onSave && ruleName) {
-      onSave({
-        name: ruleName,
-        description: ruleDescription,
-        conditions,
-        actions
-      });
-    }
+  const removeAction = (ruleId: string, actionId: string) => {
+    const updatedRules = rules.map(rule => {
+      if (rule.id === ruleId) {
+        return {
+          ...rule,
+          actions: rule.actions.filter(action => action.id !== actionId)
+        };
+      }
+      return rule;
+    });
+    
+    setRules(updatedRules);
+    onRulesChange(updatedRules);
   };
 
   return (
     <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-lg flex items-center gap-2">
-          <Wand className="h-5 w-5 text-primary" />
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle className="flex items-center gap-2">
+          <Rules className="h-5 w-5" />
           Complex Rule Builder
         </CardTitle>
-        <CardDescription>
-          Create sophisticated rules with multiple conditions and actions
-        </CardDescription>
+        <Button onClick={createNewRule}>
+          <Plus className="h-4 w-4 mr-2" />
+          Add Rule
+        </Button>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-6">
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="rule-name">Rule Name</Label>
-              <Input 
-                id="rule-name" 
-                value={ruleName}
-                onChange={(e) => setRuleName(e.target.value)}
-                placeholder="Enter a descriptive name for this rule"
-              />
-            </div>
-            
-            <div>
-              <Label htmlFor="rule-description">Description</Label>
-              <Textarea 
-                id="rule-description" 
-                value={ruleDescription}
-                onChange={(e) => setRuleDescription(e.target.value)}
-                placeholder="Explain what this rule does and when it should trigger"
-                rows={2}
-              />
-            </div>
+      <CardContent className="space-y-4">
+        {rules.length === 0 ? (
+          <div className="text-center py-6 text-muted-foreground">
+            <Rules className="h-8 w-8 mx-auto mb-2 opacity-50" />
+            <p>No rules configured</p>
+            <p className="text-sm">Create rules to automate reward logic</p>
           </div>
-          
-          <div>
-            <h3 className="text-sm font-medium mb-2">IF</h3>
-            <div className="space-y-4">
-              {conditions.map((condition, index) => (
-                <div key={condition.id} className="grid gap-3 border p-3 rounded-md bg-muted/20">
-                  {index > 0 && (
-                    <div>
-                      <Select
-                        value={condition.conjunction}
-                        onValueChange={(value) => updateCondition(condition.id, 'conjunction', value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="and">AND</SelectItem>
-                          <SelectItem value="or">OR</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
-                  
-                  <div className="grid grid-cols-12 gap-2">
-                    <div className="col-span-4">
-                      <Select
-                        value={condition.type}
-                        onValueChange={(value) => updateCondition(condition.id, 'type', value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {conditionTypes.map(type => (
-                            <SelectItem key={type.value} value={type.value}>
-                              {type.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div className="col-span-4">
-                      <Select
-                        value={condition.operator}
-                        onValueChange={(value) => updateCondition(condition.id, 'operator', value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {operators.map(op => (
-                            <SelectItem key={op.value} value={op.value}>
-                              {op.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div className="col-span-3">
-                      <Input 
-                        value={condition.value}
-                        onChange={(e) => updateCondition(condition.id, 'value', e.target.value)}
-                        placeholder="Value"
-                      />
-                    </div>
-                    
-                    <div className="col-span-1 flex items-center justify-center">
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        onClick={() => removeCondition(condition.id)}
-                      >
-                        <Trash className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-              
-              <Button 
-                variant="outline" 
-                onClick={addCondition}
-                size="sm" 
-                className="flex items-center gap-1"
-              >
-                <Plus className="h-3 w-3" />
-                Add Condition
-              </Button>
-            </div>
-          </div>
-          
-          <Separator />
-          
-          <div>
-            <h3 className="text-sm font-medium mb-2">THEN</h3>
-            <div className="space-y-4">
-              {actions.map((action, index) => (
-                <div key={action.id} className="grid gap-3 border p-3 rounded-md bg-muted/20">
-                  <div className="grid grid-cols-12 gap-2">
-                    <div className="col-span-5">
-                      <Select
-                        value={action.type}
-                        onValueChange={(value) => updateAction(action.id, 'type', value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {actionTypes.map(type => (
-                            <SelectItem key={type.value} value={type.value}>
-                              {type.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div className="col-span-6">
-                      <Input 
-                        value={action.value}
-                        onChange={(e) => updateAction(action.id, 'value', e.target.value)}
-                        placeholder={action.type === 'award_points' ? 
-                          'Number of points' : 
-                          action.type === 'send_notification' ? 
-                          'Notification message' : 'Value'}
-                      />
-                    </div>
-                    
-                    <div className="col-span-1 flex items-center justify-center">
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        onClick={() => removeAction(action.id)}
-                      >
-                        <Trash className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-              
-              <Button 
-                variant="outline" 
-                onClick={addAction}
-                size="sm" 
-                className="flex items-center gap-1"
-              >
-                <Plus className="h-3 w-3" />
-                Add Action
-              </Button>
-            </div>
-          </div>
-          
-          <div className="flex justify-end space-x-2 pt-2">
-            <Button
-              onClick={handleSave}
-              className="flex items-center gap-1"
+        ) : (
+          rules.map((rule) => (
+            <Collapsible
+              key={rule.id}
+              open={openRule === rule.id}
+              onOpenChange={(isOpen) => setOpenRule(isOpen ? rule.id : null)}
             >
-              <Save className="h-4 w-4" />
-              Save Rule
-            </Button>
-          </div>
-        </div>
+              <Card>
+                <CollapsibleTrigger asChild>
+                  <CardHeader className="cursor-pointer hover:bg-gray-50">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <ChevronDown className="h-4 w-4" />
+                        <span className="font-medium">{rule.name}</span>
+                        <Badge variant={rule.isActive ? 'default' : 'secondary'}>
+                          {rule.isActive ? 'Active' : 'Inactive'}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <span>{rule.conditions.length} conditions</span>
+                        <span>•</span>
+                        <span>{rule.actions.length} actions</span>
+                      </div>
+                    </div>
+                  </CardHeader>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <CardContent className="space-y-6">
+                    <div className="space-y-2">
+                      <Label>Rule Name</Label>
+                      <Input
+                        value={rule.name}
+                        onChange={(e) => updateRule(rule.id, { name: e.target.value })}
+                        placeholder="Enter rule name"
+                      />
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <Label>Conditions</Label>
+                        <Button size="sm" onClick={() => addCondition(rule.id)}>
+                          <Plus className="h-3 w-3 mr-1" />
+                          Add Condition
+                        </Button>
+                      </div>
+                      {rule.conditions.map((condition) => (
+                        <div key={condition.id} className="grid grid-cols-4 gap-2 items-end p-2 border rounded">
+                          <Select 
+                            value={condition.field} 
+                            onValueChange={(value) => updateCondition(rule.id, condition.id, 'field', value)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Field" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {conditionFields.map((field) => (
+                                <SelectItem key={field.value} value={field.value}>
+                                  {field.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          
+                          <Select 
+                            value={condition.operator} 
+                            onValueChange={(value) => updateCondition(rule.id, condition.id, 'operator', value)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Operator" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {operators.map((operator) => (
+                                <SelectItem key={operator.value} value={operator.value}>
+                                  {operator.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          
+                          <Input
+                            value={condition.value}
+                            onChange={(e) => updateCondition(rule.id, condition.id, 'value', e.target.value)}
+                            placeholder="Value"
+                          />
+                          
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => removeCondition(rule.id, condition.id)}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <Label>Actions</Label>
+                        <Button size="sm" onClick={() => addAction(rule.id)}>
+                          <Plus className="h-3 w-3 mr-1" />
+                          Add Action
+                        </Button>
+                      </div>
+                      {rule.actions.map((_action, _index) => (
+                        <div key={_action.id} className="grid grid-cols-3 gap-2 items-end p-2 border rounded">
+                          <Select 
+                            value={_action.type} 
+                            onValueChange={(value) => updateAction(rule.id, _action.id, 'type', value)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Action" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {actionTypes.map((actionType) => (
+                                <SelectItem key={actionType.value} value={actionType.value}>
+                                  {actionType.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          
+                          <Input
+                            value={_action.value}
+                            onChange={(e) => updateAction(rule.id, _action.id, 'value', e.target.value)}
+                            placeholder="Value"
+                          />
+                          
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => removeAction(rule.id, _action.id)}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="flex justify-between">
+                      <Button
+                        variant="outline"
+                        onClick={() => updateRule(rule.id, { isActive: !rule.isActive })}
+                      >
+                        {rule.isActive ? 'Deactivate' : 'Activate'}
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        onClick={() => deleteRule(rule.id)}
+                      >
+                        Delete Rule
+                      </Button>
+                    </div>
+                  </CardContent>
+                </CollapsibleContent>
+              </Card>
+            </Collapsible>
+          ))
+        )}
       </CardContent>
     </Card>
   );

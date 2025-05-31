@@ -1,70 +1,88 @@
 
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FormField, FormControl, FormDescription, FormItem, FormLabel } from "@/components/ui/form";
-import { Settings } from "lucide-react";
-import { UseFormReturn } from "react-hook-form";
-import { PreferencesFormData } from '../types';
+import { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Monitor, Save } from 'lucide-react';
 
-interface DisplaySettingsCardProps {
-  form: UseFormReturn<PreferencesFormData>;
-}
+export function DisplaySettingsCard() {
+  const [theme, setTheme] = useState('system');
+  const [animations, setAnimations] = useState(true);
+  const [compactMode, setCompactMode] = useState(false);
+  const [autoRefresh, setAutoRefresh] = useState(true);
 
-export function DisplaySettingsCard({ form }: DisplaySettingsCardProps) {
+  const handleSave = () => {
+    // Save display settings logic here
+    console.log('Saving display settings:', { theme, animations, compactMode, autoRefresh });
+  };
+
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Settings className="h-5 w-5" />
+          <Monitor className="h-5 w-5" />
           Display Settings
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <FormField
-          control={form.control}
-          name="display_settings.points_format"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Points Display Format</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select points format" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="standard">Standard (1,234)</SelectItem>
-                  <SelectItem value="compact">Compact (1.2K)</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormDescription>
-                Choose how points are displayed throughout the system
-              </FormDescription>
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="display_settings.show_tier_progress"
-          render={({ field }) => (
-            <FormItem className="flex items-center justify-between rounded-lg border p-3">
-              <div className="space-y-0.5">
-                <FormLabel>Show Tier Progress</FormLabel>
-                <FormDescription>
-                  Display progress towards next reward tier
-                </FormDescription>
-              </div>
-              <FormControl>
-                <Switch
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
-              </FormControl>
-            </FormItem>
-          )}
-        />
+      <CardContent className="space-y-6">
+        <div className="space-y-2">
+          <Label>Theme Preference</Label>
+          <Select value={theme} onValueChange={setTheme}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="light">Light</SelectItem>
+              <SelectItem value="dark">Dark</SelectItem>
+              <SelectItem value="system">System</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <Label htmlFor="animations">Enable Animations</Label>
+              <p className="text-sm text-muted-foreground">Smooth transitions and effects</p>
+            </div>
+            <Switch
+              id="animations"
+              checked={animations}
+              onCheckedChange={setAnimations}
+            />
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div>
+              <Label htmlFor="compact-mode">Compact Mode</Label>
+              <p className="text-sm text-muted-foreground">Reduce spacing and padding</p>
+            </div>
+            <Switch
+              id="compact-mode"
+              checked={compactMode}
+              onCheckedChange={setCompactMode}
+            />
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div>
+              <Label htmlFor="auto-refresh">Auto Refresh</Label>
+              <p className="text-sm text-muted-foreground">Automatically update data</p>
+            </div>
+            <Switch
+              id="auto-refresh"
+              checked={autoRefresh}
+              onCheckedChange={setAutoRefresh}
+            />
+          </div>
+        </div>
+
+        <Button onClick={handleSave} className="w-full">
+          <Save className="h-4 w-4 mr-2" />
+          Save Display Settings
+        </Button>
       </CardContent>
     </Card>
   );

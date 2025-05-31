@@ -1,68 +1,80 @@
 
-import React from 'react';
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Upload, Download, Users, Settings } from 'lucide-react';
 
 export function BulkTabContent() {
+  const bulkOperations = [
+    {
+      icon: Upload,
+      title: 'Bulk User Import',
+      description: 'Import multiple users with their initial reward settings',
+      difficulty: 'Easy',
+      timeEstimate: '5-10 minutes'
+    },
+    {
+      icon: Settings,
+      title: 'Mass Point Updates',
+      description: 'Update point balances for multiple users simultaneously',
+      difficulty: 'Medium',
+      timeEstimate: '10-15 minutes'
+    },
+    {
+      icon: Users,
+      title: 'Tier Migrations',
+      description: 'Move users between reward tiers in bulk operations',
+      difficulty: 'Advanced',
+      timeEstimate: '15-20 minutes'
+    },
+    {
+      icon: Download,
+      title: 'Bulk Export',
+      description: 'Export large datasets with custom field selection',
+      difficulty: 'Easy',
+      timeEstimate: '2-5 minutes'
+    }
+  ];
+
   return (
-    <ScrollArea className="h-[400px] pr-4">
-      <div className="space-y-4">
-        <h3 className="text-lg font-medium">Bulk Operations Guide</h3>
-        <p>This section allows you to add or subtract points for multiple users simultaneously.</p>
-        
-        <div className="space-y-2">
-          <h4 className="font-medium">Using Bulk Operations</h4>
-          <ol className="list-decimal list-inside space-y-1 pl-4">
-            <li>Select an operation type:
-              <ul className="list-disc list-inside ml-6 mt-1">
-                <li><strong>Add Points:</strong> Add points to user accounts</li>
-                <li><strong>Subtract Points:</strong> Deduct points from user accounts</li>
-              </ul>
-            </li>
-            <li>Provide user data in CSV format:
-              <ul className="list-disc list-inside ml-6 mt-1">
-                <li>Either upload a CSV file</li>
-                <li>Or manually enter data in the text area</li>
-              </ul>
-            </li>
-            <li>Click "Execute Bulk Operation" to process</li>
-          </ol>
-        </div>
-        
-        <div className="space-y-2">
-          <h4 className="font-medium">CSV Format Requirements</h4>
-          <p>Your CSV data should follow this format:</p>
-          <div className="font-mono text-sm p-3 bg-muted/30 rounded-md">
-            userId,points,source,metadata
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Bulk Operations Overview</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground mb-4">
+            Bulk operations allow you to perform actions on multiple records simultaneously, 
+            saving time and ensuring consistency across your reward program.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {bulkOperations.map((operation) => (
+              <Card key={operation.title}>
+                <CardContent className="p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 bg-blue-100 rounded-lg">
+                      <operation.icon className="h-5 w-5 text-blue-600" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-medium mb-1">{operation.title}</h3>
+                      <p className="text-sm text-muted-foreground mb-2">
+                        {operation.description}
+                      </p>
+                      <div className="flex gap-2">
+                        <Badge variant="outline" className="text-xs">
+                          {operation.difficulty}
+                        </Badge>
+                        <Badge variant="secondary" className="text-xs">
+                          {operation.timeEstimate}
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
-          
-          <p className="mt-2">For example:</p>
-          <div className="font-mono text-sm p-3 bg-muted/30 rounded-md">
-            user-123,100,promotion,{`{"campaign":"summer"}`}<br/>
-            user-456,50,bonus,{`{"reason":"loyalty"}`}
-          </div>
-          
-          <ul className="list-disc list-inside space-y-1 pl-4 mt-2">
-            <li><strong>userId:</strong> Unique identifier for the user</li>
-            <li><strong>points:</strong> Number of points to add/subtract</li>
-            <li><strong>source:</strong> Reason for the point change</li>
-            <li><strong>metadata:</strong> Optional JSON object with additional information</li>
-          </ul>
-        </div>
-        
-        <div className="space-y-2">
-          <h4 className="font-medium">Tips for Bulk Operations</h4>
-          <ul className="list-disc list-inside space-y-1 pl-4">
-            <li>Always verify your CSV data before submission</li>
-            <li>Use meaningful source values for audit purposes</li>
-            <li>Keep backup records of large point adjustments</li>
-            <li>Review results after completion to verify success</li>
-          </ul>
-          
-          <div className="bg-muted/30 rounded-md p-3 mt-2">
-            <p className="text-sm"><strong>Note:</strong> For very large datasets (1000+ users), consider breaking them into smaller batches for better performance.</p>
-          </div>
-        </div>
-      </div>
-    </ScrollArea>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

@@ -1,25 +1,29 @@
 
-import React from 'react';
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertTriangle } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { AlertTriangle, RefreshCw } from 'lucide-react';
 
-export function PreferencesFormError() {
+interface PreferencesFormErrorProps {
+  error: string;
+  onRetry: () => void;
+}
+
+export function PreferencesFormError({ error, onRetry }: PreferencesFormErrorProps) {
   return (
-    <Alert variant="destructive" className="mb-4">
-      <AlertTriangle className="h-4 w-4" />
-      <AlertTitle>Error</AlertTitle>
-      <AlertDescription className="flex flex-col gap-2">
-        <p>Failed to load user preferences. Please try again later.</p>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="w-fit"
-          onClick={() => window.location.reload()}
-        >
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-red-600">
+          <AlertTriangle className="h-5 w-5" />
+          Error Loading Preferences
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="text-center space-y-4">
+        <p className="text-muted-foreground">{error}</p>
+        <Button onClick={onRetry} variant="outline">
+          <RefreshCw className="h-4 w-4 mr-2" />
           Retry
         </Button>
-      </AlertDescription>
-    </Alert>
+      </CardContent>
+    </Card>
   );
 }

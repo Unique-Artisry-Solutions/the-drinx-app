@@ -1,245 +1,166 @@
-
-import React, { useState, useEffect, useRef } from 'react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AudienceNetwork, SegmentConnectionStrength, InfluentialUser, CrossSegmentEngagement } from '@/types/AudienceTypes';
-import { NetworkVisualization } from './NetworkVisualization';
-import { InfluencerList } from './InfluencerList';
-import { RelationshipMatrix } from './RelationshipMatrix';
-import { Download, Filter, Settings, ZoomIn, ZoomOut, RefreshCw } from 'lucide-react';
+import { RefreshCw, Filter, Users } from 'lucide-react';
 
 interface AudienceRelationshipMapProps {
-  selectedSegmentId?: string;
-  onSelectSegment?: (segmentId: string) => void;
+  segments: Array<{
+    id: string;
+    name: string;
+    memberCount: number;
+    relationships: Array<{
+      targetId: string;
+      strength: number;
+      type: string;
+    }>;
+  }>;
+  _onSelectSegment?: (segmentId: string) => void;
+  onRefresh?: () => void;
 }
 
-export const AudienceRelationshipMap: React.FC<AudienceRelationshipMapProps> = ({ 
-  selectedSegmentId,
-  onSelectSegment
-}) => {
-  const [networkData, setNetworkData] = useState<AudienceNetwork | null>(null);
-  const [connectionStrengths, setConnectionStrengths] = useState<SegmentConnectionStrength[]>([]);
-  const [influencers, setInfluencers] = useState<InfluentialUser[]>([]);
-  const [crossEngagement, setCrossEngagement] = useState<CrossSegmentEngagement[]>([]);
-  const [viewMode, setViewMode] = useState<'network' | 'matrix' | 'influencers'>('network');
-  const [zoomLevel, setZoomLevel] = useState(1);
-  const [filterThreshold, setFilterThreshold] = useState(0.3);
-  const [isLoading, setIsLoading] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
+export function AudienceRelationshipMap({ 
+  segments, 
+  onRefresh 
+}: AudienceRelationshipMapProps) {
+  const [filterStrength, setFilterStrength] = useState([0]);
+  const [relationshipType, setRelationshipType] = useState('all');
+  const [selectedSegments, setSelectedSegments] = useState<string[]>([]);
 
-  useEffect(() => {
-    loadRelationshipData(selectedSegmentId);
-  }, [selectedSegmentId]);
+  // Mock relationship data - preserved as placeholder
+  const mockConnections = [
+    { source: 'segment-1', target: 'segment-2', strength: 0.8, type: 'overlap' },
+    { source: 'segment-2', target: 'segment-3', strength: 0.6, type: 'behavioral' },
+    { source: 'segment-1', target: 'segment-3', strength: 0.4, type: 'demographic' }
+  ];
 
-  const loadRelationshipData = async (segmentId?: string) => {
-    setIsLoading(true);
-    try {
-      // This would be replaced with actual API calls to fetch relationship data
-      // For now we'll use mock data
-      setTimeout(() => {
-        setNetworkData(generateMockNetworkData());
-        setConnectionStrengths(generateMockConnectionStrengths());
-        setInfluencers(generateMockInfluencers());
-        setCrossEngagement(generateMockCrossEngagement());
-        setIsLoading(false);
-      }, 800);
-    } catch (error) {
-      console.error('Error loading relationship data:', error);
-      setIsLoading(false);
-    }
+  const getSegmentName = (_segmentId: string) => {
+    return 'Segment Name'; // Placeholder
   };
 
-  // Mock data generators for demonstration
-  const generateMockNetworkData = (): AudienceNetwork => {
-    return {
-      nodes: Array.from({ length: 12 }, (_, i) => ({
-        id: `node-${i}`,
-        user_id: `user-${i}`,
-        segment_ids: [Math.random() > 0.5 ? 'segment-1' : 'segment-2'],
-        influence_score: Math.random() * 10,
-        position: { x: Math.random() * 800, y: Math.random() * 600 },
-        metadata: { activity: Math.random() * 100 }
-      })),
-      edges: Array.from({ length: 20 }, (_, i) => ({
-        source: `node-${Math.floor(Math.random() * 12)}`,
-        target: `node-${Math.floor(Math.random() * 12)}`,
-        weight: Math.random(),
-        relationship_type: Math.random() > 0.5 ? 'influence' : 'interaction'
-      })),
-      metadata: {
-        density: 0.4,
-        centrality: { 'node-1': 0.8, 'node-2': 0.6 },
-        clusters: [
-          { id: 'cluster-1', members: ['node-1', 'node-3', 'node-5'] },
-          { id: 'cluster-2', members: ['node-2', 'node-4', 'node-6'] }
-        ]
-      }
-    };
-  };
-
-  const generateMockConnectionStrengths = (): SegmentConnectionStrength[] => {
-    return Array.from({ length: 6 }, (_, i) => ({
-      source_segment_id: `segment-${i % 3 + 1}`,
-      target_segment_id: `segment-${(i + 1) % 3 + 1}`,
-      connection_strength: Math.random(),
-      shared_members: Math.floor(Math.random() * 100),
-      interaction_frequency: Math.random() * 10,
-      conversion_rate: Math.random(),
-      similarity_score: Math.random()
-    }));
-  };
-
-  const generateMockInfluencers = (): InfluentialUser[] => {
-    return Array.from({ length: 8 }, (_, i) => ({
-      user_id: `user-${i}`,
-      display_name: `Influencer ${i + 1}`,
-      influence_score: Math.random() * 10,
-      follower_count: Math.floor(Math.random() * 1000),
-      engagement_rate: Math.random(),
-      connected_segments: Math.floor(Math.random() * 5) + 1,
-      expertise_areas: ['Food', 'Drinks', 'Nightlife'].slice(0, Math.floor(Math.random() * 3) + 1)
-    }));
-  };
-
-  const generateMockCrossEngagement = (): CrossSegmentEngagement[] => {
-    return Array.from({ length: 4 }, (_, i) => ({
-      primary_segment_id: `segment-${i % 2 + 1}`,
-      secondary_segment_id: `segment-${(i + 1) % 2 + 1}`,
-      timeframe: '30d',
-      engagement_rate: Math.random(),
-      conversion_rate: Math.random(),
-      overlap_percentage: Math.random(),
-      correlation_score: Math.random() * 2 - 1
-    }));
-  };
-
-  const handleRefresh = () => {
-    loadRelationshipData(selectedSegmentId);
-  };
-
-  const handleZoomIn = () => {
-    setZoomLevel(prev => Math.min(prev + 0.2, 2));
-  };
-
-  const handleZoomOut = () => {
-    setZoomLevel(prev => Math.max(prev - 0.2, 0.5));
-  };
-
-  const handleFilterChange = (value: number[]) => {
-    setFilterThreshold(value[0]);
-  };
-
-  const handleExportData = () => {
-    // In a real implementation, this would generate and download a report
-    alert('Data export functionality would be implemented here');
+  const toggleSegmentSelection = (segmentId: string) => {
+    setSelectedSegments(prev => 
+      prev.includes(segmentId)
+        ? prev.filter(id => id !== segmentId)
+        : [...prev, segmentId]
+    );
   };
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <div className="flex justify-between items-center">
-          <div>
-            <CardTitle>Audience Relationship Mapping</CardTitle>
-            <CardDescription>
-              Visualize connections between audience segments and identify key influencers
-            </CardDescription>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={handleExportData}>
-              <Download className="h-4 w-4 mr-2" />
-              Export
-            </Button>
-            <Button variant="default" size="sm" onClick={handleRefresh} disabled={isLoading}>
-              <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-              Refresh
+    <div className="space-y-6">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            Audience Relationship Map
+          </CardTitle>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={onRefresh}>
+              <RefreshCw className="h-4 w-4" />
             </Button>
           </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as any)} className="w-full">
-          <div className="flex justify-between items-center mb-4">
-            <TabsList>
-              <TabsTrigger value="network">Network View</TabsTrigger>
-              <TabsTrigger value="matrix">Matrix View</TabsTrigger>
-              <TabsTrigger value="influencers">Key Influencers</TabsTrigger>
-            </TabsList>
-            
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <ZoomOut className="h-4 w-4 text-gray-500" onClick={handleZoomOut} />
-                <Slider
-                  value={[zoomLevel]}
-                  min={0.5}
-                  max={2}
-                  step={0.1}
-                  className="w-24"
-                  onValueChange={([val]) => setZoomLevel(val)}
-                />
-                <ZoomIn className="h-4 w-4 text-gray-500" onClick={handleZoomIn} />
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <Filter className="h-4 w-4 text-gray-500" />
-                <Select 
-                  value={filterThreshold.toString()} 
-                  onValueChange={(val) => setFilterThreshold(parseFloat(val))}
-                >
-                  <SelectTrigger className="w-32">
-                    <SelectValue placeholder="Threshold" />
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col lg:flex-row gap-6">
+            {/* Controls Panel */}
+            <div className="lg:w-1/3 space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Relationship Type</label>
+                <Select value={relationshipType} onValueChange={setRelationshipType}>
+                  <SelectTrigger>
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="0.1">Low (0.1)</SelectItem>
-                    <SelectItem value="0.3">Medium (0.3)</SelectItem>
-                    <SelectItem value="0.5">High (0.5)</SelectItem>
-                    <SelectItem value="0.7">Very High (0.7)</SelectItem>
+                    <SelectItem value="all">All Types</SelectItem>
+                    <SelectItem value="overlap">Overlap</SelectItem>
+                    <SelectItem value="behavioral">Behavioral</SelectItem>
+                    <SelectItem value="demographic">Demographic</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-            </div>
-          </div>
-          
-          <div ref={containerRef} style={{ height: '500px', position: 'relative' }}>
-            {isLoading ? (
-              <div className="absolute inset-0 flex items-center justify-center bg-white/80">
-                <div className="flex flex-col items-center">
-                  <RefreshCw className="animate-spin h-8 w-8 text-primary" />
-                  <p className="mt-2 text-sm text-gray-500">Loading relationship data...</p>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">
+                  Minimum Strength: {filterStrength[0]}%
+                </label>
+                <Slider
+                  value={filterStrength}
+                  onValueChange={setFilterStrength}
+                  max={100}
+                  step={5}
+                  className="w-full"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium flex items-center gap-2">
+                  <Filter className="h-4 w-4" />
+                  Segments ({selectedSegments.length} selected)
+                </label>
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                  {segments.map((segment) => (
+                    <div
+                      key={segment.id}
+                      className={`p-2 border rounded cursor-pointer transition-colors ${
+                        selectedSegments.includes(segment.id)
+                          ? 'bg-blue-50 border-blue-200'
+                          : 'hover:bg-gray-50'
+                      }`}
+                      onClick={() => toggleSegmentSelection(segment.id)}
+                    >
+                      <div className="font-medium text-sm">{segment.name}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {segment.memberCount.toLocaleString()} members
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
-            ) : (
-              <>
-                <TabsContent value="network" className="h-full">
-                  <NetworkVisualization 
-                    network={networkData}
-                    zoomLevel={zoomLevel}
-                    filterThreshold={filterThreshold}
-                    onNodeSelect={(nodeId) => console.log('Node selected:', nodeId)}
-                  />
-                </TabsContent>
-                
-                <TabsContent value="matrix" className="h-full overflow-auto">
-                  <RelationshipMatrix 
-                    connections={connectionStrengths}
-                    crossEngagement={crossEngagement}
-                    filterThreshold={filterThreshold}
-                  />
-                </TabsContent>
-                
-                <TabsContent value="influencers" className="h-full overflow-auto">
-                  <InfluencerList 
-                    influencers={influencers.sort((a, b) => b.influence_score - a.influence_score)}
-                    onSelectUser={(userId) => console.log('Influencer selected:', userId)}
-                  />
-                </TabsContent>
-              </>
-            )}
+            </div>
+
+            {/* Visualization Area */}
+            <div className="lg:w-2/3">
+              <div className="border rounded-lg p-6 h-96 bg-gray-50 flex items-center justify-center">
+                <div className="text-center text-muted-foreground">
+                  <Users className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                  <p>Relationship visualization will appear here</p>
+                  <p className="text-sm mt-1">
+                    {mockConnections.length} relationships detected
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
-        </Tabs>
-      </CardContent>
-    </Card>
+
+          {/* Relationship Summary */}
+          <div className="mt-6 space-y-4">
+            <h3 className="font-medium">Key Relationships</h3>
+            <div className="grid gap-3">
+              {mockConnections.map((connection, _i) => (
+                <div key={`${connection.source}-${connection.target}`} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium">
+                      {getSegmentName(connection.source)}
+                    </span>
+                    <span className="text-muted-foreground">↔</span>
+                    <span className="text-sm font-medium">
+                      {getSegmentName(connection.target)}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline">{connection.type}</Badge>
+                    <Badge variant={connection.strength > 0.7 ? 'default' : 'secondary'}>
+                      {Math.round(connection.strength * 100)}%
+                    </Badge>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
-};
+}

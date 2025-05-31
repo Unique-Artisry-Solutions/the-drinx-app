@@ -1,231 +1,151 @@
 
-import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Calendar, ChevronDown, Calendar as CalendarIcon } from 'lucide-react';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Calendar, Snowflake, Sun, Leaf, Flower } from 'lucide-react';
 
 interface SeasonalTemplate {
-  id: string | number;
+  id: string;
   name: string;
-  startMonth: number;
-  endMonth: number;
-  pointsMultiplier: number;
+  season: string;
   description: string;
+  icon: any;
+  bonusMultiplier: number;
+  specialRewards: string[];
 }
 
-export interface SeasonalTemplateSelectorProps {
-  templates?: SeasonalTemplate[];
-  onSelectTemplate?: (template: SeasonalTemplate) => void;
-  onCreateTemplate?: (template: SeasonalTemplate) => void;
+interface SeasonalTemplateSelectorProps {
+  onTemplateSelect: (template: SeasonalTemplate) => void;
 }
 
-export function SeasonalTemplateSelector({
-  templates = [],
-  onSelectTemplate,
-  onCreateTemplate
-}: SeasonalTemplateSelectorProps) {
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [newTemplate, setNewTemplate] = useState<Partial<SeasonalTemplate>>({
-    name: '',
-    startMonth: 1,
-    endMonth: 2,
-    pointsMultiplier: 1.5,
-    description: ''
-  });
+export function SeasonalTemplateSelector({ onTemplateSelect }: SeasonalTemplateSelectorProps) {
+  const [selectedSeason, setSelectedSeason] = useState('all');
 
-  const months = [
-    { value: 1, label: 'January' },
-    { value: 2, label: 'February' },
-    { value: 3, label: 'March' },
-    { value: 4, label: 'April' },
-    { value: 5, label: 'May' },
-    { value: 6, label: 'June' },
-    { value: 7, label: 'July' },
-    { value: 8, label: 'August' },
-    { value: 9, label: 'September' },
-    { value: 10, label: 'October' },
-    { value: 11, label: 'November' },
-    { value: 12, label: 'December' }
+  const seasonalTemplates: SeasonalTemplate[] = [
+    {
+      id: 'winter-wonderland',
+      name: 'Winter Wonderland',
+      season: 'winter',
+      description: 'Double points on warm drinks and holiday specials',
+      icon: Snowflake,
+      bonusMultiplier: 2.0,
+      specialRewards: ['Free hot chocolate', 'Holiday merchandise', 'Warm beverage upgrade']
+    },
+    {
+      id: 'spring-fresh',
+      name: 'Spring Fresh',
+      season: 'spring',
+      description: 'Bonus points for fresh ingredients and light drinks',
+      icon: Flower,
+      bonusMultiplier: 1.5,
+      specialRewards: ['Fresh fruit smoothie', 'Garden salad', 'Herbal tea selection']
+    },
+    {
+      id: 'summer-cool',
+      name: 'Summer Cool',
+      season: 'summer',
+      description: 'Extra rewards for cold drinks and outdoor seating',
+      icon: Sun,
+      bonusMultiplier: 1.8,
+      specialRewards: ['Iced drink upgrade', 'Outdoor seating priority', 'Summer cocktail special']
+    },
+    {
+      id: 'autumn-harvest',
+      name: 'Autumn Harvest',
+      season: 'autumn',
+      description: 'Seasonal flavors and harvest-themed rewards',
+      icon: Leaf,
+      bonusMultiplier: 1.6,
+      specialRewards: ['Pumpkin spice drinks', 'Harvest pastries', 'Seasonal merchandise']
+    }
   ];
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setNewTemplate(prev => ({
-      ...prev,
-      [name]: name === 'pointsMultiplier' ? parseFloat(value) : value
-    }));
-  };
+  const filteredTemplates = selectedSeason === 'all' 
+    ? seasonalTemplates 
+    : seasonalTemplates.filter(template => template.season === selectedSeason);
 
-  const handleSelectChange = (name: string, value: string | number) => {
-    setNewTemplate(prev => ({
-      ...prev,
-      [name]: name === 'startMonth' || name === 'endMonth' ? Number(value) : value
-    }));
-  };
-
-  const handleCreateTemplate = () => {
-    if (onCreateTemplate && newTemplate.name) {
-      onCreateTemplate({
-        ...newTemplate,
-        id: Date.now(),
-        startMonth: newTemplate.startMonth || 1,
-        endMonth: newTemplate.endMonth || 12,
-        pointsMultiplier: newTemplate.pointsMultiplier || 1,
-        description: newTemplate.description || ''
-      } as SeasonalTemplate);
-      setIsCreateDialogOpen(false);
-      setNewTemplate({
-        name: '',
-        startMonth: 1,
-        endMonth: 2,
-        pointsMultiplier: 1.5,
-        description: ''
-      });
-    }
+  const handleTemplateSelect = (template: SeasonalTemplate) => {
+    onTemplateSelect(template);
   };
 
   return (
     <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-lg flex items-center gap-2">
-          <Calendar className="h-5 w-5 text-primary" />
-          Seasonal Promotion Templates
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle className="flex items-center gap-2">
+          <Calendar className="h-5 w-5" />
+          Seasonal Templates
         </CardTitle>
-        <CardDescription>
-          Apply or create seasonal promotion templates
-        </CardDescription>
+        <Select value={selectedSeason} onValueChange={setSelectedSeason}>
+          <SelectTrigger className="w-32">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Seasons</SelectItem>
+            <SelectItem value="spring">Spring</SelectItem>
+            <SelectItem value="summer">Summer</SelectItem>
+            <SelectItem value="autumn">Autumn</SelectItem>
+            <SelectItem value="winter">Winter</SelectItem>
+          </SelectContent>
+        </Select>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
-          {templates.length > 0 ? (
-            <div className="grid gap-2">
-              {templates.map(template => (
-                <div 
-                  key={template.id} 
-                  className="p-3 border rounded-md flex justify-between items-center hover:bg-accent/10 cursor-pointer"
-                  onClick={() => onSelectTemplate?.(template)}
-                >
-                  <div>
-                    <h4 className="font-medium">{template.name}</h4>
-                    <p className="text-sm text-muted-foreground">
-                      {months.find(m => m.value === template.startMonth)?.label} - {months.find(m => m.value === template.endMonth)?.label}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {filteredTemplates.map((template) => (
+            <Card key={template.id} className="cursor-pointer hover:shadow-md transition-shadow">
+              <CardContent className="p-4">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-gray-100 rounded-lg">
+                    <template.icon className="h-6 w-6" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="font-medium">{template.name}</h3>
+                      <Badge variant="outline" className="capitalize">
+                        {template.season}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      {template.description}
                     </p>
-                  </div>
-                  <div className="text-right">
-                    <span className="font-medium">×{template.pointsMultiplier}</span>
-                    <p className="text-sm text-muted-foreground">Point Multiplier</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center p-6 bg-muted/30 rounded-md">
-              <CalendarIcon className="h-10 w-10 text-muted-foreground mx-auto mb-2" />
-              <h3 className="font-medium mb-1">No Templates Available</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Create your first seasonal promotion template
-              </p>
-            </div>
-          )}
-          
-          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="w-full">Create Template</Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Create Seasonal Template</DialogTitle>
-                <DialogDescription>
-                  Create a new template for seasonal promotions
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4 py-2">
-                <div>
-                  <Label htmlFor="template-name">Template Name</Label>
-                  <Input 
-                    id="template-name"
-                    name="name"
-                    value={newTemplate.name || ''}
-                    onChange={handleInputChange}
-                    placeholder="e.g. Holiday Season Special"
-                  />
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="start-month">Start Month</Label>
-                    <Select
-                      value={String(newTemplate.startMonth)}
-                      onValueChange={(value) => handleSelectChange('startMonth', value)}
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-sm">
+                        <span className="font-medium">Bonus:</span>
+                        <Badge variant="default">
+                          {template.bonusMultiplier}x points
+                        </Badge>
+                      </div>
+                      <div className="space-y-1">
+                        <span className="text-xs font-medium text-muted-foreground">
+                          Special Rewards:
+                        </span>
+                        <div className="flex flex-wrap gap-1">
+                          {template.specialRewards.slice(0, 2).map((reward, index) => (
+                            <Badge key={index} variant="outline" className="text-xs">
+                              {reward}
+                            </Badge>
+                          ))}
+                          {template.specialRewards.length > 2 && (
+                            <Badge variant="outline" className="text-xs">
+                              +{template.specialRewards.length - 2} more
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <Button 
+                      size="sm" 
+                      className="w-full mt-3"
+                      onClick={() => handleTemplateSelect(template)}
                     >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {months.map(month => (
-                          <SelectItem key={month.value} value={String(month.value)}>
-                            {month.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label htmlFor="end-month">End Month</Label>
-                    <Select
-                      value={String(newTemplate.endMonth)}
-                      onValueChange={(value) => handleSelectChange('endMonth', value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {months.map(month => (
-                          <SelectItem key={month.value} value={String(month.value)}>
-                            {month.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      Apply Template
+                    </Button>
                   </div>
                 </div>
-                
-                <div>
-                  <Label htmlFor="points-multiplier">Points Multiplier</Label>
-                  <Input 
-                    id="points-multiplier"
-                    name="pointsMultiplier"
-                    type="number"
-                    step="0.1"
-                    min="1"
-                    value={newTemplate.pointsMultiplier || 1.5}
-                    onChange={handleInputChange}
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="template-description">Description</Label>
-                  <Textarea 
-                    id="template-description"
-                    name="description"
-                    value={newTemplate.description || ''}
-                    onChange={handleInputChange}
-                    placeholder="Describe the seasonal promotion"
-                    rows={3}
-                  />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>Cancel</Button>
-                <Button onClick={handleCreateTemplate}>Create Template</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       </CardContent>
     </Card>

@@ -1,65 +1,51 @@
-
 import { useState, useEffect } from 'react';
-import { PageComponentsMap, ComponentCatalogItem } from '../types';
-import { componentCatalogData } from '../data/componentCatalogData';
+import { ComponentGroup } from '../types';
 
-export const useComponentCatalog = () => {
-  const [componentsByPage, setComponentsByPage] = useState<PageComponentsMap>({});
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [filteredComponents, setFilteredComponents] = useState<PageComponentsMap>({});
-  
+export function useComponentCatalog() {
+  const [componentGroups, setComponentGroups] = useState<ComponentGroup[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   useEffect(() => {
-    // In a real application, we might fetch this data from an API
-    // For now, we'll use our mock data
-    setComponentsByPage(componentCatalogData);
-    setFilteredComponents(componentCatalogData);
-    setIsLoading(false);
-  }, []);
-  
-  const searchComponents = (query: string) => {
-    if (!query.trim()) {
-      setFilteredComponents(componentsByPage);
-      return;
-    }
-    
-    const lowerCaseQuery = query.toLowerCase();
-    
-    const filteredResults: PageComponentsMap = {};
-    
-    Object.keys(componentsByPage).forEach((pagePath) => {
-      const page = componentsByPage[pagePath];
-      const matchingGroups = page.components.map(group => {
-        const matchingComponents = group.components.filter(component => 
-          component.name.toLowerCase().includes(lowerCaseQuery) || 
-          component.description.toLowerCase().includes(lowerCaseQuery) ||
-          component.filePath.toLowerCase().includes(lowerCaseQuery) ||
-          component.type.toLowerCase().includes(lowerCaseQuery) ||
-          component.selectors.some(selector => selector.toLowerCase().includes(lowerCaseQuery))
-        );
+    // Mock data loading - preserved as placeholder
+    const loadComponents = async () => {
+      try {
+        setIsLoading(true);
+        // Simulate API call
+        await new Promise(resolve => setTimeout(resolve, 1000));
         
-        if (matchingComponents.length > 0) {
-          return {
-            ...group,
-            components: matchingComponents
-          };
-        }
-        return null;
-      }).filter(Boolean) as any[];
-      
-      if (matchingGroups.length > 0) {
-        filteredResults[pagePath] = {
-          ...page,
-          components: matchingGroups
-        };
+        const mockGroups: ComponentGroup[] = [
+          {
+            id: 'ui',
+            name: 'UI Components',
+            description: 'Basic UI building blocks',
+            components: []
+          },
+          {
+            id: 'forms',
+            name: 'Form Components', 
+            description: 'Form input and validation components',
+            components: []
+          }
+        ];
+        
+        setComponentGroups(mockGroups);
+      } catch (err) {
+        setError('Failed to load component catalog');
+      } finally {
+        setIsLoading(false);
       }
-    });
-    
-    setFilteredComponents(filteredResults);
-  };
-  
+    };
+
+    loadComponents();
+  }, []);
+
   return {
-    componentsByPage: filteredComponents,
+    componentGroups,
     isLoading,
-    searchComponents
+    error,
+    refetch: () => {
+      // Refetch logic here
+    }
   };
-};
+}

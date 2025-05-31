@@ -1,85 +1,76 @@
 
-import React from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Play, Pause, Trash2, RefreshCw } from 'lucide-react';
-import { useCampaigns } from '@/hooks/rewards/useCampaigns';
-import { RewardCampaign } from '@/types/rewards';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Plus, Search, Filter } from 'lucide-react';
+import { CampaignForm } from './CampaignForm';
+import { RewardCampaign } from '@/types/rewards/campaigns';
 
 interface CampaignManagementTabProps {
-  establishmentId?: string;
+  _establishmentId: string;
 }
 
-export const CampaignManagementTab: React.FC<CampaignManagementTabProps> = ({ establishmentId }) => {
-  const {
-    campaigns,
-    isLoading,
-    error,
-    createCampaign,
-    updateCampaign,
-    deleteCampaign,
-    activateCampaign,
-    deactivateCampaign,
-    fetchCampaigns
-  } = useCampaigns();
+export function CampaignManagementTab({ _establishmentId }: CampaignManagementTabProps) {
+  const [campaigns, setCampaigns] = useState<RewardCampaign[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [selectedCampaign, setSelectedCampaign] = useState<RewardCampaign | undefined>();
 
-  const handleCreateCampaign = async () => {
-    try {
-      await createCampaign({
-        name: 'New Campaign',
-        description: 'Campaign description',
-        status: 'draft'
-      });
-    } catch (error) {
-      console.error('Failed to create campaign:', error);
+  const handleSaveCampaign = (campaignData: Partial<RewardCampaign>) => {
+    if (selectedCampaign) {
+      // Update existing campaign
+      setCampaigns(prev => prev.map(c => 
+        c.id === selectedCampaign.id 
+          ? { ...c, ...campaignData } as RewardCampaign
+          : c
+      ));
+    } else {
+      // Create new campaign
+      const newCampaign: RewardCampaign = {
+        id: `campaign-${Date.now()}`,
+        name: campaignData.name || '',
+        description: campaignData.description || '',
+        status: campaignData.status || 'draft',
+        start_date: campaignData.start_date || '',
+        end_date: campaignData.end_date || '',
+        budget: campaignData.budget || 0,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      setCampaigns(prev => [...prev, newCampaign]);
     }
+    setShowCreateForm(false);
+    setSelectedCampaign(undefined);
   };
 
-  const handleActivateCampaign = async (campaignId: string) => {
-    try {
-      await activateCampaign(campaignId);
-    } catch (error) {
-      console.error('Failed to activate campaign:', error);
-    }
+  const handleCancelForm = () => {
+    setShowCreateForm(false);
+    setSelectedCampaign(undefined);
   };
 
-  const handleDeactivateCampaign = async (campaignId: string) => {
-    try {
-      await deactivateCampaign(campaignId);
-    } catch (error) {
-      console.error('Failed to deactivate campaign:', error);
-    }
-  };
+  const filteredCampaigns = campaigns.filter(campaign =>
+    campaign.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
-  const handleDeleteCampaign = async (campaignId: string) => {
-    try {
-      await deleteCampaign(campaignId);
-    } catch (error) {
-      console.error('Failed to delete campaign:', error);
-    }
-  };
-
-  const getStatusBadgeVariant = (status: RewardCampaign['status']) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
       case 'active': return 'default';
-      case 'paused': return 'secondary';
+      case 'draft': return 'secondary';
       case 'completed': return 'outline';
-      case 'cancelled': return 'destructive';
       default: return 'secondary';
     }
   };
 
-  if (isLoading) {
+  if (showCreateForm) {
     return (
-      <div className="space-y-4">
-        <div className="h-10 bg-muted animate-pulse rounded-md" />
-        <div className="space-y-2">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="h-24 bg-muted animate-pulse rounded-md" />
-          ))}
-        </div>
-      </div>
+      <CampaignForm
+        campaign={selectedCampaign}
+        onSave={handleSaveCampaign}
+        onCancel={handleCancelForm}
+      />
     );
   }
 
@@ -87,86 +78,70 @@ export const CampaignManagementTab: React.FC<CampaignManagementTabProps> = ({ es
     <div className="space-y-6">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Reward Campaigns</CardTitle>
-          <div className="flex gap-2">
-            <Button onClick={fetchCampaigns} variant="outline" size="sm">
-              <RefreshCw className="mr-2 h-4 w-4" />
-              Refresh
-            </Button>
-            <Button onClick={handleCreateCampaign}>
-              <Plus className="mr-2 h-4 w-4" />
-              Create Campaign
-            </Button>
-          </div>
+          <CardTitle>Campaign Management</CardTitle>
+          <Button onClick={() => setShowCreateForm(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            New Campaign
+          </Button>
         </CardHeader>
         <CardContent>
-          {campaigns.length === 0 ? (
-            <p className="text-muted-foreground">
-              No campaigns found. Create your first campaign to get started.
-            </p>
-          ) : (
-            <div className="space-y-4">
-              {campaigns.map((campaign) => (
-                <Card key={campaign.id} className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <h3 className="font-medium">{campaign.name}</h3>
-                        <Badge variant={getStatusBadgeVariant(campaign.status)}>
-                          {campaign.status}
-                        </Badge>
-                      </div>
-                      {campaign.description && (
-                        <p className="text-sm text-muted-foreground mb-2">
-                          {campaign.description}
-                        </p>
-                      )}
-                      <div className="flex gap-4 text-xs text-muted-foreground">
-                        {campaign.budget && (
-                          <span>Budget: ${campaign.budget}</span>
-                        )}
-                        {campaign.performance_metrics && (
-                          <span>
-                            Reached: {campaign.performance_metrics.total_users_reached || 0} users
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      {campaign.status === 'active' ? (
-                        <Button
-                          onClick={() => handleDeactivateCampaign(campaign.id)}
-                          variant="outline"
-                          size="sm"
-                        >
-                          <Pause className="h-4 w-4" />
-                        </Button>
-                      ) : (
-                        <Button
-                          onClick={() => handleActivateCampaign(campaign.id)}
-                          variant="outline"
-                          size="sm"
-                        >
-                          <Play className="h-4 w-4" />
-                        </Button>
-                      )}
-                      <Button
-                        onClick={() => handleDeleteCampaign(campaign.id)}
-                        variant="outline"
-                        size="sm"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </Card>
-              ))}
+          <Tabs defaultValue="all" className="w-full">
+            <TabsList>
+              <TabsTrigger value="all">All Campaigns</TabsTrigger>
+              <TabsTrigger value="active">Active</TabsTrigger>
+              <TabsTrigger value="draft">Draft</TabsTrigger>
+              <TabsTrigger value="completed">Completed</TabsTrigger>
+            </TabsList>
+
+            <div className="flex items-center gap-2 mt-4 mb-6">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search campaigns..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <Button variant="outline" size="sm">
+                <Filter className="h-4 w-4 mr-2" />
+                Filter
+              </Button>
             </div>
-          )}
+
+            <TabsContent value="all" className="space-y-4">
+              {filteredCampaigns.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-muted-foreground">No campaigns found. Create your first campaign to get started.</p>
+                </div>
+              ) : (
+                <div className="grid gap-4">
+                  {filteredCampaigns.map((campaign) => (
+                    <Card key={campaign.id} className="cursor-pointer hover:shadow-md transition-shadow">
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between">
+                          <div className="space-y-1">
+                            <h3 className="font-medium">{campaign.name}</h3>
+                            <p className="text-sm text-muted-foreground">{campaign.description}</p>
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <span>{campaign.start_date} - {campaign.end_date}</span>
+                              <span>•</span>
+                              <span>Budget: ${campaign.budget}</span>
+                            </div>
+                          </div>
+                          <Badge variant={getStatusColor(campaign.status)}>
+                            {campaign.status}
+                          </Badge>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
     </div>
   );
-};
-
-export default CampaignManagementTab;
+}
