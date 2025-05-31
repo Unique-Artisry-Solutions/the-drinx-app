@@ -118,12 +118,12 @@ export const AudienceManagementTab = () => {
         </TabsContent>
 
         <TabsContent value="analytics" className="space-y-4">
-          <SegmentAnalyticsDashboard selectedSegments={selectedSegments} />
+          <SegmentAnalyticsDashboard />
         </TabsContent>
 
         <TabsContent value="relationships" className="space-y-4">
           <NetworkVisualization 
-            network={{ nodes: [], connections: [] }}
+            network={{ nodes: [], edges: [] }}
             zoomLevel={1}
             filterThreshold={0.5}
             onNodeSelect={() => {}}
