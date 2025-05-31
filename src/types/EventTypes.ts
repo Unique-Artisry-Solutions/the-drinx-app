@@ -1,21 +1,21 @@
-export type EventStatus = 'draft' | 'published' | 'cancelled' | 'completed';
+export type {
+  Event,
+  EventStatus,
+  EventLocation,
+  EventContactInfo,
+  EventTicketType,
+  EventTicketPricingTier
+} from './master/index';
 
-export interface EventLocation {
-  address: string;
-  city: string;
-  state: string;
-  zip: string;
-  country: string;
-  latitude?: number;
-  longitude?: number;
-}
+// Use extended types from master/extensions for form data
+export type {
+  EventFormData,
+  EventNotificationSchedule,
+  EventDiscountCode,
+  EventPaymentSettings
+} from './master/extensions';
 
-export interface EventContactInfo {
-  name: string;
-  email: string;
-  phone?: string;
-}
-
+// Keep only the additional types that aren't in the master system
 export interface ABTestConfig {
   variantA: string;
   variantB: string;
@@ -56,46 +56,6 @@ export interface EventMarketingCampaign {
   updated_at?: string;
 }
 
-export interface EventTicketType {
-  id?: string;
-  event_id?: string;
-  name: string;
-  description: string;
-  price: number;
-  quantity: number;
-  sold?: number;    // Added field for ticket sales count
-  available?: number; // Added field for available tickets
-  created_at?: string;
-  hasLimitedInventory?: boolean;
-  lowInventoryThreshold?: number;
-  hasDynamicPricing?: boolean;
-  pricingTiers?: EventTicketPricingTier[];
-}
-
-export interface EventTicketPricingTier {
-  id?: string;
-  name: string;
-  startDate?: string;
-  endDate?: string;
-  priceAdjustment: number;
-  adjustmentType: 'percentage' | 'fixed';
-}
-
-export interface EventDiscountCode {
-  id?: string;
-  event_id: string;
-  code: string;
-  discount_type: 'percentage' | 'fixed';
-  discount_amount: number;
-  expires_at?: string;
-  usage_limit?: number;
-  usage_count?: number;
-  is_active: boolean;
-  applicable_ticket_types?: string[];
-  created_at?: string;
-  description?: string;
-}
-
 export interface EventAttendee {
   id?: string;
   event_id: string;
@@ -125,96 +85,6 @@ export interface EventCustomField {
   updated_at?: string;
 }
 
-export interface Event {
-  id?: string;
-  name: string;
-  description?: string;
-  date: string;
-  time: string;
-  venue_id?: string;
-  image_url?: string;
-  promotional_materials?: string[];
-  status?: EventStatus;
-  created_by: string;
-  created_at?: string;
-  updated_at?: string;
-  capacity?: number;
-  event_type?: string;
-  event_url?: string;
-  location_details?: EventLocation;
-  contact_info?: EventContactInfo;
-  custom_settings?: Record<string, any>;
-  is_public?: boolean;
-  
-  // Fields for EventsSection compatibility
-  venue?: {
-    id: string;
-    name: string;
-    address?: string;
-  };
-  distance?: number;
-  attendees?: {
-    registered: number;
-    checked_in?: number;
-    capacity?: number;
-  };
-  ticketTypes?: EventTicketType[];
-}
-
-// Added missing types that were causing errors
-export type EventType = Event;
-
-export interface EventFormData {
-  id?: string; 
-  name: string;
-  description?: string;
-  date: string;
-  time: string;
-  venue_id?: string;
-  venueId?: string; // Alternative name used in wizard
-  image_url?: string;
-  imageUrl?: string; // Alternative name used in wizard
-  promotional_materials?: string[];
-  promotionalMaterials?: string[]; // Alternative name used in wizard
-  status?: EventStatus;
-  created_by: string;
-  capacity?: number;
-  event_type?: string;
-  event_url?: string;
-  location_details?: EventLocation;
-  location?: EventLocation; // Alternative name used in wizard
-  contact_info?: EventContactInfo;
-  contact?: EventContactInfo; // Alternative name used in wizard
-  custom_settings?: Record<string, any>;
-  is_public?: boolean;
-  
-  // Add fields needed by the event wizard components
-  ticketTypes: EventTicketType[];
-  notificationSchedules?: Array<{
-    id: string;
-    title: string;
-    content: string;
-    priority: 'low' | 'medium' | 'high' | 'urgent';
-    scheduledFor: string;
-    locationBased: boolean;
-    coordinates?: { latitude: number; longitude: number };
-    targetRadius?: number;
-  }>;
-  
-  // Add discount codes
-  discountCodes?: EventDiscountCode[];
-  
-  // Add payment settings
-  paymentSettings?: {
-    enablePayments: boolean;
-    paymentProvider?: 'stripe' | 'paypal' | 'square' | 'other';
-    serviceFeePercentage?: number;
-    allowOfflinePayments?: boolean;
-    taxRate?: number;
-    currency?: string;
-  };
-}
-
 export interface EventCheckIn {
   id?: string;
   event_id: string;
@@ -236,3 +106,6 @@ export interface EventStatistics {
   date?: string;
   status?: EventStatus;
 }
+
+// Re-export commonly used type aliases for backward compatibility
+export type EventType = Event;

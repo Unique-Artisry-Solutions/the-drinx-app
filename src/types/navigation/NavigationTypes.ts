@@ -12,6 +12,15 @@ export enum NavigationType {
 }
 
 /**
+ * Navigation state interface for auth context compatibility
+ */
+export interface NavigationState {
+  userType: 'individual' | 'establishment' | 'promoter' | 'admin' | null;
+  isAuthenticated: boolean;
+  navigationType: 'guest' | 'user' | 'admin';
+}
+
+/**
  * Standard unified navigation item interface used across the application
  */
 export interface UnifiedNavItem {
