@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -40,6 +41,18 @@ export function ExportReportDialog({
     onOpenChange(false);
   };
 
+  const handleMetricsChange = (checked: boolean | 'indeterminate') => {
+    setIncludeMetrics(checked === true);
+  };
+
+  const handleSegmentChange = (segmentId: string) => {
+    return (checked: boolean | 'indeterminate') => {
+      if (checked === true || checked === false) {
+        onSegmentToggle(segmentId);
+      }
+    };
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px]">
@@ -78,7 +91,7 @@ export function ExportReportDialog({
                 <Checkbox
                   id="include-metrics"
                   checked={includeMetrics}
-                  onCheckedChange={setIncludeMetrics}
+                  onCheckedChange={handleMetricsChange}
                 />
                 <Label htmlFor="include-metrics">Include performance metrics</Label>
               </div>
@@ -93,7 +106,7 @@ export function ExportReportDialog({
                   <Checkbox
                     id={segment.id}
                     checked={selectedSegments.includes(segment.id)}
-                    onCheckedChange={() => onSegmentToggle(segment.id)}
+                    onCheckedChange={handleSegmentChange(segment.id)}
                   />
                   <Label htmlFor={segment.id}>{segment.name}</Label>
                 </div>

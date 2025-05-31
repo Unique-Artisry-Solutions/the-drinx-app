@@ -1,8 +1,8 @@
+
 import { useState } from 'react';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DateRange } from 'react-day-picker';
 import { AudienceSegment } from '@/types/AudienceTypes';
 import { format } from 'date-fns';
@@ -13,7 +13,7 @@ interface SegmentTrendsChartProps {
   isLoading: boolean;
 }
 
-export function SegmentTrendsChart({ dateRange, segments, isLoading }: SegmentTrendsChartProps) {
+export function SegmentTrendsChart({ segments, isLoading }: SegmentTrendsChartProps) {
   const [metric, setMetric] = useState('growth');
 
   // Mock trend data - preserved as placeholder

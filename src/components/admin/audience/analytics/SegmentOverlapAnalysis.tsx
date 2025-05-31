@@ -1,9 +1,9 @@
-import { useState } from 'react';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { AudienceSegment } from '@/types/AudienceTypes';
-import { Overlap, Users } from 'lucide-react';
+import { Users } from 'lucide-react';
 
 interface SegmentOverlapAnalysisProps {
   segments: AudienceSegment[];
@@ -64,7 +64,7 @@ export function SegmentOverlapAnalysis({
           <Card key={index}>
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-lg">
-                <Overlap className="h-5 w-5" />
+                <Users className="h-5 w-5" />
                 {item.segment1} × {item.segment2}
               </CardTitle>
             </CardHeader>
