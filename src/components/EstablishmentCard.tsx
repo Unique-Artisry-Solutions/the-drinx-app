@@ -3,7 +3,6 @@ import React from 'react';
 import { MapPin, Star, Flame, Trophy } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
-import { useTheme } from '@/contexts/ThemeContext';
 import { Badge } from '@/components/ui/badge';
 
 interface EstablishmentCardProps {
@@ -43,8 +42,6 @@ const EstablishmentCard: React.FC<EstablishmentCardProps> = ({
   achievementProgress,
   visitContribution
 }) => {
-  const { theme } = useTheme();
-
   const handleClick = (e: React.MouseEvent) => {
     if (onClick) {
       e.preventDefault();

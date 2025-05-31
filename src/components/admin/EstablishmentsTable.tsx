@@ -8,7 +8,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Edit, MoreHorizontal, Trash } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
 import { useAppNavigation } from '@/hooks/useAppNavigation';
 
 interface Establishment {
@@ -28,7 +27,6 @@ const EstablishmentsTable: React.FC<EstablishmentsTableProps> = ({
   onDeleteEstablishment
 }) => {
   const { navigate } = useAppNavigation();
-  const { toast } = useToast();
 
   const handleEditClick = (id: string) => {
     navigate(`/establishment/${id}`);

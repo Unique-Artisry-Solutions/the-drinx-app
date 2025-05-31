@@ -1,7 +1,6 @@
 
-import React from 'react';
 import { TrendingUp, CircleCheck } from "lucide-react";
-import { RewardsSystemMonitor, SystemHealthMetric } from '@/lib/rewards/system/RewardsSystemMonitor';
+import { RewardsSystemMonitor } from '@/lib/rewards/system/RewardsSystemMonitor';
 import { useQuery } from '@tanstack/react-query';
 import AnalyticsMetricCard from '@/components/charts/AnalyticsMetricCard';
 import { toast } from 'sonner';
@@ -60,7 +59,7 @@ const SystemOverviewTab = () => {
     <div className="grid gap-6">
       <div className="grid gap-4 md:grid-cols-3">
         <SystemHealthCard 
-          healthMetrics={healthMetrics}
+          healthMetrics={healthMetrics || null}
           isLoading={healthLoading}
         />
 
