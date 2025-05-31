@@ -1,5 +1,4 @@
 
-import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SystemOverviewTab from './SystemOverviewTab';
 import PerformanceMetricsTab from './PerformanceMetricsTab';
