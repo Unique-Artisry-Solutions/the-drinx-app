@@ -15,20 +15,22 @@ import {
   Event,
   Notification,
   SwigCircuit,
-  EventFormData,
-  EstablishmentWithDistance,
-  NavigationState
+  NavigationType
 } from './index';
 
-import { EventFormData as LegacyEventFormData } from './extensions';
+import { 
+  EventFormData as ExtendedEventFormData,
+  EstablishmentWithDistance,
+  NavigationState
+} from './extensions';
 
-// Redirect legacy imports to master types
+// Redirect legacy imports to master types (avoid duplicate exports)
 export type { UserProfile as ProfileTypes };
 export type { Establishment as EstablishmentTypes };
 export type { Event as EventTypes };
 export type { Notification as NotificationTypes };
 
-// Map specific legacy types
+// Map specific legacy types that don't conflict
 export type {
   // Profile types
   UserProfile as Profile,
@@ -39,8 +41,8 @@ export type {
   
   // Event types
   Event as EventType,
-  EventFormData,
-  LegacyEventFormData as EventFormDataLegacy,
+  ExtendedEventFormData as EventFormData,
+  ExtendedEventFormData as EventFormDataLegacy,
   
   // Navigation types
   NavigationState as EffectiveAuthState,
@@ -49,16 +51,26 @@ export type {
   SwigCircuit as SwigCircuitType
 };
 
-// Re-export commonly used utilities
-export { isUserRole, isEventStatus, isNotificationPriority } from './index';
-
 // Type validation functions
+export const isUserRole = (value: unknown): value is import('./index').UserRole => {
+  return typeof value === 'string' && ['individual', 'establishment', 'promoter', 'admin'].includes(value);
+};
+
+export const isEventStatus = (value: unknown): value is import('./index').EventStatus => {
+  return typeof value === 'string' && ['draft', 'published', 'cancelled', 'completed'].includes(value);
+};
+
+export const isNotificationPriority = (value: unknown): value is import('./index').NotificationPriority => {
+  return typeof value === 'string' && ['low', 'medium', 'high', 'urgent'].includes(value);
+};
+
+// Type validation functions with improved error messages
 export const validateUserRole = (value: unknown): value is import('./index').UserRole => {
-  return typeof value === 'string' && isUserRole(value);
+  return isUserRole(value);
 };
 
 export const validateEventStatus = (value: unknown): value is import('./index').EventStatus => {
-  return typeof value === 'string' && isEventStatus(value);
+  return isEventStatus(value);
 };
 
 // Migration helpers for transitioning existing code

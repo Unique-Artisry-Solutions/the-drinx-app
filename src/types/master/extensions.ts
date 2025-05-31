@@ -14,7 +14,9 @@ import {
   Notification,
   NotificationPriority,
   EventStatus,
-  UserRole
+  UserRole,
+  RewardTier,
+  UserRewardProfile as BaseUserRewardProfile
 } from './index';
 
 // Extended Event Types for Forms
@@ -106,7 +108,7 @@ export interface Cocktail extends BaseEntity {
 export interface UserProfileWithStats extends UserProfile {
   stats?: UserStats;
   preferences?: UserPreferences;
-  rewards?: UserRewardProfile[];
+  rewards?: BaseUserRewardProfile[];
 }
 
 export interface UserStats {
@@ -124,10 +126,10 @@ export interface UserPreferences {
   favorite_ingredients?: string[];
 }
 
-// Extended Swig Circuit Types
-export interface SwigCircuitWithDetails extends SwigCircuit {
+// Extended Swig Circuit Types - fix the drink_highlights type conflict
+export interface SwigCircuitWithDetails extends Omit<SwigCircuit, 'drink_highlights'> {
   selected_establishments: Establishment[];
-  drink_highlights: string[];
+  drink_highlights: string[]; // Override to string[] for compatibility
   pairings: Array<{
     drink: string;
     food: string;
