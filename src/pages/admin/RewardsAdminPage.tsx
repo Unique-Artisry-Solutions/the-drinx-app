@@ -1,5 +1,4 @@
 
-import React from 'react';
 import { RewardsAdminPage as RewardsAdmin } from '@/components/admin/rewards/RewardsAdminPage';
 
 export default function RewardsAdminPage() {

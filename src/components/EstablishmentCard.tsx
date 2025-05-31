@@ -44,7 +44,6 @@ const EstablishmentCard: React.FC<EstablishmentCardProps> = ({
   visitContribution
 }) => {
   const { theme } = useTheme();
-  const isLightTheme = theme === 'light';
 
   const handleClick = (e: React.MouseEvent) => {
     if (onClick) {
