@@ -17,10 +17,10 @@
     /* Linting */
     "strict": true,
     "noUnusedLocals": true,
-    "noImplicitAny": true,
-    "noFallthroughCasesInSwitch": false,
-    "strictNullChecks": true,
     "noUnusedParameters": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "noFallthroughCasesInSwitch": false,
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
