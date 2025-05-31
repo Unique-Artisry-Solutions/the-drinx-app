@@ -1,237 +1,181 @@
-
-import React, { useState } from 'react';
-import { z } from 'zod';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AudienceSegment } from '@/types/AudienceTypes';
+import { Badge } from '@/components/ui/badge';
+import { Save, X } from 'lucide-react';
 import { CriteriaBuilder } from './CriteriaBuilder';
-import { Plus, Save, X } from 'lucide-react';
 
-// Define the form schema with Zod
-const formSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  description: z.string().optional(),
-  is_active: z.boolean().default(true),
-});
-
-type FormValues = z.infer<typeof formSchema>;
+interface AudienceSegment {
+  id?: string;
+  name: string;
+  description: string;
+  criteria: any[];
+  isActive: boolean;
+  estimatedSize?: number;
+}
 
 interface AudienceSegmentFormProps {
   segment?: AudienceSegment;
-  onSubmit: (data: any) => void;
+  onSave: (segment: AudienceSegment) => void;
   onCancel: () => void;
 }
 
-export const AudienceSegmentForm: React.FC<AudienceSegmentFormProps> = ({
-  segment,
-  onSubmit,
-  onCancel
-}) => {
-  const [activeTab, setActiveTab] = useState('details');
-  const [criteria, setCriteria] = useState<any[]>([]); // Store criteria as we build them
-  
-  // Initialize the form
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: segment?.name || '',
-      description: segment?.description || '',
-      is_active: segment?.is_active ?? true,
-    },
+export function AudienceSegmentForm({ segment, onSave, onCancel }: AudienceSegmentFormProps) {
+  const [formData, setFormData] = useState<AudienceSegment>({
+    name: segment?.name || '',
+    description: segment?.description || '',
+    criteria: segment?.criteria || [],
+    isActive: segment?.isActive ?? true,
+    estimatedSize: segment?.estimatedSize || 0,
+    ...segment
   });
-  
-  const handleAddCriterion = (criterion: any) => {
-    setCriteria(prev => [...prev, criterion]);
+
+  const [activeTab, setActiveTab] = useState('basic');
+
+  const handleInputChange = (field: keyof AudienceSegment, value: any) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
-  
-  const handleRemoveCriterion = (index: number) => {
-    setCriteria(prev => prev.filter((_, i) => i !== index));
-  };
-  
-  const handleFormSubmit = (values: FormValues) => {
-    onSubmit({
-      segment: {
-        ...values,
-        created_by: segment?.created_by || 'current-user', // In real app, use the current user's ID
-      },
-      criteria: criteria.map(c => ({
-        criteria_type: c.type,
-        criteria_value: c.value,
-        operator: c.operator,
-      })),
-    });
-  };
-  
-  // Handle tab switching with validation
-  const handleTabChange = (value: string) => {
-    if (value === 'criteria' && !form.getValues('name')) {
-      form.setError('name', { message: 'Please enter a segment name first' });
+
+  const handleSave = () => {
+    if (!formData.name.trim()) {
       return;
     }
-    
-    setActiveTab(value);
+    onSave(formData);
   };
-  
+
+  const calculateEstimatedSize = () => {
+    // Mock calculation based on criteria - preserved as placeholder
+    const baseSize = 10000;
+    const criteriaMultiplier = Math.max(0.1, 1 - (formData.criteria.length * 0.2));
+    return Math.floor(baseSize * criteriaMultiplier);
+  };
+
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleFormSubmit)}>
-        <div className="space-y-6">
-          <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-            <TabsList className="mb-4">
-              <TabsTrigger value="details">Segment Details</TabsTrigger>
-              <TabsTrigger value="criteria">Targeting Criteria</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="details">
-              <Card>
-                <CardHeader>
-                  <CardTitle>{segment ? 'Edit Segment' : 'Create New Segment'}</CardTitle>
-                  <CardDescription>
-                    Define a segment to target a specific audience
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Segment Name</FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder="e.g., Active Users" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="description"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Description</FormLabel>
-                        <FormControl>
-                          <Textarea 
-                            {...field} 
-                            placeholder="Describe this audience segment"
-                            rows={3}
-                          />
-                        </FormControl>
-                        <FormDescription>
-                          Optional description of what this segment represents
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="is_active"
-                    render={({ field }) => (
-                      <FormItem className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
-                        <div className="space-y-0.5">
-                          <FormLabel>Active Status</FormLabel>
-                          <FormDescription>
-                            Enable or disable this segment
-                          </FormDescription>
-                        </div>
-                        <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </CardContent>
-                <CardFooter className="justify-between border-t px-6 py-4">
-                  <Button variant="outline" onClick={onCancel}>
-                    <X className="h-4 w-4 mr-2" />
-                    Cancel
-                  </Button>
-                  <Button type="button" onClick={() => setActiveTab('criteria')}>
-                    Continue to Criteria
-                  </Button>
-                </CardFooter>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="criteria">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Targeting Criteria</CardTitle>
-                  <CardDescription>
-                    Define the conditions that users must meet to be included in this segment
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {criteria.length > 0 ? (
-                      <div className="space-y-2">
-                        {criteria.map((criterion, index) => (
-                          <div key={index} className="flex items-center justify-between p-3 rounded-md border">
-                            <div>
-                              <span className="font-medium">{criterion.type}</span>
-                              <span className="mx-2 text-gray-500">{criterion.operator}</span>
-                              <span>{JSON.stringify(criterion.value)}</span>
-                            </div>
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              onClick={() => handleRemoveCriterion(index)}
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-center py-6 border rounded-md bg-muted/50">
-                        <p className="text-muted-foreground">No criteria defined yet</p>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          Add at least one criterion to target specific users
-                        </p>
-                      </div>
-                    )}
-                    
-                    <CriteriaBuilder onAddCriterion={handleAddCriterion} />
-                  </div>
-                </CardContent>
-                <CardFooter className="justify-between border-t px-6 py-4">
-                  <div className="flex space-x-2">
-                    <Button variant="outline" onClick={onCancel}>
-                      <X className="h-4 w-4 mr-2" />
-                      Cancel
-                    </Button>
-                    <Button variant="outline" onClick={() => setActiveTab('details')}>
-                      Back to Details
-                    </Button>
-                  </div>
-                  <Button 
-                    type="submit" 
-                    disabled={criteria.length === 0}
-                    className="space-x-2"
-                  >
-                    <Save className="h-4 w-4" />
-                    <span>Save Segment</span>
-                  </Button>
-                </CardFooter>
-              </Card>
-            </TabsContent>
-          </Tabs>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold">
+          {segment ? 'Edit Segment' : 'Create New Segment'}
+        </h2>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={onCancel}>
+            <X className="h-4 w-4 mr-2" />
+            Cancel
+          </Button>
+          <Button onClick={handleSave}>
+            <Save className="h-4 w-4 mr-2" />
+            Save Segment
+          </Button>
         </div>
-      </form>
-    </Form>
+      </div>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList>
+          <TabsTrigger value="basic">Basic Info</TabsTrigger>
+          <TabsTrigger value="criteria">Criteria</TabsTrigger>
+          <TabsTrigger value="preview">Preview</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="basic" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Basic Information</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Segment Name</Label>
+                <Input
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => handleInputChange('name', e.target.value)}
+                  placeholder="Enter segment name"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) => handleInputChange('description', e.target.value)}
+                  placeholder="Describe this audience segment"
+                  rows={3}
+                />
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="isActive"
+                  checked={formData.isActive}
+                  onChange={(e) => handleInputChange('isActive', e.target.checked)}
+                  className="rounded"
+                />
+                <Label htmlFor="isActive">Active segment</Label>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="criteria" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Audience Criteria</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CriteriaBuilder
+                criteria={formData.criteria}
+                onCriteriaChange={(criteria) => handleInputChange('criteria', criteria)}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="preview" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Segment Preview</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <h4 className="font-medium mb-2">Segment Details</h4>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">Name:</span>
+                      <span className="text-sm font-medium">{formData.name || 'Unnamed Segment'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">Status:</span>
+                      <Badge variant={formData.isActive ? "default" : "secondary"}>
+                        {formData.isActive ? 'Active' : 'Inactive'}
+                      </Badge>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">Criteria Count:</span>
+                      <span className="text-sm font-medium">{formData.criteria.length}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">Estimated Size:</span>
+                      <span className="text-sm font-medium">{calculateEstimatedSize().toLocaleString()}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-medium mb-2">Description</h4>
+                  <p className="text-sm text-muted-foreground">
+                    {formData.description || 'No description provided'}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
   );
-};
+}

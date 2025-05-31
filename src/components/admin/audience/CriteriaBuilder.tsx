@@ -1,364 +1,194 @@
-
-import React, { useState } from 'react';
+import { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Trash } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Plus, Trash2 } from 'lucide-react';
 
-interface CriteriaBuilderProps {
-  onAddCriterion: (criterion: any) => void;
+interface Criterion {
+  id: string;
+  type: 'demographic' | 'behavior' | 'engagement' | 'transaction';
+  field: string;
+  operator: 'equals' | 'not_equals' | 'greater_than' | 'less_than' | 'contains' | 'in_range';
+  value: string | number | string[];
 }
 
-export const CriteriaBuilder: React.FC<CriteriaBuilderProps> = ({ onAddCriterion }) => {
-  const [criterionType, setCriterionType] = useState('demographics');
-  const [operator, setOperator] = useState('equals');
-  const [demographicField, setDemographicField] = useState('age_group');
-  const [valueInput, setValueInput] = useState('');
-  const [listValues, setListValues] = useState<string[]>([]);
-  const [tempListValue, setTempListValue] = useState('');
-  
-  // Define the options based on criterion type
-  const operatorOptions = {
-    demographics: ['equals', 'not_equals', 'in_list'],
-    behavior: ['performed', 'not_performed', 'performed_times'],
-    engagement: ['greater_than', 'less_than', 'between'],
-    location: ['within_radius', 'not_within_radius'],
+interface CriteriaBuilderProps {
+  criteria: Criterion[];
+  onCriteriaChange: (criteria: Criterion[]) => void;
+}
+
+export function CriteriaBuilder({ criteria, onCriteriaChange }: CriteriaBuilderProps) {
+  const [editingCriterion, setEditingCriterion] = useState<string | null>(null);
+
+  // Field options for different criterion types - preserved as placeholder
+  const fieldOptions = {
+    demographic: ['age', 'location', 'gender', 'occupation'],
+    behavior: ['visit_frequency', 'last_visit', 'favorite_establishments', 'check_ins'],
+    engagement: ['app_opens', 'recipe_saves', 'social_shares', 'review_count'],
+    transaction: ['total_spent', 'average_order', 'purchase_frequency', 'preferred_payment']
   };
-  
-  const demographicFields = [
-    { value: 'age_group', label: 'Age Group' },
-    { value: 'gender', label: 'Gender' },
-    { value: 'membership_level', label: 'Membership Level' },
-    { value: 'join_date', label: 'Join Date' },
+
+  const operatorOptions = [
+    { value: 'equals', label: 'Equals' },
+    { value: 'not_equals', label: 'Not Equals' },
+    { value: 'greater_than', label: 'Greater Than' },
+    { value: 'less_than', label: 'Less Than' },
+    { value: 'contains', label: 'Contains' },
+    { value: 'in_range', label: 'In Range' }
   ];
-  
-  const behaviorTypes = [
-    { value: 'purchase', label: 'Made a Purchase' },
-    { value: 'visited', label: 'Visited Location' },
-    { value: 'referred', label: 'Referred a Friend' },
-    { value: 'logged_in', label: 'Logged In' },
-  ];
-  
-  const engagementMetrics = [
-    { value: 'visits', label: 'Number of Visits' },
-    { value: 'average_spend', label: 'Average Spend' },
-    { value: 'time_spent', label: 'Time Spent on App' },
-    { value: 'days_since_last_visit', label: 'Days Since Last Visit' },
-  ];
-  
-  const handleAddListValue = () => {
-    if (tempListValue.trim()) {
-      setListValues([...listValues, tempListValue.trim()]);
-      setTempListValue('');
-    }
+
+  const addCriterion = () => {
+    const newCriterion: Criterion = {
+      id: `criterion_${Date.now()}`,
+      type: 'demographic',
+      field: 'age',
+      operator: 'equals',
+      value: ''
+    };
+    onCriteriaChange([...criteria, newCriterion]);
+    setEditingCriterion(newCriterion.id);
   };
-  
-  const handleRemoveListValue = (indexToRemove: number) => {
-    setListValues(listValues.filter((_, index) => index !== indexToRemove));
+
+  const updateCriterion = (id: string, updates: Partial<Criterion>) => {
+    const updatedCriteria = criteria.map(criterion =>
+      criterion.id === id ? { ...criterion, ...updates } : criterion
+    );
+    onCriteriaChange(updatedCriteria);
   };
-  
-  const handleAddCriterion = () => {
-    let criterionValue: any;
-    
-    switch (criterionType) {
-      case 'demographics':
-        if (operator === 'in_list') {
-          criterionValue = {
-            field: demographicField,
-            values: listValues
-          };
-        } else {
-          criterionValue = {
-            field: demographicField,
-            value: valueInput
-          };
-        }
-        break;
-        
-      case 'behavior':
-        criterionValue = {
-          activity_type: valueInput,
-          min_count: operator === 'performed_times' ? parseInt(valueInput, 10) : undefined
-        };
-        break;
-        
-      case 'engagement':
-        criterionValue = {
-          metric: valueInput,
-          min_value: operator === 'greater_than' || operator === 'between' ? parseInt(valueInput, 10) : undefined,
-          max_value: operator === 'less_than' || operator === 'between' ? parseInt(valueInput, 10) : undefined
-        };
-        break;
-        
-      case 'location':
-        criterionValue = {
-          coordinates: {
-            latitude: 0,
-            longitude: 0
-          },
-          radius: parseInt(valueInput, 10) || 5
-        };
-        break;
-        
-      default:
-        criterionValue = valueInput;
-    }
-    
-    onAddCriterion({
-      type: criterionType,
-      operator,
-      value: criterionValue
-    });
-    
-    // Reset form
-    setValueInput('');
-    setListValues([]);
+
+  const removeCriterion = (id: string) => {
+    const filteredCriteria = criteria.filter(criterion => criterion.id !== id);
+    onCriteriaChange(filteredCriteria);
   };
-  
-  // Render different input fields based on criterion type and operator
-  const renderInputFields = () => {
-    switch (criterionType) {
-      case 'demographics':
-        return (
-          <>
-            <FormItem className="flex-1">
-              <FormLabel>Field</FormLabel>
-              <Select 
-                value={demographicField} 
-                onValueChange={setDemographicField}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select field" />
-                </SelectTrigger>
-                <SelectContent>
-                  {demographicFields.map(field => (
-                    <SelectItem key={field.value} value={field.value}>
-                      {field.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </FormItem>
-            
-            {operator === 'in_list' ? (
-              <div className="space-y-2 w-full">
-                <div className="flex items-center space-x-2">
-                  <Input 
-                    value={tempListValue} 
-                    onChange={(e) => setTempListValue(e.target.value)}
-                    placeholder="Add value"
-                    className="flex-1"
-                  />
-                  <Button type="button" onClick={handleAddListValue}>Add</Button>
-                </div>
-                
-                {listValues.length > 0 && (
-                  <div className="p-2 border rounded-md space-y-1">
-                    <FormLabel>Values List:</FormLabel>
-                    <div className="space-y-1">
-                      {listValues.map((value, index) => (
-                        <div key={index} className="flex items-center justify-between bg-muted p-2 rounded-sm">
-                          <span>{value}</span>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            onClick={() => handleRemoveListValue(index)}
-                          >
-                            <Trash className="h-4 w-4" />
-                          </Button>
-                        </div>
+
+  const formatCriterionDisplay = (criterion: Criterion) => {
+    return `${criterion.field} ${criterion.operator.replace('_', ' ')} ${criterion.value}`;
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <h3 className="text-lg font-medium">Audience Criteria</h3>
+        <Button onClick={addCriterion} size="sm">
+          <Plus className="h-4 w-4 mr-2" />
+          Add Criterion
+        </Button>
+      </div>
+
+      <div className="space-y-3">
+        {criteria.map((criterion) => (
+          <Card key={criterion.id} className="p-4">
+            {editingCriterion === criterion.id ? (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <Select
+                    value={criterion.type}
+                    onValueChange={(value: Criterion['type']) => updateCriterion(criterion.id, { type: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="demographic">Demographic</SelectItem>
+                      <SelectItem value="behavior">Behavior</SelectItem>
+                      <SelectItem value="engagement">Engagement</SelectItem>
+                      <SelectItem value="transaction">Transaction</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  <Select
+                    value={criterion.field}
+                    onValueChange={(value) => updateCriterion(criterion.id, { field: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {fieldOptions[criterion.type].map((field) => (
+                        <SelectItem key={field} value={field}>
+                          {field.replace('_', ' ').toUpperCase()}
+                        </SelectItem>
                       ))}
-                    </div>
-                  </div>
-                )}
+                    </SelectContent>
+                  </Select>
+
+                  <Select
+                    value={criterion.operator}
+                    onValueChange={(value: Criterion['operator']) => updateCriterion(criterion.id, { operator: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {operatorOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  <Input
+                    value={criterion.value.toString()}
+                    onChange={(e) => updateCriterion(criterion.id, { value: e.target.value })}
+                    placeholder="Enter value"
+                  />
+                </div>
+
+                <div className="flex justify-end gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setEditingCriterion(null)}
+                  >
+                    Save
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => removeCriterion(criterion.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             ) : (
-              <FormItem className="flex-1">
-                <FormLabel>Value</FormLabel>
-                <Input 
-                  value={valueInput} 
-                  onChange={(e) => setValueInput(e.target.value)}
-                  placeholder="Enter value"
-                />
-              </FormItem>
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary">{criterion.type}</Badge>
+                  <span className="text-sm font-medium">
+                    {formatCriterionDisplay(criterion)}
+                  </span>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setEditingCriterion(criterion.id)}
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeCriterion(criterion.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
             )}
-          </>
-        );
-        
-      case 'behavior':
-        return (
-          <>
-            <FormItem className="flex-1">
-              <FormLabel>Activity Type</FormLabel>
-              <Select 
-                value={valueInput} 
-                onValueChange={setValueInput}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select activity" />
-                </SelectTrigger>
-                <SelectContent>
-                  {behaviorTypes.map(type => (
-                    <SelectItem key={type.value} value={type.value}>
-                      {type.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </FormItem>
-            
-            {operator === 'performed_times' && (
-              <FormItem className="flex-1">
-                <FormLabel>Minimum Times</FormLabel>
-                <Input 
-                  type="number" 
-                  value={valueInput} 
-                  onChange={(e) => setValueInput(e.target.value)}
-                  placeholder="Enter minimum times"
-                />
-              </FormItem>
-            )}
-          </>
-        );
-        
-      case 'engagement':
-        return (
-          <>
-            <FormItem className="flex-1">
-              <FormLabel>Metric</FormLabel>
-              <Select 
-                value={valueInput} 
-                onValueChange={setValueInput}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select metric" />
-                </SelectTrigger>
-                <SelectContent>
-                  {engagementMetrics.map(metric => (
-                    <SelectItem key={metric.value} value={metric.value}>
-                      {metric.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </FormItem>
-            
-            <FormItem className="flex-1">
-              <FormLabel>{operator === 'less_than' ? 'Maximum' : 'Minimum'} Value</FormLabel>
-              <Input 
-                type="number" 
-                value={valueInput} 
-                onChange={(e) => setValueInput(e.target.value)}
-                placeholder={`Enter ${operator === 'less_than' ? 'maximum' : 'minimum'} value`}
-              />
-            </FormItem>
-            
-            {operator === 'between' && (
-              <FormItem className="flex-1">
-                <FormLabel>Maximum Value</FormLabel>
-                <Input 
-                  type="number" 
-                  value={valueInput} 
-                  onChange={(e) => setValueInput(e.target.value)}
-                  placeholder="Enter maximum value"
-                />
-              </FormItem>
-            )}
-          </>
-        );
-      
-      default:
-        return (
-          <FormItem className="flex-1">
-            <FormLabel>Value</FormLabel>
-            <Input 
-              value={valueInput} 
-              onChange={(e) => setValueInput(e.target.value)}
-              placeholder="Enter value"
-            />
-          </FormItem>
-        );
-    }
-  };
-  
-  return (
-    <Card>
-      <CardContent className="pt-4">
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <FormLabel>Criterion Type</FormLabel>
-              <Select 
-                value={criterionType} 
-                onValueChange={(value) => {
-                  setCriterionType(value);
-                  setOperator(operatorOptions[value as keyof typeof operatorOptions][0]);
-                  setValueInput('');
-                  setListValues([]);
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="demographics">Demographics</SelectItem>
-                  <SelectItem value="behavior">Behavior</SelectItem>
-                  <SelectItem value="engagement">Engagement</SelectItem>
-                  <SelectItem value="location">Location</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div>
-              <FormLabel>Operator</FormLabel>
-              <Select 
-                value={operator} 
-                onValueChange={(value) => {
-                  setOperator(value);
-                  // Reset values when operator changes
-                  setValueInput('');
-                  if (value === 'in_list') {
-                    setListValues([]);
-                  }
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select operator" />
-                </SelectTrigger>
-                <SelectContent>
-                  {operatorOptions[criterionType as keyof typeof operatorOptions]?.map((op) => (
-                    <SelectItem key={op} value={op}>
-                      {op.replace(/_/g, ' ')}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          
-          <div className="space-y-4">
-            <div className="flex flex-col md:flex-row gap-4">
-              {renderInputFields()}
-            </div>
-            
-            <Button 
-              type="button" 
-              onClick={handleAddCriterion}
-              disabled={
-                (operator === 'in_list' && listValues.length === 0) ||
-                (operator !== 'in_list' && !valueInput)
-              }
-              className="w-full"
-            >
-              Add Criterion
-            </Button>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+          </Card>
+        ))}
+      </div>
+
+      {criteria.length === 0 && (
+        <Card className="p-8 text-center">
+          <p className="text-muted-foreground">No criteria defined. Add criteria to build your audience segment.</p>
+        </Card>
+      )}
+    </div>
   );
-};
+}
