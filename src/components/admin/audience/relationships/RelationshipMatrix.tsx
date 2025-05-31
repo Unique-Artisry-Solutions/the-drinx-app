@@ -12,8 +12,8 @@ interface RelationshipMatrixProps {
 
 export const RelationshipMatrix: React.FC<RelationshipMatrixProps> = ({
   connections,
-  crossEngagement,
-  filterThreshold
+  crossEngagement
+  // filterThreshold - preserved for future filtering functionality
 }) => {
   // Group segments to get a unique list
   const segments = Array.from(

@@ -1,205 +1,190 @@
 
-import React from 'react';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuSeparator,
-  DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu';
-import { 
-  Calendar,
-  ChartBar, 
-  MoreVertical,
-  PauseCircle,
-  Play,
-  TrashIcon,
-  Edit
-} from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { format } from 'date-fns';
-import { RewardCampaign } from '@/lib/rewards/types';
-import { Skeleton } from '@/components/ui/skeleton';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Search, Plus, Edit, Trash2, Play, Pause, Eye } from 'lucide-react';
+import { RewardCampaign } from '@/types/rewards/campaigns';
 
 interface CampaignListProps {
   campaigns: RewardCampaign[];
-  isLoading: boolean;
-  onEdit: (campaign: RewardCampaign) => void;
-  onDelete: (campaignId: string) => void;
-  onToggleActivation: (campaign: RewardCampaign) => void;
+  onCreateCampaign: () => void;
+  onEditCampaign: (campaign: RewardCampaign) => void;
+  onDeleteCampaign: (campaignId: string) => void;
+  onViewCampaign: (campaign: RewardCampaign) => void;
+  isLoading?: boolean;
 }
 
-export const CampaignList = ({ 
-  campaigns, 
-  isLoading,
-  onEdit,
-  onDelete,
-  onToggleActivation
-}: CampaignListProps) => {
+export function CampaignList({
+  campaigns,
+  onCreateCampaign,
+  onEditCampaign,
+  onDeleteCampaign,
+  onViewCampaign,
+  isLoading = false
+}: CampaignListProps) {
+  const [searchTerm, setSearchTerm] = useState('');
+  
+  const filteredCampaigns = campaigns.filter(campaign =>
+    campaign.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    campaign.status.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
-  const getStatusBadge = (status: string) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
-      case 'active':
-        return <Badge className="bg-green-500">Active</Badge>;
-      case 'scheduled':
-        return <Badge className="bg-blue-500">Scheduled</Badge>;
-      case 'draft':
-        return <Badge variant="outline">Draft</Badge>;
-      case 'paused':
-        return <Badge className="bg-yellow-500">Paused</Badge>;
-      case 'completed':
-        return <Badge className="bg-gray-500">Completed</Badge>;
-      case 'cancelled':
-        return <Badge variant="destructive">Cancelled</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
+      case 'active': return 'bg-green-100 text-green-800';
+      case 'paused': return 'bg-yellow-100 text-yellow-800';
+      case 'completed': return 'bg-blue-100 text-blue-800';
+      case 'scheduled': return 'bg-purple-100 text-purple-800';
+      case 'cancelled': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const handleEdit = (campaign: RewardCampaign, e: React.MouseEvent) => {
-    e.preventDefault();
-    onEdit(campaign);
+  const handleStatusToggle = (campaign: RewardCampaign) => {
+    const newStatus = campaign.status === 'active' ? 'paused' : 'active';
+    onEditCampaign({ ...campaign, status: newStatus });
   };
 
-  const handleDelete = (campaignId: string, e: React.MouseEvent) => {
-    e.preventDefault();
-    onDelete(campaignId);
-  };
-
-  const handleToggleActivation = (campaign: RewardCampaign, e: React.MouseEvent) => {
-    e.preventDefault();
-    onToggleActivation(campaign);
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return 'Not set';
+    try {
+      return format(new Date(dateString), 'MMM dd, yyyy');
+    } catch {
+      return 'Invalid date';
+    }
   };
 
   if (isLoading) {
     return (
-      <div className="space-y-2">
-        <Skeleton className="h-8 w-full" />
-        <Skeleton className="h-8 w-full" />
-        <Skeleton className="h-8 w-full" />
-      </div>
-    );
-  }
-
-  if (campaigns.length === 0) {
-    return (
-      <div className="text-center py-10 border rounded-md bg-muted/20">
-        <h3 className="text-lg font-medium">No campaigns found</h3>
-        <p className="text-muted-foreground mt-2">
-          Create your first reward campaign to start engaging with your users
-        </p>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Loading campaigns...</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="h-16 bg-gray-100 animate-pulse rounded"></div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Name</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead>Timeline</TableHead>
-          <TableHead>Audience</TableHead>
-          <TableHead>Rewards</TableHead>
-          <TableHead className="text-right">Actions</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {campaigns.map((campaign) => (
-          <TableRow key={campaign.id}>
-            <TableCell className="font-medium">
-              <div>
-                {campaign.name}
-                {campaign.description && (
-                  <p className="text-sm text-muted-foreground truncate max-w-[200px]">
-                    {campaign.description}
-                  </p>
-                )}
-              </div>
-            </TableCell>
-            <TableCell>{getStatusBadge(campaign.status)}</TableCell>
-            <TableCell>
-              <div className="flex items-center space-x-1">
-                <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
-                <span className="text-xs text-muted-foreground">
-                  {format(new Date(campaign.start_date), 'MMM d')} - {format(new Date(campaign.end_date), 'MMM d, yyyy')}
-                </span>
-              </div>
-            </TableCell>
-            <TableCell>
-              <Badge variant="outline">{campaign.audience_filters?.length || 0} filters</Badge>
-            </TableCell>
-            <TableCell>
-              <Badge variant="outline">{campaign.rewards?.length || 0} rewards</Badge>
-            </TableCell>
-            <TableCell className="text-right">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm">
-                    <MoreVertical className="h-4 w-4" />
-                    <span className="sr-only">Open menu</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={(e) => handleEdit(campaign, e)}>
-                    <Edit className="mr-2 h-4 w-4" />
-                    Edit
-                  </DropdownMenuItem>
-                  
-                  {campaign.status !== 'completed' && campaign.status !== 'cancelled' && (
-                    <DropdownMenuItem onClick={(e) => handleToggleActivation(campaign, e)}>
-                      {campaign.is_active ? (
-                        <>
-                          <PauseCircle className="mr-2 h-4 w-4" />
-                          Pause
-                        </>
-                      ) : (
-                        <>
-                          <Play className="mr-2 h-4 w-4" />
-                          Activate
-                        </>
-                      )}
-                    </DropdownMenuItem>
-                  )}
-                  
-                  <DropdownMenuItem>
-                    <ChartBar className="mr-2 h-4 w-4" />
-                    View Performance
-                  </DropdownMenuItem>
-                  
-                  <DropdownMenuSeparator />
-                  
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                        <TrashIcon className="mr-2 h-4 w-4" />
-                        Delete
-                      </DropdownMenuItem>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Delete Campaign</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Are you sure you want to delete this campaign? This action cannot be undone.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={(e) => handleDelete(campaign.id, e)}>
-                          Delete
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+    <Card>
+      <CardHeader>
+        <div className="flex justify-between items-center">
+          <CardTitle>Reward Campaigns</CardTitle>
+          <Button onClick={onCreateCampaign}>
+            <Plus className="h-4 w-4 mr-2" />
+            Create Campaign
+          </Button>
+        </div>
+        <div className="flex items-center space-x-2">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search campaigns..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-8"
+            />
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {filteredCampaigns.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-muted-foreground">
+              {searchTerm ? 'No campaigns match your search.' : 'No campaigns created yet.'}
+            </p>
+            {!searchTerm && (
+              <Button onClick={onCreateCampaign} className="mt-4">
+                <Plus className="h-4 w-4 mr-2" />
+                Create Your First Campaign
+              </Button>
+            )}
+          </div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Start Date</TableHead>
+                <TableHead>End Date</TableHead>
+                <TableHead>Budget</TableHead>
+                <TableHead>Performance</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredCampaigns.map((campaign) => (
+                <TableRow key={campaign.id}>
+                  <TableCell className="font-medium">{campaign.name}</TableCell>
+                  <TableCell>
+                    <Badge className={getStatusColor(campaign.status)}>
+                      {campaign.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>{formatDate(campaign.start_date)}</TableCell>
+                  <TableCell>{formatDate(campaign.end_date)}</TableCell>
+                  <TableCell>
+                    {campaign.budget ? `$${campaign.budget.toLocaleString()}` : 'No budget set'}
+                  </TableCell>
+                  <TableCell>
+                    <div className="text-sm">
+                      <div>Impressions: {campaign.performance_metrics?.impressions || 0}</div>
+                      <div>Clicks: {campaign.performance_metrics?.clicks || 0}</div>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end space-x-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onViewCampaign(campaign)}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleStatusToggle(campaign)}
+                      >
+                        {campaign.status === 'active' ? (
+                          <Pause className="h-4 w-4" />
+                        ) : (
+                          <Play className="h-4 w-4" />
+                        )}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onEditCampaign(campaign)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onDeleteCampaign(campaign.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </CardContent>
+    </Card>
   );
-};
+}

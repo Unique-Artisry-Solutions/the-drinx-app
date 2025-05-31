@@ -1,11 +1,9 @@
-
-import React, { useState } from 'react';
+import { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { AudienceSegment } from '@/types/AudienceTypes';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Card, CardContent } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { Label } from '@/components/ui/label';
+import { Overlap, Users } from 'lucide-react';
 
 interface SegmentOverlapAnalysisProps {
   segments: AudienceSegment[];
@@ -14,182 +12,92 @@ interface SegmentOverlapAnalysisProps {
   isLoading: boolean;
 }
 
-export function SegmentOverlapAnalysis({ 
-  segments, 
-  selectedSegments, 
-  onSegmentToggle, 
-  isLoading 
+export function SegmentOverlapAnalysis({
+  segments,
+  selectedSegments,
+  onSegmentToggle,
+  isLoading
 }: SegmentOverlapAnalysisProps) {
-  const [view, setView] = useState<'chart' | 'matrix'>('chart');
-  
-  // Mock data - In a real application, this would come from an API
-  const getOverlapData = () => {
-    // Create overlap data for visualization (limited to 3 segments for clarity)
-    if (selectedSegments.length === 0) return [];
-    
-    const displaySegments = selectedSegments.slice(0, 3);
-    
-    // Create data for each segment
-    return displaySegments.map(id => {
-      const segment = segments.find(s => s.id === id);
-      return {
-        id,
-        name: segment?.name || 'Unknown',
-        value: Math.floor(Math.random() * 500) + 200,
-        color: getSegmentColor(id, displaySegments)
-      };
-    });
-  };
-  
-  // Simple function to get different colors based on segment position
-  const getSegmentColor = (id: string, displaySegments: string[]) => {
-    const colors = ['#8884d8', '#82ca9d', '#ffc658', '#ff8042', '#a4de6c'];
-    const index = displaySegments.indexOf(id);
-    return colors[index % colors.length];
+  // Mock overlap data - preserved as placeholder
+  const overlapData = [
+    { segment1: 'High Engagement Users', segment2: 'VIP Members', overlap: 85, size: 120 },
+    { segment1: 'New Subscribers', segment2: 'High Engagement Users', overlap: 25, size: 45 },
+    { segment1: 'VIP Members', segment2: 'New Subscribers', overlap: 12, size: 18 }
+  ];
+
+  const getOverlapPercentage = (overlap: number, total: number) => {
+    return ((overlap / total) * 100).toFixed(1);
   };
 
-  const generateOverlapMatrix = () => {
-    const matrix: Array<{id: string, name: string, overlaps: {id: string, name: string, count: number}[]}> = [];
-    
-    selectedSegments.forEach(segId => {
-      const segment = segments.find(s => s.id === segId);
-      if (!segment) return;
-      
-      const overlaps = selectedSegments
-        .filter(otherId => otherId !== segId)
-        .map(otherId => {
-          const otherSegment = segments.find(s => s.id === otherId);
-          return {
-            id: otherId,
-            name: otherSegment?.name || 'Unknown',
-            count: Math.floor(Math.random() * 200) + 50
-          };
-        });
-      
-      matrix.push({
-        id: segId,
-        name: segment.name,
-        overlaps
-      });
-    });
-    
-    return matrix;
-  };
-  
   if (isLoading) {
-    return <div className="py-8 text-center">Loading segment data...</div>;
+    return (
+      <div className="space-y-4">
+        {[1, 2, 3].map(i => (
+          <Card key={i} className="animate-pulse">
+            <CardContent className="p-6">
+              <div className="h-4 bg-gray-200 rounded mb-2"></div>
+              <div className="h-8 bg-gray-200 rounded"></div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
   }
-  
+
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="md:col-span-2">
-          <CardContent className="pt-6">
-            <Tabs value={view} onValueChange={(v) => setView(v as 'chart' | 'matrix')}>
-              <TabsList className="mb-4">
-                <TabsTrigger value="chart">Chart View</TabsTrigger>
-                <TabsTrigger value="matrix">Matrix View</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="chart" className="min-h-[300px]">
-                {selectedSegments.length === 0 ? (
-                  <div className="flex items-center justify-center h-[300px]">
-                    <p className="text-muted-foreground">Select segments to visualize overlap</p>
+      <div className="flex flex-wrap gap-2">
+        {segments.map((segment) => (
+          <Button
+            key={segment.id}
+            variant={selectedSegments.includes(segment.id) ? "default" : "outline"}
+            size="sm"
+            onClick={() => onSegmentToggle(segment.id)}
+          >
+            {segment.name}
+          </Button>
+        ))}
+      </div>
+
+      <div className="grid gap-4">
+        {overlapData.map((item, index) => (
+          <Card key={index}>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Overlap className="h-5 w-5" />
+                {item.segment1} × {item.segment2}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground">Overlap Size</p>
+                  <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4 text-blue-500" />
+                    <span className="text-2xl font-bold">{item.size}</span>
                   </div>
-                ) : selectedSegments.length > 3 ? (
-                  <div className="flex items-center justify-center h-[300px]">
-                    <p className="text-muted-foreground">Chart visualization limited to 3 segments. Using first 3 selected.</p>
-                  </div>
-                ) : (
-                  <ResponsiveContainer width="100%" height={300}>
-                    <PieChart>
-                      <Pie
-                        data={getOverlapData()}
-                        dataKey="value"
-                        nameKey="name"
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={100}
-                        label={(entry) => entry.name}
-                      >
-                        {getOverlapData().map((entry) => (
-                          <Cell key={entry.id} fill={entry.color} />
-                        ))}
-                      </Pie>
-                    </PieChart>
-                  </ResponsiveContainer>
-                )}
-              </TabsContent>
-              
-              <TabsContent value="matrix" className="min-h-[300px]">
-                {selectedSegments.length < 2 ? (
-                  <div className="flex items-center justify-center h-[300px]">
-                    <p className="text-muted-foreground">Select at least 2 segments to view overlap matrix</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <table className="w-full border-collapse">
-                      <thead>
-                        <tr>
-                          <th className="text-left p-2 border-b">Segment</th>
-                          <th className="text-left p-2 border-b">Overlaps With</th>
-                          <th className="text-right p-2 border-b">Overlap Count</th>
-                          <th className="text-right p-2 border-b">Percentage</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {generateOverlapMatrix().map(row => (
-                          row.overlaps.map((overlap, idx) => (
-                            <tr key={`${row.id}-${overlap.id}`} className={idx === 0 ? "" : "border-t border-dashed"}>
-                              {idx === 0 && (
-                                <td className="p-2 font-medium" rowSpan={row.overlaps.length}>
-                                  {row.name}
-                                </td>
-                              )}
-                              <td className="p-2">{overlap.name}</td>
-                              <td className="p-2 text-right">{overlap.count.toLocaleString()}</td>
-                              <td className="p-2 text-right">
-                                {Math.round(Math.random() * 60 + 10)}%
-                              </td>
-                            </tr>
-                          ))
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="pt-6">
-            <h3 className="text-sm font-medium mb-4">Select Segments to Compare</h3>
-            <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2">
-              {segments.map(segment => (
-                <div key={segment.id} className="flex items-center space-x-2">
-                  <Checkbox 
-                    id={`segment-${segment.id}`}
-                    checked={selectedSegments.includes(segment.id)}
-                    onCheckedChange={() => onSegmentToggle(segment.id)}
-                  />
-                  <Label 
-                    htmlFor={`segment-${segment.id}`}
-                    className="cursor-pointer"
-                  >
-                    {segment.name}
-                  </Label>
                 </div>
-              ))}
-            </div>
-            {view === 'chart' && selectedSegments.length > 3 && (
-              <p className="text-xs text-muted-foreground mt-4">
-                Note: Chart visualization is limited to 3 segments for clarity
-              </p>
-            )}
-          </CardContent>
-        </Card>
+                
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground">Overlap Rate</p>
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl font-bold">{getOverlapPercentage(item.overlap, 1000)}%</span>
+                    <Badge variant={parseFloat(getOverlapPercentage(item.overlap, 1000)) > 10 ? "default" : "secondary"}>
+                      {parseFloat(getOverlapPercentage(item.overlap, 1000)) > 10 ? "High" : "Low"}
+                    </Badge>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground">Similarity Score</p>
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl font-bold">{(Math.random() * 0.8 + 0.2).toFixed(2)}</span>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
     </div>
   );
