@@ -1,11 +1,17 @@
 
-// Updated navigation types using shared base interfaces
-import { EnhancedNavItem, NavDropdownItem, BaseNavigationProps } from '../shared/NavigationInterfaces';
+/**
+ * Navigation types using shared base interfaces with consistent naming conventions
+ * 
+ * Namespace: Navigation
+ * Naming Conventions Applied:
+ * - Props: Component interfaces
+ * - Data: Data structures  
+ * - Config: Configuration objects
+ */
 
-// Re-export the enhanced types for backward compatibility
-export type UnifiedNavItem = EnhancedNavItem;
-export type { NavDropdownItem };
+import { EnhancedNavItemData, NavDropdownItemData, BaseNavigationProps } from '../shared/NavigationInterfaces';
 
+// ===== NAVIGATION TYPE DEFINITIONS =====
 // Navigation type enum
 export enum NavigationType {
   USER = 'user',
@@ -13,13 +19,14 @@ export enum NavigationType {
   GUEST = 'guest'
 }
 
-// Legacy type for backward compatibility
-export type NavigationItemType = EnhancedNavItem;
+// User type definition for consistent typing
+export type UserType = 'individual' | 'establishment' | 'promoter' | 'admin';
 
-// Specific navigation configurations
+// ===== NAVIGATION CONFIG =====
+// Specific navigation configurations with proper naming
 export interface UserNavigationConfig extends BaseNavigationProps {
   type: NavigationType.USER;
-  userType: 'individual' | 'establishment' | 'promoter';
+  userType: UserType;
 }
 
 export interface AdminNavigationConfig extends BaseNavigationProps {
@@ -31,4 +38,15 @@ export interface GuestNavigationConfig extends BaseNavigationProps {
   type: NavigationType.GUEST;
 }
 
+// Union type for all navigation configurations
 export type NavigationConfig = UserNavigationConfig | AdminNavigationConfig | GuestNavigationConfig;
+
+// ===== LEGACY COMPATIBILITY =====
+// Re-export the enhanced types for backward compatibility
+/** @deprecated Use EnhancedNavItemData instead */
+export type UnifiedNavItem = EnhancedNavItemData;
+/** @deprecated Use EnhancedNavItemData instead */
+export type NavigationItemType = EnhancedNavItemData;
+
+// Re-export shared types
+export type { NavDropdownItemData as NavDropdownItem };

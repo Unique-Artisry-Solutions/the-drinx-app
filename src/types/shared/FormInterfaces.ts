@@ -1,9 +1,17 @@
 
-// Generic form interfaces to reduce duplication across form components
+/**
+ * Form interfaces to reduce duplication across form components
+ * 
+ * Naming Conventions:
+ * - Props: Component prop interfaces for form components
+ * - Data: Form data structures and validation rules
+ * - Config: Form configuration objects
+ */
 
 import { UseFormReturn, FieldValues, Path } from 'react-hook-form';
 import { BaseFormFieldProps, BaseModalProps, BaseActionProps } from './BaseInterfaces';
 
+// ===== FORM PROPS =====
 // Generic form props that can be used across different form types
 export interface BaseFormProps<T extends FieldValues> {
   form: UseFormReturn<T>;
@@ -25,16 +33,17 @@ export interface BaseFormModalProps<T extends FieldValues> extends BaseModalProp
   cancelButtonText?: string;
 }
 
-// Generic form dialog actions
-export interface BaseFormDialogActions extends BaseActionProps {
+// Generic form dialog actions props
+export interface BaseFormDialogActionsProps extends BaseActionProps {
   onSubmit?: () => void;
   onCancel?: () => void;
   submitText?: string;
   cancelText?: string;
 }
 
-// Generic validation rule interface
-export interface BaseValidationRules {
+// ===== FORM DATA & VALIDATION =====
+// Generic validation rule data structure
+export interface BaseValidationRulesData {
   required?: boolean | string;
   minLength?: { value: number; message: string };
   maxLength?: { value: number; message: string };
@@ -44,8 +53,8 @@ export interface BaseValidationRules {
   validate?: (value: any) => boolean | string;
 }
 
-// Generic form section interface
-export interface BaseFormSection {
+// Generic form section data structure
+export interface BaseFormSectionData {
   title: string;
   description?: string;
   fields: string[];
@@ -53,10 +62,19 @@ export interface BaseFormSection {
   isExpanded?: boolean;
 }
 
+// ===== FORM CONFIG =====
 // Generic form configuration
 export interface BaseFormConfig<T extends FieldValues> {
-  fields: Partial<Record<keyof T, BaseValidationRules>>;
-  sections?: BaseFormSection[];
+  fields: Partial<Record<keyof T, BaseValidationRulesData>>;
+  sections?: BaseFormSectionData[];
   submitButton?: BaseActionProps;
   resetButton?: BaseActionProps;
 }
+
+// Legacy exports for backward compatibility
+/** @deprecated Use BaseFormDialogActionsProps instead */
+export type BaseFormDialogActions = BaseFormDialogActionsProps;
+/** @deprecated Use BaseValidationRulesData instead */
+export type BaseValidationRules = BaseValidationRulesData;
+/** @deprecated Use BaseFormSectionData instead */
+export type BaseFormSection = BaseFormSectionData;

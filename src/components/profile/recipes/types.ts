@@ -1,10 +1,21 @@
 
+/**
+ * Recipe component types using shared base interfaces with consistent naming conventions
+ * 
+ * Namespace: Recipe
+ * Naming Conventions Applied:
+ * - Props: Component interfaces
+ * - Data: Data structures for recipes and ingredients
+ * - Config: Configuration objects
+ */
+
 import { UserRecipe, Ingredient } from '@/types/DatabaseTypes';
 import { BaseFormProps, BaseFormModalProps } from '@/types/shared/FormInterfaces';
-import { BaseListItem, BaseActionProps } from '@/types/shared/BaseInterfaces';
+import { BaseActionProps } from '@/types/shared/BaseInterfaces';
 
-// Recipe form state using shared patterns
-export interface RecipeFormState {
+// ===== RECIPE DATA STRUCTURES =====
+// Recipe form state data structure
+export interface RecipeFormData {
   name: string;
   description: string;
   ingredients: Ingredient[];
@@ -12,6 +23,7 @@ export interface RecipeFormState {
   is_public: boolean;
 }
 
+// ===== RECIPE COMPONENT PROPS =====
 // Recipe item props using shared action patterns
 export interface RecipeItemProps {
   recipe: UserRecipe;
@@ -24,7 +36,7 @@ export interface RecipeItemProps {
 }
 
 // Recipe form props using shared form interface
-export interface RecipeFormProps extends BaseFormProps<RecipeFormState> {
+export interface RecipeFormProps extends BaseFormProps<RecipeFormData> {
   newIngredient: string;
   setNewIngredient: (value: string) => void;
   newAmount: string;
@@ -37,7 +49,7 @@ export interface RecipeFormProps extends BaseFormProps<RecipeFormState> {
 }
 
 // Recipe dialog props using shared modal interface
-export interface CreateRecipeDialogProps extends BaseFormModalProps<RecipeFormState> {
+export interface CreateRecipeDialogProps extends BaseFormModalProps<RecipeFormData> {
   formProps: RecipeFormProps;
 }
 
@@ -48,3 +60,7 @@ export interface EditRecipeDialogProps {
   isUpdating: boolean;
   formProps: RecipeFormProps;
 }
+
+// ===== LEGACY COMPATIBILITY =====
+/** @deprecated Use RecipeFormData instead */
+export type RecipeFormState = RecipeFormData;
