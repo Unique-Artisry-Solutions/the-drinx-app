@@ -5,14 +5,6 @@ import { Badge } from '@/components/ui/badge';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { TrendingUp, Users, Gift, DollarSign, Target } from 'lucide-react';
 
-interface MetricCardProps {
-  title: string;
-  value: string | number;
-  change: string;
-  icon: React.ComponentType<any>;
-  iconColor: string;
-}
-
 interface TierData {
   tier: string;
   users: number;

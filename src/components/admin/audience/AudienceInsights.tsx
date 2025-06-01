@@ -4,18 +4,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Progress } from '@/components/ui/progress';
 import { Users, TrendingUp, Target, Activity } from 'lucide-react';
 
-interface Insight {
-  title: string;
-  value: string;
-  change: string;
-  trend: 'up' | 'down';
-  icon: React.ComponentType;
-}
-
 const AudienceInsights = () => {
   const [timeRange, setTimeRange] = useState('30d');
 
-  // Mock data
   const insights = [
     {
       title: 'Total Audience Size',

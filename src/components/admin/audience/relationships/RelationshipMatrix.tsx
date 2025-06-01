@@ -3,18 +3,17 @@ import { SegmentConnectionStrength, CrossSegmentEngagement } from '@/types/Audie
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui/table';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle } from 'lucide-react';
 
 interface RelationshipMatrixProps {
   connections: SegmentConnectionStrength[];
   crossEngagement: CrossSegmentEngagement[];
-  filterThreshold: number;
+  _filterThreshold: number;
 }
 
 export const RelationshipMatrix: React.FC<RelationshipMatrixProps> = ({
   connections,
   crossEngagement,
-  filterThreshold
+  _filterThreshold
 }) => {
   // Group segments to get a unique list
   const segments = Array.from(
@@ -141,3 +140,5 @@ export const RelationshipMatrix: React.FC<RelationshipMatrixProps> = ({
     </div>
   );
 };
+
+export default RelationshipMatrix;

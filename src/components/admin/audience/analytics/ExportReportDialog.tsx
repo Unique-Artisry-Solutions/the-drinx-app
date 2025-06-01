@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -12,7 +13,7 @@ import { AudienceSegment } from '@/types/AudienceTypes';
 interface ExportReportDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  segments: AudienceSegment[];
+  // segments prop removed as it's not used
 }
 
 interface ExportOptions {
@@ -21,7 +22,7 @@ interface ExportOptions {
   selectedMetrics: string[];
 }
 
-const ExportReportDialog = ({ open, onOpenChange, segments }: ExportReportDialogProps) => {
+const ExportReportDialog = ({ open, onOpenChange }: ExportReportDialogProps) => {
   const [exportOptions, setExportOptions] = useState<ExportOptions>({
     format: 'csv',
     includeSegmentDetails: true,

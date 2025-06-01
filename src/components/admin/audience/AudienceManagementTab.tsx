@@ -1,26 +1,13 @@
+
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Search, Filter } from 'lucide-react';
-
-interface AudienceSegment {
-  id: string;
-  name: string;
-  description: string;
-  size: number;
-  criteria: Record<string, any>;
-  status: 'active' | 'inactive' | 'draft';
-}
-
-interface AudienceManagementTabProps {
-  // No props needed for now
-}
+import { Plus, Filter } from 'lucide-react';
 
 const AudienceManagementTab = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedSegment, setSelectedSegment] = useState<string | null>(null);
 
   // Mock segments data
   const segments = [

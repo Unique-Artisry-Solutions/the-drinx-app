@@ -1,16 +1,12 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Badge } from '@/components/ui/badge';
 import { TrendingDown, Users } from 'lucide-react';
 
 interface FunnelStep {
   step: string;
   users: number;
   conversionRate: number;
-}
-
-interface FunnelVisualizationProps {
-  data: FunnelStep[];
 }
 
 const FunnelVisualization = () => {

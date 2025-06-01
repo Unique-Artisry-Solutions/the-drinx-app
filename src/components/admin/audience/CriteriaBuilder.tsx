@@ -1,179 +1,125 @@
+
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { X, Plus } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 
-interface Criteria {
+interface Criterion {
+  id: string;
   field: string;
   operator: string;
   value: string;
 }
 
 interface CriteriaBuilderProps {
-  criteria: Criteria[];
-  onCriteriaChange: (criteria: Criteria[]) => void;
+  criteria: Criterion[];
+  onCriteriaChange: (criteria: Criterion[]) => void;
 }
 
 const CriteriaBuilder = ({ criteria, onCriteriaChange }: CriteriaBuilderProps) => {
-  const [newCriteria, setNewCriteria] = useState<Criteria>({ field: '', operator: '', value: '' });
+  const [localCriteria, setLocalCriteria] = useState<Criterion[]>(criteria);
 
-  const availableFields = [
-    { value: 'age', label: 'Age' },
-    { value: 'location', label: 'Location' },
-    { value: 'purchaseHistory', label: 'Purchase History' },
-    { value: 'engagementScore', label: 'Engagement Score' }
-  ];
-
-  const availableOperators = {
-    age: [
-      { value: '>', label: 'Greater than' },
-      { value: '<', label: 'Less than' },
-      { value: '=', label: 'Equals' }
-    ],
-    location: [
-      { value: 'is', label: 'Is' },
-      { value: 'isNot', label: 'Is not' }
-    ],
-    purchaseHistory: [
-      { value: 'contains', label: 'Contains' },
-      { value: 'notContains', label: 'Not contains' }
-    ],
-    engagementScore: [
-      { value: '>', label: 'Greater than' },
-      { value: '<', label: 'Less than' },
-      { value: '=', label: 'Equals' }
-    ]
+  const addCriterion = () => {
+    const newCriterion: Criterion = {
+      id: Date.now().toString(),
+      field: '',
+      operator: 'equals',
+      value: ''
+    };
+    const updated = [...localCriteria, newCriterion];
+    setLocalCriteria(updated);
+    onCriteriaChange(updated);
   };
 
-  const handleCriteriaChange = (index: number, field: string, value: string) => {
-    const updatedCriteria = [...criteria];
-    updatedCriteria[index] = { ...updatedCriteria[index], [field]: value };
-    onCriteriaChange(updatedCriteria);
+  const removeCriterion = (id: string) => {
+    const updated = localCriteria.filter(c => c.id !== id);
+    setLocalCriteria(updated);
+    onCriteriaChange(updated);
   };
 
-  const handleAddCriteria = () => {
-    onCriteriaChange([...criteria, newCriteria]);
-    setNewCriteria({ field: '', operator: '', value: '' });
-  };
-
-  const handleRemoveCriteria = (index: number) => {
-    const updatedCriteria = [...criteria];
-    updatedCriteria.splice(index, 1);
-    onCriteriaChange(updatedCriteria);
+  const updateCriterion = (id: string, field: keyof Criterion, value: string) => {
+    const updated = localCriteria.map(c => 
+      c.id === id ? { ...c, [field]: value } : c
+    );
+    setLocalCriteria(updated);
+    onCriteriaChange(updated);
   };
 
   return (
-    <div className="space-y-4">
-      <Card>
-        <CardHeader>
-          <CardTitle>Define Audience Criteria</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {criteria.map((criterion, index) => (
-            <div key={index} className="flex items-center space-x-4">
+    <Card>
+      <CardHeader>
+        <CardTitle>Segment Criteria</CardTitle>
+        <CardDescription>
+          Define the conditions that determine who belongs to this segment
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {localCriteria.map((criterion) => (
+          <div key={criterion.id} className="flex items-center space-x-2 p-4 border rounded">
+            <div className="flex-1">
+              <Label className="text-xs">Field</Label>
               <Select
                 value={criterion.field}
-                onValueChange={(value) => handleCriteriaChange(index, 'field', value)}
+                onValueChange={(value) => updateCriterion(criterion.id, 'field', value)}
               >
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Select Field" />
+                <SelectTrigger>
+                  <SelectValue placeholder="Select field" />
                 </SelectTrigger>
                 <SelectContent>
-                  {availableFields.map((field) => (
-                    <SelectItem key={field.value} value={field.value}>
-                      {field.label}
-                    </SelectItem>
-                  ))}
+                  <SelectItem value="age">Age</SelectItem>
+                  <SelectItem value="location">Location</SelectItem>
+                  <SelectItem value="spending">Total Spending</SelectItem>
+                  <SelectItem value="visits">Visit Count</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
 
+            <div className="flex-1">
+              <Label className="text-xs">Operator</Label>
               <Select
                 value={criterion.operator}
-                onValueChange={(value) => handleCriteriaChange(index, 'operator', value)}
-                disabled={!criterion.field}
+                onValueChange={(value) => updateCriterion(criterion.id, 'operator', value)}
               >
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Select Operator" />
+                <SelectTrigger>
+                  <SelectValue placeholder="Select operator" />
                 </SelectTrigger>
                 <SelectContent>
-                  {criterion.field && availableOperators[criterion.field as keyof typeof availableOperators].map((operator) => (
-                    <SelectItem key={operator.value} value={operator.value}>
-                      {operator.label}
-                    </SelectItem>
-                  ))}
+                  <SelectItem value="equals">Equals</SelectItem>
+                  <SelectItem value="greater_than">Greater than</SelectItem>
+                  <SelectItem value="less_than">Less than</SelectItem>
+                  <SelectItem value="contains">Contains</SelectItem>
                 </SelectContent>
               </Select>
-
-              <Input
-                type="text"
-                placeholder="Enter Value"
-                value={criterion.value}
-                onChange={(e) => handleCriteriaChange(index, 'value', e.target.value)}
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => handleRemoveCriteria(index)}
-              >
-                <X className="h-4 w-4" />
-              </Button>
             </div>
-          ))}
 
-          <div className="flex items-center space-x-4">
-            <Select
-              value={newCriteria.field}
-              onValueChange={(value) => setNewCriteria({ ...newCriteria, field: value })}
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Select Field" />
-              </SelectTrigger>
-              <SelectContent>
-                {availableFields.map((field) => (
-                  <SelectItem key={field.value} value={field.value}>
-                    {field.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex-1">
+              <Label className="text-xs">Value</Label>
+              <Input
+                value={criterion.value}
+                onChange={(e) => updateCriterion(criterion.id, 'value', e.target.value)}
+                placeholder="Enter value"
+              />
+            </div>
 
-            <Select
-              value={newCriteria.operator}
-              onValueChange={(value) => setNewCriteria({ ...newCriteria, operator: value })}
-              disabled={!newCriteria.field}
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Select Operator" />
-              </SelectTrigger>
-              <SelectContent>
-                {newCriteria.field && availableOperators[newCriteria.field as keyof typeof availableOperators].map((operator) => (
-                  <SelectItem key={operator.value} value={operator.value}>
-                    {operator.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Input
-              type="text"
-              placeholder="Enter Value"
-              value={newCriteria.value}
-              onChange={(e) => setNewCriteria({ ...newCriteria, value: e.target.value })}
-            />
             <Button
-              type="button"
-              onClick={handleAddCriteria}
+              variant="outline"
+              size="sm"
+              onClick={() => removeCriterion(criterion.id)}
             >
-              <Plus className="h-4 w-4 mr-2" /> Add Criteria
+              <Trash2 className="h-4 w-4" />
             </Button>
           </div>
-        </CardContent>
-      </Card>
-    </div>
+        ))}
+
+        <Button variant="outline" onClick={addCriterion} className="w-full">
+          <Plus className="h-4 w-4 mr-2" />
+          Add Criterion
+        </Button>
+      </CardContent>
+    </Card>
   );
 };
 

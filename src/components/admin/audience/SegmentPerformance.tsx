@@ -1,31 +1,9 @@
+
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { TrendingUp, Users, Target, Activity } from 'lucide-react';
-import { format } from 'date-fns';
-
-interface SegmentPerformanceProps {
-  segmentId: string;
-  name: string;
-  description: string;
-  size: number;
-  status: 'active' | 'inactive';
-}
-
-interface PerformanceData {
-  name: string;
-  conversions: number;
-  engagement: number;
-}
-
-interface MetricCardProps {
-  title: string;
-  value: string;
-  icon: React.ComponentType<any>;
-  change: string;
-}
 
 const SegmentPerformance = () => {
   const [selectedSegment, setSelectedSegment] = useState('all');

@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -5,8 +6,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { X } from 'lucide-react';
 
 interface AudienceSegment {
   id?: string;
@@ -32,10 +31,6 @@ const AudienceSegmentForm = ({ segment, onSubmit, onCancel }: AudienceSegmentFor
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleCriteriaChange = (newCriteria: Record<string, any>) => {
-    setFormData(prev => ({ ...prev, criteria: newCriteria }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -73,10 +68,8 @@ const AudienceSegmentForm = ({ segment, onSubmit, onCancel }: AudienceSegmentFor
             />
           </div>
 
-          {/* Criteria Builder Component (replace with actual implementation) */}
           <div>
             <Label>Criteria</Label>
-            {/* <CriteriaBuilder criteria={formData.criteria} onCriteriaChange={handleCriteriaChange} /> */}
             <p className="text-muted-foreground text-sm">
               (Criteria builder component will go here)
             </p>

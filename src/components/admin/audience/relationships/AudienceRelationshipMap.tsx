@@ -1,259 +1,159 @@
+
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Search, Filter, Download, RefreshCw } from 'lucide-react';
+import { Slider } from '@/components/ui/slider';
+import { Users, Network, Filter } from 'lucide-react';
 
-interface AudienceSegment {
-  id: string;
-  name: string;
-  description: string;
-  size: number;
-  criteria: Record<string, any>;
-  status: 'active' | 'inactive';
-}
-
-interface AudienceRelationship {
-  sourceSegment: string;
-  targetSegment: string;
-  type: 'overlap' | 'correlation' | 'causation';
+interface ConnectionData {
+  source: string;
+  target: string;
   strength: number;
-  description: string;
+  type: 'strong' | 'moderate' | 'weak';
 }
 
-interface AudienceRelationshipMapProps {
-  segments: AudienceSegment[];
-  _onSelectSegment: (segmentId: string) => void;
-}
+const AudienceRelationshipMap = () => {
+  const [selectedView, setSelectedView] = useState('network');
+  const [_selectedSegment, setSelectedSegment] = useState('all');
+  const [_onSelectSegment] = useState(() => (segmentId: string) => {
+    setSelectedSegment(segmentId);
+  });
+  
+  const [filterThreshold, _setFilterThreshold] = useState([50]);
 
-const AudienceRelationshipMap = ({ 
-  segments, 
-  _onSelectSegment 
-}: AudienceRelationshipMapProps) => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedRelationshipType, setSelectedRelationshipType] = useState('all');
-  const [_filterThreshold, setFilterThreshold] = useState(0.1);
-
-  const relationships: AudienceRelationship[] = [
-    {
-      sourceSegment: 'High Value Customers',
-      targetSegment: 'Loyal Customers',
-      type: 'overlap',
-      strength: 0.75,
-      description: 'Significant overlap between high value and loyal customers'
-    },
-    {
-      sourceSegment: 'New Users',
-      targetSegment: 'Active Users',
-      type: 'correlation',
-      strength: 0.6,
-      description: 'New users are highly correlated with active users'
-    },
-    {
-      sourceSegment: 'Discount Seekers',
-      targetSegment: 'Churn Risk',
-      type: 'causation',
-      strength: 0.8,
-      description: 'Discount seekers have a high causation with churn risk'
-    },
-    {
-      sourceSegment: 'High Value Customers',
-      targetSegment: 'VIP Subscribers',
-      type: 'overlap',
-      strength: 0.9,
-      description: 'High overlap between high value customers and VIP subscribers'
-    },
-    {
-      sourceSegment: 'Mobile App Users',
-      targetSegment: 'In-Store Shoppers',
-      type: 'correlation',
-      strength: 0.4,
-      description: 'Moderate correlation between mobile app users and in-store shoppers'
-    },
-    {
-      sourceSegment: 'Inactive Users',
-      targetSegment: 'Email Unsubscribers',
-      type: 'causation',
-      strength: 0.7,
-      description: 'Inactive users have a strong causation with email unsubscribers'
-    },
-    {
-      sourceSegment: 'High Spenders',
-      targetSegment: 'Frequent Buyers',
-      type: 'overlap',
-      strength: 0.85,
-      description: 'Significant overlap between high spenders and frequent buyers'
-    },
-    {
-      sourceSegment: 'Social Media Engagers',
-      targetSegment: 'Brand Advocates',
-      type: 'correlation',
-      strength: 0.65,
-      description: 'Social media engagers are highly correlated with brand advocates'
-    }
+  // Mock data for demonstration
+  const connections: ConnectionData[] = [
+    { source: 'High Spenders', target: 'Frequent Visitors', strength: 85, type: 'strong' },
+    { source: 'New Users', target: 'Mobile Users', strength: 72, type: 'strong' },
+    { source: 'Loyal Customers', target: 'High Spenders', strength: 68, type: 'moderate' },
+    { source: 'Weekend Visitors', target: 'Social Media Users', strength: 45, type: 'moderate' },
   ];
 
-  const filteredRelationships = relationships.filter(rel => {
-    const matchesSearch = rel.sourceSegment.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         rel.targetSegment.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = selectedRelationshipType === 'all' || rel.type === selectedRelationshipType;
-    return matchesSearch && matchesType;
-  });
-
-  const NetworkVisualization = () => {
-    const nodeRadius = 30;
-    const centerX = 200;
-    const centerY = 150;
-    const radius = 100;
-
-    const segmentNodes = segments.slice(0, 6).map((segment, index) => {
-      const angle = (index / 6) * 2 * Math.PI;
-      return {
-        ...segment,
-        x: centerX + Math.cos(angle) * radius,
-        y: centerY + Math.sin(angle) * radius
-      };
-    });
-
-    return (
-      <svg width="400" height="300" className="border rounded">
-        {/* Connections */}
-        {filteredRelationships.slice(0, 8).map((rel, _i) => {
-          const source = segmentNodes.find(n => n.name === rel.sourceSegment);
-          const target = segmentNodes.find(n => n.name === rel.targetSegment);
-          if (!source || !target) return null;
-
-          return (
-            <line
-              key={`${rel.sourceSegment}-${rel.targetSegment}`}
-              x1={source.x}
-              y1={source.y}
-              x2={target.x}
-              y2={target.y}
-              stroke="#cbd5e1"
-              strokeWidth={Math.max(1, rel.strength * 5)}
-              opacity={0.7}
-            />
-          );
-        })}
-
-        {/* Nodes */}
-        {segmentNodes.map((node) => (
-          <g key={node.id}>
-            <circle
-              cx={node.x}
-              cy={node.y}
-              r={nodeRadius}
-              fill="#3b82f6"
-              opacity={0.8}
-              className="cursor-pointer hover:opacity-100"
-            />
-            <text
-              x={node.x}
-              y={node.y}
-              textAnchor="middle"
-              dy="0.35em"
-              fill="white"
-              fontSize="10"
-              className="pointer-events-none"
-            >
-              {node.name.length > 8 ? `${node.name.substring(0, 8)}...` : node.name}
-            </text>
-          </g>
-        ))}
-      </svg>
-    );
-  };
+  const segments = [
+    { id: 'high-spenders', name: 'High Spenders', size: 1250, connections: 8 },
+    { id: 'frequent-visitors', name: 'Frequent Visitors', size: 890, connections: 6 },
+    { id: 'new-users', name: 'New Users', size: 2100, connections: 4 },
+    { id: 'mobile-users', name: 'Mobile Users', size: 3200, connections: 7 },
+  ];
 
   return (
     <div className="space-y-6">
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <CardTitle>Audience Relationship Map</CardTitle>
-          <Button variant="outline" size="sm">
-            <Download className="h-4 w-4 mr-2" />
-            Export Data
-          </Button>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-semibold">Audience Relationship Map</h2>
+          <p className="text-muted-foreground">
+            Visualize connections and overlaps between audience segments
+          </p>
         </div>
-        <p className="text-muted-foreground">
-          Visualize relationships between audience segments to identify opportunities and risks
-        </p>
-        
-        <div className="flex items-center space-x-4">
-          <div className="relative w-full max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-            <Input
-              type="search"
-              placeholder="Search relationships..."
-              className="pl-10"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          
-          <Select value={selectedRelationshipType} onValueChange={setSelectedRelationshipType}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="All Types" />
+        <div className="flex items-center space-x-2">
+          <Select value={selectedView} onValueChange={setSelectedView}>
+            <SelectTrigger className="w-[150px]">
+              <SelectValue placeholder="View type" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Types</SelectItem>
-              <SelectItem value="overlap">Overlap</SelectItem>
-              <SelectItem value="correlation">Correlation</SelectItem>
-              <SelectItem value="causation">Causation</SelectItem>
+              <SelectItem value="network">Network View</SelectItem>
+              <SelectItem value="matrix">Matrix View</SelectItem>
+              <SelectItem value="hierarchy">Hierarchy View</SelectItem>
             </SelectContent>
           </Select>
-          
-          <Button variant="outline" size="sm">
+          <Button variant="outline">
             <Filter className="h-4 w-4 mr-2" />
-            Filter
-          </Button>
-          
-          <Button variant="ghost" size="sm">
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh
+            Filters
           </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Relationship Network</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <NetworkVisualization />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>Relationship List</CardTitle>
-              <Badge variant="secondary">
-                {filteredRelationships.length} relationships
-              </Badge>
-            </div>
-            <CardDescription>
-              Detailed list of relationships between audience segments
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {filteredRelationships.map((rel) => (
-              <div key={`${rel.sourceSegment}-${rel.targetSegment}`} className="p-3 border rounded-lg">
-                <div className="flex items-center justify-between">
-                  <div className="font-medium">
-                    {rel.sourceSegment} ➔ {rel.targetSegment}
-                  </div>
-                  <Badge variant="outline">{rel.type}</Badge>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Network className="h-5 w-5 mr-2" />
+                Relationship Network
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[400px] border-2 border-dashed border-muted rounded-lg flex items-center justify-center">
+                <div className="text-center">
+                  <Network className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">
+                    Interactive network visualization will be displayed here
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Showing {connections.length} connections between segments
+                  </p>
                 </div>
-                <p className="text-sm text-muted-foreground mt-1">{rel.description}</p>
-                <Progress value={rel.strength * 100} className="mt-2" />
               </div>
-            ))}
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Connection Strength Filter</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <label className="text-sm font-medium">Minimum Strength: {filterThreshold[0]}%</label>
+                <Slider
+                  value={filterThreshold}
+                  onValueChange={_setFilterThreshold}
+                  max={100}
+                  step={5}
+                  className="mt-2"
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Segment Overview</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {segments.map((segment) => (
+                  <div key={segment.id} className="flex items-center justify-between p-2 border rounded">
+                    <div>
+                      <div className="font-medium text-sm">{segment.name}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {segment.size.toLocaleString()} members
+                      </div>
+                    </div>
+                    <Badge variant="outline">
+                      {segment.connections} connections
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Strong Connections</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {connections
+                  .filter(conn => conn.type === 'strong')
+                  .map((connection, index) => (
+                    <div key={index} className="text-sm">
+                      <div className="font-medium">
+                        {connection.source} ↔ {connection.target}
+                      </div>
+                      <div className="text-muted-foreground">
+                        {connection.strength}% strength
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

@@ -1,217 +1,153 @@
+
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Plus, X, Users, Filter } from 'lucide-react';
+import { Label } from '@/components/ui/label';
+import { Users, Target, Filter } from 'lucide-react';
 
 interface AudienceTargetingProps {
-  targeting: {
-    type: string;
-    segments: string[];
-    criteria: {
-      age?: { min?: number; max?: number };
-      location?: string;
-      interests?: string[];
-    };
-  };
-  onTargetingChange: (targeting: any) => void;
+  onTargetingChange?: (targeting: any) => void;
 }
 
-const AudienceTargeting = ({ targeting, onTargetingChange }: AudienceTargetingProps) => {
-  const [selectedType, setSelectedType] = useState(targeting.type || 'all');
-  const [selectedSegments, setSelectedSegments] = useState(targeting.segments || []);
-  const [ageRange, setAgeRange] = useState({
-    min: targeting.criteria.age?.min || 18,
-    max: targeting.criteria.age?.max || 65,
+const AudienceTargeting = ({ onTargetingChange }: AudienceTargetingProps) => {
+  const [selectedSegments, setSelectedSegments] = useState<string[]>([]);
+  const [targetingRules, setTargetingRules] = useState({
+    minAge: '',
+    maxAge: '',
+    location: '',
+    tier: ''
   });
-  const [location, setLocation] = useState(targeting.criteria.location || '');
-  const [interests, setInterests] = useState(targeting.criteria.interests || []);
-  const [newInterest, setNewInterest] = useState('');
 
-  const handleTypeChange = (type: string) => {
-    setSelectedType(type);
-    onTargetingChange({ ...targeting, type });
+  const availableSegments = [
+    { id: 'high-value', name: 'High Value Customers', size: 1250 },
+    { id: 'loyal', name: 'Loyal Customers', size: 890 },
+    { id: 'new-users', name: 'New Users', size: 2100 },
+    { id: 'inactive', name: 'Inactive Users', size: 540 }
+  ];
+
+  const handleSegmentToggle = (segmentId: string) => {
+    const updated = selectedSegments.includes(segmentId)
+      ? selectedSegments.filter(id => id !== segmentId)
+      : [...selectedSegments, segmentId];
+    
+    setSelectedSegments(updated);
+    onTargetingChange?.({ segments: updated, rules: targetingRules });
   };
 
-  const handleSegmentToggle = (segment: string) => {
-    const isSelected = selectedSegments.includes(segment);
-    const updatedSegments = isSelected
-      ? selectedSegments.filter((s) => s !== segment)
-      : [...selectedSegments, segment];
-
-    setSelectedSegments(updatedSegments);
-    onTargetingChange({ ...targeting, segments: updatedSegments });
+  const handleRuleChange = (key: string, value: string) => {
+    const updated = { ...targetingRules, [key]: value };
+    setTargetingRules(updated);
+    onTargetingChange?.({ segments: selectedSegments, rules: updated });
   };
-
-  const handleAgeChange = (field: 'min' | 'max', value: number) => {
-    const updatedAge = { ...ageRange, [field]: value };
-    setAgeRange(updatedAge);
-    onTargetingChange({
-      ...targeting,
-      criteria: { ...targeting.criteria, age: updatedAge },
-    });
-  };
-
-  const handleLocationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newLocation = e.target.value;
-    setLocation(newLocation);
-    onTargetingChange({
-      ...targeting,
-      criteria: { ...targeting.criteria, location: newLocation },
-    });
-  };
-
-  const handleAddInterest = () => {
-    if (newInterest && !interests.includes(newInterest)) {
-      const updatedInterests = [...interests, newInterest];
-      setInterests(updatedInterests);
-      onTargetingChange({
-        ...targeting,
-        criteria: { ...targeting.criteria, interests: updatedInterests },
-      });
-      setNewInterest('');
-    }
-  };
-
-  const handleRemoveInterest = (interestToRemove: string) => {
-    const updatedInterests = interests.filter((interest) => interest !== interestToRemove);
-    setInterests(updatedInterests);
-    onTargetingChange({
-      ...targeting,
-      criteria: { ...targeting.criteria, interests: updatedInterests },
-    });
-  };
-
-  const availableSegments = ['Premium Customers', 'New Users', 'Inactive Users'];
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Audience Targeting</CardTitle>
-        <CardDescription>
-          Define the audience for this campaign
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div>
-          <h4 className="text-sm font-medium">Targeting Type</h4>
-          <div className="flex space-x-4 mt-2">
-            <Button
-              variant={selectedType === 'all' ? 'default' : 'outline'}
-              onClick={() => handleTypeChange('all')}
-            >
-              All Users
-            </Button>
-            <Button
-              variant={selectedType === 'segments' ? 'default' : 'outline'}
-              onClick={() => handleTypeChange('segments')}
-            >
-              Specific Segments
-            </Button>
-            <Button
-              variant={selectedType === 'criteria' ? 'default' : 'outline'}
-              onClick={() => handleTypeChange('criteria')}
-            >
-              Custom Criteria
-            </Button>
-          </div>
-        </div>
-
-        {selectedType === 'segments' && (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <Target className="h-5 w-5 mr-2" />
+            Audience Targeting
+          </CardTitle>
+          <CardDescription>
+            Define which audience segments this campaign should target
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
           <div>
-            <h4 className="text-sm font-medium">Select Segments</h4>
-            <div className="mt-2 flex flex-wrap gap-2">
+            <Label className="text-base font-medium">Select Audience Segments</Label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
               {availableSegments.map((segment) => (
-                <Badge
-                  key={segment}
-                  variant={selectedSegments.includes(segment) ? 'default' : 'outline'}
-                  className="cursor-pointer"
-                  onClick={() => handleSegmentToggle(segment)}
-                >
-                  {segment}
-                </Badge>
+                <div key={segment.id} className="flex items-center space-x-3 p-3 border rounded-lg">
+                  <Checkbox
+                    id={segment.id}
+                    checked={selectedSegments.includes(segment.id)}
+                    onCheckedChange={() => handleSegmentToggle(segment.id)}
+                  />
+                  <div className="flex-1">
+                    <Label htmlFor={segment.id} className="font-medium">
+                      {segment.name}
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      {segment.size.toLocaleString()} users
+                    </p>
+                  </div>
+                </div>
               ))}
             </div>
           </div>
-        )}
 
-        {selectedType === 'criteria' && (
-          <div className="space-y-4">
-            <div>
-              <h4 className="text-sm font-medium">Age Range</h4>
-              <div className="flex items-center space-x-2 mt-2">
-                <div className="flex items-center space-x-1">
-                  <Label htmlFor="minAge">Min</Label>
-                  <Input
-                    type="number"
-                    id="minAge"
-                    value={ageRange.min}
-                    onChange={(e) => handleAgeChange('min', parseInt(e.target.value))}
-                    className="w-20"
-                  />
-                </div>
-                <div className="flex items-center space-x-1">
-                  <Label htmlFor="maxAge">Max</Label>
-                  <Input
-                    type="number"
-                    id="maxAge"
-                    value={ageRange.max}
-                    onChange={(e) => handleAgeChange('max', parseInt(e.target.value))}
-                    className="w-20"
-                  />
-                </div>
+          <div className="border-t pt-4">
+            <Label className="text-base font-medium">Additional Targeting Rules</Label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+              <div>
+                <Label htmlFor="tier">Tier Level</Label>
+                <Select 
+                  value={targetingRules.tier} 
+                  onValueChange={(value) => handleRuleChange('tier', value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select tier" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Tiers</SelectItem>
+                    <SelectItem value="bronze">Bronze</SelectItem>
+                    <SelectItem value="silver">Silver</SelectItem>
+                    <SelectItem value="gold">Gold</SelectItem>
+                    <SelectItem value="platinum">Platinum</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-            </div>
 
-            <div>
-              <h4 className="text-sm font-medium">Location</h4>
-              <Input
-                type="text"
-                placeholder="Enter location"
-                value={location}
-                onChange={handleLocationChange}
-                className="mt-2"
-              />
-            </div>
-
-            <div>
-              <h4 className="text-sm font-medium">Interests</h4>
-              <div className="flex items-center space-x-2 mt-2">
-                <Input
-                  type="text"
-                  placeholder="Add interest"
-                  value={newInterest}
-                  onChange={(e) => setNewInterest(e.target.value)}
-                />
-                <Button size="sm" onClick={handleAddInterest}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add
-                </Button>
-              </div>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {interests.map((interest) => (
-                  <Badge key={interest} variant="secondary" className="gap-x-2 items-center">
-                    {interest}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="-mr-1"
-                      onClick={() => handleRemoveInterest(interest)}
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </Badge>
-                ))}
+              <div>
+                <Label htmlFor="location">Location</Label>
+                <Select 
+                  value={targetingRules.location} 
+                  onValueChange={(value) => handleRuleChange('location', value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select location" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Locations</SelectItem>
+                    <SelectItem value="us">United States</SelectItem>
+                    <SelectItem value="ca">Canada</SelectItem>
+                    <SelectItem value="uk">United Kingdom</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </div>
-        )}
-      </CardContent>
-    </Card>
+
+          {selectedSegments.length > 0 && (
+            <div className="bg-muted p-4 rounded-lg">
+              <div className="flex items-center justify-between mb-2">
+                <span className="font-medium">Estimated Reach</span>
+                <Badge>
+                  <Users className="h-3 w-3 mr-1" />
+                  {availableSegments
+                    .filter(s => selectedSegments.includes(s.id))
+                    .reduce((sum, s) => sum + s.size, 0)
+                    .toLocaleString()} users
+                </Badge>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Based on selected segments and targeting rules
+              </p>
+            </div>
+          )}
+
+          <div className="flex justify-end">
+            <Button variant="outline">
+              <Filter className="h-4 w-4 mr-2" />
+              Preview Audience
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 

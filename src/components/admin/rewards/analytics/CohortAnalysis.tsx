@@ -1,11 +1,7 @@
+
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-
-interface CohortAnalysisProps {
-  // Define any props here
-}
 
 const CohortAnalysis = () => {
   const [selectedCohort, setSelectedCohort] = useState('new_users');
@@ -23,8 +19,8 @@ const CohortAnalysis = () => {
     { value: 'average_spend', label: 'Average Spend' },
   ];
 
-  // Mock data for cohort analysis
-  const cohortData = {
+  // Mock data for cohort analysis with proper typing
+  const cohortData: Record<string, Record<string, number[]>> = {
     new_users: {
       retention_rate: [65, 55, 45, 35, 25, 15],
       conversion_rate: [5, 8, 12, 15, 18, 20],
@@ -94,7 +90,7 @@ const CohortAnalysis = () => {
               {cohortOptions.find(o => o.value === selectedCohort)?.label} - {metricOptions.find(m => m.value === selectedMetric)?.label}
             </h3>
             <p className="text-sm text-muted-foreground">
-              {cohortData[selectedCohort] ? cohortData[selectedCohort][selectedMetric]?.join(', ') : 'No data available'}
+              {cohortData[selectedCohort]?.[selectedMetric]?.join(', ') || 'No data available'}
             </p>
           </div>
         </CardContent>

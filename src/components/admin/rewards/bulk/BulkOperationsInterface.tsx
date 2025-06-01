@@ -1,80 +1,62 @@
+
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Upload, Download, Play, Pause, FileText } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { Badge } from '@/components/ui/badge';
+import { Upload, PlayCircle } from 'lucide-react';
 
-interface BulkOperation {
-  type: 'add_points' | 'remove_points' | 'set_tier';
-  target: 'all_users' | 'specific_users' | 'tier';
-  value: number;
-  tier?: string;
-  user_list?: string;
-  status: 'pending' | 'processing' | 'completed' | 'failed';
-  progress: number;
-  log?: string;
-}
+type BulkOperationType = 'add_points' | 'remove_points' | 'set_tier';
+type TargetType = 'all_users' | 'specific_users' | 'tier';
 
 const BulkOperationsInterface = () => {
-  const [operationType, setOperationType] = useState<BulkOperation['type']>('add_points');
-  const [operationTarget, setOperationTarget] = useState<BulkOperation['target']>('all_users');
-  const [operationValue, setOperationValue] = useState<number>(0);
-  const [targetTier, setTargetTier] = useState<string>('');
-  const [userList, setUserList] = useState<string>('');
-  const [operationStatus, setOperationStatus] = useState<BulkOperation['status']>('pending');
-  const [operationProgress, setOperationProgress] = useState<number>(0);
-  const [operationLog, setOperationLog] = useState<string>('');
-  const { toast } = useToast();
+  const [operationType, setOperationType] = useState<BulkOperationType>('add_points');
+  const [targetType, setTargetType] = useState<TargetType>('all_users');
+  const [pointsValue, setPointsValue] = useState('');
+  const [tierValue, setTierValue] = useState('');
+  const [userList, setUserList] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [progress, setProgress] = useState(0);
 
-  const handleOperationStart = () => {
-    console.log('Starting bulk operation with:', {
-      type: operationType,
-      target: operationTarget,
-      value: operationValue,
-      tier: targetTier,
-      userList: userList
-    });
-
-    setOperationStatus('processing');
-    setOperationProgress(10);
-
-    setTimeout(() => {
-      setOperationProgress(50);
-      setOperationLog('Processing users...');
-    }, 2000);
-
-    setTimeout(() => {
-      setOperationProgress(90);
-      setOperationLog('Finalizing operation...');
-    }, 5000);
-
-    setTimeout(() => {
-      setOperationStatus('completed');
-      setOperationProgress(100);
-      setOperationLog('Operation completed successfully.');
-      toast({
-        title: "Bulk operation completed",
-        description: "The bulk operation has been completed successfully.",
+  const handleExecuteOperation = () => {
+    setIsProcessing(true);
+    setProgress(0);
+    
+    // Simulate progress
+    const interval = setInterval(() => {
+      setProgress((prev) => {
+        if (prev >= 100) {
+          clearInterval(interval);
+          setIsProcessing(false);
+          return 100;
+        }
+        return prev + 10;
       });
-    }, 7000);
+    }, 500);
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setUserList(event.target?.result as string);
-      };
-      reader.readAsText(file);
+  const recentOperations = [
+    {
+      id: '1',
+      type: 'Add Points',
+      target: '1,250 users',
+      value: '+500 points',
+      status: 'completed',
+      timestamp: '2 hours ago'
+    },
+    {
+      id: '2',
+      type: 'Set Tier',
+      target: '85 users',
+      value: 'Gold tier',
+      status: 'completed',
+      timestamp: '1 day ago'
     }
-  };
+  ];
 
   return (
     <div className="space-y-6">
@@ -82,17 +64,16 @@ const BulkOperationsInterface = () => {
         <CardHeader>
           <CardTitle>Bulk Operations</CardTitle>
           <CardDescription>
-            Perform bulk actions on users, such as adding points, removing points, or setting tiers.
+            Perform bulk actions on user rewards and tiers
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="operationType">Operation Type</Label>
-              <Select
-                id="operationType"
-                value={operationType}
-                onValueChange={setOperationType}
+              <Label>Operation Type</Label>
+              <Select 
+                value={operationType} 
+                onValueChange={(value: BulkOperationType) => setOperationType(value)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select operation" />
@@ -106,11 +87,10 @@ const BulkOperationsInterface = () => {
             </div>
 
             <div>
-              <Label htmlFor="operationTarget">Operation Target</Label>
-              <Select
-                id="operationTarget"
-                value={operationTarget}
-                onValueChange={setOperationTarget}
+              <Label>Target</Label>
+              <Select 
+                value={targetType} 
+                onValueChange={(value: TargetType) => setTargetType(value)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select target" />
@@ -118,117 +98,104 @@ const BulkOperationsInterface = () => {
                 <SelectContent>
                   <SelectItem value="all_users">All Users</SelectItem>
                   <SelectItem value="specific_users">Specific Users</SelectItem>
-                  <SelectItem value="tier">Tier</SelectItem>
+                  <SelectItem value="tier">By Tier</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
 
-          {operationTarget === 'tier' && (
-            <div className="space-y-2">
-              <Label htmlFor="targetTier">Target Tier</Label>
+          {(operationType === 'add_points' || operationType === 'remove_points') && (
+            <div>
+              <Label>Points Value</Label>
               <Input
-                id="targetTier"
-                type="text"
-                placeholder="Enter tier name"
-                value={targetTier}
-                onChange={(e) => setTargetTier(e.target.value)}
+                type="number"
+                value={pointsValue}
+                onChange={(e) => setPointsValue(e.target.value)}
+                placeholder="Enter points amount"
               />
             </div>
           )}
 
-          {operationTarget === 'specific_users' && (
-            <div className="space-y-2">
-              <Label htmlFor="userList">User List (CSV)</Label>
-              <div className="flex items-center space-x-2">
-                <Input
-                  type="file"
-                  id="userList"
-                  className="hidden"
-                  onChange={handleFileUpload}
-                />
-                <Label htmlFor="userList" className="cursor-pointer bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 px-4 rounded-md">
-                  <Upload className="h-4 w-4 mr-2 inline-block" />
-                  Upload CSV
-                </Label>
-                {userList && (
-                  <Badge variant="secondary">
-                    <FileText className="h-4 w-4 mr-1" />
-                    File Uploaded
-                  </Badge>
-                )}
-              </div>
+          {operationType === 'set_tier' && (
+            <div>
+              <Label>Tier</Label>
+              <Select value={tierValue} onValueChange={setTierValue}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select tier" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="bronze">Bronze</SelectItem>
+                  <SelectItem value="silver">Silver</SelectItem>
+                  <SelectItem value="gold">Gold</SelectItem>
+                  <SelectItem value="platinum">Platinum</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {targetType === 'specific_users' && (
+            <div>
+              <Label>User List</Label>
               <Textarea
-                placeholder="Paste user IDs (comma-separated)"
                 value={userList}
                 onChange={(e) => setUserList(e.target.value)}
-                rows={3}
+                placeholder="Enter user IDs or emails, one per line"
+                rows={4}
               />
+              <Button variant="outline" className="mt-2">
+                <Upload className="h-4 w-4 mr-2" />
+                Upload CSV
+              </Button>
             </div>
           )}
 
-          <div className="space-y-2">
-            <Label htmlFor="operationValue">Value</Label>
-            <Input
-              id="operationValue"
-              type="number"
-              placeholder="Enter value"
-              value={operationValue}
-              onChange={(e) => setOperationValue(Number(e.target.value))}
-            />
-          </div>
+          {isProcessing && (
+            <div className="space-y-2">
+              <Label>Operation Progress</Label>
+              <Progress value={progress} />
+              <p className="text-sm text-muted-foreground">{progress}% complete</p>
+            </div>
+          )}
 
-          <Button onClick={handleOperationStart} disabled={operationStatus === 'processing'}>
-            {operationStatus === 'processing' ? (
-              <>
-                <Pause className="h-4 w-4 mr-2 animate-pulse" />
-                Processing...
-              </>
-            ) : (
-              <>
-                <Play className="h-4 w-4 mr-2" />
-                Start Operation
-              </>
-            )}
+          <Button 
+            onClick={handleExecuteOperation} 
+            disabled={isProcessing}
+            className="w-full"
+          >
+            <PlayCircle className="h-4 w-4 mr-2" />
+            Execute Operation
           </Button>
         </CardContent>
       </Card>
 
-      {operationStatus !== 'pending' && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Operation Status</CardTitle>
-            <CardDescription>
-              Real-time status and progress of the bulk operation.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Progress</span>
-                <span className="text-sm text-muted-foreground">{operationProgress}%</span>
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Operations</CardTitle>
+          <CardDescription>
+            View the history of bulk operations
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {recentOperations.map((operation) => (
+              <div key={operation.id} className="flex items-center justify-between p-3 border rounded">
+                <div>
+                  <div className="font-medium">{operation.type}</div>
+                  <div className="text-sm text-muted-foreground">
+                    {operation.target} • {operation.value}
+                  </div>
+                </div>
+                <div className="text-right">
+                  <Badge variant="outline">{operation.status}</Badge>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    {operation.timestamp}
+                  </div>
+                </div>
               </div>
-              <Progress value={operationProgress} />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Log</Label>
-              <Textarea
-                readOnly
-                value={operationLog}
-                rows={4}
-                className="bg-gray-100"
-              />
-            </div>
-
-            <div className="flex justify-end">
-              <Badge variant={operationStatus === 'completed' ? 'default' : operationStatus === 'failed' ? 'destructive' : 'secondary'}>
-                {operationStatus.toUpperCase()}
-              </Badge>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
