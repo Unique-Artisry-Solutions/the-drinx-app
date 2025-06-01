@@ -1,101 +1,139 @@
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useEffect } from 'react';
+import { useFeatures } from '@/contexts/FeatureContext';
+import { FeatureId } from '@/lib/features/registry';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Lock, Crown, Zap, Star } from 'lucide-react';
-import { useAuth } from '@/contexts/auth';
 import { useToast } from '@/hooks/use-toast';
-import { useFeatureTier } from '@/hooks/useFeatureTier';
 
 interface FeatureGateProps {
-  feature: string;
-  requiredTier: 'free' | 'basic' | 'premium' | 'vip';
+  /**
+   * The feature ID to check access for
+   */
+  feature: FeatureId;
+  /**
+   * The content to render if the user has access to the feature
+   */
   children: React.ReactNode;
+  /**
+   * Optional fallback content to render if the user doesn't have access
+   */
   fallback?: React.ReactNode;
+  /**
+   * Whether to show an upgrade prompt when access is denied
+   * @default true
+   */
   showUpgradePrompt?: boolean;
+  /**
+   * Event name to use when tracking feature access attempts
+   * @default "view"
+   */
+  trackingEventName?: string;
 }
 
-const TIER_CONFIG = {
-  free: { icon: Lock, color: 'bg-gray-100 text-gray-800', label: 'Free' },
-  basic: { icon: Zap, color: 'bg-blue-100 text-blue-800', label: 'Basic' },
-  premium: { icon: Crown, color: 'bg-purple-100 text-purple-800', label: 'Premium' },
-  vip: { icon: Star, color: 'bg-amber-100 text-amber-800', label: 'VIP' }
-};
-
-const FeatureGate: React.FC<FeatureGateProps> = ({
+/**
+ * FeatureGate component to conditionally render content based on feature access
+ * 
+ * This component renders its children only if the user has access to the specified feature.
+ * Otherwise, it renders fallback content or an upgrade prompt.
+ * 
+ * @example
+ * <FeatureGate feature={FEATURES.ADVANCED_ANALYTICS}>
+ *   <AdvancedAnalytics />
+ * </FeatureGate>
+ */
+export const FeatureGate: React.FC<FeatureGateProps> = ({
   feature,
-  requiredTier,
   children,
   fallback,
-  showUpgradePrompt = true
+  showUpgradePrompt = true,
+  trackingEventName = 'view',
 }) => {
-  const { user } = useAuth();
-  const { hasFeatureAccess, userTier } = useFeatureTier();
-  const { toast: _toast } = useToast();
-
-  // Check if user has access to this feature
-  const hasAccess = hasFeatureAccess(feature, requiredTier);
+  const { hasAccess, trackFeatureUsage } = useFeatures();
+  const { toast } = useToast();
   
-  if (hasAccess) {
+  useEffect(() => {
+    // Track attempt to access the feature
+    trackFeatureUsage(feature, trackingEventName);
+  }, [feature, trackFeatureUsage, trackingEventName]);
+
+  // Check if the user has access to the feature
+  const userHasAccess = hasAccess(feature);
+
+  if (userHasAccess) {
+    // If the user has access, render the children
     return <>{children}</>;
   }
 
-  // If access is denied, show fallback or upgrade prompt
+  // Show the fallback content if provided
   if (fallback) {
     return <>{fallback}</>;
   }
 
-  if (!showUpgradePrompt) {
-    return null;
+  // Show an upgrade prompt if enabled
+  if (showUpgradePrompt) {
+    return (
+      <div className="flex flex-col items-center justify-center p-4 border border-dashed rounded-lg">
+        <p className="text-sm text-muted-foreground mb-2">
+          This feature requires a subscription upgrade.
+        </p>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            trackFeatureUsage(feature, 'upgrade_prompt_click');
+            // Navigate to pricing page
+            window.location.href = '/pricing';
+          }}
+        >
+          View Pricing
+        </Button>
+      </div>
+    );
   }
 
-  const tierConfig = TIER_CONFIG[requiredTier];
-  const TierIcon = tierConfig.icon;
+  // If no fallback and no upgrade prompt, render nothing
+  return null;
+};
 
-  return (
-    <Card className="border-dashed">
-      <CardHeader className="text-center">
-        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-          <TierIcon className="h-6 w-6" />
-        </div>
-        <CardTitle className="text-lg">
-          {tierConfig.label} Feature Required
-        </CardTitle>
-        <CardDescription>
-          This feature requires a {tierConfig.label} subscription or higher.
-        </CardDescription>
-      </CardHeader>
-      
-      <CardContent className="text-center space-y-4">
-        <div className="flex justify-center">
-          <Badge className={tierConfig.color}>
-            {tierConfig.label} Required
-          </Badge>
-        </div>
-        
-        <div className="text-sm text-muted-foreground">
-          {user ? (
-            <>
-              Your current plan: <Badge variant="outline">{userTier}</Badge>
-            </>
-          ) : (
-            "Sign in to access premium features"
-          )}
-        </div>
-
-        <div className="flex gap-2 justify-center">
-          {!user && (
-            <Button variant="outline" size="sm">
-              Sign In
-            </Button>
-          )}
-          <Button size="sm">
-            {user ? 'Upgrade Plan' : 'View Plans'}
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
-  );
+/**
+ * Hook for conditionally executing code based on feature access
+ * 
+ * @example
+ * const { whenEnabled } = useFeatureToggle(FEATURES.BULK_MESSAGING);
+ * 
+ * whenEnabled(() => {
+ *   // This code only runs if the user has access to bulk messaging
+ *   sendBulkMessages();
+ * }, () => {
+ *   // Optional fallback function if access is denied
+ *   showUpgradeMessage();
+ * });
+ */
+export const useFeatureToggle = (featureId: FeatureId) => {
+  const { hasAccess, trackFeatureUsage } = useFeatures();
+  
+  /**
+   * Conditionally executes a callback if the user has access to the feature
+   * @param callback Function to execute if the user has access
+   * @param fallback Optional function to execute if the user doesn't have access
+   * @returns The result of the executed callback, or undefined
+   */
+  const whenEnabled = (callback: Function, fallback?: Function) => {
+    if (hasAccess(featureId)) {
+      trackFeatureUsage(featureId, 'use');
+      return callback();
+    } else if (fallback) {
+      return fallback();
+    }
+    return undefined;
+  };
+  
+  return {
+    whenEnabled,
+    hasAccess: hasAccess(featureId),
+    trackUsage: (eventType?: string, data?: Record<string, any>) => 
+      trackFeatureUsage(featureId, eventType, data),
+  };
 };
 
 export default FeatureGate;

@@ -12,7 +12,6 @@ interface CampaignManagementTabProps {
 }
 
 export const CampaignManagementTab: React.FC<CampaignManagementTabProps> = ({ establishmentId }) => {
-  const _establishmentId = establishmentId; // Keep variable to avoid TS6133 error
   const {
     campaigns,
     isLoading,

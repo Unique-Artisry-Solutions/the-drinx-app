@@ -4,17 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertCircle, CheckCircle, Clock } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-
-// Export the SystemHealthMetric interface for use in other components
-export interface SystemHealthMetric {
-  name: string;
-  value: number;
-  status: string;
-  description: string;
-  response_time_ms?: number;
-  transaction_count?: number;
-  error_count?: number;
-}
+import { SystemHealthMetric } from "@/lib/rewards/system/RewardsSystemMonitor";
 
 interface SystemHealthCardProps {
   healthMetrics: SystemHealthMetric | null;
@@ -67,19 +57,19 @@ export const SystemHealthCard: React.FC<SystemHealthCardProps> = ({
           <>
             <div className="flex items-center justify-between">
               <p className="text-sm font-medium text-muted-foreground">Response Time</p>
-              <p className="text-sm font-medium">{healthMetrics.response_time_ms || 0}ms</p>
+              <p className="text-sm font-medium">{healthMetrics.response_time_ms}ms</p>
             </div>
             <div className="flex items-center justify-between">
               <p className="text-sm font-medium text-muted-foreground">Transactions</p>
-              <p className="text-sm font-medium">{healthMetrics.transaction_count || 0}</p>
+              <p className="text-sm font-medium">{healthMetrics.transaction_count}</p>
             </div>
             <div className="flex items-center justify-between">
               <p className="text-sm font-medium text-muted-foreground">Errors</p>
               <div className="flex items-center space-x-1">
-                <span className={`text-sm font-medium ${(healthMetrics.error_count || 0) > 0 ? 'text-red-500' : 'text-green-500'}`}>
-                  {healthMetrics.error_count || 0}
+                <span className={`text-sm font-medium ${healthMetrics.error_count > 0 ? 'text-red-500' : 'text-green-500'}`}>
+                  {healthMetrics.error_count}
                 </span>
-                {(healthMetrics.error_count || 0) === 0 && (
+                {healthMetrics.error_count === 0 && (
                   <CheckCircle className="h-3 w-3 text-green-500" />
                 )}
               </div>

@@ -1,156 +1,183 @@
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { RefreshCw, Plus } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { supabase } from '@/integrations/supabase/client';
+import { UserRewardProfile } from './UserRewardProfile';
+import { UserRewardsList } from './UserRewardsList';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
 import { UserFilter } from './UserFilter';
-import UserRewardsList from './UserRewardsList';
+import { Skeleton } from '@/components/ui/skeleton';
 
-interface RewardUser {
+export type RewardUser = {
   id: string;
   user_id: string;
-  username: string;
+  username?: string;
   points: number;
   lifetime_points: number;
   tier_name?: string;
-  last_activity: string;
+  last_activity?: string;
   establishment_id?: string;
-}
+};
 
-interface UserManagementTabProps {
-  establishmentId?: string;
-}
-
-export const UserManagementTab: React.FC<UserManagementTabProps> = ({ establishmentId }) => {
-  const _establishmentId = establishmentId; // Keep variable to avoid TS6133 error
+export const UserManagementTab = () => {
   const [users, setUsers] = useState<RewardUser[]>([]);
-  const [filteredUsers, setFilteredUsers] = useState<RewardUser[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [filter, setFilter] = useState({
     searchTerm: '',
-    tierFilter: 'all',
+    tierFilter: '',
     sortBy: 'points',
     sortOrder: 'desc' as 'asc' | 'desc'
   });
+  const { toast } = useToast();
 
-  const fetchUsers = async () => {
+  useEffect(() => {
+    fetchRewardUsers();
+  }, [filter]);
+
+  const fetchRewardUsers = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
+      // Modified query to fix the relationship issue by using explicit joins
+      const { data: userRewardsData, error: userRewardsError } = await supabase
         .from('user_rewards')
         .select(`
           id,
           user_id,
           points,
           lifetime_points,
-          created_at,
-          profiles!inner(username),
-          reward_tiers(name)
+          current_tier_id,
+          updated_at,
+          establishment_id
         `)
-        .order('lifetime_points', { ascending: false });
-
-      if (error) throw error;
-
-      if (data) {
-        // Transform the data to match RewardUser interface with proper null handling
-        const transformedUsers: RewardUser[] = data.map(user => ({
-          id: user.id,
-          user_id: user.user_id,
-          username: (user.profiles as any)?.username || 'Unknown User',
-          points: user.points || 0,
-          lifetime_points: user.lifetime_points || 0,
-          tier_name: (user.reward_tiers as any)?.name || undefined, // Convert null to undefined
-          last_activity: user.created_at,
-          establishment_id: null
-        }));
-
-        setUsers(transformedUsers);
-        setFilteredUsers(transformedUsers);
-      }
+        .order(filter.sortBy, { ascending: filter.sortOrder === 'asc' });
+      
+      if (userRewardsError) throw userRewardsError;
+      
+      // Get additional data with separate queries if needed
+      const formattedUsers = await Promise.all(userRewardsData.map(async (item) => {
+        // Fetch username from profiles
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('username')
+          .eq('id', item.user_id)
+          .single();
+        
+        // Fetch tier name if available
+        let tierName = null;
+        if (item.current_tier_id) {
+          const { data: tierData } = await supabase
+            .from('reward_tiers')
+            .select('name')
+            .eq('id', item.current_tier_id)
+            .single();
+          
+          tierName = tierData?.name;
+        }
+        
+        return {
+          id: item.id,
+          user_id: item.user_id,
+          username: profileData?.username || `User ${item.user_id.substring(0, 6)}`,
+          points: item.points,
+          lifetime_points: item.lifetime_points,
+          tier_name: tierName,
+          last_activity: item.updated_at,
+          establishment_id: item.establishment_id,
+        };
+      }));
+      
+      setUsers(formattedUsers);
     } catch (error) {
-      console.error('Error fetching users:', error);
+      console.error('Error fetching reward users:', error);
+      toast({
+        title: 'Failed to load users',
+        description: 'There was an error loading the reward users.',
+        variant: 'destructive',
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
+  const handleUserSelect = (userId: string) => {
+    setSelectedUserId(userId);
+  };
 
-  useEffect(() => {
-    let filtered = users;
-
-    if (filter.tierFilter !== 'all') {
-      filtered = filtered.filter(user => user.tier_name === filter.tierFilter);
+  const handleUserUpdate = async (userId: string, points: number) => {
+    try {
+      const { error } = await supabase.rpc('update_user_points', {
+        p_user_id: userId,
+        p_points: points
+      });
+      
+      if (error) throw error;
+      
+      toast({
+        title: 'User points updated',
+        description: `User points have been successfully updated.`,
+      });
+      
+      // Refresh the user list
+      fetchRewardUsers();
+    } catch (error) {
+      console.error('Error updating user points:', error);
+      toast({
+        title: 'Update failed',
+        description: 'Failed to update user points.',
+        variant: 'destructive',
+      });
     }
-
-    if (filter.searchTerm) {
-      filtered = filtered.filter(user =>
-        user.username.toLowerCase().includes(filter.searchTerm.toLowerCase())
-      );
-    }
-
-    setFilteredUsers(filtered);
-  }, [users, filter]);
-
-  const uniqueTiers = Array.from(new Set(users.map(user => user.tier_name).filter(Boolean)));
+  };
 
   return (
     <div className="space-y-6">
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>User Management</CardTitle>
-          <div className="flex gap-2">
-            <Button onClick={fetchUsers} variant="outline" size="sm" disabled={isLoading}>
-              <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-              Refresh
-            </Button>
-            <Button size="sm">
-              <Plus className="mr-2 h-4 w-4" />
-              Add User
-            </Button>
-          </div>
+        <CardHeader>
+          <CardTitle>User Reward Management</CardTitle>
+          <CardDescription>
+            View and manage user rewards, points, and tiers.
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            <UserFilter
-              filter={filter}
-              onFilterChange={setFilter}
-              onRefresh={fetchUsers}
-            />
-
-            <div className="flex gap-2 flex-wrap">
-              <Badge 
-                variant={filter.tierFilter === 'all' ? 'default' : 'outline'}
-                className="cursor-pointer"
-                onClick={() => setFilter(prev => ({ ...prev, tierFilter: 'all' }))}
-              >
-                All Tiers ({users.length})
-              </Badge>
-              {uniqueTiers.map((tier) => {
-                const count = users.filter(user => user.tier_name === tier).length;
-                return (
-                  <Badge
-                    key={tier}
-                    variant={filter.tierFilter === tier ? 'default' : 'outline'}
-                    className="cursor-pointer"
-                    onClick={() => setFilter(prev => ({ ...prev, tierFilter: tier || '' }))}
-                  >
-                    {tier} ({count})
-                  </Badge>
-                );
-              })}
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="md:col-span-1">
+              <UserFilter 
+                filter={filter}
+                onFilterChange={setFilter}
+                onRefresh={fetchRewardUsers}
+              />
+              
+              {isLoading ? (
+                <div className="space-y-2 mt-4">
+                  <Skeleton className="h-12 w-full" />
+                  <Skeleton className="h-12 w-full" />
+                  <Skeleton className="h-12 w-full" />
+                </div>
+              ) : (
+                <UserRewardsList 
+                  users={users}
+                  selectedUserId={selectedUserId}
+                  onUserSelect={handleUserSelect}
+                />
+              )}
             </div>
-
-            <UserRewardsList users={filteredUsers} isLoading={isLoading} />
+            
+            <div className="md:col-span-1 lg:col-span-2">
+              {selectedUserId ? (
+                <UserRewardProfile
+                  userId={selectedUserId}
+                  onUpdate={handleUserUpdate}
+                />
+              ) : (
+                <div className="flex items-center justify-center h-64 border rounded-md bg-muted/20">
+                  <p className="text-muted-foreground">Select a user to view their reward profile</p>
+                </div>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>
     </div>
   );
 };
-
-export default UserManagementTab;

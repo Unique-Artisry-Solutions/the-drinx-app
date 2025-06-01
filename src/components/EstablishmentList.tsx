@@ -11,7 +11,7 @@ interface Establishment {
   id: string;
   name: string;
   address: string;
-  distance?: number;
+  distance?: string;
   cocktailCount: number;
   image?: string;
   latitude: number;
@@ -68,8 +68,7 @@ const EstablishmentList: React.FC<EstablishmentListProps> = ({
       </div>;
   }
   
-  return (
-    <div className="mt-6">
+  return <div className="mt-6">
       <div className="flex justify-between items-center mb-3">
         <h2 className="text-lg font-medium text-material-on-surface text-gray-300">
           {establishments.length > 0 ? 'Nearby Establishments' : 'All Establishments'}
@@ -91,19 +90,13 @@ const EstablishmentList: React.FC<EstablishmentListProps> = ({
               className={`relative ${selectedEstablishment === establishment.id ? 'animate-pulse-subtle' : ''}`}
             >
               <EstablishmentCard 
-                establishment={{
-                  id: establishment.id,
-                  name: establishment.name,
-                  address: establishment.address,
-                  description: '', // Add default description
-                  is_verified: false // Add default verification status
-                }}
-                distance={establishment.distance}
-                onClick={() => handleEstablishmentClick(establishment.id)}
-                showDistance={true}
-                showRating={true}
-                variant="default"
-                isLightTheme={false}
+                id={establishment.id} 
+                name={establishment.name} 
+                address={establishment.address} 
+                distance={establishment.distance} 
+                cocktailCount={establishment.cocktailCount} 
+                image={establishment.image} 
+                onClick={() => handleEstablishmentClick(establishment.id)} 
               />
               
               <Button 
@@ -133,8 +126,7 @@ const EstablishmentList: React.FC<EstablishmentListProps> = ({
           </div>
         )}
       </div>
-    </div>
-  );
+    </div>;
 };
 
 export default EstablishmentList;

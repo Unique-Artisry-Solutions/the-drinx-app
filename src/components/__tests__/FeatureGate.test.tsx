@@ -1,59 +1,109 @@
 
+import React from 'react';
 import { render } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
-import FeatureGate from '../FeatureGate';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { FeatureGate, useFeatureToggle } from '@/components/FeatureGate';
+import { FEATURES } from '@/lib/features/registry';
+import { screen, renderHook } from '@/test/testing-library-extensions';
 
-// Mock the auth context
-const mockAuthContext = {
-  user: null,
-  isLoading: false,
-  signIn: () => Promise.resolve(),
-  signOut: () => Promise.resolve(),
-  signUp: () => Promise.resolve()
-};
-
-// Mock the feature tier hook
-const mockFeatureTierHook = {
-  hasFeatureAccess: () => true,
-  userTier: 'free' as const
-};
-
-vi.mock('@/contexts/auth', () => ({
-  useAuth: () => mockAuthContext
+// Mock the features context
+vi.mock('@/contexts/FeatureContext', () => ({
+  useFeatures: vi.fn(() => ({
+    hasAccess: vi.fn((featureId) => featureId === FEATURES.SOCIAL_SHARING),
+    trackFeatureUsage: vi.fn()
+  }))
 }));
 
-vi.mock('@/hooks/useFeatureTier', () => ({
-  useFeatureTier: () => mockFeatureTierHook
-}));
-
+// Mock the toast hook
 vi.mock('@/hooks/use-toast', () => ({
-  useToast: () => ({ toast: vi.fn() })
+  useToast: () => ({
+    toast: vi.fn()
+  })
 }));
 
 describe('FeatureGate', () => {
-  it('renders children when user has access', () => {
-    const { getByText } = render(
-      <FeatureGate feature="test-feature" requiredTier="free">
-        <div>Test Content</div>
-      </FeatureGate>
-    );
-    
-    expect(getByText('Test Content')).toBeInTheDocument();
+  beforeEach(() => {
+    vi.clearAllMocks();
   });
 
-  it('renders upgrade prompt when user lacks access', () => {
-    // Override the hook to return false for access
-    vi.spyOn(require('@/hooks/useFeatureTier'), 'useFeatureTier').mockReturnValue({
-      hasFeatureAccess: () => false,
-      userTier: 'free'
-    });
-
-    const { getByText } = render(
-      <FeatureGate feature="premium-feature" requiredTier="premium">
-        <div>Premium Content</div>
+  it('renders children when user has access to the feature', () => {
+    render(
+      <FeatureGate feature={FEATURES.SOCIAL_SHARING}>
+        <div data-testid="protected-content">Protected Content</div>
       </FeatureGate>
     );
+
+    expect(screen.getByTestId('protected-content')).toBeInTheDocument();
+    expect(screen.getByText('Protected Content')).toBeInTheDocument();
+  });
+
+  it('renders fallback when user does not have access', () => {
+    render(
+      <FeatureGate 
+        feature={FEATURES.ADVANCED_ANALYTICS}
+        fallback={<div data-testid="fallback-content">Fallback Content</div>}
+      >
+        <div>Protected Content</div>
+      </FeatureGate>
+    );
+
+    expect(screen.getByTestId('fallback-content')).toBeInTheDocument();
+    expect(screen.getByText('Fallback Content')).toBeInTheDocument();
+    expect(screen.queryByText('Protected Content')).not.toBeInTheDocument();
+  });
+
+  it('renders upgrade prompt when no fallback provided and user lacks access', () => {
+    render(
+      <FeatureGate feature={FEATURES.ADVANCED_ANALYTICS}>
+        <div>Protected Content</div>
+      </FeatureGate>
+    );
+
+    expect(screen.getByText("This feature requires a subscription upgrade")).toBeInTheDocument();
+    expect(screen.getByText('View Pricing')).toBeInTheDocument();
+    expect(screen.queryByText('Protected Content')).not.toBeInTheDocument();
+  });
+
+  it('renders nothing when showUpgradePrompt is false and no fallback', () => {
+    render(
+      <FeatureGate 
+        feature={FEATURES.ADVANCED_ANALYTICS}
+        showUpgradePrompt={false}
+      >
+        <div>Protected Content</div>
+      </FeatureGate>
+    );
+
+    expect(screen.queryByText('Protected Content')).not.toBeInTheDocument();
+    expect(screen.queryByText("This feature requires a subscription upgrade")).not.toBeInTheDocument();
+    expect(screen.queryByText('View Pricing')).not.toBeInTheDocument();
+  });
+});
+
+describe('useFeatureToggle', () => {
+  it('conditionally executes callbacks based on feature access', () => {
+    const { result } = renderHook(() => useFeatureToggle(FEATURES.SOCIAL_SHARING));
     
-    expect(getByText('Premium Feature Required')).toBeInTheDocument();
+    const callbackMock = vi.fn();
+    const fallbackMock = vi.fn();
+    
+    // User has access to SOCIAL_SHARING according to our mock
+    result.current.whenEnabled(callbackMock, fallbackMock);
+    
+    expect(callbackMock).toHaveBeenCalled();
+    expect(fallbackMock).not.toHaveBeenCalled();
+  });
+
+  it('executes fallback when user lacks feature access', () => {
+    const { result } = renderHook(() => useFeatureToggle(FEATURES.ADVANCED_ANALYTICS));
+    
+    const callbackMock = vi.fn();
+    const fallbackMock = vi.fn();
+    
+    // User does not have access to ADVANCED_ANALYTICS according to our mock
+    result.current.whenEnabled(callbackMock, fallbackMock);
+    
+    expect(callbackMock).not.toHaveBeenCalled();
+    expect(fallbackMock).toHaveBeenCalled();
   });
 });

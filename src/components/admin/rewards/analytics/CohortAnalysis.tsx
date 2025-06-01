@@ -1,102 +1,81 @@
 
-import { useState } from 'react';
+import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
-const CohortAnalysis = () => {
-  const [selectedCohort, setSelectedCohort] = useState('new_users');
-  const [selectedMetric, setSelectedMetric] = useState('retention_rate');
+interface CohortData {
+  cohort: string;
+  users: number;
+  retention: Record<string, number>;
+}
 
-  const cohortOptions = [
-    { value: 'new_users', label: 'New Users' },
-    { value: 'active_users', label: 'Active Users' },
-    { value: 'paying_users', label: 'Paying Users' },
-  ];
+interface CohortAnalysisProps {
+  data: CohortData[];
+}
 
-  const metricOptions = [
-    { value: 'retention_rate', label: 'Retention Rate' },
-    { value: 'conversion_rate', label: 'Conversion Rate' },
-    { value: 'average_spend', label: 'Average Spend' },
-  ];
-
-  // Mock data for cohort analysis with proper typing
-  const cohortData: Record<string, Record<string, number[]>> = {
-    new_users: {
-      retention_rate: [65, 55, 45, 35, 25, 15],
-      conversion_rate: [5, 8, 12, 15, 18, 20],
-      average_spend: [10, 15, 20, 25, 30, 35],
-    },
-    active_users: {
-      retention_rate: [80, 75, 70, 65, 60, 55],
-      conversion_rate: [10, 14, 18, 22, 26, 30],
-      average_spend: [20, 28, 36, 44, 52, 60],
-    },
-    paying_users: {
-      retention_rate: [90, 85, 80, 75, 70, 65],
-      conversion_rate: [20, 25, 30, 35, 40, 45],
-      average_spend: [50, 60, 70, 80, 90, 100],
-    },
-  };
+export function CohortAnalysis({ data }: CohortAnalysisProps) {
+  // Prepare data for visualization
+  const preparedData = data.map(cohort => ({
+    cohort: cohort.cohort,
+    'Week 1': cohort.retention['Week 1'],
+    'Week 2': cohort.retention['Week 2'],
+    'Week 3': cohort.retention['Week 3'],
+    'Week 4': cohort.retention['Week 4'],
+  }));
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Cohort Analysis</CardTitle>
-          <CardDescription>
-            Analyze user behavior based on cohorts and metrics
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                Cohort
-              </label>
-              <Select value={selectedCohort} onValueChange={setSelectedCohort}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select cohort" />
-                </SelectTrigger>
-                <SelectContent>
-                  {cohortOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                Metric
-              </label>
-              <Select value={selectedMetric} onValueChange={setSelectedMetric}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select metric" />
-                </SelectTrigger>
-                <SelectContent>
-                  {metricOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div>
-            <h3 className="text-lg font-medium">
-              {cohortOptions.find(o => o.value === selectedCohort)?.label} - {metricOptions.find(m => m.value === selectedMetric)?.label}
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              {cohortData[selectedCohort]?.[selectedMetric]?.join(', ') || 'No data available'}
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg">Cohort Retention Analysis</CardTitle>
+        <CardDescription>User retention based on signup date</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="h-[400px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart
+              layout="vertical"
+              data={preparedData}
+              margin={{ top: 20, right: 30, left: 50, bottom: 5 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis type="number" domain={[0, 100]} unit="%" />
+              <YAxis dataKey="cohort" type="category" width={80} />
+              <Tooltip formatter={(value) => [`${value}%`, 'Retention']} />
+              <Legend />
+              <Bar dataKey="Week 1" fill="#8884d8" name="Week 1" />
+              <Bar dataKey="Week 2" fill="#83a6ed" name="Week 2" />
+              <Bar dataKey="Week 3" fill="#8dd1e1" name="Week 3" />
+              <Bar dataKey="Week 4" fill="#82ca9d" name="Week 4" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+        <div className="overflow-x-auto mt-6 bg-card rounded-md border">
+          <table className="min-w-full">
+            <thead>
+              <tr className="border-b">
+                <th className="px-4 py-3 text-left">Cohort</th>
+                <th className="px-4 py-3 text-left">Users</th>
+                <th className="px-4 py-3 text-left">Week 1</th>
+                <th className="px-4 py-3 text-left">Week 2</th>
+                <th className="px-4 py-3 text-left">Week 3</th>
+                <th className="px-4 py-3 text-left">Week 4</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.map((cohort) => (
+                <tr key={cohort.cohort} className="border-b">
+                  <td className="px-4 py-3">{cohort.cohort}</td>
+                  <td className="px-4 py-3">{cohort.users}</td>
+                  <td className="px-4 py-3">{cohort.retention['Week 1']}%</td>
+                  <td className="px-4 py-3">{cohort.retention['Week 2']}%</td>
+                  <td className="px-4 py-3">{cohort.retention['Week 3']}%</td>
+                  <td className="px-4 py-3">{cohort.retention['Week 4']}%</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </CardContent>
+    </Card>
   );
-};
-
-export default CohortAnalysis;
+}

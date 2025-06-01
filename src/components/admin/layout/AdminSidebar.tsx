@@ -6,23 +6,11 @@ import { adminNavItems } from '@/components/navigation/admin/AdminNavItems';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 
-// Define extended nav item type with children
-interface ExtendedNavItem {
-  path: string;
-  label: string;
-  icon: any;
-  showInNav?: boolean;
-  children?: ExtendedNavItem[];
-}
-
 const AdminSidebar: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
   const [collapsed, setCollapsed] = useState<boolean>(false);
-  
-  // Type assertion for nav items with children
-  const navItems = adminNavItems as ExtendedNavItem[];
   
   // Initialize expanded categories based on current path and defaults
   useEffect(() => {
@@ -39,9 +27,9 @@ const AdminSidebar: React.FC = () => {
     
     // Auto-expand categories that contain the current active page
     const activeCategories: string[] = [];
-    navItems.forEach(category => {
+    adminNavItems.forEach(category => {
       if (category.children) {
-        const hasActiveChild = category.children.some((child: ExtendedNavItem) => isActive(child.path));
+        const hasActiveChild = category.children.some(child => isActive(child.path));
         if (hasActiveChild) {
           activeCategories.push(category.path);
         }
@@ -86,8 +74,8 @@ const AdminSidebar: React.FC = () => {
       (path !== '/admin/dashboard' && location.pathname.startsWith(path));
   };
   
-  const hasActiveChild = (category: ExtendedNavItem) => {
-    return category.children?.some((child: ExtendedNavItem) => isActive(child.path)) || false;
+  const hasActiveChild = (category: any) => {
+    return category.children?.some((child: any) => isActive(child.path)) || false;
   };
 
   const handleNavigation = (path: string) => {
@@ -114,10 +102,9 @@ const AdminSidebar: React.FC = () => {
       </div>
       
       <nav className={cn("px-2 py-2", collapsed && "flex flex-col items-center")}>
-        {navItems.map(category => {
+        {adminNavItems.map(category => {
           const isExpanded = expandedCategories.includes(category.path);
           const categoryHasActiveChild = hasActiveChild(category);
-          const IconComponent = category.icon;
           
           return (
             <div key={category.path} className={cn("mb-1", collapsed && "w-full flex justify-center")}>
@@ -132,9 +119,9 @@ const AdminSidebar: React.FC = () => {
                 onClick={() => collapsed ? toggleCollapse() : toggleCategory(category.path)}
                 title={collapsed ? category.label : undefined}
               >
-                {IconComponent && (
-                  <IconComponent className={cn("h-5 w-5", !collapsed && "mr-2 opacity-70")} />
-                )}
+                {React.createElement(category.icon, { 
+                  className: cn("h-5 w-5", !collapsed && "mr-2 opacity-70") 
+                })}
                 {!collapsed && (
                   <>
                     <span className="flex-1 truncate">{category.label}</span>
@@ -151,27 +138,24 @@ const AdminSidebar: React.FC = () => {
               
               {!collapsed && isExpanded && category.children && (
                 <div className="mt-1 ml-4 space-y-1 border-l border-white/10 pl-2">
-                  {category.children.map((item: ExtendedNavItem) => {
-                    const ItemIcon = item.icon;
-                    return (
-                      <button
-                        key={item.path}
-                        onClick={() => handleNavigation(item.path)}
-                        className={cn(
-                          "flex items-center w-full px-3 py-2 text-sm rounded-md transition-colors text-left",
-                          isActive(item.path)
-                            ? "bg-white/25 text-white font-medium border-l-2 border-white"
-                            : "text-white/70 hover:text-white hover:bg-white/10"
-                        )}
-                        title={collapsed ? item.label : undefined}
-                      >
-                        {ItemIcon && (
-                          <ItemIcon className="h-4 w-4 mr-2" />
-                        )}
-                        <span className="truncate">{item.label}</span>
-                      </button>
-                    );
-                  })}
+                  {category.children.map(item => (
+                    <button
+                      key={item.path}
+                      onClick={() => handleNavigation(item.path)}
+                      className={cn(
+                        "flex items-center w-full px-3 py-2 text-sm rounded-md transition-colors text-left",
+                        isActive(item.path)
+                          ? "bg-white/25 text-white font-medium border-l-2 border-white"
+                          : "text-white/70 hover:text-white hover:bg-white/10"
+                      )}
+                      title={collapsed ? item.label : undefined}
+                    >
+                      {React.createElement(item.icon, { 
+                        className: "h-4 w-4 mr-2" 
+                      })}
+                      <span className="truncate">{item.label}</span>
+                    </button>
+                  ))}
                 </div>
               )}
             </div>

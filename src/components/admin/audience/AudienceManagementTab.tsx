@@ -1,110 +1,216 @@
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Plus, Filter } from 'lucide-react';
+import { useAudienceSegments } from '@/hooks/useAudienceSegments';
+import { AudienceSegmentList } from './AudienceSegmentList';
+import { AudienceSegmentForm } from './AudienceSegmentForm';
+import { AudienceInsights } from './AudienceInsights';
+import { SegmentPerformance } from './SegmentPerformance';
+import { AudienceSegment } from '@/types/AudienceTypes';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Search, PlusCircle, RefreshCw, BarChart3, Users, Settings, ChartBar, Network } from 'lucide-react';
+import { SegmentAnalyticsDashboard } from './analytics/SegmentAnalyticsDashboard';
+import { AudienceRelationshipMap } from './relationships/AudienceRelationshipMap';
 
-const AudienceManagementTab = () => {
-  const [searchTerm, setSearchTerm] = useState('');
+export const AudienceManagementTab = () => {
+  const [activeView, setActiveView] = useState<'list' | 'create' | 'edit' | 'analytics' | 'relationships'>('list');
+  const [selectedSegment, setSelectedSegment] = useState<AudienceSegment | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [activeTab, setActiveTab] = useState<'segments' | 'insights' | 'performance' | 'analytics' | 'relationships'>('segments');
+  
+  const { 
+    segments,
+    isLoadingSegments,
+    refetchSegments,
+    createSegment,
+    updateSegment,
+    deleteSegment,
+    useSegmentAnalytics
+  } = useAudienceSegments();
 
-  // Mock segments data
-  const segments = [
-    {
-      id: '1',
-      name: 'High Value Customers',
-      description: 'Customers with lifetime value > $500',
-      size: 1250,
-      criteria: { minSpend: 500 },
-      status: 'active' as const
-    },
-    {
-      id: '2',
-      name: 'Loyal Customers',
-      description: 'Customers with > 10 orders',
-      size: 870,
-      criteria: { minOrders: 10 },
-      status: 'active' as const
-    },
-    {
-      id: '3',
-      name: 'New Signups Last Month',
-      description: 'Users who signed up in the last month',
-      size: 320,
-      criteria: { signupDate: 'last_month' },
-      status: 'draft' as const
-    },
-    {
-      id: '4',
-      name: 'Inactive Users',
-      description: 'Users who have not logged in for 90 days',
-      size: 540,
-      criteria: { lastLogin: '90_days' },
-      status: 'inactive' as const
-    }
-  ];
-
-  const filteredSegments = segments.filter(segment =>
-    segment.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
+  const filteredSegments = segments.filter(segment => {
+    const matchesSearch = segment.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         (segment.description || '').toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesStatus = statusFilter === 'all' || 
+                         (statusFilter === 'active' && segment.is_active) ||
+                         (statusFilter === 'inactive' && !segment.is_active);
+    return matchesSearch && matchesStatus;
+  });
+  
+  const handleCreateSegment = async (segmentData: any) => {
+    await createSegment.mutateAsync(segmentData);
+    setActiveView('list');
+  };
+  
+  const handleUpdateSegment = async (segmentId: string, updates: Partial<AudienceSegment>) => {
+    await updateSegment.mutateAsync({ id: segmentId, updates });
+    setActiveView('list');
+    setSelectedSegment(null);
+  };
+  
+  const handleDeleteSegment = async (segmentId: string) => {
+    await deleteSegment.mutateAsync(segmentId);
+  };
+  
+  const handleEditSegment = (segment: AudienceSegment) => {
+    setSelectedSegment(segment);
+    setActiveView('edit');
+  };
+  
+  const handleSelectSegment = (segment: AudienceSegment) => {
+    setSelectedSegment(segment);
+    setActiveTab('insights');
+  };
+  
+  const handleRefresh = () => {
+    refetchSegments();
+  };
+  
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-semibold">Audience Segments</h2>
-          <p className="text-muted-foreground">
-            Manage and analyze your audience segments
-          </p>
-        </div>
-        <div className="space-x-2">
-          <Input
-            type="search"
-            placeholder="Search segments..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="md:w-64"
-          />
-          <Button>
-            <Filter className="w-4 h-4 mr-2" />
-            Filter
-          </Button>
-          <Button>
-            <Plus className="w-4 h-4 mr-2" />
-            Create Segment
-          </Button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredSegments.map((segment) => (
-          <Card key={segment.id} className="cursor-pointer hover:shadow-md transition-shadow">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">{segment.name}</CardTitle>
-                <Badge variant={segment.status === 'active' ? 'default' : 'secondary'}>
-                  {segment.status}
-                </Badge>
-              </div>
-              <CardDescription>{segment.description}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span>Segment Size</span>
-                  <span className="font-medium">{segment.size.toLocaleString()}</span>
-                </div>
-                <Button variant="outline" className="w-full">
-                  View Details
+      <Card>
+        <CardHeader>
+          <div className="flex justify-between items-center">
+            <div>
+              <CardTitle>Audience Segmentation</CardTitle>
+              <CardDescription>
+                Create and manage audience segments for targeted marketing
+              </CardDescription>
+            </div>
+            {activeView === 'list' ? (
+              <div className="flex gap-2">
+                <Button onClick={() => setActiveView('create')}>
+                  <PlusCircle className="h-4 w-4 mr-2" />
+                  Create Segment
+                </Button>
+                <Button variant="outline" onClick={() => setActiveView('analytics')}>
+                  <ChartBar className="h-4 w-4 mr-2" />
+                  Analytics
                 </Button>
               </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+            ) : (
+              <Button variant="outline" onClick={() => {
+                setActiveView('list');
+                setSelectedSegment(null);
+              }}>
+                Back to Segments
+              </Button>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent>
+          {activeView === 'list' && (
+            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)}>
+              <TabsList className="mb-4">
+                <TabsTrigger value="segments">
+                  <Users className="h-4 w-4 mr-2" />
+                  Segments
+                </TabsTrigger>
+                <TabsTrigger value="insights">
+                  <Settings className="h-4 w-4 mr-2" />
+                  Insights
+                </TabsTrigger>
+                <TabsTrigger value="performance">
+                  <BarChart3 className="h-4 w-4 mr-2" />
+                  Performance
+                </TabsTrigger>
+                <TabsTrigger value="relationships">
+                  <Network className="h-4 w-4 mr-2" />
+                  Relationships
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="segments">
+                <div className="flex items-center space-x-2 mb-4">
+                  <div className="relative flex-1 max-w-sm">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search segments..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-8"
+                    />
+                  </div>
+                  
+                  <Tabs defaultValue={statusFilter} onValueChange={setStatusFilter}>
+                    <TabsList>
+                      <TabsTrigger value="all">All</TabsTrigger>
+                      <TabsTrigger value="active">Active</TabsTrigger>
+                      <TabsTrigger value="inactive">Inactive</TabsTrigger>
+                    </TabsList>
+                  </Tabs>
+                  
+                  <Button variant="outline" size="sm" onClick={handleRefresh}>
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Refresh
+                  </Button>
+                </div>
+                
+                <AudienceSegmentList 
+                  segments={filteredSegments} 
+                  isLoading={isLoadingSegments}
+                  onEdit={handleEditSegment}
+                  onDelete={handleDeleteSegment}
+                  onSelect={handleSelectSegment}
+                />
+              </TabsContent>
+              
+              <TabsContent value="insights">
+                <AudienceInsights segmentId={selectedSegment?.id} />
+              </TabsContent>
+              
+              <TabsContent value="performance">
+                <SegmentPerformance 
+                  segments={segments}
+                  isLoading={isLoadingSegments}
+                />
+              </TabsContent>
+              
+              <TabsContent value="relationships">
+                <AudienceRelationshipMap 
+                  selectedSegmentId={selectedSegment?.id}
+                  onSelectSegment={(segmentId) => {
+                    const segment = segments.find(s => s.id === segmentId);
+                    if (segment) {
+                      setSelectedSegment(segment);
+                    }
+                  }}
+                />
+              </TabsContent>
+            </Tabs>
+          )}
+          
+          {activeView === 'create' && (
+            <AudienceSegmentForm
+              onSubmit={handleCreateSegment}
+              onCancel={() => setActiveView('list')}
+            />
+          )}
+          
+          {activeView === 'edit' && selectedSegment && (
+            <AudienceSegmentForm
+              segment={selectedSegment}
+              onSubmit={(data) => handleUpdateSegment(selectedSegment.id, data.segment)}
+              onCancel={() => {
+                setActiveView('list');
+                setSelectedSegment(null);
+              }}
+            />
+          )}
+          
+          {activeView === 'analytics' && (
+            <SegmentAnalyticsDashboard />
+          )}
+          
+          {activeView === 'relationships' && (
+            <AudienceRelationshipMap />
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };
-
-export default AudienceManagementTab;

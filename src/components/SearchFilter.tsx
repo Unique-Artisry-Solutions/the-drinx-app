@@ -1,189 +1,142 @@
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { X, Search, Filter } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { SlidersHorizontal } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { createFuzzySearch, extractSearchSuggestions } from '@/utils/searchUtils';
 import Fuse from 'fuse.js';
+import SearchInput from './search/SearchInput';
+import FilterPanel from './search/FilterPanel';
 
-interface SearchFilterProps {
-  data: any[];
-  onFilter: (filteredData: any[]) => void;
-  searchKeys: string[];
-  placeholder?: string;
-  filters?: {
-    key: string;
-    label: string;
-    options: { label: string; value: string }[];
-  }[];
+export interface SearchFilterProps {
+  onSearch: (query: string) => void;
+  onFilterChange: (filters: any) => void;
+  onApplyFilters: () => void;
+  className?: string;
+  initialSearchTerm?: string;
+  cocktails?: any[];
+  establishments?: any[];
 }
 
 const SearchFilter: React.FC<SearchFilterProps> = ({
-  data,
-  onFilter,
-  searchKeys,
-  placeholder = "Search...",
-  filters = []
+  onSearch,
+  onFilterChange,
+  onApplyFilters,
+  className,
+  initialSearchTerm = '',
+  cocktails = [],
+  establishments = [],
 }) => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [activeFilters, setActiveFilters] = useState<Record<string, string>>({});
+  const [query, setQuery] = useState(initialSearchTerm);
   const [showFilters, setShowFilters] = useState(false);
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 25]);
+  const [distance, setDistance] = useState<number>(10);
+  const [suggestions, setSuggestions] = useState<Array<{value: string; label: string; type: 'cocktail' | 'establishment' | 'ingredient'}>>([]);
+  const [fuseInstance, setFuseInstance] = useState<Fuse<any> | null>(null);
+  const searchRef = useRef<HTMLDivElement>(null);
 
-  // Initialize Fuse instance for fuzzy search
-  const fuseInstance: Fuse<any> = useMemo(() => new Fuse(data, {
-    keys: searchKeys,
-    threshold: 0.3,
-    includeScore: true
-  }), [data, searchKeys]);
-
-  // Apply search and filters
+  // Initialize fuzzy search when cocktails or establishments change
   useEffect(() => {
-    let filteredData = data;
-
-    // Apply search
-    if (searchTerm.trim()) {
-      const searchResults = fuseInstance.search(searchTerm);
-      filteredData = searchResults.map(result => result.item);
+    const cocktailItems = cocktails.length > 0 ? cocktails : []; 
+    const establishmentItems = establishments.length > 0 ? establishments : [];
+    
+    if (cocktailItems.length > 0 || establishmentItems.length > 0) {
+      const searchItems = [
+        ...cocktailItems.map(c => ({
+          ...c,
+          type: 'cocktail',
+        })),
+        ...establishmentItems.map(e => ({
+          ...e,
+          type: 'establishment',
+        })),
+      ];
+      
+      setFuseInstance(createFuzzySearch(searchItems));
+      
+      const extractedSuggestions = extractSearchSuggestions(cocktailItems, establishmentItems);
+      setSuggestions(extractedSuggestions);
     }
+  }, [cocktails, establishments]);
 
-    // Apply filters
-    Object.entries(activeFilters).forEach(([filterKey, filterValue]) => {
-      if (filterValue) {
-        filteredData = filteredData.filter(item => {
-          const itemValue = item[filterKey];
-          return itemValue === filterValue || 
-                 (Array.isArray(itemValue) && itemValue.includes(filterValue));
-        });
+  useEffect(() => {
+    if (initialSearchTerm !== query) {
+      setQuery(initialSearchTerm);
+    }
+  }, [initialSearchTerm]);
+
+  // Handle clicks outside the search component
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowFilters(false);
       }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  const handleSearch = (value: string) => {
+    console.log('SearchFilter - handleSearch called with:', value);
+    onSearch(value);
+  };
+
+  const handleFilterChange = () => {
+    onFilterChange({
+      priceRange,
+      distance,
     });
-
-    onFilter(filteredData);
-  }, [searchTerm, activeFilters, data, onFilter, fuseInstance]);
-
-  const handleFilterChange = (filterKey: string, value: string) => {
-    setActiveFilters(prev => ({
-      ...prev,
-      [filterKey]: value
-    }));
   };
 
-  const removeFilter = (filterKey: string) => {
-    setActiveFilters(prev => {
-      const newFilters = { ...prev };
-      delete newFilters[filterKey];
-      return newFilters;
-    });
+  const handleApplyFilters = () => {
+    console.log('SearchFilter - applying filters:', { priceRange, distance });
+    handleFilterChange();
+    onApplyFilters();
+    setShowFilters(false);
   };
 
-  const clearAllFilters = () => {
-    setSearchTerm('');
-    setActiveFilters({});
+  const clearSearch = () => {
+    setQuery('');
+    onSearch('');
   };
-
-  const hasActiveFilters = searchTerm || Object.keys(activeFilters).length > 0;
 
   return (
-    <div className="space-y-4">
-      {/* Search Bar */}
+    <div className={cn("w-full", className)} ref={searchRef}>
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-        <Input
-          type="text"
-          placeholder={placeholder}
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-10 pr-10"
+        <SearchInput
+          value={query}
+          onChange={setQuery}
+          onSearch={handleSearch}
+          onClear={clearSearch}
+          suggestions={suggestions}
         />
-        {searchTerm && (
-          <button
-            onClick={() => setSearchTerm('')}
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        )}
-      </div>
-
-      {/* Filter Toggle */}
-      {filters.length > 0 && (
-        <div className="flex justify-between items-center">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowFilters(!showFilters)}
-            className="gap-2"
-          >
-            <Filter className="h-4 w-4" />
-            Filters
-            {Object.keys(activeFilters).length > 0 && (
-              <Badge variant="secondary" className="ml-1">
-                {Object.keys(activeFilters).length}
-              </Badge>
-            )}
-          </Button>
-
-          {hasActiveFilters && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={clearAllFilters}
-              className="text-destructive hover:text-destructive"
-            >
-              Clear All
-            </Button>
+        <button
+          type="button"
+          onClick={() => {
+            console.log('Filter button clicked, current state:', showFilters);
+            setShowFilters(!showFilters);
+          }}
+          className={cn(
+            "absolute right-3 top-1/2 transform -translate-y-1/2 p-2 rounded-full transition-colors",
+            "hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary",
+            showFilters ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
           )}
-        </div>
-      )}
-
-      {/* Active Filters */}
-      {Object.keys(activeFilters).length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {Object.entries(activeFilters).map(([filterKey, filterValue]) => {
-            const filter = filters.find(f => f.key === filterKey);
-            const option = filter?.options.find(o => o.value === filterValue);
-            
-            return (
-              <Badge
-                key={filterKey}
-                variant="secondary"
-                className="gap-1"
-              >
-                {filter?.label}: {option?.label || filterValue}
-                <button
-                  onClick={() => removeFilter(filterKey)}
-                  className="ml-1 hover:text-destructive"
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              </Badge>
-            );
-          })}
-        </div>
-      )}
-
-      {/* Filter Options */}
-      {showFilters && filters.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 border rounded-lg">
-          {filters.map(filter => (
-            <div key={filter.key}>
-              <label className="block text-sm font-medium mb-2">
-                {filter.label}
-              </label>
-              <select
-                value={activeFilters[filter.key] || ''}
-                onChange={(e) => handleFilterChange(filter.key, e.target.value)}
-                className="w-full p-2 border rounded-md"
-              >
-                <option value="">All</option>
-                {filter.options.map(option => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          ))}
-        </div>
+          aria-label="Toggle filters"
+        >
+          <SlidersHorizontal size={16} />
+        </button>
+      </div>
+      
+      {showFilters && (
+        <FilterPanel
+          priceRange={priceRange}
+          distance={distance}
+          onPriceRangeChange={setPriceRange}
+          onDistanceChange={setDistance}
+          onApplyFilters={handleApplyFilters}
+        />
       )}
     </div>
   );

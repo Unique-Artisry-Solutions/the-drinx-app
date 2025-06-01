@@ -1,133 +1,174 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Upload as _Upload, X, Image } from 'lucide-react';
+import { Camera, Upload, X } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface PhotoUploadFieldProps {
   onPhotoSelect: (file: File) => void;
-  currentPhoto?: string;
-  onPhotoRemove?: () => void;
   className?: string;
-  accept?: string;
-  maxSize?: number; // in MB
+  requiresModeration?: boolean;
+  onModerationRequired?: () => void;
 }
 
-const PhotoUploadField: React.FC<PhotoUploadFieldProps> = ({
+const PhotoUploadField: React.FC<PhotoUploadFieldProps> = ({ 
   onPhotoSelect,
-  currentPhoto,
-  onPhotoRemove,
-  className = '',
-  accept = 'image/*',
-  maxSize = 5
+  className = "",
+  requiresModeration = false,
+  onModerationRequired
 }) => {
-  const [dragOver, setDragOver] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+  const [dragActive, setDragActive] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
 
-  const validateFile = (file: File): boolean => {
-    if (!file.type.startsWith('image/')) {
-      setError('Please select an image file');
-      return false;
-    }
-
-    if (file.size > maxSize * 1024 * 1024) {
-      setError(`File size must be less than ${maxSize}MB`);
-      return false;
-    }
-
-    setError(null);
-    return true;
-  };
-
-  const handleFileSelect = (file: File) => {
-    if (validateFile(file)) {
-      onPhotoSelect(file);
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      processFile(file);
     }
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      handleFileSelect(file);
+  const processFile = (file: File) => {
+    // Check file type
+    if (!file.type.match('image.*')) {
+      toast({
+        title: 'Invalid file type',
+        description: 'Please upload an image file (jpeg, png, etc).',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Check file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: 'File too large',
+        description: 'Please upload an image smaller than 5MB.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Create preview
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setPreview(event.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+    
+    // Pass file to parent component
+    onPhotoSelect(file);
+    
+    // Show appropriate toast message based on moderation requirements
+    if (requiresModeration) {
+      toast({
+        title: "Photo submitted for review",
+        description: "Your photo will be visible after approval.",
+      });
+      
+      if (onModerationRequired) {
+        onModerationRequired();
+      }
+    } else {
+      toast({
+        title: 'Photo uploaded',
+        description: 'Your photo has been successfully uploaded.',
+      });
+    }
+  };
+
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (e.type === 'dragenter' || e.type === 'dragover') {
+      setDragActive(true);
+    } else if (e.type === 'dragleave') {
+      setDragActive(false);
     }
   };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
-    setDragOver(false);
+    e.stopPropagation();
+    setDragActive(false);
     
-    const file = e.dataTransfer.files[0];
-    if (file) {
-      handleFileSelect(file);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      processFile(e.dataTransfer.files[0]);
     }
   };
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setDragOver(true);
+  const triggerFileInput = () => {
+    fileInputRef.current?.click();
   };
 
-  const handleDragLeave = () => {
-    setDragOver(false);
+  const removePhoto = () => {
+    setPreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   return (
-    <div className={`space-y-4 ${className}`}>
-      {currentPhoto ? (
-        <div className="relative">
-          <img
-            src={currentPhoto}
-            alt="Selected"
-            className="w-full h-48 object-cover rounded-lg border"
+    <div className={className}>
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        accept="image/*"
+        className="hidden"
+      />
+      
+      {preview ? (
+        <div className="relative rounded-lg overflow-hidden">
+          <img 
+            src={preview} 
+            alt="Preview" 
+            className="w-full h-48 object-cover"
           />
-          {onPhotoRemove && (
-            <Button
-              type="button"
-              variant="destructive"
-              size="sm"
-              className="absolute top-2 right-2"
-              onClick={onPhotoRemove}
-            >
-              <X className="h-4 w-4" />
-            </Button>
+          <Button
+            variant="destructive"
+            size="sm"
+            className="absolute top-2 right-2 h-8 w-8 p-0 rounded-full"
+            onClick={removePhoto}
+          >
+            <X size={16} />
+          </Button>
+          {requiresModeration && (
+            <div className="absolute bottom-0 left-0 right-0 bg-amber-100 text-amber-800 py-1 px-2 text-xs text-center">
+              Pending approval
+            </div>
           )}
         </div>
       ) : (
         <div
-          className={`
-            border-2 border-dashed rounded-lg p-8 text-center transition-colors
-            ${dragOver ? 'border-primary bg-primary/5' : 'border-gray-300'}
-            hover:border-primary/50 cursor-pointer
-          `}
+          className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+            dragActive ? 'border-material-primary bg-material-primary/5' : 'border-gray-300'
+          }`}
+          onClick={triggerFileInput}
+          onDragEnter={handleDrag}
+          onDragLeave={handleDrag}
+          onDragOver={handleDrag}
           onDrop={handleDrop}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
         >
-          <Image className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-          <p className="text-gray-600 mb-2">
-            Drag and drop an image here, or click to select
-          </p>
-          <p className="text-sm text-gray-400 mb-4">
-            PNG, JPG, GIF up to {maxSize}MB
-          </p>
-          
-          <Input
-            type="file"
-            accept={accept}
-            onChange={handleInputChange}
-            className="hidden"
-            id="photo-upload"
-          />
-          <label htmlFor="photo-upload">
-            <Button type="button" variant="outline" asChild>
-              <span>Select Photo</span>
-            </Button>
-          </label>
+          <div className="flex flex-col items-center justify-center h-32">
+            <div className="mb-3 bg-material-primary/10 p-3 rounded-full">
+              <Camera className="h-6 w-6 text-material-primary" />
+            </div>
+            <p className="mb-2 text-sm font-medium">
+              <span className="text-material-primary">Upload a photo</span> or drag and drop
+            </p>
+            <p className="text-xs text-material-on-surface-variant">
+              PNG, JPG, GIF up to 5MB
+            </p>
+            {requiresModeration && (
+              <p className="text-xs text-amber-500 mt-1">
+                Photos require admin approval before being displayed
+              </p>
+            )}
+          </div>
         </div>
-      )}
-      
-      {error && (
-        <p className="text-sm text-destructive">{error}</p>
       )}
     </div>
   );
