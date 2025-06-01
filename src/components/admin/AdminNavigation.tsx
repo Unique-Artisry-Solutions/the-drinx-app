@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { LogOut, Menu, ChevronDown } from 'lucide-react';
+import { LogOut, ChevronDown } from 'lucide-react';
 import { adminNavItems } from '@/components/navigation/admin/AdminNavItems';
 import {
   DropdownMenu,
@@ -40,7 +40,7 @@ const AdminNavigation: React.FC<AdminNavigationProps> = ({
               size="sm"
               className="border-white text-white hover:text-white hover:bg-white/10 flex items-center gap-2"
             >
-              {activeNavItem && (
+              {activeNavItem && activeNavItem.icon && (
                 <>
                   <activeNavItem.icon size={16} className="mr-1" />
                   <span className="text-sm">{activeNavItem.label}</span>
@@ -50,7 +50,7 @@ const AdminNavigation: React.FC<AdminNavigationProps> = ({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56 bg-white z-50">
-            {adminNavItems.filter(item => item.showInNav).map((item) => (
+            {adminNavItems.filter(item => item.showInNav !== false).map((item) => (
               <DropdownMenuItem key={item.path} asChild>
                 <Link
                   to={item.path}
@@ -58,7 +58,7 @@ const AdminNavigation: React.FC<AdminNavigationProps> = ({
                     isActive(item.path) ? 'bg-gray-100' : ''
                   }`}
                 >
-                  <item.icon className="mr-2 h-4 w-4" />
+                  {item.icon && <item.icon className="mr-2 h-4 w-4" />}
                   <span className="text-sm font-medium">{item.label}</span>
                 </Link>
               </DropdownMenuItem>

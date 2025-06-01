@@ -7,7 +7,6 @@ export const promotionsDocData: DocSection[] = [
     title: "Promotion Basics",
     description: "Learn the fundamentals of creating and managing promotions",
     category: "promotions",
-    tags: ["basics", "getting-started"],
     features: []
   },
   {
@@ -15,7 +14,6 @@ export const promotionsDocData: DocSection[] = [
     title: "Discount Types",
     description: "Understanding different types of discounts available",
     category: "promotions",
-    tags: ["discounts", "types"],
     features: []
   },
   {
@@ -23,7 +21,6 @@ export const promotionsDocData: DocSection[] = [
     title: "Promotion Rules", 
     description: "Setting up rules and conditions for promotions",
     category: "promotions",
-    tags: ["rules", "conditions"],
     features: []
   }
 ];

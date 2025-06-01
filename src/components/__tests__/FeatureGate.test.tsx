@@ -1,6 +1,6 @@
 
 import { render } from '@testing-library/react';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import FeatureGate from '../FeatureGate';
 
 // Mock the auth context
@@ -18,16 +18,16 @@ const mockFeatureTierHook = {
   userTier: 'free' as const
 };
 
-jest.mock('@/contexts/auth', () => ({
+vi.mock('@/contexts/auth', () => ({
   useAuth: () => mockAuthContext
 }));
 
-jest.mock('@/hooks/useFeatureTier', () => ({
+vi.mock('@/hooks/useFeatureTier', () => ({
   useFeatureTier: () => mockFeatureTierHook
 }));
 
-jest.mock('@/hooks/use-toast', () => ({
-  useToast: () => ({ toast: jest.fn() })
+vi.mock('@/hooks/use-toast', () => ({
+  useToast: () => ({ toast: vi.fn() })
 }));
 
 describe('FeatureGate', () => {
@@ -43,7 +43,7 @@ describe('FeatureGate', () => {
 
   it('renders upgrade prompt when user lacks access', () => {
     // Override the hook to return false for access
-    jest.spyOn(require('@/hooks/useFeatureTier'), 'useFeatureTier').mockReturnValue({
+    vi.spyOn(require('@/hooks/useFeatureTier'), 'useFeatureTier').mockReturnValue({
       hasFeatureAccess: () => false,
       userTier: 'free'
     });

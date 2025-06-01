@@ -11,7 +11,7 @@ interface Establishment {
   id: string;
   name: string;
   address: string;
-  distance?: string;
+  distance?: number; // Changed to number instead of string
   cocktailCount: number;
   image?: string;
   latitude: number;
@@ -68,7 +68,8 @@ const EstablishmentList: React.FC<EstablishmentListProps> = ({
       </div>;
   }
   
-  return <div className="mt-6">
+  return (
+    <div className="mt-6">
       <div className="flex justify-between items-center mb-3">
         <h2 className="text-lg font-medium text-material-on-surface text-gray-300">
           {establishments.length > 0 ? 'Nearby Establishments' : 'All Establishments'}
@@ -93,7 +94,7 @@ const EstablishmentList: React.FC<EstablishmentListProps> = ({
                 id={establishment.id} 
                 name={establishment.name} 
                 address={establishment.address} 
-                distance={establishment.distance} 
+                distance={establishment.distance ? String(establishment.distance) : undefined} 
                 cocktailCount={establishment.cocktailCount} 
                 image={establishment.image} 
                 onClick={() => handleEstablishmentClick(establishment.id)} 
@@ -126,7 +127,8 @@ const EstablishmentList: React.FC<EstablishmentListProps> = ({
           </div>
         )}
       </div>
-    </div>;
+    </div>
+  );
 };
 
 export default EstablishmentList;
