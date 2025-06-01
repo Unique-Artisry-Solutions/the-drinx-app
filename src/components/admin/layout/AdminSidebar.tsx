@@ -16,7 +16,6 @@ import {
   TestTube,
   FolderTree
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 
 const sidebarItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/admin' },
