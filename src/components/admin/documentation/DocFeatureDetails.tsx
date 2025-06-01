@@ -1,191 +1,139 @@
 
 import React from 'react';
-import { ArrowLeft, ExternalLink, Info } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { getFeatureById } from './docData';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from '@/components/ui/badge';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { DocFeature } from './types';
+import { CheckCircle, AlertCircle, Clock } from 'lucide-react';
 
 interface DocFeatureDetailsProps {
-  featureId: string;
+  feature: DocFeature | null;
   onBack: () => void;
 }
 
-const DocFeatureDetails: React.FC<DocFeatureDetailsProps> = ({ featureId, onBack }) => {
-  const feature = getFeatureById(featureId);
-  
+const DocFeatureDetails: React.FC<DocFeatureDetailsProps> = ({ feature, onBack }) => {
   if (!feature) {
     return (
-      <div className="text-center py-12">
-        <h3 className="text-lg font-medium">Feature not found</h3>
-        <Button onClick={onBack} variant="outline" className="mt-4">
-          <ArrowLeft className="mr-2 h-4 w-4" /> Back to documentation
-        </Button>
-      </div>
+      <Card className="h-full">
+        <CardHeader>
+          <CardTitle>Feature Details</CardTitle>
+          <CardDescription>Select a feature to view its implementation details</CardDescription>
+        </CardHeader>
+        <CardContent className="text-center py-8">
+          <p className="text-gray-500">No feature selected</p>
+        </CardContent>
+      </Card>
     );
   }
 
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <Button onClick={onBack} variant="outline" size="sm">
-          <ArrowLeft className="mr-2 h-4 w-4" /> Back to documentation
-        </Button>
-        {feature.externalUrl && (
-          <Button variant="ghost" size="sm" asChild>
-            <a href={feature.externalUrl} target="_blank" rel="noopener noreferrer">
-              Open in new tab <ExternalLink className="ml-2 h-4 w-4" />
-            </a>
-          </Button>
-        )}
-      </div>
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'implemented': return <CheckCircle className="h-4 w-4 text-green-500" />;
+      case 'partial': return <Clock className="h-4 w-4 text-yellow-500" />;
+      default: return <AlertCircle className="h-4 w-4 text-gray-500" />;
+    }
+  };
 
-      <div className="space-y-4">
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'implemented': return 'default';
+      case 'partial': return 'secondary';
+      default: return 'outline';
+    }
+  };
+
+  return (
+    <Card className="h-full">
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <Button variant="ghost" onClick={onBack}>
+            ← Back to Features
+          </Button>
+          <Badge variant={getStatusColor(feature.status)} className="flex items-center gap-1">
+            {getStatusIcon(feature.status)}
+            {feature.status}
+          </Badge>
+        </div>
+        <CardTitle>{feature.title}</CardTitle>
+        <CardDescription>{feature.description}</CardDescription>
+      </CardHeader>
+      
+      <CardContent className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold">{feature.title}</h1>
-          <div className="flex items-center mt-2 space-x-2">
-            <Badge variant="outline">{feature.category}</Badge>
-            {feature.status === 'implemented' && (
-              <Badge variant="secondary" className="bg-green-100 text-green-800">Implemented</Badge>
-            )}
-            {feature.status === 'partial' && (
-              <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">Partially Implemented</Badge>
-            )}
-            {feature.status === 'planned' && (
-              <Badge variant="secondary" className="bg-blue-100 text-blue-800">Planned</Badge>
-            )}
-          </div>
-          <p className="text-gray-600 mt-4 text-lg">{feature.description}</p>
+          <h4 className="font-medium mb-2">Category</h4>
+          <Badge variant="outline">{feature.category}</Badge>
         </div>
 
-        {feature.screenshot && (
-          <Card className="overflow-hidden p-2 bg-gray-50 border border-gray-200">
-            <div className="aspect-video relative bg-white rounded shadow-sm">
-              {/* Placeholder for screenshots - would be replaced with actual images */}
-              <div className="absolute inset-0 flex items-center justify-center text-gray-400">
-                <p>Screenshot: {feature.title}</p>
-                {/* Replace with: <img src={feature.screenshot} alt={feature.title} className="w-full h-full object-cover" /> */}
-              </div>
+        {feature.implementationTips && feature.implementationTips.length > 0 && (
+          <div>
+            <h4 className="font-medium mb-2">Implementation Tips</h4>
+            <ul className="space-y-1">
+              {feature.implementationTips.map((tip: string, index: number) => (
+                <li key={index} className="text-sm text-gray-600 flex items-start gap-2">
+                  <span className="text-blue-500 mt-1">•</span>
+                  {tip}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {feature.testingSteps && feature.testingSteps.length > 0 && (
+          <div>
+            <h4 className="font-medium mb-2">Testing Steps</h4>
+            <ol className="space-y-1">
+              {feature.testingSteps.map((step: string, index: number) => (
+                <li key={index} className="text-sm text-gray-600 flex items-start gap-2">
+                  <span className="text-green-500 font-medium">{index + 1}.</span>
+                  {step}
+                </li>
+              ))}
+            </ol>
+          </div>
+        )}
+
+        {feature.bestPractices && feature.bestPractices.length > 0 && (
+          <div>
+            <h4 className="font-medium mb-2">Best Practices</h4>
+            <ul className="space-y-1">
+              {feature.bestPractices.map((practice: string, index: number) => (
+                <li key={index} className="text-sm text-gray-600 flex items-start gap-2">
+                  <CheckCircle className="h-3 w-3 text-green-500 mt-1 flex-shrink-0" />
+                  {practice}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {feature.troubleshooting && feature.troubleshooting.length > 0 && (
+          <div>
+            <h4 className="font-medium mb-2">Troubleshooting</h4>
+            <ul className="space-y-1">
+              {feature.troubleshooting.map((item: string, index: number) => (
+                <li key={index} className="text-sm text-gray-600 flex items-start gap-2">
+                  <AlertCircle className="h-3 w-3 text-yellow-500 mt-1 flex-shrink-0" />
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {feature.relatedFeatures && feature.relatedFeatures.length > 0 && (
+          <div>
+            <h4 className="font-medium mb-2">Related Features</h4>
+            <div className="flex flex-wrap gap-2">
+              {feature.relatedFeatures.map((relatedId: string, index: number) => (
+                <Badge key={index} variant="outline" className="text-xs">
+                  {relatedId}
+                </Badge>
+              ))}
             </div>
-            {feature.screenshotCaption && (
-              <p className="text-sm text-gray-500 mt-2 text-center">{feature.screenshotCaption}</p>
-            )}
-          </Card>
+          </div>
         )}
-
-        {feature.quickTips && feature.quickTips.length > 0 && (
-          <Alert className="bg-blue-50 border-blue-200">
-            <Info className="h-4 w-4 text-blue-600" />
-            <AlertTitle className="text-blue-800">Quick Tips</AlertTitle>
-            <AlertDescription>
-              <ul className="list-disc pl-5 mt-2 space-y-1">
-                {feature.quickTips.map((tip, index) => (
-                  <li key={index} className="text-sm">{tip}</li>
-                ))}
-              </ul>
-            </AlertDescription>
-          </Alert>
-        )}
-
-        <Accordion type="single" collapsible className="w-full">
-          {feature.steps && feature.steps.length > 0 && (
-            <AccordionItem value="steps">
-              <AccordionTrigger>Step-by-Step Guide</AccordionTrigger>
-              <AccordionContent>
-                <ol className="space-y-4 list-decimal pl-5">
-                  {feature.steps.map((step, index) => (
-                    <li key={index} className="pl-2">
-                      <h4 className="font-medium">{step.title}</h4>
-                      <p className="text-gray-600 mt-1">{step.description}</p>
-                      {step.screenshot && (
-                        <div className="mt-2 border border-gray-200 rounded overflow-hidden">
-                          {/* Placeholder for step screenshots */}
-                          <div className="h-40 bg-gray-50 flex items-center justify-center text-gray-400">
-                            Step {index + 1} Screenshot
-                            {/* Replace with: <img src={step.screenshot} alt={step.title} className="w-full h-full object-contain" /> */}
-                          </div>
-                        </div>
-                      )}
-                    </li>
-                  ))}
-                </ol>
-              </AccordionContent>
-            </AccordionItem>
-          )}
-          
-          {feature.bestPractices && feature.bestPractices.length > 0 && (
-            <AccordionItem value="best-practices">
-              <AccordionTrigger>Best Practices</AccordionTrigger>
-              <AccordionContent>
-                <ul className="space-y-3 list-disc pl-5">
-                  {feature.bestPractices.map((practice, index) => (
-                    <li key={index} className="pl-1">{practice}</li>
-                  ))}
-                </ul>
-              </AccordionContent>
-            </AccordionItem>
-          )}
-          
-          {feature.troubleshooting && feature.troubleshooting.length > 0 && (
-            <AccordionItem value="troubleshooting">
-              <AccordionTrigger>Troubleshooting</AccordionTrigger>
-              <AccordionContent>
-                <div className="space-y-4">
-                  {feature.troubleshooting.map((item, index) => (
-                    <div key={index}>
-                      <h4 className="font-medium text-red-600">{item.problem}</h4>
-                      <p className="mt-1">{item.solution}</p>
-                    </div>
-                  ))}
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-          )}
-
-          {feature.faq && feature.faq.length > 0 && (
-            <AccordionItem value="faq">
-              <AccordionTrigger>Frequently Asked Questions</AccordionTrigger>
-              <AccordionContent>
-                <div className="space-y-4">
-                  {feature.faq.map((item, index) => (
-                    <div key={index}>
-                      <h4 className="font-medium">{item.question}</h4>
-                      <p className="mt-1 text-gray-600">{item.answer}</p>
-                    </div>
-                  ))}
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-          )}
-          
-          {feature.relatedFeatures && feature.relatedFeatures.length > 0 && (
-            <AccordionItem value="related">
-              <AccordionTrigger>Related Features</AccordionTrigger>
-              <AccordionContent>
-                <ul className="space-y-2">
-                  {feature.relatedFeatures.map(relatedId => {
-                    const related = getFeatureById(relatedId);
-                    return related ? (
-                      <li key={relatedId} className="p-2 bg-gray-50 rounded-md">
-                        <h4 className="font-medium">{related.title}</h4>
-                        <p className="text-sm text-gray-500">{related.description}</p>
-                      </li>
-                    ) : null;
-                  })}
-                </ul>
-              </AccordionContent>
-            </AccordionItem>
-          )}
-        </Accordion>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 

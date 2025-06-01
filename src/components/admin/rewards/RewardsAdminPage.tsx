@@ -57,6 +57,17 @@ export function RewardsAdminPage() {
   const handleTabChange = (value: string) => {
     setActiveTab(value);
   };
+
+  // Mock handlers for props
+  const handleConfigSave = (config: any) => {
+    console.log('Config saved:', config);
+  };
+
+  // Mock data for reports
+  const mockReportData = [
+    { id: '1', name: 'User Report', type: 'users', date: '2024-01-01' },
+    { id: '2', name: 'Transaction Report', type: 'transactions', date: '2024-01-02' }
+  ];
   
   const renderMobileNavigation = () => {
     return (
@@ -132,12 +143,12 @@ export function RewardsAdminPage() {
         {activeTab === 'users' && <UserManagementTab />}
         {activeTab === 'tiers' && <TierManagementTab />}
         {activeTab === 'offerings' && <RewardOfferingsTab />}
-        {activeTab === 'campaigns' && <CampaignManagementTab />}
-        {activeTab === 'config' && <RewardProgramConfig />}
+        {activeTab === 'campaigns' && <CampaignManagementTab _establishmentId="mock-establishment-id" />}
+        {activeTab === 'config' && <RewardProgramConfig onConfigSave={handleConfigSave} />}
         {activeTab === 'rules' && <RewardRulesManagement />}
         {activeTab === 'bulk' && <BulkOperationsInterface />}
         {activeTab === 'statistics' && <ProgramStatisticsDashboard />}
-        {activeTab === 'reports' && <ReportExportUtility />}
+        {activeTab === 'reports' && <ReportExportUtility data={mockReportData} reportType="users" />}
       </div>
     </div>
   );

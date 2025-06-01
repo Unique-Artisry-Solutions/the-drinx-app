@@ -22,13 +22,6 @@ export const reportTypes = [
   { value: 'campaigns' as ReportType, label: 'Campaigns Report' }
 ];
 
-interface ExportData {
-  format: string;
-  data: any[];
-  filename?: string;
-  headers?: string[];
-}
-
 export const exportToCSV = (data: any[], filename: string = 'export.csv') => {
   if (data.length === 0) return;
 
@@ -95,7 +88,7 @@ const formatFieldValue = (value: any, type?: string) => {
     case 'percentage':
       return `${(value * 100).toFixed(2)}%`;
     default:
-      return String(value);
+      return value.toString();
   }
 };
 

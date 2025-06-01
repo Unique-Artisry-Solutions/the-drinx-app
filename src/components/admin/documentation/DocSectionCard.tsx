@@ -18,7 +18,7 @@ const DocSectionCard: React.FC<DocSectionCardProps> = ({
 }) => {
   // Filter features by search query if provided
   const filteredFeatures = filterQuery
-    ? section.features.filter(feature => 
+    ? section.features.filter((feature: DocFeature) => 
         feature.title.toLowerCase().includes(filterQuery.toLowerCase()) ||
         feature.description.toLowerCase().includes(filterQuery.toLowerCase()) ||
         feature.category.toLowerCase().includes(filterQuery.toLowerCase())
@@ -43,7 +43,7 @@ const DocSectionCard: React.FC<DocSectionCardProps> = ({
       
       <CardContent className="pt-0">
         <ul className="space-y-3">
-          {filteredFeatures.map(feature => (
+          {filteredFeatures.map((feature: DocFeature) => (
             <FeatureItem 
               key={feature.id} 
               feature={feature} 

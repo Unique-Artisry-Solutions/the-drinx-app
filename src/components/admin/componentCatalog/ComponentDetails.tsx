@@ -69,7 +69,7 @@ const ComponentDetails: React.FC<ComponentDetailsProps> = ({ component }) => {
   };
   
   return (
-    <Card className="shadow-md"> {/* Kept the shadow styling */}
+    <Card className="shadow-md">
       <CardHeader>
         <div className="flex justify-between items-start">
           <CardTitle>{component.name}</CardTitle>
@@ -78,7 +78,7 @@ const ComponentDetails: React.FC<ComponentDetailsProps> = ({ component }) => {
         <CardDescription>{component.filePath}</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="mb-6 border rounded-md p-3 bg-gray-50 sticky top-4 z-10"> {/* Added sticky positioning to the preview container */}
+        <div className="mb-6 border rounded-md p-3 bg-gray-50 sticky top-4 z-10">
           <h4 className="font-medium mb-2 text-sm">Preview</h4>
           <div className="flex items-center justify-center p-2 bg-white rounded border h-48">
             {renderPreview()}
@@ -93,7 +93,7 @@ const ComponentDetails: React.FC<ComponentDetailsProps> = ({ component }) => {
         <div className="mb-4">
           <h4 className="font-medium mb-2">Selectors</h4>
           <div className="space-y-1 max-h-[200px] overflow-y-auto">
-            {component.selectors.map((selector, idx) => (
+            {component.selectors.map((selector: string, idx: number) => (
               <div key={idx} className="flex items-center justify-between bg-gray-50 p-2 rounded text-sm">
                 <code className="text-xs">{selector}</code>
                 <Button 
