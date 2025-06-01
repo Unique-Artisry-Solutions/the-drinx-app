@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { RefreshCw, Plus } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import UserFilter from './UserFilter';
+import { UserFilter } from './UserFilter';
 import UserRewardsList from './UserRewardsList';
 
 interface RewardUser {
@@ -28,8 +28,12 @@ export const UserManagementTab: React.FC<UserManagementTabProps> = ({ establishm
   const [users, setUsers] = useState<RewardUser[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<RewardUser[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedTier, setSelectedTier] = useState<string>('all');
-  const [searchTerm, setSearchTerm] = useState('');
+  const [filter, setFilter] = useState({
+    searchTerm: '',
+    tierFilter: 'all',
+    sortBy: 'points',
+    sortOrder: 'desc' as 'asc' | 'desc'
+  });
 
   const fetchUsers = async () => {
     setIsLoading(true);
@@ -79,18 +83,18 @@ export const UserManagementTab: React.FC<UserManagementTabProps> = ({ establishm
   useEffect(() => {
     let filtered = users;
 
-    if (selectedTier !== 'all') {
-      filtered = filtered.filter(user => user.tier_name === selectedTier);
+    if (filter.tierFilter !== 'all') {
+      filtered = filtered.filter(user => user.tier_name === filter.tierFilter);
     }
 
-    if (searchTerm) {
+    if (filter.searchTerm) {
       filtered = filtered.filter(user =>
-        user.username.toLowerCase().includes(searchTerm.toLowerCase())
+        user.username.toLowerCase().includes(filter.searchTerm.toLowerCase())
       );
     }
 
     setFilteredUsers(filtered);
-  }, [users, selectedTier, searchTerm]);
+  }, [users, filter]);
 
   const uniqueTiers = Array.from(new Set(users.map(user => user.tier_name).filter(Boolean)));
 
@@ -113,18 +117,16 @@ export const UserManagementTab: React.FC<UserManagementTabProps> = ({ establishm
         <CardContent>
           <div className="space-y-4">
             <UserFilter
-              searchTerm={searchTerm}
-              onSearchChange={setSearchTerm}
-              selectedTier={selectedTier}
-              onTierChange={setSelectedTier}
-              tiers={uniqueTiers}
+              filter={filter}
+              onFilterChange={setFilter}
+              onRefresh={fetchUsers}
             />
 
             <div className="flex gap-2 flex-wrap">
               <Badge 
-                variant={selectedTier === 'all' ? 'default' : 'outline'}
+                variant={filter.tierFilter === 'all' ? 'default' : 'outline'}
                 className="cursor-pointer"
-                onClick={() => setSelectedTier('all')}
+                onClick={() => setFilter(prev => ({ ...prev, tierFilter: 'all' }))}
               >
                 All Tiers ({users.length})
               </Badge>
@@ -133,9 +135,9 @@ export const UserManagementTab: React.FC<UserManagementTabProps> = ({ establishm
                 return (
                   <Badge
                     key={tier}
-                    variant={selectedTier === tier ? 'default' : 'outline'}
+                    variant={filter.tierFilter === tier ? 'default' : 'outline'}
                     className="cursor-pointer"
-                    onClick={() => setSelectedTier(tier || '')}
+                    onClick={() => setFilter(prev => ({ ...prev, tierFilter: tier || '' }))}
                   >
                     {tier} ({count})
                   </Badge>
