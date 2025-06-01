@@ -1,6 +1,6 @@
+
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Users, TrendingUp, Target, Activity } from 'lucide-react';
 
@@ -97,7 +97,7 @@ const AudienceInsights = () => {
           <Card>
             <CardHeader>
               <CardTitle>High Value Customers</CardTitle>
-              <CardDescription>Customers with lifetime value > $500</CardDescription>
+              <CardDescription>Customers with lifetime value {'>'}$500</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
@@ -118,7 +118,7 @@ const AudienceInsights = () => {
           <Card>
             <CardHeader>
               <CardTitle>Loyal Customers</CardTitle>
-              <CardDescription>Customers with > 10 purchases</CardDescription>
+              <CardDescription>Customers with {'>'} 10 purchases</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">

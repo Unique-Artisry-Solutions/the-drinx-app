@@ -1,9 +1,9 @@
+
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { TrendingUp, TrendingDown, Users, Gift, DollarSign, Target } from 'lucide-react';
+import { TrendingUp, Users, Gift, DollarSign, Target } from 'lucide-react';
 
 interface MetricCardProps {
   title: string;
@@ -178,8 +178,9 @@ const RewardsAnalyticsPanel = () => {
               <Tooltip />
               <Bar dataKey="redemptions" fill="#ffc658" />
             </BarChart>
-          </CardContent>
-        </Card>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
     </div>
   );
 };
