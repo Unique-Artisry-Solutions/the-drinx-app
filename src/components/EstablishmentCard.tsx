@@ -6,28 +6,53 @@ import { Button } from '@/components/ui/button';
 import { MapPin, Star, Clock, Phone } from 'lucide-react';
 
 interface EstablishmentCardProps {
-  establishment: {
-    id: string;
-    name: string;
-    address: string;
-    phone?: string;
-    hours?: string;
-    rating?: number;
-    image_url?: string;
-    description?: string;
-    tags?: string[];
-    distance?: string;
-    cocktailCount?: number;
-  };
+  id?: string;
+  name: string;
+  address: string;
+  phone?: string;
+  hours?: string;
+  rating?: number;
+  image_url?: string;
+  image?: string;
+  description?: string;
+  tags?: string[];
+  distance?: string;
+  cocktailCount?: number;
   onSelect?: (establishment: any) => void;
   onClick?: () => void;
 }
 
 const EstablishmentCard: React.FC<EstablishmentCardProps> = ({ 
-  establishment, 
+  id,
+  name,
+  address,
+  phone,
+  hours,
+  rating,
+  image_url,
+  image,
+  description,
+  tags,
+  distance,
+  cocktailCount,
   onSelect,
   onClick 
 }) => {
+  const establishment = {
+    id: id || '',
+    name,
+    address,
+    phone,
+    hours,
+    rating,
+    image_url,
+    image,
+    description,
+    tags,
+    distance,
+    cocktailCount
+  };
+
   const handleCardClick = () => {
     if (onClick) {
       onClick();
@@ -39,45 +64,57 @@ const EstablishmentCard: React.FC<EstablishmentCardProps> = ({
   return (
     <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={handleCardClick}>
       <CardHeader>
-        <CardTitle className="text-lg">{establishment.name}</CardTitle>
+        <CardTitle className="text-lg">{name}</CardTitle>
         <CardDescription className="flex items-center">
           <MapPin className="h-4 w-4 mr-1" />
-          {establishment.address}
+          {address}
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {establishment.description && (
+        {description && (
           <p className="text-sm text-muted-foreground mb-3">
-            {establishment.description}
+            {description}
           </p>
         )}
         
         <div className="space-y-2">
-          {establishment.rating && (
+          {rating && (
             <div className="flex items-center">
               <Star className="h-4 w-4 mr-1 text-yellow-500" />
-              <span className="text-sm">{establishment.rating}/5</span>
+              <span className="text-sm">{rating}/5</span>
             </div>
           )}
           
-          {establishment.hours && (
+          {hours && (
             <div className="flex items-center">
               <Clock className="h-4 w-4 mr-1" />
-              <span className="text-sm">{establishment.hours}</span>
+              <span className="text-sm">{hours}</span>
             </div>
           )}
           
-          {establishment.phone && (
+          {phone && (
             <div className="flex items-center">
               <Phone className="h-4 w-4 mr-1" />
-              <span className="text-sm">{establishment.phone}</span>
+              <span className="text-sm">{phone}</span>
+            </div>
+          )}
+
+          {distance && (
+            <div className="text-sm text-muted-foreground">
+              {distance}
+            </div>
+          )}
+
+          {cocktailCount !== undefined && (
+            <div className="text-sm text-muted-foreground">
+              {cocktailCount} mocktails
             </div>
           )}
         </div>
 
-        {establishment.tags && establishment.tags.length > 0 && (
+        {tags && tags.length > 0 && (
           <div className="flex flex-wrap gap-2 mt-3">
-            {establishment.tags.map((tag, index) => (
+            {tags.map((tag, index) => (
               <Badge key={index} variant="secondary" className="text-xs">
                 {tag}
               </Badge>
