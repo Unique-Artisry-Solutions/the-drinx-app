@@ -1,7 +1,5 @@
 
-import React from 'react';
-import { TrendingUp, CircleCheck, Users, Award, DollarSign } from "lucide-react";
-import { useQuery } from '@tanstack/react-query';
+import { TrendingUp, Users, Award, DollarSign } from "lucide-react";
 import AnalyticsMetricCard from '@/components/charts/AnalyticsMetricCard';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";

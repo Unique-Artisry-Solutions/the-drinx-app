@@ -1,7 +1,6 @@
-
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Camera, Upload, X } from 'lucide-react';
+import { Camera, X, Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface PhotoUploadFieldProps {
