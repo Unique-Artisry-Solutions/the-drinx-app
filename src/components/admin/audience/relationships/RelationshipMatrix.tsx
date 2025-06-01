@@ -7,13 +7,11 @@ import { Badge } from '@/components/ui/badge';
 interface RelationshipMatrixProps {
   connections: SegmentConnectionStrength[];
   crossEngagement: CrossSegmentEngagement[];
-  filterThreshold: number;
 }
 
 export const RelationshipMatrix: React.FC<RelationshipMatrixProps> = ({
   connections,
-  crossEngagement,
-  filterThreshold
+  crossEngagement
 }) => {
   // Group segments to get a unique list
   const segments = Array.from(

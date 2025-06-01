@@ -1,155 +1,111 @@
 
-import React, { useState } from 'react';
+import { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { PlusCircle, X, Gift, Award } from 'lucide-react';
-import { CampaignReward } from '@/lib/rewards/types';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { X } from 'lucide-react';
 
-interface RewardConfiguratorProps {
-  rewards: CampaignReward[];
-  onChange: (rewards: CampaignReward[]) => void;
+interface RewardConfig {
+  type: 'points' | 'offering' | 'tier';
+  value: string;
+  description: string;
 }
 
-export const RewardConfigurator = ({ rewards, onChange }: RewardConfiguratorProps) => {
-  const [rewardType, setRewardType] = useState('points');
-  const [rewardValue, setRewardValue] = useState('');
-  
+interface RewardConfiguratorProps {
+  rewards: RewardConfig[];
+  onRewardsChange: (rewards: RewardConfig[]) => void;
+}
+
+export const RewardConfigurator: React.FC<RewardConfiguratorProps> = ({
+  rewards,
+  onRewardsChange
+}) => {
+  const [newReward, setNewReward] = useState<RewardConfig>({
+    type: 'points',
+    value: '',
+    description: ''
+  });
+
   const addReward = () => {
-    if (!rewardValue.trim()) return;
-    
-    let description = '';
-    
-    switch (rewardType) {
-      case 'points':
-        description = `${rewardValue} bonus points`;
-        break;
-      case 'offering':
-        description = `Reward offering: ${rewardValue}`;
-        break;
-      case 'tier':
-        description = `Tier upgrade: ${rewardValue}`;
-        break;
-      default:
-        description = `${rewardType}: ${rewardValue}`;
+    if (newReward.value && newReward.description) {
+      onRewardsChange([...rewards, newReward]);
+      setNewReward({ type: 'points', value: '', description: '' });
     }
-    
-    const newReward: CampaignReward = {
-      id: `reward-${Date.now()}`,
-      type: rewardType as CampaignReward['type'],
-      value: rewardValue,
-      description
-    };
-    
-    onChange([...rewards, newReward]);
-    setRewardValue('');
   };
-  
-  const removeReward = (rewardId: string) => {
-    onChange(rewards.filter(reward => reward.id !== rewardId));
+
+  const removeReward = (index: number) => {
+    onRewardsChange(rewards.filter((_, i) => i !== index));
   };
-  
+
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Gift className="h-5 w-5" />
-            Campaign Rewards
-          </CardTitle>
-          <CardDescription>
-            Define what rewards users will receive during this campaign
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-2 mb-4">
-            <Select 
-              value={rewardType} 
-              onValueChange={setRewardType}
+    <Card>
+      <CardHeader>
+        <CardTitle>Configure Rewards</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          {/* Add new reward */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
+            <Select
+              value={newReward.type}
+              onValueChange={(value: 'points' | 'offering' | 'tier') =>
+                setNewReward({ ...newReward, type: value })
+              }
             >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Reward type" />
+              <SelectTrigger>
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="points">Bonus Points</SelectItem>
-                <SelectItem value="offering">Reward Offering</SelectItem>
-                <SelectItem value="tier">Tier Upgrade</SelectItem>
+                <SelectItem value="points">Points</SelectItem>
+                <SelectItem value="offering">Offering</SelectItem>
+                <SelectItem value="tier">Tier</SelectItem>
               </SelectContent>
             </Select>
             
-            <Input 
-              placeholder={rewardType === 'points' ? 'Enter points amount...' : 'Enter reward details...'}
-              value={rewardValue} 
-              onChange={(e) => setRewardValue(e.target.value)} 
-              className="flex-1"
+            <Input
+              placeholder="Value"
+              value={newReward.value}
+              onChange={(e) => setNewReward({ ...newReward, value: e.target.value })}
             />
             
-            <Button onClick={addReward} type="button">
-              <PlusCircle className="h-4 w-4 mr-2" />
-              Add Reward
-            </Button>
+            <Input
+              placeholder="Description"
+              value={newReward.description}
+              onChange={(e) => setNewReward({ ...newReward, description: e.target.value })}
+            />
+            
+            <Button onClick={addReward}>Add Reward</Button>
           </div>
-          
-          {rewards.length === 0 ? (
-            <Alert>
-              <AlertTitle>No rewards defined</AlertTitle>
-              <AlertDescription>
-                Add at least one reward that users will receive during this campaign.
-              </AlertDescription>
-            </Alert>
-          ) : (
-            <div className="flex flex-wrap gap-2">
-              {rewards.map(reward => (
-                <Badge 
-                  key={reward.id} 
-                  variant="secondary"
-                  className="px-2 py-1 flex items-center gap-1"
+
+          {/* Current rewards */}
+          <div className="space-y-2">
+            {rewards.map((reward, index) => (
+              <div key={index} className="flex items-center gap-2 p-2 border rounded">
+                <Badge variant="outline">{reward.type}</Badge>
+                <span className="font-medium">{reward.value}</span>
+                <span className="text-muted-foreground flex-1">{reward.description}</span>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => removeReward(index)}
                 >
-                  {reward.description}
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="h-4 w-4 p-0 ml-2"
-                    onClick={() => removeReward(reward.id)}
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
-                </Badge>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-      
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Award className="h-5 w-5" />
-            Reward Preview
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="border rounded-md p-4">
-            {rewards.length === 0 ? (
-              <p className="text-muted-foreground text-center">
-                Add rewards to see a preview
-              </p>
-            ) : (
-              <div className="space-y-2">
-                <p className="font-medium">Users will receive:</p>
-                <ul className="list-disc list-inside space-y-1">
-                  {rewards.map(reward => (
-                    <li key={reward.id}>{reward.description}</li>
-                  ))}
-                </ul>
+                  <X className="h-4 w-4" />
+                </Button>
               </div>
-            )}
+            ))}
           </div>
-        </CardContent>
-      </Card>
-    </div>
+
+          {rewards.length === 0 && (
+            <p className="text-muted-foreground text-center py-4">
+              No rewards configured. Add rewards above.
+            </p>
+          )}
+        </div>
+      </CardContent>
+    </Card>
   );
 };
+
+export default RewardConfigurator;

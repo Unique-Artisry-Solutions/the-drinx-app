@@ -1,160 +1,113 @@
 
-import React, { useState } from 'react';
+import { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { PlusCircle, X, Zap, Clock } from 'lucide-react';
-import { TriggerCondition } from '@/lib/rewards/types';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
+import { X } from 'lucide-react';
 
-interface TriggerConditionerProps {
-  triggers: TriggerCondition[];
-  onChange: (triggers: TriggerCondition[]) => void;
+interface TriggerCondition {
+  type: 'visit' | 'purchase' | 'checkin' | 'review' | 'referral';
+  value: string;
+  description: string;
 }
 
-export const TriggerConditioner = ({ triggers, onChange }: TriggerConditionerProps) => {
-  const [triggerType, setTriggerType] = useState('schedule');
-  const [triggerValue, setTriggerValue] = useState('');
-  
-  const addTrigger = () => {
-    if (triggerType !== 'manual' && !triggerValue.trim()) return;
-    
-    let description = '';
-    const value = triggerType === 'manual' ? 'manual' : triggerValue;
-    
-    switch (triggerType) {
-      case 'schedule':
-        description = `Scheduled: ${triggerValue}`;
-        break;
-      case 'event':
-        description = `Event trigger: ${triggerValue}`;
-        break;
-      case 'manual':
-        description = 'Manually triggered';
-        break;
-      default:
-        description = `${triggerType}: ${triggerValue}`;
+interface TriggerConditionerProps {
+  conditions: TriggerCondition[];
+  onConditionsChange: (conditions: TriggerCondition[]) => void;
+}
+
+export const TriggerConditioner: React.FC<TriggerConditionerProps> = ({
+  conditions,
+  onConditionsChange
+}) => {
+  const [newCondition, setNewCondition] = useState<TriggerCondition>({
+    type: 'visit',
+    value: '',
+    description: ''
+  });
+
+  const addCondition = () => {
+    if (newCondition.value && newCondition.description) {
+      onConditionsChange([...conditions, newCondition]);
+      setNewCondition({ type: 'visit', value: '', description: '' });
     }
-    
-    const newTrigger: TriggerCondition = {
-      id: `trigger-${Date.now()}`,
-      type: triggerType as TriggerCondition['type'],
-      value,
-      description
-    };
-    
-    onChange([...triggers, newTrigger]);
-    setTriggerValue('');
   };
-  
-  const removeTrigger = (triggerId: string) => {
-    onChange(triggers.filter(trigger => trigger.id !== triggerId));
+
+  const removeCondition = (index: number) => {
+    onConditionsChange(conditions.filter((_, i) => i !== index));
   };
-  
+
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Zap className="h-5 w-5" />
-            Trigger Conditions
-          </CardTitle>
-          <CardDescription>
-            Define when and how this campaign will be triggered
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-2 mb-4">
-            <Select 
-              value={triggerType} 
-              onValueChange={setTriggerType}
+    <Card>
+      <CardHeader>
+        <CardTitle>Configure Trigger Conditions</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          {/* Add new condition */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
+            <Select
+              value={newCondition.type}
+              onValueChange={(value: TriggerCondition['type']) =>
+                setNewCondition({ ...newCondition, type: value })
+              }
             >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Trigger type" />
+              <SelectTrigger>
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="schedule">Time Schedule</SelectItem>
-                <SelectItem value="event">User Event</SelectItem>
-                <SelectItem value="manual">Manual Trigger</SelectItem>
+                <SelectItem value="visit">Visit</SelectItem>
+                <SelectItem value="purchase">Purchase</SelectItem>
+                <SelectItem value="checkin">Check-in</SelectItem>
+                <SelectItem value="review">Review</SelectItem>
+                <SelectItem value="referral">Referral</SelectItem>
               </SelectContent>
             </Select>
             
-            {triggerType !== 'manual' && (
-              <Input 
-                placeholder={triggerType === 'schedule' ? 'e.g., Daily at 9am' : 'e.g., user_login, purchase'}
-                value={triggerValue} 
-                onChange={(e) => setTriggerValue(e.target.value)} 
-                className="flex-1"
-              />
-            )}
+            <Input
+              placeholder="Value"
+              value={newCondition.value}
+              onChange={(e) => setNewCondition({ ...newCondition, value: e.target.value })}
+            />
             
-            <Button onClick={addTrigger} type="button">
-              <PlusCircle className="h-4 w-4 mr-2" />
-              Add Trigger
-            </Button>
+            <Input
+              placeholder="Description"
+              value={newCondition.description}
+              onChange={(e) => setNewCondition({ ...newCondition, description: e.target.value })}
+            />
+            
+            <Button onClick={addCondition}>Add Condition</Button>
           </div>
-          
-          {triggers.length === 0 ? (
-            <Alert>
-              <AlertTitle>No triggers defined</AlertTitle>
-              <AlertDescription>
-                Add at least one trigger condition to determine when this campaign will run.
-              </AlertDescription>
-            </Alert>
-          ) : (
-            <div className="flex flex-wrap gap-2">
-              {triggers.map(trigger => (
-                <Badge 
-                  key={trigger.id} 
-                  variant="secondary"
-                  className="px-2 py-1 flex items-center gap-1"
+
+          {/* Current conditions */}
+          <div className="space-y-2">
+            {conditions.map((condition, index) => (
+              <div key={index} className="flex items-center gap-2 p-2 border rounded">
+                <Badge variant="outline">{condition.type}</Badge>
+                <span className="font-medium">{condition.value}</span>
+                <span className="text-muted-foreground flex-1">{condition.description}</span>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => removeCondition(index)}
                 >
-                  {trigger.description}
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="h-4 w-4 p-0 ml-2"
-                    onClick={() => removeTrigger(trigger.id)}
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
-                </Badge>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-      
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Clock className="h-5 w-5" />
-            Automation Settings
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <Switch id="auto-start" />
-              <Label htmlFor="auto-start">Automatically start campaign on start date</Label>
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <Switch id="auto-end" defaultChecked />
-              <Label htmlFor="auto-end">Automatically end campaign on end date</Label>
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <Switch id="notifications" />
-              <Label htmlFor="notifications">Send notifications when campaign starts/ends</Label>
-            </div>
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            ))}
           </div>
-        </CardContent>
-      </Card>
-    </div>
+
+          {conditions.length === 0 && (
+            <p className="text-muted-foreground text-center py-4">
+              No trigger conditions configured. Add conditions above.
+            </p>
+          )}
+        </div>
+      </CardContent>
+    </Card>
   );
 };
+
+export default TriggerConditioner;
