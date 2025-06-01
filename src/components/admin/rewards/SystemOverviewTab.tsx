@@ -33,6 +33,13 @@ const SystemOverviewTab = () => {
     }
   ];
 
+  // Mock performance test data
+  const mockPerformanceTests = [
+    { name: 'Database Query', duration_ms: 45, status: 'success' },
+    { name: 'Cache Access', duration_ms: 12, status: 'success' },
+    { name: 'API Response', duration_ms: 120, status: 'warning' }
+  ];
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'healthy': return 'bg-green-100 text-green-800';
@@ -40,6 +47,14 @@ const SystemOverviewTab = () => {
       case 'critical': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
     }
+  };
+
+  const handleRefresh = () => {
+    console.log('Refreshing performance tests...');
+  };
+
+  const handleExport = () => {
+    console.log('Exporting performance test results...');
   };
 
   return (
@@ -101,7 +116,13 @@ const SystemOverviewTab = () => {
           </CardContent>
         </Card>
 
-        <PerformanceTestCard />
+        <PerformanceTestCard 
+          performanceTest={mockPerformanceTests}
+          isLoading={false}
+          error={null}
+          onRefresh={handleRefresh}
+          onExport={handleExport}
+        />
       </div>
     </div>
   );
