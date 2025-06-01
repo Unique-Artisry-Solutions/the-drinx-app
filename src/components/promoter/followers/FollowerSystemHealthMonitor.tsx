@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -7,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { 
   CheckCircle, 
   AlertTriangle, 
-  XCircle, 
   RefreshCw,
   Database,
   Zap,
@@ -46,7 +44,7 @@ const FollowerSystemHealthMonitor: React.FC<FollowerSystemHealthMonitorProps> = 
     if (isWorking === undefined) return <RefreshCw className="h-4 w-4 animate-spin" />;
     return isWorking ? 
       <CheckCircle className="h-4 w-4 text-green-500" /> : 
-      <XCircle className="h-4 w-4 text-red-500" />;
+      <AlertTriangle className="h-4 w-4 text-red-500" />;
   };
 
   const getStatusBadge = (isWorking: boolean | undefined) => {
