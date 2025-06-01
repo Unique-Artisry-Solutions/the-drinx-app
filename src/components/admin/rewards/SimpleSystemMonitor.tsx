@@ -1,171 +1,189 @@
 
-import React from 'react';
+import React, { useState } from 'react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { 
-  Activity, 
-  Database, 
-  Server, 
-  CheckCircle,
-  AlertTriangle,
-  RefreshCw
-} from "lucide-react";
+import { RefreshCw, Activity, Database, Settings } from "lucide-react";
+import AnalyticsMetricCard from '@/components/charts/AnalyticsMetricCard';
 
 export default function SimpleSystemMonitor() {
+  const [activeTab, setActiveTab] = useState('overview');
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    setTimeout(() => setIsRefreshing(false), 1000);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col space-y-1">
-        <h1 className="text-2xl font-bold tracking-tight">System Monitor</h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold tracking-tight">System Monitor</h1>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+        </div>
         <p className="text-muted-foreground">
-          Monitor your rewards system health and performance.
+          Monitor system health, performance, and real-time metrics.
         </p>
       </div>
 
-      {/* System Status Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">API Health</CardTitle>
-            <Server className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center space-x-2">
-              <CheckCircle className="h-5 w-5 text-green-500" />
-              <Badge variant="outline" className="text-green-600 border-green-200">
-                Healthy
-              </Badge>
-            </div>
-            <p className="text-xs text-muted-foreground mt-2">
-              Response time: 45ms
-            </p>
-          </CardContent>
-        </Card>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="performance">Performance</TabsTrigger>
+          <TabsTrigger value="database">Database</TabsTrigger>
+          <TabsTrigger value="logs">Logs</TabsTrigger>
+        </TabsList>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Database</CardTitle>
-            <Database className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center space-x-2">
-              <CheckCircle className="h-5 w-5 text-green-500" />
-              <Badge variant="outline" className="text-green-600 border-green-200">
-                Healthy
-              </Badge>
-            </div>
-            <p className="text-xs text-muted-foreground mt-2">
-              Query time: 12ms
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Cache System</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center space-x-2">
-              <AlertTriangle className="h-5 w-5 text-yellow-500" />
-              <Badge variant="outline" className="text-yellow-600 border-yellow-200">
-                Degraded
-              </Badge>
-            </div>
-            <p className="text-xs text-muted-foreground mt-2">
-              Hit rate: 85%
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Performance Metrics */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Performance Metrics</CardTitle>
-              <CardDescription>System performance over the last 24 hours</CardDescription>
-            </div>
-            <Button variant="outline" size="sm">
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Refresh
-            </Button>
+        <TabsContent value="overview" className="space-y-6">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <AnalyticsMetricCard
+              title="System Health"
+              value="99.8%"
+              icon={Activity}
+              iconColor="text-green-500"
+              change={0.2}
+            />
+            <AnalyticsMetricCard
+              title="Response Time"
+              value="142ms"
+              icon={RefreshCw}
+              iconColor="text-blue-500"
+              change={-5.3}
+            />
+            <AnalyticsMetricCard
+              title="Active Sessions"
+              value="1,247"
+              icon={Settings}
+              iconColor="text-purple-500"
+              change={8.7}
+            />
+            <AnalyticsMetricCard
+              title="DB Connections"
+              value="23"
+              icon={Database}
+              iconColor="text-orange-500"
+              change={2.1}
+            />
           </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <span className="font-medium">API Response Time</span>
-              <div className="flex items-center space-x-2">
-                <div className="w-32 bg-gray-200 rounded-full h-2">
-                  <div className="bg-green-500 h-2 rounded-full" style={{ width: '25%' }}></div>
-                </div>
-                <span className="text-sm text-muted-foreground">45ms avg</span>
-              </div>
-            </div>
-            
-            <div className="flex justify-between items-center">
-              <span className="font-medium">Database Queries</span>
-              <div className="flex items-center space-x-2">
-                <div className="w-32 bg-gray-200 rounded-full h-2">
-                  <div className="bg-blue-500 h-2 rounded-full" style={{ width: '60%' }}></div>
-                </div>
-                <span className="text-sm text-muted-foreground">1.2K/min</span>
-              </div>
-            </div>
 
-            <div className="flex justify-between items-center">
-              <span className="font-medium">Memory Usage</span>
-              <div className="flex items-center space-x-2">
-                <div className="w-32 bg-gray-200 rounded-full h-2">
-                  <div className="bg-yellow-500 h-2 rounded-full" style={{ width: '75%' }}></div>
+          <div className="grid gap-6 md:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>System Status</CardTitle>
+                <CardDescription>Current operational status</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">API Gateway</span>
+                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-300">
+                    Healthy
+                  </Badge>
                 </div>
-                <span className="text-sm text-muted-foreground">75% used</span>
-              </div>
-            </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Database</span>
+                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-300">
+                    Healthy
+                  </Badge>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Cache</span>
+                  <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-300">
+                    Warning
+                  </Badge>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Rewards Engine</span>
+                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-300">
+                    Healthy
+                  </Badge>
+                </div>
+              </CardContent>
+            </Card>
 
-            <div className="flex justify-between items-center">
-              <span className="font-medium">Cache Hit Rate</span>
-              <div className="flex items-center space-x-2">
-                <div className="w-32 bg-gray-200 rounded-full h-2">
-                  <div className="bg-orange-500 h-2 rounded-full" style={{ width: '85%' }}></div>
+            <Card>
+              <CardHeader>
+                <CardTitle>Performance Metrics</CardTitle>
+                <CardDescription>Real-time performance indicators</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-sm">CPU Usage</span>
+                    <span className="text-sm font-medium">34%</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div className="bg-blue-600 h-2 rounded-full" style={{ width: '34%' }}></div>
+                  </div>
                 </div>
-                <span className="text-sm text-muted-foreground">85% hits</span>
-              </div>
-            </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-sm">Memory Usage</span>
+                    <span className="text-sm font-medium">67%</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div className="bg-orange-600 h-2 rounded-full" style={{ width: '67%' }}></div>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-sm">Disk Usage</span>
+                    <span className="text-sm font-medium">23%</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div className="bg-green-600 h-2 rounded-full" style={{ width: '23%' }}></div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
-        </CardContent>
-      </Card>
+        </TabsContent>
 
-      {/* Recent Events */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent System Events</CardTitle>
-          <CardDescription>Latest system activities and alerts</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            <div className="flex items-center space-x-3">
-              <CheckCircle className="h-4 w-4 text-green-500" />
-              <span className="text-sm">Cache refreshed successfully</span>
-              <span className="text-xs text-muted-foreground ml-auto">2 min ago</span>
-            </div>
-            
-            <div className="flex items-center space-x-3">
-              <AlertTriangle className="h-4 w-4 text-yellow-500" />
-              <span className="text-sm">High memory usage detected</span>
-              <span className="text-xs text-muted-foreground ml-auto">15 min ago</span>
-            </div>
-            
-            <div className="flex items-center space-x-3">
-              <CheckCircle className="h-4 w-4 text-green-500" />
-              <span className="text-sm">Database backup completed</span>
-              <span className="text-xs text-muted-foreground ml-auto">1 hour ago</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+        <TabsContent value="performance" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Performance Analysis</CardTitle>
+              <CardDescription>Detailed performance metrics and trends</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">Performance analysis features will be added in the next iteration.</p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="database" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Database Performance</CardTitle>
+              <CardDescription>Database health and performance monitoring</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">Database monitoring features will be added in the next iteration.</p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="logs" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>System Logs</CardTitle>
+              <CardDescription>Recent system logs and error tracking</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">Log monitoring features will be added in the next iteration.</p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
