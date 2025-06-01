@@ -1,11 +1,14 @@
-
 import React, { useState } from 'react';
 import { AudienceSegment } from '@/types/AudienceTypes';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { Users, Overlap } from 'lucide-react';
 
 interface SegmentOverlapAnalysisProps {
   segments: AudienceSegment[];
@@ -194,3 +197,5 @@ export function SegmentOverlapAnalysis({
     </div>
   );
 }
+
+export default SegmentOverlapAnalysis;

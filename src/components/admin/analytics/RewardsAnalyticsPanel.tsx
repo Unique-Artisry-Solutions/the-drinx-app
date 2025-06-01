@@ -1,223 +1,186 @@
+import { useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { TrendingUp, TrendingDown, Users, Gift, DollarSign, Target } from 'lucide-react';
 
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Award, Users, TrendingUp, Zap } from 'lucide-react';
-import AnalyticsMetricCard from '@/components/charts/AnalyticsMetricCard';
-import { useQuery } from '@tanstack/react-query';
-import { rewardsApi } from '@/lib/rewards/api';
-import { Skeleton } from '@/components/ui/skeleton';
-import { RewardAnalytics } from '@/lib/rewards/types';
-
-interface RewardsAnalyticsPanelProps {
-  establishmentId?: string;
+interface MetricCardProps {
+  title: string;
+  value: string | number;
+  change: string;
+  icon: React.ComponentType<any>;
+  iconColor: string;
 }
 
-const RewardsAnalyticsPanel: React.FC<RewardsAnalyticsPanelProps> = ({ establishmentId }) => {
-  const { data, isLoading, error } = useQuery({
-    queryKey: ['rewardAnalytics', establishmentId],
-    queryFn: () => rewardsApi.getRewardAnalytics(establishmentId),
-  });
+interface TierData {
+  tier: string;
+  users: number;
+}
 
-  if (isLoading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Rewards Program Analytics</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <Skeleton className="h-24 w-full" />
-            <Skeleton className="h-24 w-full" />
-            <Skeleton className="h-24 w-full" />
-            <Skeleton className="h-24 w-full" />
-          </div>
-          <Skeleton className="h-80 w-full" />
-        </CardContent>
-      </Card>
-    );
-  }
+interface EngagementData {
+  name: string;
+  engagement: number;
+}
 
-  if (error || !data) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Rewards Program Analytics</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-red-500">Error loading rewards analytics data</p>
-        </CardContent>
-      </Card>
-    );
-  }
+interface RedemptionData {
+  name: string;
+  redemptions: number;
+}
 
-  const analyticsData = data as RewardAnalytics;
+const RewardsAnalyticsPanel = () => {
+  const [_selectedPeriod, setSelectedPeriod] = useState('30d');
 
-  // Create metrics for display
-  const metrics = [
+  const metricCards = [
     {
-      title: "Points Earned",
-      value: analyticsData.totalPointsEarned.toLocaleString(),
-      icon: Award,
-      iconColor: "text-purple-500",
-      backgroundColor: "bg-purple-50"
-    },
-    {
-      title: "Points Redeemed",
-      value: analyticsData.totalPointsRedeemed.toLocaleString(),
-      icon: Zap,
-      iconColor: "text-amber-500",
-      backgroundColor: "bg-amber-50"
-    },
-    {
-      title: "Points Economy",
-      value: analyticsData.pointsEconomyBalance.toLocaleString(),
-      icon: TrendingUp,
-      iconColor: "text-green-500",
-      backgroundColor: "bg-green-50"
-    },
-    {
-      title: "Redemption Rate",
-      value: `${Math.round(analyticsData.redemptionRate)}%`,
+      title: 'Total Users',
+      value: 4528,
+      change: '+12.5%',
       icon: Users,
-      iconColor: "text-blue-500",
-      backgroundColor: "bg-blue-50"
+      iconColor: 'text-blue-500'
+    },
+    {
+      title: 'Points Awarded',
+      value: 125896,
+      change: '+8.7%',
+      icon: Gift,
+      iconColor: 'text-green-500'
+    },
+    {
+      title: 'Points Redeemed',
+      value: 89654,
+      change: '-3.2%',
+      icon: DollarSign,
+      iconColor: 'text-amber-500'
+    },
+    {
+      title: 'Conversion Rate',
+      value: '15.2%',
+      change: '+1.5%',
+      icon: Target,
+      iconColor: 'text-purple-500'
     }
   ];
 
-  // Prepare source breakdown data for pie chart
-  const sourceData = Object.entries(analyticsData.sourcesBreakdown || {}).map(([name, value]) => ({
-    name,
-    value
-  }));
+  const tierData: TierData[] = [
+    { tier: 'Bronze', users: 1824 },
+    { tier: 'Silver', users: 1256 },
+    { tier: 'Gold', users: 892 },
+    { tier: 'Platinum', users: 556 }
+  ];
 
-  // Colors for charts
-  const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff8042', '#8dd1e1'];
+  const engagementData: EngagementData[] = [
+    { name: 'Week 1', engagement: 68 },
+    { name: 'Week 2', engagement: 74 },
+    { name: 'Week 3', engagement: 71 },
+    { name: 'Week 4', engagement: 79 }
+  ];
+
+  const redemptionData: RedemptionData[] = [
+    { name: 'Jan', redemptions: 52 },
+    { name: 'Feb', redemptions: 61 },
+    { name: 'Mar', redemptions: 48 },
+    { name: 'Apr', redemptions: 55 },
+    { name: 'May', redemptions: 63 }
+  ];
+
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Rewards Program Analytics</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          {metrics.map((metric, index) => (
-            <AnalyticsMetricCard
-              key={index}
-              title={metric.title}
-              value={metric.value}
-              icon={metric.icon}
-              iconColor={metric.iconColor}
-              backgroundColor={metric.backgroundColor}
-            />
-          ))}
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-semibold">Rewards Analytics</h2>
+        <div className="space-x-2">
+          <Badge variant="secondary">Last 30 Days</Badge>
+          <Badge variant="outline">Last 90 Days</Badge>
+          <Badge variant="outline">All Time</Badge>
         </div>
+      </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          {/* Points Over Time Chart */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">Points Activity Over Time</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-72">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart
-                    data={analyticsData.timeSeriesData}
-                    margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Area 
-                      type="monotone" 
-                      dataKey="pointsEarned" 
-                      name="Points Earned" 
-                      stackId="1"
-                      stroke="#8884d8" 
-                      fill="#8884d8" 
-                    />
-                    <Area 
-                      type="monotone" 
-                      dataKey="pointsRedeemed" 
-                      name="Points Redeemed" 
-                      stackId="2"
-                      stroke="#82ca9d" 
-                      fill="#82ca9d" 
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {metricCards.map((card, index) => {
+          const IconComponent = card.icon;
+          return (
+            <Card key={index}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{card.title}</CardTitle>
+                <IconComponent className={`h-4 w-4 ${card.iconColor}`} />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{card.value}</div>
+                <div className="text-sm text-muted-foreground">
+                  <TrendingUp className="inline-block h-4 w-4 mr-1 align-middle" />
+                  {card.change} vs last month
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
 
-          {/* Points Source Breakdown */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">Points Sources Breakdown</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-72">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={sourceData}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="value"
-                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                    >
-                      {sourceData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip formatter={(value) => [value.toLocaleString(), 'Points']} />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Points Distribution by Tier</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={tierData}
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="users"
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                >
+                  {tierData.map((_entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm">Rewards Program Metrics</CardTitle>
+            <CardTitle>User Engagement</CardTitle>
+            <CardDescription>Engagement rate over time</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={analyticsData.timeSeriesData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis yAxisId="left" orientation="left" stroke="#8884d8" />
-                  <YAxis yAxisId="right" orientation="right" stroke="#82ca9d" />
-                  <Tooltip />
-                  <Legend />
-                  <Bar 
-                    yAxisId="left" 
-                    dataKey="pointsEarned" 
-                    name="Points Earned" 
-                    fill="#8884d8" 
-                  />
-                  <Bar 
-                    yAxisId="right" 
-                    dataKey="netPoints" 
-                    name="Net Points Balance" 
-                    fill="#82ca9d" 
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={engagementData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="engagement" fill="#82ca9d" />
+              </BarChart>
+            </ResponsiveContainer>
           </CardContent>
         </Card>
-      </CardContent>
-    </Card>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Redemption Trends</CardTitle>
+          <CardDescription>Number of redemptions per month</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={redemptionData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" />
+              <YAxis />
+              <Tooltip />
+              <Bar dataKey="redemptions" fill="#ffc658" />
+            </BarChart>
+          </CardContent>
+        </Card>
+    </div>
   );
 };
 
