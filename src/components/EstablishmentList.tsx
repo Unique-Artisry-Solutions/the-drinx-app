@@ -11,7 +11,7 @@ interface Establishment {
   id: string;
   name: string;
   address: string;
-  distance?: number; // Changed to number instead of string
+  distance?: number;
   cocktailCount: number;
   image?: string;
   latitude: number;
@@ -94,7 +94,7 @@ const EstablishmentList: React.FC<EstablishmentListProps> = ({
                 id={establishment.id} 
                 name={establishment.name} 
                 address={establishment.address} 
-                distance={establishment.distance ? String(establishment.distance) : undefined} 
+                distance={establishment.distance} 
                 cocktailCount={establishment.cocktailCount} 
                 image={establishment.image} 
                 onClick={() => handleEstablishmentClick(establishment.id)} 
