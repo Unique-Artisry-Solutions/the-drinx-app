@@ -5,16 +5,21 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 
 interface AudienceRelationshipMapProps {
-  segments: any[];
   onFilterChange?: (filter: string) => void;
 }
 
-export function AudienceRelationshipMap({ segments }: AudienceRelationshipMapProps) {
+export function AudienceRelationshipMap({ onFilterChange }: AudienceRelationshipMapProps) {
   const mockSegments = [
     { id: '1', name: 'High Spenders', size: 250, connections: 3 },
     { id: '2', name: 'Frequent Visitors', size: 180, connections: 2 },
     { id: '3', name: 'New Users', size: 320, connections: 1 },
   ];
+
+  const handleFilterChange = (value: string) => {
+    if (onFilterChange) {
+      onFilterChange(value);
+    }
+  };
 
   return (
     <Card>
@@ -23,7 +28,10 @@ export function AudienceRelationshipMap({ segments }: AudienceRelationshipMapPro
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          <Input placeholder="Filter segments..." />
+          <Input 
+            placeholder="Filter segments..." 
+            onChange={(e) => handleFilterChange(e.target.value)}
+          />
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {mockSegments.map((segment) => (

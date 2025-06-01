@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { PageComponentsMap, ComponentCatalogItem } from '../types';
+import { PageComponentsMap } from '../types';
 import { componentCatalogData } from '../data/componentCatalogData';
 
 export const useComponentCatalog = () => {

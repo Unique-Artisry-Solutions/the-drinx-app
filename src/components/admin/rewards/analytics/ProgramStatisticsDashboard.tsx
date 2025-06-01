@@ -1,7 +1,7 @@
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { RewardAnalytics, TimeSeriesData } from '@/lib/rewards/types';
+import { TimeSeriesData } from '@/lib/rewards/types';
 import { mapAnalyticsTimeSeriesData } from '@/lib/rewards/utils/dataMappers';
 import { useQuery } from '@tanstack/react-query';
 import { rewardsApi } from '@/lib/rewards/api';
@@ -16,12 +16,11 @@ interface ProgramStatisticsDashboardProps {
 }
 
 export const ProgramStatisticsDashboard: React.FC<ProgramStatisticsDashboardProps> = ({ establishmentId }) => {
-  const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d' | 'all'>('30d');
   const [chartData, setChartData] = useState<TimeSeriesData[]>([]);
   const [tierData, setTierData] = useState<{name: string, value: number}[]>([]);
   
   const { data: analytics, isLoading, error } = useQuery({
-    queryKey: ['rewardAnalytics', establishmentId, timeRange],
+    queryKey: ['rewardAnalytics', establishmentId],
     queryFn: () => rewardsApi.getRewardAnalytics(establishmentId)
   });
   

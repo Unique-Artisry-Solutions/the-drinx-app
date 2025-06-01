@@ -1,5 +1,4 @@
 
-import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -7,17 +6,11 @@ import { Plus, Play, Pause, Trash2, RefreshCw } from 'lucide-react';
 import { useCampaigns } from '@/hooks/rewards/useCampaigns';
 import { RewardCampaign } from '@/types/rewards';
 
-interface CampaignManagementTabProps {
-  establishmentId?: string;
-}
-
-export const CampaignManagementTab: React.FC<CampaignManagementTabProps> = ({ establishmentId }) => {
+export const CampaignManagementTab: React.FC = () => {
   const {
     campaigns,
     isLoading,
-    error,
     createCampaign,
-    updateCampaign,
     deleteCampaign,
     activateCampaign,
     deactivateCampaign,
