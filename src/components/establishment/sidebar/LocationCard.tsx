@@ -18,7 +18,6 @@ const LocationCard: React.FC<LocationCardProps> = ({
   userLocation,
   isLightTheme
 }) => {
-  // Map data for this single establishment, using cocktail_count from database
   const mapEstablishments = [{
     id: establishment.id,
     name: establishment.name,

@@ -11,7 +11,6 @@ interface QrCodeScannerProps {
 const QrCodeScanner: React.FC<QrCodeScannerProps> = ({ onScan, onClose }) => {
   const handleScan = async (result: ScanResult) => {
     if (result.success && result.data) {
-      // Convert the enhanced scan result back to the expected string format
       const qrString = QRCodeService.generateQRCodeValue(result.data);
       await onScan(qrString);
     } else {

@@ -9,10 +9,6 @@ import AnalyticsMetricCard from '@/components/charts/AnalyticsMetricCard';
 export default function SimpleRewardsDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
 
-  const handleTabChange = (value: string) => {
-    setActiveTab(value);
-  };
-
   return (
     <div className="space-y-6">
       <div className="flex flex-col space-y-1">
@@ -22,7 +18,7 @@ export default function SimpleRewardsDashboard() {
         </p>
       </div>
 
-      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="users">Users</TabsTrigger>

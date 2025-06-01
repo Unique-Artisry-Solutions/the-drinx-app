@@ -10,7 +10,6 @@ import { PreferencesFormSkeleton } from './components/PreferencesFormSkeleton';
 import { Loader2 } from 'lucide-react';
 
 export function UserPreferencesTab() {
-  // Mock user ID for demo purposes - in a real app, you'd get this from auth context
   const demoUserId = '123e4567-e89b-12d3-a456-426614174000';
   const { form, isLoading, onSubmit, isSubmitting, hasError } = usePreferencesForm(demoUserId);
 
