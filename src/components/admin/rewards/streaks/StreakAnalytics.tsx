@@ -1,307 +1,228 @@
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ResponsiveContainer, LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { supabase } from '@/lib/supabase';
-import { Loader2 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-
-interface StreakAnalyticsProps {
-  // Optional props for future extensions
-}
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { supabase } from "@/lib/supabase";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { RefreshCw } from "lucide-react";
 
 interface StreakMetrics {
-  streak_type: string;
   total_streaks: number;
   avg_current_streak_length: number;
   max_streak_length: number;
   streaks_3_plus: number;
   streaks_7_plus: number;
   streaks_30_plus: number;
+  streak_type: string;
 }
 
-interface ChartData {
-  name: string;
-  value: number;
-}
-
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
-
-const StreakAnalytics: React.FC<StreakAnalyticsProps> = () => {
-  const [streakData, setStreakData] = useState<StreakMetrics[]>([]);
-  const [historicalData, setHistoricalData] = useState<any[]>([]);
-  const [selectedStreakType, setSelectedStreakType] = useState<string>('all');
+export function StreakAnalytics() {
+  const [metrics, setMetrics] = useState<StreakMetrics[]>([]);
+  const [selectedType, setSelectedType] = useState<string>('all');
   const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
 
-  useEffect(() => {
-    fetchStreakPerformance();
-  }, []);
-  
-  const fetchStreakPerformance = async () => {
+  const fetchStreakMetrics = async () => {
     setLoading(true);
     try {
-      const { data: streakPerformance, error } = await supabase
+      const { data, error } = await supabase
         .from('streak_performance')
         .select('*');
-        
-      if (error) throw error;
-      
-      setStreakData(streakPerformance || []);
-      
-      if (streakPerformance && streakPerformance.length > 0) {
-        setSelectedStreakType(streakPerformance[0].streak_type);
+
+      if (error) {
+        console.error('Error fetching streak metrics:', error);
+        return;
       }
-      
-      // For now, generate mock historical data - would be replaced with real endpoint
-      generateMockHistoricalData();
+
+      if (data) {
+        // Transform data to handle null values properly
+        const transformedData: StreakMetrics[] = data.map(item => ({
+          total_streaks: item.total_streaks || 0,
+          avg_current_streak_length: item.avg_current_streak_length || 0,
+          max_streak_length: item.max_streak_length || 0,
+          streaks_3_plus: item.streaks_3_plus || 0,
+          streaks_7_plus: item.streaks_7_plus || 0,
+          streaks_30_plus: item.streaks_30_plus || 0,
+          streak_type: item.streak_type || 'unknown'
+        }));
+        
+        setMetrics(transformedData);
+        
+        // Set selected type safely
+        if (data.length > 0 && data[0].streak_type) {
+          setSelectedType(data[0].streak_type);
+        }
+      }
     } catch (error) {
-      console.error('Error fetching streak performance:', error);
-      toast({
-        title: 'Failed to load streak data',
-        description: 'There was an error loading streak analytics.',
-        variant: 'destructive',
-      });
+      console.error('Error:', error);
     } finally {
       setLoading(false);
     }
   };
-  
-  const generateMockHistoricalData = () => {
-    const now = new Date();
-    const data = [];
-    
-    for (let i = 30; i >= 0; i--) {
-      const date = new Date(now);
-      date.setDate(now.getDate() - i);
-      
-      data.push({
-        date: date.toISOString().split('T')[0],
-        'New Streaks': Math.floor(Math.random() * 15) + 5,
-        'Broken Streaks': Math.floor(Math.random() * 10) + 2,
-        'Average Length': (Math.random() * 3) + 2
-      });
-    }
-    
-    setHistoricalData(data);
-  };
-  
-  const getDistributionData = (): ChartData[] => {
-    if (!streakData.length) return [];
-    
-    const currentStreak = streakData.find(d => d.streak_type === selectedStreakType);
-    if (!currentStreak) return [];
-    
-    return [
-      { name: '1-2 days', value: currentStreak.total_streaks - currentStreak.streaks_3_plus },
-      { name: '3-6 days', value: currentStreak.streaks_3_plus - currentStreak.streaks_7_plus },
-      { name: '7-29 days', value: currentStreak.streaks_7_plus - currentStreak.streaks_30_plus },
-      { name: '30+ days', value: currentStreak.streaks_30_plus }
-    ];
-  };
-  
-  const getComparisonData = (): ChartData[] => {
-    return streakData.map(streak => ({
-      name: streak.streak_type.replace(/_/g, ' '),
-      value: parseFloat(streak.avg_current_streak_length.toFixed(1))
-    }));
-  };
+
+  useEffect(() => {
+    fetchStreakMetrics();
+  }, []);
+
+  const currentMetrics = selectedType === 'all' 
+    ? metrics.reduce((acc, curr) => ({
+        total_streaks: acc.total_streaks + curr.total_streaks,
+        avg_current_streak_length: (acc.avg_current_streak_length + curr.avg_current_streak_length) / 2,
+        max_streak_length: Math.max(acc.max_streak_length, curr.max_streak_length),
+        streaks_3_plus: acc.streaks_3_plus + curr.streaks_3_plus,
+        streaks_7_plus: acc.streaks_7_plus + curr.streaks_7_plus,
+        streaks_30_plus: acc.streaks_30_plus + curr.streaks_30_plus,
+        streak_type: 'all'
+      }), {
+        total_streaks: 0,
+        avg_current_streak_length: 0,
+        max_streak_length: 0,
+        streaks_3_plus: 0,
+        streaks_7_plus: 0,
+        streaks_30_plus: 0,
+        streak_type: 'all'
+      })
+    : metrics.find(m => m.streak_type === selectedType);
 
   if (loading) {
     return (
       <Card>
-        <CardContent className="pt-6 flex justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <CardHeader>
+          <CardTitle>Streak Analytics</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex justify-center items-center h-32">
+            <RefreshCw className="h-6 w-6 animate-spin" />
+          </div>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-          <div>
-            <CardTitle>Streak Analytics</CardTitle>
-            <CardDescription>Performance metrics for user streaks</CardDescription>
-          </div>
-          
-          {streakData.length > 0 && (
-            <Select value={selectedStreakType} onValueChange={setSelectedStreakType}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Select streak type" />
-              </SelectTrigger>
-              <SelectContent>
-                {streakData.map(streak => (
-                  <SelectItem key={streak.streak_type} value={streak.streak_type}>
-                    {streak.streak_type.replace(/_/g, ' ')}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        </div>
-      </CardHeader>
-      <CardContent>
-        {streakData.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-80 text-center">
-            <div className="text-muted-foreground mb-2">No streak data available yet</div>
-            <p className="text-sm text-muted-foreground max-w-md">
-              As users start building streaks on your platform, analytics will appear here.
-              Configure streak settings to begin tracking user engagement.
-            </p>
-          </div>
-        ) : (
-          <Tabs defaultValue="overview">
-            <TabsList className="mb-4">
-              <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="trends">Trends</TabsTrigger>
-              <TabsTrigger value="distribution">Distribution</TabsTrigger>
-              <TabsTrigger value="comparison">Comparison</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="overview" className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+    <div className="space-y-6">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Streak Analytics</CardTitle>
+          <Button variant="outline" size="sm" onClick={fetchStreakMetrics}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {/* Streak Type Selector */}
+            <div className="flex gap-2 flex-wrap">
+              <Badge 
+                variant={selectedType === 'all' ? 'default' : 'outline'}
+                className="cursor-pointer"
+                onClick={() => setSelectedType('all')}
+              >
+                All Types
+              </Badge>
+              {Array.from(new Set(metrics.map(m => m.streak_type))).map((type) => (
+                <Badge
+                  key={type}
+                  variant={selectedType === type ? 'default' : 'outline'}
+                  className="cursor-pointer"
+                  onClick={() => setSelectedType(type)}
+                >
+                  {type}
+                </Badge>
+              ))}
+            </div>
+
+            {/* Metrics Display */}
+            {currentMetrics && (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                 <Card>
-                  <CardHeader className="p-4 pb-2">
-                    <CardTitle className="text-sm font-medium">Average Streak</CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-4 pt-0">
-                    <div className="text-2xl font-bold">
-                      {parseFloat(streakData.find(d => d.streak_type === selectedStreakType)?.avg_current_streak_length.toFixed(1) || '0')} days
-                    </div>
+                  <CardContent className="p-4">
+                    <div className="text-2xl font-bold">{currentMetrics.total_streaks}</div>
+                    <div className="text-sm text-muted-foreground">Total Streaks</div>
                   </CardContent>
                 </Card>
                 
                 <Card>
-                  <CardHeader className="p-4 pb-2">
-                    <CardTitle className="text-sm font-medium">Longest Streak</CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-4 pt-0">
-                    <div className="text-2xl font-bold">
-                      {streakData.find(d => d.streak_type === selectedStreakType)?.max_streak_length || 0} days
-                    </div>
+                  <CardContent className="p-4">
+                    <div className="text-2xl font-bold">{currentMetrics.avg_current_streak_length.toFixed(1)}</div>
+                    <div className="text-sm text-muted-foreground">Avg Length</div>
                   </CardContent>
                 </Card>
                 
                 <Card>
-                  <CardHeader className="p-4 pb-2">
-                    <CardTitle className="text-sm font-medium">7+ Day Streaks</CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-4 pt-0">
-                    <div className="text-2xl font-bold">
-                      {streakData.find(d => d.streak_type === selectedStreakType)?.streaks_7_plus || 0}
-                    </div>
+                  <CardContent className="p-4">
+                    <div className="text-2xl font-bold">{currentMetrics.max_streak_length}</div>
+                    <div className="text-sm text-muted-foreground">Max Length</div>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="text-2xl font-bold">{currentMetrics.streaks_3_plus}</div>
+                    <div className="text-sm text-muted-foreground">3+ Days</div>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="text-2xl font-bold">{currentMetrics.streaks_7_plus}</div>
+                    <div className="text-sm text-muted-foreground">7+ Days</div>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="text-2xl font-bold">{currentMetrics.streaks_30_plus}</div>
+                    <div className="text-sm text-muted-foreground">30+ Days</div>
                   </CardContent>
                 </Card>
               </div>
-              
-              <Card className="overflow-hidden">
-                <CardHeader className="p-4 pb-2">
-                  <CardTitle className="text-sm font-medium">Streak Growth</CardTitle>
-                </CardHeader>
-                <CardContent className="p-4 pt-0">
-                  <div className="h-80">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={historicalData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="date" />
-                        <YAxis />
-                        <Tooltip />
-                        <Line type="monotone" dataKey="New Streaks" stroke="#8884d8" activeDot={{ r: 8 }} />
-                        <Line type="monotone" dataKey="Broken Streaks" stroke="#ff7300" />
-                        <Line type="monotone" dataKey="Average Length" stroke="#4caf50" />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="trends" className="space-y-4">
-              <Card className="overflow-hidden">
-                <CardHeader className="p-4 pb-2">
-                  <CardTitle className="text-sm font-medium">Daily Streak Activity</CardTitle>
-                </CardHeader>
-                <CardContent className="p-4 pt-0">
-                  <div className="h-80">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={historicalData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="date" />
-                        <YAxis />
-                        <Tooltip />
-                        <Bar dataKey="New Streaks" fill="#8884d8" />
-                        <Bar dataKey="Broken Streaks" fill="#ff7300" />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="distribution" className="space-y-4">
-              <Card className="overflow-hidden">
-                <CardHeader className="p-4 pb-2">
-                  <CardTitle className="text-sm font-medium">Streak Length Distribution</CardTitle>
-                </CardHeader>
-                <CardContent className="p-4 pt-0">
-                  <div className="h-80">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={getDistributionData()}
-                          cx="50%"
-                          cy="50%"
-                          labelLine={true}
-                          outerRadius={80}
-                          fill="#8884d8"
-                          dataKey="value"
-                          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                        >
-                          {getDistributionData().map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                          ))}
-                        </Pie>
-                        <Tooltip />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="comparison" className="space-y-4">
-              <Card className="overflow-hidden">
-                <CardHeader className="p-4 pb-2">
-                  <CardTitle className="text-sm font-medium">Streak Type Comparison</CardTitle>
-                </CardHeader>
-                <CardContent className="p-4 pt-0">
-                  <div className="h-80">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={getComparisonData()}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" />
-                        <YAxis />
-                        <Tooltip />
-                        <Bar dataKey="value" name="Avg. Streak Length" fill="#8884d8">
-                          {getComparisonData().map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                          ))}
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        )}
-      </CardContent>
-    </Card>
+            )}
+
+            {/* Breakdown by Type */}
+            <div className="mt-6">
+              <h4 className="text-lg font-semibold mb-4">Breakdown by Streak Type</h4>
+              <div className="space-y-2">
+                {metrics.map((metric, index) => {
+                  const _entry = metric; // Keep variable to avoid TS6133 error
+                  return (
+                    <div key={index} className="flex justify-between items-center p-3 bg-muted rounded-lg">
+                      <div className="font-medium">{metric.streak_type}</div>
+                      <div className="text-right">
+                        <div className="font-bold">{metric.total_streaks} streaks</div>
+                        <div className="text-sm text-muted-foreground">
+                          Avg: {metric.avg_current_streak_length.toFixed(1)} days
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Performance Indicators */}
+            <div className="mt-6">
+              <h4 className="text-lg font-semibold mb-4">Performance Indicators</h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {metrics.map((metric, index) => {
+                  const _entry = metric; // Keep variable to avoid TS6133 error
+                  const retentionRate = metric.total_streaks > 0 ? (metric.streaks_7_plus / metric.total_streaks) * 100 : 0;
+                  return (
+                    <Card key={index}>
+                      <CardContent className="p-4">
+                        <div className="text-sm font-medium mb-2">{metric.streak_type}</div>
+                        <div className="text-2xl font-bold">{retentionRate.toFixed(1)}%</div>
+                        <div className="text-sm text-muted-foreground">7+ Day Retention</div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
-};
+}
 
 export default StreakAnalytics;
