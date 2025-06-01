@@ -10,6 +10,8 @@ const PromoterDashboardPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get('tab') || 'overview';
 
+  console.log('PromoterDashboardPage - Current tab:', activeTab);
+
   const handleTabChange = (value: string) => {
     if (value === 'overview') {
       setSearchParams({});

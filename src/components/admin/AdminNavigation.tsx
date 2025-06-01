@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { LogOut, ChevronDown } from 'lucide-react';
+import { LogOut, Menu, ChevronDown } from 'lucide-react';
 import { adminNavItems } from '@/components/navigation/admin/AdminNavItems';
 import {
   DropdownMenu,

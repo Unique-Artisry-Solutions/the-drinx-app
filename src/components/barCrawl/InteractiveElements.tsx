@@ -14,18 +14,17 @@ const InteractiveElements: React.FC<InteractiveElementsProps> = ({ circuitId }) 
         title: 'Check out this Swig Circuit!',
         text: 'Join me on this awesome bar crawl circuit!',
         url: window.location.href,
-      }).catch(() => {
-        // Fallback if share fails
-        navigator.clipboard.writeText(window.location.href)
-          .then(() => {
-            alert('Link copied to clipboard!');
-          });
+      }).catch(err => {
+        console.error('Error sharing:', err);
       });
     } else {
       // Fallback for browsers that don't support the Web Share API
       navigator.clipboard.writeText(window.location.href)
         .then(() => {
           alert('Link copied to clipboard!');
+        })
+        .catch(err => {
+          console.error('Error copying link:', err);
         });
     }
   };

@@ -1,35 +1,7 @@
 
 import { useState, useEffect } from 'react';
-import { PageComponentsMap } from '../types';
-
-// Simple component catalog data without the complex rewards components
-const simpleComponentCatalogData: PageComponentsMap = {
-  '/admin/rewards': {
-    pageName: 'Rewards Administration',
-    description: 'Simple rewards program administration',
-    components: [
-      {
-        groupName: 'Core Components',
-        components: [
-          {
-            name: 'SimpleRewardsDashboard',
-            description: 'Basic rewards program dashboard',
-            filePath: 'src/components/admin/rewards/SimpleRewardsDashboard.tsx',
-            type: 'Component',
-            selectors: ['rewards-dashboard', 'admin-rewards']
-          },
-          {
-            name: 'SimpleSystemMonitor',
-            description: 'Basic system monitoring for rewards',
-            filePath: 'src/components/admin/rewards/SimpleSystemMonitor.tsx',
-            type: 'Component',
-            selectors: ['system-monitor', 'rewards-monitor']
-          }
-        ]
-      }
-    ]
-  }
-};
+import { PageComponentsMap, ComponentCatalogItem } from '../types';
+import { componentCatalogData } from '../data/componentCatalogData';
 
 export const useComponentCatalog = () => {
   const [componentsByPage, setComponentsByPage] = useState<PageComponentsMap>({});
@@ -37,8 +9,10 @@ export const useComponentCatalog = () => {
   const [filteredComponents, setFilteredComponents] = useState<PageComponentsMap>({});
   
   useEffect(() => {
-    setComponentsByPage(simpleComponentCatalogData);
-    setFilteredComponents(simpleComponentCatalogData);
+    // In a real application, we might fetch this data from an API
+    // For now, we'll use our mock data
+    setComponentsByPage(componentCatalogData);
+    setFilteredComponents(componentCatalogData);
     setIsLoading(false);
   }, []);
   
@@ -49,6 +23,7 @@ export const useComponentCatalog = () => {
     }
     
     const lowerCaseQuery = query.toLowerCase();
+    
     const filteredResults: PageComponentsMap = {};
     
     Object.keys(componentsByPage).forEach((pagePath) => {

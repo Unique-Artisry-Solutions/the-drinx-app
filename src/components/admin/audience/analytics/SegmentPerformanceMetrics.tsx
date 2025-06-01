@@ -1,4 +1,5 @@
 
+import React from 'react';
 import { DateRange } from 'react-day-picker';
 import { AudienceSegment } from '@/types/AudienceTypes';
 import AnalyticsMetricCard from '@/components/charts/AnalyticsMetricCard';
@@ -15,7 +16,7 @@ interface SegmentPerformanceMetricsProps {
 
 export function SegmentPerformanceMetrics({ dateRange, segments, isLoading }: SegmentPerformanceMetricsProps) {
   // Mock data - In a real application, this would come from an API
-  const getSegmentMetrics = () => {
+  const getSegmentMetrics = (segmentId: string) => {
     return {
       memberCount: Math.floor(Math.random() * 1000) + 500,
       conversionRate: (Math.random() * 15) + 3,
@@ -54,7 +55,7 @@ export function SegmentPerformanceMetrics({ dateRange, segments, isLoading }: Se
       
       <div className="space-y-8">
         {segments.map(segment => {
-          const metrics = getSegmentMetrics();
+          const metrics = getSegmentMetrics(segment.id);
           
           return (
             <div key={segment.id} className="space-y-2">

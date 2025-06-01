@@ -3,9 +3,11 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 import { 
   CheckCircle, 
   AlertTriangle, 
+  XCircle, 
   RefreshCw,
   Database,
   Zap,
@@ -13,6 +15,7 @@ import {
 } from 'lucide-react';
 import { useAdaptiveSubscriptions } from '@/hooks/useAdaptiveSubscriptions';
 import { FollowerComponentProps } from '@/types/FollowerComponentTypes';
+import FollowerErrorBoundary from './FollowerErrorBoundary';
 
 interface FollowerSystemHealthMonitorProps extends FollowerComponentProps {
   showDetails?: boolean;
@@ -43,7 +46,7 @@ const FollowerSystemHealthMonitor: React.FC<FollowerSystemHealthMonitorProps> = 
     if (isWorking === undefined) return <RefreshCw className="h-4 w-4 animate-spin" />;
     return isWorking ? 
       <CheckCircle className="h-4 w-4 text-green-500" /> : 
-      <AlertTriangle className="h-4 w-4 text-red-500" />;
+      <XCircle className="h-4 w-4 text-red-500" />;
   };
 
   const getStatusBadge = (isWorking: boolean | undefined) => {
@@ -70,9 +73,9 @@ const FollowerSystemHealthMonitor: React.FC<FollowerSystemHealthMonitorProps> = 
             <Database className="h-5 w-5" />
             System Health
           </span>
-          <button onClick={handleRefresh} className="p-1 hover:bg-gray-100 rounded">
+          <Button variant="ghost" size="sm" onClick={handleRefresh}>
             <RefreshCw className="h-4 w-4" />
-          </button>
+          </Button>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">

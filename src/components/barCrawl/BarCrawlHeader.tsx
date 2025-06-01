@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { Link } from 'react-router-dom';
 import BarCrawlDetails from './BarCrawlDetails';
 import JoinBarCrawlButton from './JoinBarCrawlButton';
 
@@ -10,7 +11,7 @@ interface BarCrawlHeaderProps {
   stops: number;
   description?: string;
   id?: string;
-  showJoinButton?: boolean;
+  showJoinButton?: boolean; // New prop to control join button visibility
 }
 
 const BarCrawlHeader: React.FC<BarCrawlHeaderProps> = ({
@@ -20,7 +21,7 @@ const BarCrawlHeader: React.FC<BarCrawlHeaderProps> = ({
   stops,
   description,
   id,
-  showJoinButton = true
+  showJoinButton = true // Default to true for backward compatibility
 }) => {
   return (
     <div className="mb-4">
