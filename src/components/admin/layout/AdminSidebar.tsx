@@ -1,206 +1,68 @@
 
-import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { ChevronDown, ChevronRight, ChevronLeft, BarChart3, Users, Settings, Shield, Award, DollarSign } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { 
+  LayoutDashboard, 
+  Building, 
+  Users, 
+  BarChart3, 
+  Settings, 
+  Flag, 
+  Image, 
+  Award,
+  FileText,
+  Database,
+  Palette,
+  TestTube,
+  FolderTree
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-interface NavItem {
-  path: string;
-  label: string;
-  icon: React.ComponentType<{ className?: string }>;
-  children?: NavItem[];
-}
-
-const adminNavItems: NavItem[] = [
-  {
-    path: '/admin/dashboard',
-    label: 'Dashboard',
-    icon: BarChart3,
-    children: [
-      {
-        path: '/admin/system-breakdown',
-        label: 'System Overview',
-        icon: Shield
-      }
-    ]
-  },
-  {
-    path: '/admin/rewards',
-    label: 'Rewards',
-    icon: Award,
-    children: [
-      {
-        path: '/admin/rewards',
-        label: 'Rewards Admin',
-        icon: Award
-      },
-      {
-        path: '/admin/rewards/monitor',
-        label: 'System Monitor',
-        icon: BarChart3
-      }
-    ]
-  },
-  {
-    path: '/admin/users',
-    label: 'Users',
-    icon: Users
-  },
-  {
-    path: '/admin/settings',
-    label: 'Settings',
-    icon: Settings
-  }
+const sidebarItems = [
+  { icon: LayoutDashboard, label: 'Dashboard', path: '/admin' },
+  { icon: Building, label: 'Establishments', path: '/admin/establishments' },
+  { icon: Users, label: 'Users', path: '/admin/users' },
+  { icon: Award, label: 'Rewards', path: '/admin/rewards' },
+  { icon: BarChart3, label: 'Analytics', path: '/admin/analytics' },
+  { icon: Flag, label: 'Content Flags', path: '/admin/content-flags' },
+  { icon: Image, label: 'Photo Moderation', path: '/admin/photo-moderation' },
+  { icon: FileText, label: 'Documentation', path: '/admin/documentation' },
+  { icon: Database, label: 'Database Health', path: '/admin/database-health' },
+  { icon: FolderTree, label: 'System Breakdown', path: '/admin/system-breakdown' },
+  { icon: Palette, label: 'Theme Management', path: '/admin/theme' },
+  { icon: TestTube, label: 'Testing', path: '/admin/testing' },
+  { icon: Settings, label: 'System Config', path: '/admin/system-config' },
 ];
 
 const AdminSidebar: React.FC = () => {
   const location = useLocation();
-  const navigate = useNavigate();
-  const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
-  const [collapsed, setCollapsed] = useState<boolean>(false);
-  
-  // Initialize expanded categories based on current path
-  useEffect(() => {
-    const savedExpanded = localStorage.getItem('admin_sidebar_expanded');
-    let initialExpanded: string[] = [];
-    
-    if (savedExpanded) {
-      try {
-        initialExpanded = JSON.parse(savedExpanded);
-      } catch (error) {
-        console.error('Error parsing saved expanded state:', error);
-      }
-    }
-    
-    // Auto-expand categories that contain the current active page
-    const activeCategories: string[] = [];
-    adminNavItems.forEach(category => {
-      if (category.children) {
-        const hasActiveChild = category.children.some(child => isActive(child.path));
-        if (hasActiveChild) {
-          activeCategories.push(category.path);
-        }
-      }
-    });
-    
-    // Default expanded categories
-    const defaultExpanded = ['/admin/dashboard', '/admin/rewards'];
-    
-    const combinedExpanded = Array.from(new Set([
-      ...activeCategories,
-      ...initialExpanded,
-      ...defaultExpanded
-    ]));
-    
-    setExpandedCategories(combinedExpanded);
-  }, [location.pathname]);
-  
-  // Save expanded state to localStorage whenever it changes
-  useEffect(() => {
-    localStorage.setItem('admin_sidebar_expanded', JSON.stringify(expandedCategories));
-  }, [expandedCategories]);
-  
-  const toggleCategory = (categoryPath: string) => {
-    setExpandedCategories(prev => 
-      prev.includes(categoryPath) 
-        ? prev.filter(path => path !== categoryPath) 
-        : [...prev, categoryPath]
-    );
-  };
-  
-  const toggleCollapse = () => {
-    setCollapsed(prev => !prev);
-  };
-  
+
   const isActive = (path: string) => {
-    return location.pathname === path || 
-      (path !== '/admin/dashboard' && location.pathname.startsWith(path));
-  };
-  
-  const hasActiveChild = (category: NavItem) => {
-    return category.children?.some((child: NavItem) => isActive(child.path)) || false;
+    return location.pathname === path || location.pathname.startsWith(path + '/');
   };
 
-  const handleNavigation = (path: string) => {
-    navigate(path);
-  };
-  
   return (
-    <div 
-      className={cn(
-        "bg-material-primary text-white h-full flex-shrink-0 overflow-y-auto shadow-lg transition-all duration-300",
-        collapsed ? "w-16" : "w-64"
-      )}
-    >
-      <div className="flex justify-between items-center px-4 py-3 border-b border-white/10">
-        {!collapsed && <h2 className="text-lg font-semibold">Admin Panel</h2>}
-        <Button
-          variant="ghost" 
-          size="icon"
-          onClick={toggleCollapse} 
-          className="ml-auto text-white hover:bg-white/10"
-        >
-          {collapsed ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
-        </Button>
+    <div className="w-64 bg-white border-r border-gray-200 flex flex-col">
+      <div className="p-4 border-b border-gray-200">
+        <h2 className="text-lg font-semibold text-gray-800">Admin Panel</h2>
       </div>
       
-      <nav className={cn("px-2 py-2", collapsed && "flex flex-col items-center")}>
-        {adminNavItems.map(category => {
-          const isExpanded = expandedCategories.includes(category.path);
-          const categoryHasActiveChild = hasActiveChild(category);
-          
+      <nav className="flex-1 p-4 space-y-1">
+        {sidebarItems.map((item) => {
+          const Icon = item.icon;
           return (
-            <div key={category.path} className={cn("mb-1", collapsed && "w-full flex justify-center")}>
-              <button
-                className={cn(
-                  "flex items-center w-full px-3 py-2 text-sm font-medium rounded-md transition-colors",
-                  (categoryHasActiveChild || isExpanded) 
-                    ? "bg-white/15 text-white" 
-                    : "hover:bg-white/5 text-white/90",
-                  collapsed && "justify-center p-2"
-                )}
-                onClick={() => collapsed ? toggleCollapse() : toggleCategory(category.path)}
-                title={collapsed ? category.label : undefined}
-              >
-                <category.icon className={cn("h-5 w-5", !collapsed && "mr-2 opacity-70")} />
-                {!collapsed && (
-                  <>
-                    <span className="flex-1 truncate">{category.label}</span>
-                    {category.children && (
-                      <div className="ml-auto">
-                        {isExpanded ? (
-                          <ChevronDown className="h-4 w-4 opacity-70" />
-                        ) : (
-                          <ChevronRight className="h-4 w-4 opacity-70" />
-                        )}
-                      </div>
-                    )}
-                  </>
-                )}
-              </button>
-              
-              {!collapsed && isExpanded && category.children && (
-                <div className="mt-1 ml-4 space-y-1 border-l border-white/10 pl-2">
-                  {category.children.map(item => (
-                    <button
-                      key={item.path}
-                      onClick={() => handleNavigation(item.path)}
-                      className={cn(
-                        "flex items-center w-full px-3 py-2 text-sm rounded-md transition-colors text-left",
-                        isActive(item.path)
-                          ? "bg-white/25 text-white font-medium border-l-2 border-white"
-                          : "text-white/70 hover:text-white hover:bg-white/10"
-                      )}
-                      title={collapsed ? item.label : undefined}
-                    >
-                      <item.icon className="h-4 w-4 mr-2" />
-                      <span className="truncate">{item.label}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+            <Link
+              key={item.path}
+              to={item.path}
+              className={`flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                isActive(item.path)
+                  ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-700'
+                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+              }`}
+            >
+              <Icon className="mr-3 h-5 w-5" />
+              {item.label}
+            </Link>
           );
         })}
       </nav>

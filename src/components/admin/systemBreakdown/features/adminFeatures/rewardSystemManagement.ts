@@ -3,45 +3,35 @@ import { FeatureItem } from '../../types';
 
 export const rewardSystemManagement: FeatureItem = {
   id: "admin-reward-system",
-  name: "Advanced Reward System Management",
-  description: "Comprehensive reward program administration with flexible rule engines, tier management, and analytics.",
+  name: "Basic Reward System Management",
+  description: "Simple reward program administration with overview dashboard and basic metrics.",
   status: "implemented",
   adminAccess: "full",
-  establishmentAccess: "partial",
+  establishmentAccess: "read",
   individualAccess: "read",
-  databaseStatus: "complete",
-  userImpact: "high",
-  complexity: "high",
-  implementationProgress: 98,
+  databaseStatus: "basic",
+  userImpact: "medium",
+  complexity: "low",
+  implementationProgress: 100,
   statusUpdated: true,
   databaseAnalysis: `
     Database Implementation:
-    - [x] User rewards table with flexible JSON configuration
-    - [x] Reward transactions with complete audit trail
-    - [x] Reward tiers with customizable progression criteria
-    - [x] Reward offerings with flexible redemption options
-    - [x] Reward redemptions tracking with complete history
-    - [x] Reward rules with condition/action patterns
-    - [x] Reward performance metrics and analytics views
-    - [x] User activity pattern tracking and analysis
-    - [x] Streak tracking with configurable parameters
-    - [x] Reward cache control for performance optimization
-    - [x] Reward system health monitoring and alerts
-    - [x] Advanced reporting and business intelligence
-    - [x] Integration with establishment point-of-sale systems
-    - [x] Automated tier progression and notifications
-    - [x] Fraud detection and prevention mechanisms
+    - [x] Basic rewards dashboard with overview metrics
+    - [x] Simple system status monitoring
+    - [x] User activity tracking (basic)
+    - [x] Rewards program configuration (basic)
+    - [ ] Advanced analytics and reporting
+    - [ ] Complex rule engine
+    - [ ] Automated tier progression
+    - [ ] Campaign management system
+    - [ ] Bulk operations interface
+    - [ ] Advanced fraud detection
   `,
   testSteps: [
-    "Test reward program creation and configuration",
-    "Verify reward tier setup and progression rules",
-    "Test point earning through various activities",
-    "Verify reward redemption workflows",
-    "Test streak tracking and bonus calculations",
-    "Verify fraud detection and prevention systems",
-    "Test integration with establishment POS systems",
-    "Verify automated notifications and communications",
-    "Test performance analytics and reporting",
-    "Verify system health monitoring and alerts"
+    "Test basic rewards dashboard loads correctly",
+    "Verify system status display works",
+    "Test navigation between reward tabs",
+    "Verify metrics display properly",
+    "Test responsive design on mobile"
   ]
 };

@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 
 interface AudienceFilter {
@@ -70,7 +69,6 @@ export const AudienceTargeting: React.FC<AudienceTargetingProps> = ({
       </CardHeader>
       <CardContent>
         <div className="space-y-6">
-          {/* Tier Selection */}
           <div>
             <h4 className="font-medium mb-3">Target by Tier</h4>
             <div className="grid grid-cols-2 gap-2">
@@ -95,7 +93,6 @@ export const AudienceTargeting: React.FC<AudienceTargetingProps> = ({
             </Button>
           </div>
 
-          {/* Points Range */}
           <div>
             <h4 className="font-medium mb-3">Target by Points Range</h4>
             <div className="flex gap-2 items-center">
@@ -122,7 +119,6 @@ export const AudienceTargeting: React.FC<AudienceTargetingProps> = ({
             </div>
           </div>
 
-          {/* Active Filters */}
           <div>
             <h4 className="font-medium mb-3">Active Filters</h4>
             <div className="space-y-2">

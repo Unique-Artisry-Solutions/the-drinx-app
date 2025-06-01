@@ -46,7 +46,6 @@ export const TriggerConditioner: React.FC<TriggerConditionerProps> = ({
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {/* Add new condition */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
             <Select
               value={newCondition.type}
@@ -81,7 +80,6 @@ export const TriggerConditioner: React.FC<TriggerConditionerProps> = ({
             <Button onClick={addCondition}>Add Condition</Button>
           </div>
 
-          {/* Current conditions */}
           <div className="space-y-2">
             {conditions.map((condition, index) => (
               <div key={index} className="flex items-center gap-2 p-2 border rounded">

@@ -9,8 +9,6 @@ export const useComponentCatalog = () => {
   const [filteredComponents, setFilteredComponents] = useState<PageComponentsMap>({});
   
   useEffect(() => {
-    // In a real application, we might fetch this data from an API
-    // For now, we'll use our mock data
     setComponentsByPage(componentCatalogData);
     setFilteredComponents(componentCatalogData);
     setIsLoading(false);
@@ -23,7 +21,6 @@ export const useComponentCatalog = () => {
     }
     
     const lowerCaseQuery = query.toLowerCase();
-    
     const filteredResults: PageComponentsMap = {};
     
     Object.keys(componentsByPage).forEach((pagePath) => {

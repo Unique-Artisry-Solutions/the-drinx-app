@@ -46,7 +46,6 @@ export const RewardConfigurator: React.FC<RewardConfiguratorProps> = ({
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {/* Add new reward */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
             <Select
               value={newReward.type}
@@ -79,7 +78,6 @@ export const RewardConfigurator: React.FC<RewardConfiguratorProps> = ({
             <Button onClick={addReward}>Add Reward</Button>
           </div>
 
-          {/* Current rewards */}
           <div className="space-y-2">
             {rewards.map((reward, index) => (
               <div key={index} className="flex items-center gap-2 p-2 border rounded">
