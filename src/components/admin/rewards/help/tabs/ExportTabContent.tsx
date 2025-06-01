@@ -1,117 +1,72 @@
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Download, FileText, Table, Database } from 'lucide-react';
+import React from 'react';
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { FileDown, FileText, Info } from "lucide-react";
 
 export function ExportTabContent() {
-  const exportFormats = [
-    {
-      icon: Table,
-      format: 'CSV',
-      description: 'Comma-separated values for spreadsheet applications',
-      useCase: 'Excel analysis, data import',
-      pros: ['Universal compatibility', 'Small file size', 'Easy to edit'],
-      cons: ['Limited formatting', 'No data types']
-    },
-    {
-      icon: FileText,
-      format: 'JSON',
-      description: 'JavaScript Object Notation for structured data',
-      useCase: 'API integration, web applications',
-      pros: ['Preserves data types', 'Nested structures', 'Web-friendly'],
-      cons: ['Larger file size', 'Not spreadsheet-friendly']
-    },
-    {
-      icon: Database,
-      format: 'Excel',
-      description: 'Microsoft Excel format with formatting',
-      useCase: 'Advanced analysis, presentations',
-      pros: ['Rich formatting', 'Multiple sheets', 'Charts and formulas'],
-      cons: ['Proprietary format', 'Larger files']
-    }
-  ];
-
-  const exportTypes = [
-    'User reward data',
-    'Transaction history',
-    'Tier progression',
-    'Campaign performance',
-    'Analytics reports',
-    'System configuration'
-  ];
-
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Download className="h-5 w-5" />
-            Export Guidelines
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground mb-6">
-            Export your reward program data in various formats for analysis, reporting, and integration purposes.
-          </p>
-
-          <div className="space-y-6">
-            <div>
-              <h3 className="font-medium mb-3">Available Export Formats</h3>
-              <div className="space-y-4">
-                {exportFormats.map((format) => (
-                  <Card key={format.format}>
-                    <CardContent className="p-4">
-                      <div className="flex items-start gap-3">
-                        <div className="p-2 bg-purple-100 rounded-lg">
-                          <format.icon className="h-5 w-5 text-purple-600" />
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h4 className="font-medium">{format.format}</h4>
-                            <Badge variant="outline">{format.useCase}</Badge>
-                          </div>
-                          <p className="text-sm text-muted-foreground mb-3">
-                            {format.description}
-                          </p>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                            <div>
-                              <span className="font-medium text-green-600">Pros:</span>
-                              <ul className="list-disc list-inside text-muted-foreground mt-1">
-                                {format.pros.map((pro) => (
-                                  <li key={pro}>{pro}</li>
-                                ))}
-                              </ul>
-                            </div>
-                            <div>
-                              <span className="font-medium text-red-600">Cons:</span>
-                              <ul className="list-disc list-inside text-muted-foreground mt-1">
-                                {format.cons.map((con) => (
-                                  <li key={con}>{con}</li>
-                                ))}
-                              </ul>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <h3 className="font-medium mb-3">Available Data Types</h3>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                {exportTypes.map((type) => (
-                  <Badge key={type} variant="outline" className="justify-center p-2">
-                    {type}
-                  </Badge>
-                ))}
-              </div>
-            </div>
+    <ScrollArea className="h-[400px] pr-4">
+      <div className="space-y-4">
+        <h3 className="text-lg font-medium">Data Export Guide</h3>
+        <p>Export your analytics data for deeper analysis or reporting purposes.</p>
+        
+        <div className="space-y-2">
+          <h4 className="font-medium">Available Export Formats</h4>
+          <ul className="list-disc list-inside space-y-1 pl-4">
+            <li><strong>CSV:</strong> Standard format for spreadsheet analysis</li>
+            <li><strong>JSON:</strong> Structured format for programmatic use</li>
+            <li><strong>PDF Reports:</strong> Formatted reports with visualizations</li>
+            <li><strong>Excel:</strong> Detailed workbooks with multiple sheets</li>
+          </ul>
+        </div>
+        
+        <Alert>
+          <Info className="h-4 w-4" />
+          <AlertTitle>Export Limits</AlertTitle>
+          <AlertDescription>
+            Exports are limited to 100,000 records per request. For larger datasets, use date filters to break up the export into smaller chunks.
+          </AlertDescription>
+        </Alert>
+        
+        <div className="space-y-2">
+          <h4 className="font-medium">How to Export Data</h4>
+          <ol className="list-decimal list-inside space-y-1 pl-4">
+            <li>Navigate to the analytics section you want to export</li>
+            <li>Use filters to narrow down the data set if needed</li>
+            <li>Click the export button <FileDown className="inline h-4 w-4" /> in the upper right corner</li>
+            <li>Choose your preferred format</li>
+            <li>Wait for the export to complete (larger datasets may take longer)</li>
+            <li>Save the file to your computer when prompted</li>
+          </ol>
+        </div>
+        
+        <div className="space-y-2">
+          <h4 className="font-medium">Scheduled Reports</h4>
+          <p>Set up automated exports to be delivered on a regular schedule:</p>
+          <ul className="list-disc list-inside space-y-1 pl-4">
+            <li><strong>Daily Reports:</strong> Sent at the end of each day</li>
+            <li><strong>Weekly Summaries:</strong> Delivered each Monday</li>
+            <li><strong>Monthly Analytics:</strong> Comprehensive reports at month-end</li>
+            <li><strong>Custom Schedules:</strong> Define your own reporting cadence</li>
+          </ul>
+          
+          <div className="bg-muted/30 rounded-md p-3 mt-2">
+            <p className="text-sm"><strong>Tip:</strong> Use the <FileText className="inline h-4 w-4" /> Report Builder to customize the data included in scheduled exports.</p>
           </div>
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+        
+        <div className="space-y-2">
+          <h4 className="font-medium">Data Privacy Considerations</h4>
+          <p>When exporting data, ensure you comply with all applicable privacy regulations:</p>
+          <ul className="list-disc list-inside space-y-1 pl-4">
+            <li>Consider using anonymized exports for general analytics</li>
+            <li>Ensure exported files are stored securely</li>
+            <li>Delete exported files when they are no longer needed</li>
+            <li>Be mindful of who has access to exported data</li>
+          </ul>
+        </div>
+      </div>
+    </ScrollArea>
   );
 }

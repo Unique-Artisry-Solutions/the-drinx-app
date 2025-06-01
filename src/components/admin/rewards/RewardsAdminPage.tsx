@@ -1,6 +1,6 @@
 
-import { useState } from 'react';
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import React, { useState, useEffect } from 'react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RewardProgramConfig } from './config/RewardProgramConfig';
 import { BulkOperationsInterface } from './bulk/BulkOperationsInterface';
 import { RewardRulesManagement } from './rules/RewardRulesManagement';
@@ -13,7 +13,7 @@ import { TierManagementTab } from './tiers/TierManagementTab';
 import { RewardOfferingsTab } from './offerings/RewardOfferingsTab';
 import { CampaignManagementTab } from './campaigns/CampaignManagementTab';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, ListPlus } from "lucide-react";
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -31,6 +31,7 @@ interface TabOption {
 export function RewardsAdminPage() {
   const [activeTab, setActiveTab] = useState('overview');
   const isMobile = useMediaQuery("(max-width: 640px)");
+  const isTablet = useMediaQuery("(min-width: 641px) and (max-width: 1024px)");
   
   // Primary tabs to show on tablet view (most commonly used)
   const primaryTabs: TabOption[] = [
@@ -57,17 +58,6 @@ export function RewardsAdminPage() {
   const handleTabChange = (value: string) => {
     setActiveTab(value);
   };
-
-  // Mock handlers for props
-  const handleConfigSave = (config: any) => {
-    console.log('Config saved:', config);
-  };
-
-  // Mock data for reports
-  const mockReportData = [
-    { id: '1', name: 'User Report', type: 'users', date: '2024-01-01' },
-    { id: '2', name: 'Transaction Report', type: 'transactions', date: '2024-01-02' }
-  ];
   
   const renderMobileNavigation = () => {
     return (
@@ -143,12 +133,12 @@ export function RewardsAdminPage() {
         {activeTab === 'users' && <UserManagementTab />}
         {activeTab === 'tiers' && <TierManagementTab />}
         {activeTab === 'offerings' && <RewardOfferingsTab />}
-        {activeTab === 'campaigns' && <CampaignManagementTab _establishmentId="mock-establishment-id" />}
-        {activeTab === 'config' && <RewardProgramConfig onConfigSave={handleConfigSave} />}
+        {activeTab === 'campaigns' && <CampaignManagementTab />}
+        {activeTab === 'config' && <RewardProgramConfig />}
         {activeTab === 'rules' && <RewardRulesManagement />}
         {activeTab === 'bulk' && <BulkOperationsInterface />}
         {activeTab === 'statistics' && <ProgramStatisticsDashboard />}
-        {activeTab === 'reports' && <ReportExportUtility data={mockReportData} reportType="users" />}
+        {activeTab === 'reports' && <ReportExportUtility />}
       </div>
     </div>
   );

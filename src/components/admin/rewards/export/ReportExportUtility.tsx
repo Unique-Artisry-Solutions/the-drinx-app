@@ -1,79 +1,115 @@
 
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Download } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { ReportType, exportToCSV, exportToJSON } from './exportUtils';
+import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { FileText } from "lucide-react";
+import { format } from 'date-fns';
+import { useToast } from "@/hooks/use-toast";
+import { ReportControls } from './ReportControls';
+import { DataPreview } from './DataPreview';
+import { RecentExports } from './RecentExports';
+import { 
+  DateRange, 
+  RecentExport, 
+  ReportType,
+  fetchPreviewData,
+  exportReportData 
+} from './exportUtils';
 
-export interface ReportExportUtilityProps {
-  data: any[];
-  reportType: ReportType;
-}
-
-export function ReportExportUtility({ data, reportType }: ReportExportUtilityProps) {
-  const [exportFormat, setExportFormat] = useState<'csv' | 'json' | 'pdf'>('csv');
+export function ReportExportUtility() {
   const { toast } = useToast();
-
-  const handleExport = () => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [reportType, setReportType] = useState<ReportType>('user_points');
+  const [dateRange, setDateRange] = useState<DateRange>({
+    from: undefined,
+    to: undefined
+  });
+  const [preview, setPreview] = useState<any[]>([]);
+  const [recentExports, setRecentExports] = useState<RecentExport[]>([
+    {
+      id: '1',
+      type: 'User Points',
+      date: format(new Date(), 'yyyy-MM-dd'),
+      fileName: 'user_points_export_20250428.csv'
+    }
+  ]);
+  
+  const generatePreview = async () => {
+    setIsLoading(true);
     try {
-      const filename = `${reportType}_report_${new Date().toISOString().split('T')[0]}`;
-      
-      switch (exportFormat) {
-        case 'csv':
-          exportToCSV(data, `${filename}.csv`);
-          break;
-        case 'json':
-          exportToJSON(data, `${filename}.json`);
-          break;
-        case 'pdf':
-          // PDF export would be implemented here
-          console.log('PDF export not yet implemented');
-          break;
-      }
+      const data = await fetchPreviewData(reportType);
+      setPreview(data);
       
       toast({
-        title: 'Export Successful',
-        description: `${reportType} report exported as ${exportFormat.toUpperCase()}`,
+        title: "Preview Generated",
+        description: `Showing a preview of ${reportType} report data`
       });
     } catch (error) {
+      console.error("Error generating preview:", error);
       toast({
-        title: 'Export Failed',
-        description: 'There was an error exporting the report',
-        variant: 'destructive',
+        title: "Error",
+        description: "Failed to generate report preview",
+        variant: "destructive"
       });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  const handleExport = async () => {
+    setIsLoading(true);
+    try {
+      const { fileName, type } = await exportReportData(reportType);
+      
+      setRecentExports(prev => [{
+        id: `export-${Date.now()}`,
+        type,
+        date: format(new Date(), 'yyyy-MM-dd'),
+        fileName
+      }, ...prev]);
+      
+      toast({
+        title: "Export Successful",
+        description: `Successfully exported ${reportType} data to ${fileName}`
+      });
+    } catch (error) {
+      console.error("Error exporting report:", error);
+      toast({
+        title: "Export Failed",
+        description: "Failed to export the report data",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Report Export Utility</CardTitle>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle className="flex items-center gap-2">
+          <FileText className="h-5 w-5 text-primary" />
+          Report Export Utility
+        </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Export Format</label>
-          <Select value={exportFormat} onValueChange={(value: 'csv' | 'json' | 'pdf') => setExportFormat(value)}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="csv">CSV</SelectItem>
-              <SelectItem value="json">JSON</SelectItem>
-              <SelectItem value="pdf">PDF</SelectItem>
-            </SelectContent>
-          </Select>
+      <CardContent>
+        <div className="space-y-6">
+          <ReportControls 
+            reportType={reportType}
+            setReportType={setReportType}
+            dateRange={dateRange}
+            setDateRange={setDateRange}
+            onGeneratePreview={generatePreview}
+            onExport={handleExport}
+            isLoading={isLoading}
+            hasPreviewData={preview.length > 0}
+          />
+          
+          {preview.length > 0 && (
+            <DataPreview preview={preview} />
+          )}
+          
+          <RecentExports exports={recentExports} />
         </div>
-
-        <div className="text-sm text-muted-foreground">
-          Exporting {data.length} records of type: {reportType}
-        </div>
-
-        <Button onClick={handleExport} className="w-full">
-          <Download className="h-4 w-4 mr-2" />
-          Export Report
-        </Button>
       </CardContent>
     </Card>
   );

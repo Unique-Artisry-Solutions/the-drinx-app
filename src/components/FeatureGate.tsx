@@ -3,6 +3,7 @@ import React, { useEffect } from 'react';
 import { useFeatures } from '@/contexts/FeatureContext';
 import { FeatureId } from '@/lib/features/registry';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
 
 interface FeatureGateProps {
   /**
@@ -48,6 +49,7 @@ export const FeatureGate: React.FC<FeatureGateProps> = ({
   trackingEventName = 'view',
 }) => {
   const { hasAccess, trackFeatureUsage } = useFeatures();
+  const { toast } = useToast();
   
   useEffect(() => {
     // Track attempt to access the feature

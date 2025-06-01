@@ -1,38 +1,43 @@
+
 import { Json } from '@/integrations/supabase/types';
 
-/**
- * Legacy type guards - maintained for backward compatibility
- * New code should use the comprehensive type guard system in utils/typeGuards/
- */
-
-// Re-export the enhanced type guard system
-export * from './typeGuards/index';
-
-// Legacy functions - redirected to new implementation
-import { 
-  safeJsonToRecord as newSafeJsonToRecord,
-  safeJsonToArray as newSafeJsonToArray,
-  safeJsonToString as newSafeJsonToString,
-  safeJsonToNumber as newSafeJsonToNumber,
-  isNonEmptyString as newIsNonEmptyString,
-  isNumber as newIsValidNumber,
-  isString
-} from './typeGuards/coreTypeGuards';
-
-export const safeJsonToRecord = newSafeJsonToRecord;
-export const safeJsonToArray = newSafeJsonToArray;
-export const safeJsonToString = newSafeJsonToString;
-export const safeJsonToNumber = newSafeJsonToNumber;
-export const isNonEmptyString = newIsNonEmptyString;
-export const isValidNumber = newIsValidNumber;
-
-// Keep existing utility functions
-export const exists = <T>(value: T | null | undefined): value is T => {
-  return value !== null && value !== undefined;
+export const safeJsonToRecord = (json: Json): Record<string, any> => {
+  if (typeof json === 'object' && json !== null && !Array.isArray(json)) {
+    return json as Record<string, any>;
+  }
+  return {};
 };
 
-// Enhanced generic type converter using new validation
-export const safeJsonToType = <T>(json: any, defaultValue: T): T => {
+export const safeJsonToArray = (json: Json): any[] => {
+  if (Array.isArray(json)) {
+    return json;
+  }
+  return [];
+};
+
+export const safeJsonToString = (json: Json): string => {
+  if (typeof json === 'string') {
+    return json;
+  }
+  if (typeof json === 'object' && json !== null) {
+    return JSON.stringify(json);
+  }
+  return '';
+};
+
+export const safeJsonToNumber = (json: Json): number => {
+  if (typeof json === 'number') {
+    return json;
+  }
+  if (typeof json === 'string') {
+    const parsed = parseFloat(json);
+    return isNaN(parsed) ? 0 : parsed;
+  }
+  return 0;
+};
+
+// Generic type-safe JSON to Type converter
+export const safeJsonToType = <T>(json: Json, defaultValue: T): T => {
   if (json === null || json === undefined) {
     return defaultValue;
   }
@@ -43,7 +48,7 @@ export const safeJsonToType = <T>(json: any, defaultValue: T): T => {
   }
   
   // Try to parse if it's a string
-  if (isString(json)) {
+  if (typeof json === 'string') {
     try {
       const parsed = JSON.parse(json);
       return parsed as T;
@@ -60,8 +65,21 @@ export const safeJsonToType = <T>(json: any, defaultValue: T): T => {
   return defaultValue;
 };
 
-// Enhanced JSON conversion with validation
-export const toJsonCompatible = (value: any): any => {
+// Basic type checking utilities
+export const isNonEmptyString = (value: any): value is string => {
+  return typeof value === 'string' && value.trim().length > 0;
+};
+
+export const isValidNumber = (value: any): value is number => {
+  return typeof value === 'number' && !isNaN(value) && isFinite(value);
+};
+
+export const exists = <T>(value: T | null | undefined): value is T => {
+  return value !== null && value !== undefined;
+};
+
+// JSON conversion utilities for database operations
+export const toJsonCompatible = (value: any): Json => {
   if (value === null || value === undefined) {
     return null;
   }
@@ -71,11 +89,11 @@ export const toJsonCompatible = (value: any): any => {
   }
   
   if (Array.isArray(value)) {
-    return value.map(item => toJsonCompatible(item));
+    return value.map(item => toJsonCompatible(item)) as Json;
   }
   
   if (typeof value === 'object') {
-    const result: Record<string, any> = {};
+    const result: Record<string, Json> = {};
     for (const [key, val] of Object.entries(value)) {
       result[key] = toJsonCompatible(val);
     }

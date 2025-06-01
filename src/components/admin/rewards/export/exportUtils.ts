@@ -1,5 +1,15 @@
 
 import { format } from 'date-fns';
+import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabase";
+
+// Types
+export type ReportType = 'user_points' | 'reward_redemptions' | 'point_transactions' | 'tier_distribution';
+
+export interface DateRange {
+  from: Date | undefined;
+  to: Date | undefined;
+}
 
 export interface RecentExport {
   id: string;
@@ -8,106 +18,106 @@ export interface RecentExport {
   fileName: string;
 }
 
-export interface DateRange {
-  from?: Date;
-  to?: Date;
-}
-
-export type ReportType = 'users' | 'transactions' | 'analytics' | 'campaigns';
-
 export const reportTypes = [
-  { value: 'users' as ReportType, label: 'Users Report' },
-  { value: 'transactions' as ReportType, label: 'Transactions Report' },
-  { value: 'analytics' as ReportType, label: 'Analytics Report' },
-  { value: 'campaigns' as ReportType, label: 'Campaigns Report' }
+  { value: 'user_points', label: 'User Points' },
+  { value: 'reward_redemptions', label: 'Reward Redemptions' },
+  { value: 'point_transactions', label: 'Point Transactions' },
+  { value: 'tier_distribution', label: 'Tier Distribution' }
 ];
 
-export const exportToCSV = (data: any[], filename: string = 'export.csv') => {
-  if (data.length === 0) return;
-
-  const headers = Object.keys(data[0]);
-  const csvContent = [
-    headers.join(','),
-    ...data.map(row => 
-      headers.map(header => 
-        typeof row[header] === 'string' && row[header].includes(',') 
-          ? `"${row[header]}"` 
-          : row[header]
-      ).join(',')
-    )
-  ].join('\n');
-
-  downloadFile(csvContent, filename, 'text/csv');
+// Fetch preview data based on report type
+export const fetchPreviewData = async (reportType: ReportType): Promise<any[]> => {
+  let data = [];
+  
+  switch (reportType) {
+    case 'user_points':
+      const { data: userPoints, error: userError } = await supabase
+        .from('user_rewards')
+        .select('user_id, points, lifetime_points')
+        .limit(5);
+      
+      if (userError) throw userError;
+      data = userPoints;
+      break;
+      
+    case 'reward_redemptions':
+      const { data: redemptions, error: redemptionError } = await supabase
+        .from('reward_redemptions')
+        .select('id, user_id, offering_id, points_spent, created_at')
+        .limit(5);
+      
+      if (redemptionError) throw redemptionError;
+      data = redemptions;
+      break;
+      
+    case 'point_transactions':
+      const { data: transactions, error: transactionError } = await supabase
+        .from('reward_transactions')
+        .select('id, user_id, points, transaction_type, source, created_at')
+        .order('created_at', { ascending: false })
+        .limit(5);
+      
+      if (transactionError) throw transactionError;
+      data = transactions;
+      break;
+      
+    case 'tier_distribution':
+      data = [
+        { tier: 'Tier 1', user_count: 156, percentage: '62.4%' },
+        { tier: 'Tier 2', user_count: 67, percentage: '26.8%' },
+        { tier: 'Tier 3', user_count: 27, percentage: '10.8%' }
+      ];
+      break;
+  }
+  
+  return data;
 };
 
-export const exportToJSON = (data: any[], filename: string = 'export.json') => {
-  const jsonContent = JSON.stringify(data, null, 2);
-  downloadFile(jsonContent, filename, 'application/json');
-};
-
-export const exportToPDF = async (data: any[], filename: string = 'export.pdf') => {
-  // PDF export would be implemented here with a library like jsPDF
-  console.log('PDF export not implemented yet', { data, filename });
-};
-
-export const formatExportData = (rawData: any[], exportConfig: any) => {
-  return rawData.map(item => {
-    const formatted: any = {};
+// Export data to CSV
+export const exportReportData = async (reportType: ReportType) => {
+  try {
+    let data;
+    let fileName;
     
-    // Apply field mappings and formatting
-    if (exportConfig.fields) {
-      exportConfig.fields.forEach((field: any) => {
-        if (item[field.key] !== undefined) {
-          formatted[field.label || field.key] = formatFieldValue(item[field.key], field.type);
-        }
-      });
-    } else {
-      // Use all fields if no specific configuration
-      Object.keys(item).forEach(key => {
-        formatted[key] = formatFieldValue(item[key]);
-      });
+    switch (reportType) {
+      case 'user_points':
+        const { data: userPoints, error: userError } = await supabase
+          .from('user_rewards')
+          .select('*');
+        
+        if (userError) throw userError;
+        data = userPoints;
+        fileName = `user_points_export_${format(new Date(), 'yyyyMMdd')}.csv`;
+        break;
+        
+      default:
+        // For other report types (would be expanded based on actual requirements)
+        throw new Error("Export for this report type is not fully implemented");
     }
     
-    return formatted;
-  });
-};
-
-const formatFieldValue = (value: any, type?: string) => {
-  if (value === null || value === undefined) return '';
-  
-  switch (type) {
-    case 'date':
-      return format(new Date(value), 'yyyy-MM-dd');
-    case 'datetime':
-      return format(new Date(value), 'yyyy-MM-dd HH:mm:ss');
-    case 'currency':
-      return new Intl.NumberFormat('en-US', { 
-        style: 'currency', 
-        currency: 'USD' 
-      }).format(value);
-    case 'percentage':
-      return `${(value * 100).toFixed(2)}%`;
-    default:
-      return value.toString();
+    if (!data || !data.length) {
+      throw new Error("No data available to export");
+    }
+    
+    const headers = Object.keys(data[0]).join(',');
+    const rows = data.map(row => Object.values(row).join(','));
+    const csvContent = [headers, ...rows].join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', fileName);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    return {
+      fileName,
+      type: reportTypes.find(t => t.value === reportType)?.label || reportType
+    };
+  } catch (error) {
+    console.error("Error exporting report:", error);
+    throw error;
   }
-};
-
-const downloadFile = (content: string, filename: string, mimeType: string) => {
-  const blob = new Blob([content], { type: mimeType });
-  const url = URL.createObjectURL(blob);
-  
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  
-  URL.revokeObjectURL(url);
-};
-
-export const getExportFilename = (baseFilename: string, format: string) => {
-  const timestamp = format(new Date(), 'yyyy-MM-dd-HHmm');
-  const extension = format.toLowerCase();
-  return `${baseFilename}_${timestamp}.${extension}`;
 };

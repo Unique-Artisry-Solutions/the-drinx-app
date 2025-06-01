@@ -11,19 +11,12 @@ const UserAuth: React.FC<UserAuthProps> = ({
   defaultTab = 'login',
   userType = 'individual'
 }) => {
-  // Provide safe default handlers
-  const safeOnSuccess = onSuccess ?? (() => console.log('Authentication successful'));
-  const safeOnClose = onClose ?? (() => console.log('Auth dialog closed'));
-
   return (
     <Card className="w-full max-w-md mx-auto">
-      <UserAuthHeader 
-        defaultTab={defaultTab} 
-        userType={userType} 
-      />
+      <UserAuthHeader defaultTab={defaultTab} userType={userType} />
       <UserAuthTabs 
-        onSuccess={safeOnSuccess}
-        onClose={safeOnClose}
+        onSuccess={onSuccess}
+        onClose={onClose}
         defaultTab={defaultTab}
         userType={userType}
       />

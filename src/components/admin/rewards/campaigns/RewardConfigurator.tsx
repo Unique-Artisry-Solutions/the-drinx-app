@@ -1,159 +1,155 @@
 
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
-import { Gift, Percent, Star } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { PlusCircle, X, Gift, Award } from 'lucide-react';
+import { CampaignReward } from '@/lib/rewards/types';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface RewardConfiguratorProps {
-  onRewardConfigured: (config: any) => void;
+  rewards: CampaignReward[];
+  onChange: (rewards: CampaignReward[]) => void;
 }
 
-export function RewardConfigurator({ onRewardConfigured }: RewardConfiguratorProps) {
-  const [rewardType, setRewardType] = useState('');
+export const RewardConfigurator = ({ rewards, onChange }: RewardConfiguratorProps) => {
+  const [rewardType, setRewardType] = useState('points');
   const [rewardValue, setRewardValue] = useState('');
-  const [rewardName, setRewardName] = useState('');
-  const [rewardDescription, setRewardDescription] = useState('');
-  const [isStackable, setIsStackable] = useState(false);
-  const [hasExpiry, setHasExpiry] = useState(false);
-  const [expiryDays, setExpiryDays] = useState('30');
-
-  const rewardTypes = [
-    { value: 'points', label: 'Points', icon: Star },
-    { value: 'discount', label: 'Discount', icon: Percent },
-    { value: 'freebie', label: 'Free Item', icon: Gift }
-  ];
-
-  const handleSave = () => {
-    const config = {
-      type: rewardType,
+  
+  const addReward = () => {
+    if (!rewardValue.trim()) return;
+    
+    let description = '';
+    
+    switch (rewardType) {
+      case 'points':
+        description = `${rewardValue} bonus points`;
+        break;
+      case 'offering':
+        description = `Reward offering: ${rewardValue}`;
+        break;
+      case 'tier':
+        description = `Tier upgrade: ${rewardValue}`;
+        break;
+      default:
+        description = `${rewardType}: ${rewardValue}`;
+    }
+    
+    const newReward: CampaignReward = {
+      id: `reward-${Date.now()}`,
+      type: rewardType as CampaignReward['type'],
       value: rewardValue,
-      name: rewardName,
-      description: rewardDescription,
-      isStackable,
-      hasExpiry,
-      expiryDays: hasExpiry ? parseInt(expiryDays) : null
+      description
     };
-    onRewardConfigured(config);
+    
+    onChange([...rewards, newReward]);
+    setRewardValue('');
   };
-
+  
+  const removeReward = (rewardId: string) => {
+    onChange(rewards.filter(reward => reward.id !== rewardId));
+  };
+  
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Gift className="h-5 w-5" />
-          Reward Configuration
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="space-y-2">
-          <Label>Reward Type</Label>
-          <Select value={rewardType} onValueChange={setRewardType}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select reward type" />
-            </SelectTrigger>
-            <SelectContent>
-              {rewardTypes.map((type) => (
-                <SelectItem key={type.value} value={type.value}>
-                  <div className="flex items-center gap-2">
-                    <type.icon className="h-4 w-4" />
-                    {type.label}
-                  </div>
-                </SelectItem>
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Gift className="h-5 w-5" />
+            Campaign Rewards
+          </CardTitle>
+          <CardDescription>
+            Define what rewards users will receive during this campaign
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-2 mb-4">
+            <Select 
+              value={rewardType} 
+              onValueChange={setRewardType}
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Reward type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="points">Bonus Points</SelectItem>
+                <SelectItem value="offering">Reward Offering</SelectItem>
+                <SelectItem value="tier">Tier Upgrade</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            <Input 
+              placeholder={rewardType === 'points' ? 'Enter points amount...' : 'Enter reward details...'}
+              value={rewardValue} 
+              onChange={(e) => setRewardValue(e.target.value)} 
+              className="flex-1"
+            />
+            
+            <Button onClick={addReward} type="button">
+              <PlusCircle className="h-4 w-4 mr-2" />
+              Add Reward
+            </Button>
+          </div>
+          
+          {rewards.length === 0 ? (
+            <Alert>
+              <AlertTitle>No rewards defined</AlertTitle>
+              <AlertDescription>
+                Add at least one reward that users will receive during this campaign.
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {rewards.map(reward => (
+                <Badge 
+                  key={reward.id} 
+                  variant="secondary"
+                  className="px-2 py-1 flex items-center gap-1"
+                >
+                  {reward.description}
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-4 w-4 p-0 ml-2"
+                    onClick={() => removeReward(reward.id)}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </Badge>
               ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="reward-name">Reward Name</Label>
-            <Input
-              id="reward-name"
-              value={rewardName}
-              onChange={(e) => setRewardName(e.target.value)}
-              placeholder="e.g., Welcome Bonus"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="reward-value">
-              {rewardType === 'points' ? 'Points Amount' : 
-               rewardType === 'discount' ? 'Discount %' : 'Item Name'}
-            </Label>
-            <Input
-              id="reward-value"
-              value={rewardValue}
-              onChange={(e) => setRewardValue(e.target.value)}
-              placeholder={rewardType === 'points' ? '100' : 
-                          rewardType === 'discount' ? '10' : 'Free drink'}
-            />
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="reward-description">Description</Label>
-          <Textarea
-            id="reward-description"
-            value={rewardDescription}
-            onChange={(e) => setRewardDescription(e.target.value)}
-            placeholder="Describe the reward and how to claim it..."
-            rows={3}
-          />
-        </div>
-
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <Label htmlFor="stackable">Stackable with other rewards</Label>
-              <p className="text-sm text-muted-foreground">Allow combining with other active rewards</p>
-            </div>
-            <Switch
-              id="stackable"
-              checked={isStackable}
-              onCheckedChange={setIsStackable}
-            />
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div>
-              <Label htmlFor="has-expiry">Has expiry date</Label>
-              <p className="text-sm text-muted-foreground">Set expiration for this reward</p>
-            </div>
-            <Switch
-              id="has-expiry"
-              checked={hasExpiry}
-              onCheckedChange={setHasExpiry}
-            />
-          </div>
-
-          {hasExpiry && (
-            <div className="space-y-2">
-              <Label htmlFor="expiry-days">Expires after (days)</Label>
-              <Input
-                id="expiry-days"
-                type="number"
-                value={expiryDays}
-                onChange={(e) => setExpiryDays(e.target.value)}
-                min="1"
-                max="365"
-              />
             </div>
           )}
-        </div>
-
-        <Button 
-          onClick={handleSave} 
-          disabled={!rewardType || !rewardName || !rewardValue}
-          className="w-full"
-        >
-          Save Reward Configuration
-        </Button>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Award className="h-5 w-5" />
+            Reward Preview
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="border rounded-md p-4">
+            {rewards.length === 0 ? (
+              <p className="text-muted-foreground text-center">
+                Add rewards to see a preview
+              </p>
+            ) : (
+              <div className="space-y-2">
+                <p className="font-medium">Users will receive:</p>
+                <ul className="list-disc list-inside space-y-1">
+                  {rewards.map(reward => (
+                    <li key={reward.id}>{reward.description}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
-}
+};

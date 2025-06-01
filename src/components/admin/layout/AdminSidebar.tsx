@@ -105,7 +105,6 @@ const AdminSidebar: React.FC = () => {
         {adminNavItems.map(category => {
           const isExpanded = expandedCategories.includes(category.path);
           const categoryHasActiveChild = hasActiveChild(category);
-          const IconComponent = category.icon;
           
           return (
             <div key={category.path} className={cn("mb-1", collapsed && "w-full flex justify-center")}>
@@ -120,9 +119,9 @@ const AdminSidebar: React.FC = () => {
                 onClick={() => collapsed ? toggleCollapse() : toggleCategory(category.path)}
                 title={collapsed ? category.label : undefined}
               >
-                {IconComponent && (
-                  <IconComponent className={cn("h-5 w-5", !collapsed && "mr-2 opacity-70")} />
-                )}
+                {React.createElement(category.icon, { 
+                  className: cn("h-5 w-5", !collapsed && "mr-2 opacity-70") 
+                })}
                 {!collapsed && (
                   <>
                     <span className="flex-1 truncate">{category.label}</span>
@@ -139,27 +138,24 @@ const AdminSidebar: React.FC = () => {
               
               {!collapsed && isExpanded && category.children && (
                 <div className="mt-1 ml-4 space-y-1 border-l border-white/10 pl-2">
-                  {category.children.map(item => {
-                    const ItemIconComponent = item.icon;
-                    return (
-                      <button
-                        key={item.path}
-                        onClick={() => handleNavigation(item.path)}
-                        className={cn(
-                          "flex items-center w-full px-3 py-2 text-sm rounded-md transition-colors text-left",
-                          isActive(item.path)
-                            ? "bg-white/25 text-white font-medium border-l-2 border-white"
-                            : "text-white/70 hover:text-white hover:bg-white/10"
-                        )}
-                        title={collapsed ? item.label : undefined}
-                      >
-                        {ItemIconComponent && (
-                          <ItemIconComponent className="h-4 w-4 mr-2" />
-                        )}
-                        <span className="truncate">{item.label}</span>
-                      </button>
-                    );
-                  })}
+                  {category.children.map(item => (
+                    <button
+                      key={item.path}
+                      onClick={() => handleNavigation(item.path)}
+                      className={cn(
+                        "flex items-center w-full px-3 py-2 text-sm rounded-md transition-colors text-left",
+                        isActive(item.path)
+                          ? "bg-white/25 text-white font-medium border-l-2 border-white"
+                          : "text-white/70 hover:text-white hover:bg-white/10"
+                      )}
+                      title={collapsed ? item.label : undefined}
+                    >
+                      {React.createElement(item.icon, { 
+                        className: "h-4 w-4 mr-2" 
+                      })}
+                      <span className="truncate">{item.label}</span>
+                    </button>
+                  ))}
                 </div>
               )}
             </div>

@@ -18,8 +18,6 @@ export interface EnhancedNavItemData extends BaseNavItemProps {
   isExternal?: boolean;
   requiresAuth?: boolean;
   userTypes?: ('individual' | 'establishment' | 'promoter' | 'admin')[];
-  children?: EnhancedNavItemData[];
-  showInNav?: boolean;
 }
 
 // Navigation dropdown item data

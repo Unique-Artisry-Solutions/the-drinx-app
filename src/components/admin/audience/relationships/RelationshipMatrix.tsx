@@ -1,4 +1,5 @@
 
+import React from 'react';
 import { SegmentConnectionStrength, CrossSegmentEngagement } from '@/types/AudienceTypes';
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui/table';
 import { Card } from '@/components/ui/card';
@@ -12,8 +13,8 @@ interface RelationshipMatrixProps {
 
 export const RelationshipMatrix: React.FC<RelationshipMatrixProps> = ({
   connections,
-  crossEngagement
-  // filterThreshold - preserved for future filtering functionality
+  crossEngagement,
+  filterThreshold
 }) => {
   // Group segments to get a unique list
   const segments = Array.from(
@@ -21,6 +22,10 @@ export const RelationshipMatrix: React.FC<RelationshipMatrixProps> = ({
       ...connections.map(conn => conn.source_segment_id),
       ...connections.map(conn => conn.target_segment_id)
     ])
+  );
+  
+  const filteredConnections = connections.filter(
+    conn => conn.connection_strength >= filterThreshold
   );
 
   // Format a percentage value
@@ -45,6 +50,15 @@ export const RelationshipMatrix: React.FC<RelationshipMatrixProps> = ({
     if (strength >= 0.4) return "bg-blue-50 text-blue-800";
     if (strength >= 0.2) return "bg-gray-50 text-gray-800";
     return "bg-white text-gray-500";
+  };
+
+  // Get engagement data between segments
+  const getEngagementData = (primary: string, secondary: string) => {
+    return crossEngagement.find(
+      item => 
+        (item.primary_segment_id === primary && item.secondary_segment_id === secondary) ||
+        (item.primary_segment_id === secondary && item.secondary_segment_id === primary)
+    );
   };
 
   // Format segment name (for demo purposes)

@@ -16,45 +16,22 @@ const NotificationTester = () => {
   const {
     config,
     setConfig,
-    isLoading = false,
-    error = null,
+    isLoading,
+    error,
     sendEnhancedTestNotification
-  } = useEnhancedNotificationTesting() ?? {};
+  } = useEnhancedNotificationTesting();
   
   const [activeTab, setActiveTab] = useState("test");
 
-  // Check if notifications are supported with fallback
-  const isNotificationSupported = typeof window !== 'undefined' && 'Notification' in window;
-  const notificationPermission = isNotificationSupported ? Notification.permission : 'denied';
-
   const handleSendTest = async () => {
     try {
-      if (sendEnhancedTestNotification) {
-        await sendEnhancedTestNotification();
-      } else {
-        console.warn('Send test notification function not available');
-      }
+      await sendEnhancedTestNotification();
     } catch (err) {
       console.error("Failed to send test notification:", err);
     }
   };
 
-  const handleServiceWorkerAction = (action: string, payload?: any) => {
-    try {
-      if (navigator?.serviceWorker?.controller) {
-        navigator.serviceWorker.controller.postMessage({
-          action,
-          ...payload
-        });
-      } else {
-        console.error('No service worker controller available');
-      }
-    } catch (err) {
-      console.error('Service worker action failed:', err);
-    }
-  };
-
-  if (!isNotificationSupported) {
+  if (!('Notification' in window)) {
     return (
       <Card>
         <div className="p-6">
@@ -72,10 +49,9 @@ const NotificationTester = () => {
   
   return (
     <div className="space-y-4">
-      <NotificationStatusAlert 
-        permissionStatus={notificationPermission} 
-      />
+      <NotificationStatusAlert permissionStatus={Notification.permission} />
       
+      {/* Add diagnostics panel */}
       <NotificationSystemDiagnostics />
       
       <Tabs defaultValue="test" value={activeTab} onValueChange={setActiveTab}>
@@ -109,9 +85,7 @@ const NotificationTester = () => {
             {error && (
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  {typeof error === 'string' ? error : 'An unexpected error occurred'}
-                </AlertDescription>
+                <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
 
@@ -121,8 +95,8 @@ const NotificationTester = () => {
         
         <TabsContent value="config" className="py-4">
           <SystemStatusPanel
-            isSupported={isNotificationSupported}
-            permissionStatus={notificationPermission}
+            isSupported={'Notification' in window}
+            permissionStatus={Notification.permission}
             lastCheck={new Date()}
           />
         </TabsContent>
@@ -132,7 +106,7 @@ const NotificationTester = () => {
             <Info className="h-4 w-4" />
             <AlertTitle>Browser Information</AlertTitle>
             <AlertDescription className="text-xs mt-2">
-              {navigator?.userAgent ?? 'User agent not available'}
+              {navigator.userAgent}
             </AlertDescription>
           </Alert>
           
@@ -142,7 +116,16 @@ const NotificationTester = () => {
               <Button 
                 size="sm"
                 variant="outline"
-                onClick={() => handleServiceWorkerAction('setDebugLevel', { level: 'DEBUG' })}
+                onClick={() => {
+                  if (navigator.serviceWorker.controller) {
+                    navigator.serviceWorker.controller.postMessage({
+                      action: 'setDebugLevel',
+                      level: 'DEBUG'
+                    });
+                  } else {
+                    console.error('No service worker controller');
+                  }
+                }}
               >
                 <Settings className="h-3 w-3 mr-1" />
                 Enable Debug Logs
@@ -151,7 +134,15 @@ const NotificationTester = () => {
               <Button 
                 size="sm"
                 variant="outline"
-                onClick={() => handleServiceWorkerAction('healthCheck')}
+                onClick={() => {
+                  if (navigator.serviceWorker.controller) {
+                    navigator.serviceWorker.controller.postMessage({
+                      action: 'healthCheck'
+                    });
+                  } else {
+                    console.error('No service worker controller');
+                  }
+                }}
               >
                 <Settings className="h-3 w-3 mr-1" />
                 Run Health Check

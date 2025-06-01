@@ -1,38 +1,45 @@
 
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { DisplaySettingsCard } from './components/DisplaySettingsCard';
+import React from 'react';
+import { Form } from "@/components/ui/form";
 import { NotificationSettingsCard } from './components/NotificationSettingsCard';
-import { PreferencesFormSkeleton } from './components/PreferencesFormSkeleton';
+import { DisplaySettingsCard } from './components/DisplaySettingsCard';
+import { Button } from '@/components/ui/button';
+import { usePreferencesForm } from './hooks/usePreferencesForm';
 import { PreferencesFormError } from './components/PreferencesFormError';
+import { PreferencesFormSkeleton } from './components/PreferencesFormSkeleton';
+import { Loader2 } from 'lucide-react';
 
 export function UserPreferencesTab() {
-  const [isLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // Mock user ID for demo purposes - in a real app, you'd get this from auth context
+  const demoUserId = '123e4567-e89b-12d3-a456-426614174000';
+  const { form, isLoading, onSubmit, isSubmitting, hasError } = usePreferencesForm(demoUserId);
+
+  if (hasError) {
+    return <PreferencesFormError />;
+  }
 
   if (isLoading) {
     return <PreferencesFormSkeleton />;
   }
 
-  if (error) {
-    return <PreferencesFormError error={error} onRetry={() => setError(null)} />;
-  }
-
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>User Preferences</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground mb-6">
-            Configure system-wide user preference settings and defaults.
-          </p>
-        </CardContent>
-      </Card>
-
-      <DisplaySettingsCard />
-      <NotificationSettingsCard />
-    </div>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <NotificationSettingsCard form={form} />
+        <DisplaySettingsCard form={form} />
+        <div className="flex justify-end">
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              'Save Preferences'
+            )}
+          </Button>
+        </div>
+      </form>
+    </Form>
   );
 }

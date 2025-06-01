@@ -12,7 +12,7 @@ interface ReviewFormProps {
   onSuccess?: () => void;
 }
 
-const ReviewForm: React.FC<ReviewFormProps> = ({ cocktailName, onSuccess }) => {
+const ReviewForm: React.FC<ReviewFormProps> = ({ cocktailId, cocktailName, onSuccess }) => {
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [comment, setComment] = useState('');

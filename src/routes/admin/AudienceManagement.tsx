@@ -1,4 +1,5 @@
 
+import React from 'react';
 import { AudienceManagementTab } from '@/components/admin/audience/AudienceManagementTab';
 
 const AudienceManagement = () => {

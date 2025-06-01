@@ -1,28 +1,17 @@
 
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Bell, Save } from 'lucide-react';
+import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
+import { FormField, FormControl, FormItem, FormLabel, FormDescription } from "@/components/ui/form";
+import { Bell } from "lucide-react";
+import { UseFormReturn } from "react-hook-form";
+import { PreferencesFormData } from '../types';
 
-export function NotificationSettingsCard() {
-  const [emailNotifications, setEmailNotifications] = useState(true);
-  const [pushNotifications, setPushNotifications] = useState(false);
-  const [frequency, setFrequency] = useState('daily');
-  const [quietHours, setQuietHours] = useState(true);
+interface NotificationSettingsCardProps {
+  form: UseFormReturn<PreferencesFormData>;
+}
 
-  const handleSave = () => {
-    // Save notification settings logic here
-    console.log('Saving notification settings:', { 
-      emailNotifications, 
-      pushNotifications, 
-      frequency, 
-      quietHours 
-    });
-  };
-
+export function NotificationSettingsCard({ form }: NotificationSettingsCardProps) {
   return (
     <Card>
       <CardHeader>
@@ -31,64 +20,67 @@ export function NotificationSettingsCard() {
           Notification Settings
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <Label htmlFor="email-notifications">Email Notifications</Label>
-              <p className="text-sm text-muted-foreground">Receive updates via email</p>
-            </div>
-            <Switch
-              id="email-notifications"
-              checked={emailNotifications}
-              onCheckedChange={setEmailNotifications}
-            />
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div>
-              <Label htmlFor="push-notifications">Push Notifications</Label>
-              <p className="text-sm text-muted-foreground">Browser push notifications</p>
-            </div>
-            <Switch
-              id="push-notifications"
-              checked={pushNotifications}
-              onCheckedChange={setPushNotifications}
-            />
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div>
-              <Label htmlFor="quiet-hours">Quiet Hours</Label>
-              <p className="text-sm text-muted-foreground">Pause notifications at night</p>
-            </div>
-            <Switch
-              id="quiet-hours"
-              checked={quietHours}
-              onCheckedChange={setQuietHours}
-            />
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <Label>Notification Frequency</Label>
-          <Select value={frequency} onValueChange={setFrequency}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="immediate">Immediate</SelectItem>
-              <SelectItem value="hourly">Hourly</SelectItem>
-              <SelectItem value="daily">Daily</SelectItem>
-              <SelectItem value="weekly">Weekly</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <Button onClick={handleSave} className="w-full">
-          <Save className="h-4 w-4 mr-2" />
-          Save Notification Settings
-        </Button>
+      <CardContent className="space-y-4">
+        <FormField
+          control={form.control}
+          name="notification_settings.point_changes"
+          render={({ field }) => (
+            <FormItem className="flex items-center justify-between rounded-lg border p-3">
+              <div className="space-y-0.5">
+                <FormLabel>Point Change Notifications</FormLabel>
+                <FormDescription>
+                  Receive notifications when your points balance changes
+                </FormDescription>
+              </div>
+              <FormControl>
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="notification_settings.tier_updates"
+          render={({ field }) => (
+            <FormItem className="flex items-center justify-between rounded-lg border p-3">
+              <div className="space-y-0.5">
+                <FormLabel>Tier Update Notifications</FormLabel>
+                <FormDescription>
+                  Get notified when you reach a new reward tier
+                </FormDescription>
+              </div>
+              <FormControl>
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="notification_settings.reward_availability"
+          render={({ field }) => (
+            <FormItem className="flex items-center justify-between rounded-lg border p-3">
+              <div className="space-y-0.5">
+                <FormLabel>Reward Availability</FormLabel>
+                <FormDescription>
+                  Receive notifications about new available rewards
+                </FormDescription>
+              </div>
+              <FormControl>
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+            </FormItem>
+          )}
+        />
       </CardContent>
     </Card>
   );

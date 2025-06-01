@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { SlidersHorizontal } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { createFuzzySearch, extractSearchSuggestions } from '@/utils/searchUtils';
+import Fuse from 'fuse.js';
 import SearchInput from './search/SearchInput';
 import FilterPanel from './search/FilterPanel';
 
@@ -30,6 +31,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 25]);
   const [distance, setDistance] = useState<number>(10);
   const [suggestions, setSuggestions] = useState<Array<{value: string; label: string; type: 'cocktail' | 'establishment' | 'ingredient'}>>([]);
+  const [fuseInstance, setFuseInstance] = useState<Fuse<any> | null>(null);
   const searchRef = useRef<HTMLDivElement>(null);
 
   // Initialize fuzzy search when cocktails or establishments change
@@ -49,7 +51,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
         })),
       ];
       
-      createFuzzySearch(searchItems);
+      setFuseInstance(createFuzzySearch(searchItems));
       
       const extractedSuggestions = extractSearchSuggestions(cocktailItems, establishmentItems);
       setSuggestions(extractedSuggestions);

@@ -1,106 +1,161 @@
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Users, PlusCircle, X } from 'lucide-react';
+import { AudienceFilter } from '@/lib/rewards/types';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface AudienceTargetingProps {
-  selectedAudiences: string[];
-  onAudienceChange: (audiences: string[]) => void;
+  filters: AudienceFilter[];
+  onChange: (filters: AudienceFilter[]) => void;
 }
 
-export function AudienceTargeting({ selectedAudiences, onAudienceChange }: AudienceTargetingProps) {
-  const [targetingType, setTargetingType] = useState('segments');
-
-  // Mock audience data - preserved as placeholder
-  const audienceSegments = [
-    { id: 'vip', name: 'VIP Members', size: 1200, description: 'High-value customers' },
-    { id: 'new', name: 'New Users', size: 3400, description: 'Recently joined users' },
-    { id: 'loyal', name: 'Loyal Customers', size: 856, description: 'Frequent visitors' }
-  ];
-
-  const handleAudienceToggle = (audienceId: string) => {
-    const updated = selectedAudiences.includes(audienceId)
-      ? selectedAudiences.filter(id => id !== audienceId)
-      : [...selectedAudiences, audienceId];
-    onAudienceChange(updated);
+export const AudienceTargeting = ({ filters, onChange }: AudienceTargetingProps) => {
+  const [filterType, setFilterType] = useState('tier');
+  const [filterValue, setFilterValue] = useState('');
+  
+  const addFilter = () => {
+    if (!filterValue.trim()) return;
+    
+    let description = '';
+    
+    switch (filterType) {
+      case 'tier':
+        description = `Users in tier: ${filterValue}`;
+        break;
+      case 'pointsRange':
+        description = `Users with points: ${filterValue}`;
+        break;
+      case 'activity':
+        description = `Users with activity: ${filterValue}`;
+        break;
+      case 'joinDate':
+        description = `Users who joined: ${filterValue}`;
+        break;
+      case 'demographics':
+        description = `Users matching: ${filterValue}`;
+        break;
+      case 'all':
+        description = 'All users';
+        break;
+      default:
+        description = `${filterType}: ${filterValue}`;
+    }
+    
+    const newFilter: AudienceFilter = {
+      id: `filter-${Date.now()}`,
+      type: filterType as AudienceFilter['type'],
+      value: filterValue,
+      description
+    };
+    
+    onChange([...filters, newFilter]);
+    setFilterValue('');
   };
-
-  const getTotalReach = () => {
-    return audienceSegments
-      .filter(segment => selectedAudiences.includes(segment.id))
-      .reduce((total, segment) => total + segment.size, 0);
+  
+  const removeFilter = (filterId: string) => {
+    onChange(filters.filter(filter => filter.id !== filterId));
   };
-
+  
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Audience Targeting</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="space-y-2">
-          <Label>Targeting Method</Label>
-          <Select value={targetingType} onValueChange={setTargetingType}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="segments">Audience Segments</SelectItem>
-              <SelectItem value="criteria">Custom Criteria</SelectItem>
-              <SelectItem value="all">All Users</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        {targetingType === 'segments' && (
-          <div className="space-y-4">
-            <Label>Select Audience Segments</Label>
-            {audienceSegments.map((segment) => (
-              <div key={segment.id} className="flex items-center space-x-3 p-3 border rounded-lg">
-                <Checkbox
-                  id={segment.id}
-                  checked={selectedAudiences.includes(segment.id)}
-                  onCheckedChange={() => handleAudienceToggle(segment.id)}
-                />
-                <div className="flex-1">
-                  <Label htmlFor={segment.id} className="font-medium">
-                    {segment.name}
-                  </Label>
-                  <p className="text-sm text-muted-foreground">{segment.description}</p>
-                  <Badge variant="outline" className="mt-1">
-                    {segment.size.toLocaleString()} users
-                  </Badge>
-                </div>
-              </div>
-            ))}
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            Audience Targeting
+          </CardTitle>
+          <CardDescription>
+            Define which users will be eligible for this campaign
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-2 mb-4">
+            <Select 
+              value={filterType} 
+              onValueChange={setFilterType}
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filter type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Users</SelectItem>
+                <SelectItem value="tier">Reward Tier</SelectItem>
+                <SelectItem value="pointsRange">Points Range</SelectItem>
+                <SelectItem value="activity">Activity Level</SelectItem>
+                <SelectItem value="joinDate">Join Date</SelectItem>
+                <SelectItem value="demographics">Demographics</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            {filterType !== 'all' && (
+              <Input 
+                placeholder="Filter value..." 
+                value={filterValue} 
+                onChange={(e) => setFilterValue(e.target.value)} 
+                className="flex-1"
+              />
+            )}
+            
+            <Button onClick={addFilter} type="button">
+              <PlusCircle className="h-4 w-4 mr-2" />
+              Add Filter
+            </Button>
           </div>
-        )}
-
-        {selectedAudiences.length > 0 && (
-          <div className="p-4 bg-blue-50 rounded-lg">
-            <div className="flex justify-between items-center">
-              <span className="font-medium">Total Estimated Reach</span>
-              <Badge variant="default">
-                {getTotalReach().toLocaleString()} users
-              </Badge>
+          
+          {filters.length === 0 ? (
+            <Alert>
+              <AlertTitle>No audience filters defined</AlertTitle>
+              <AlertDescription>
+                Without filters, this campaign will target all users. Add filters to narrow your audience.
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {filters.map(filter => (
+                <Badge 
+                  key={filter.id} 
+                  variant="secondary"
+                  className="px-2 py-1 flex items-center gap-1"
+                >
+                  {filter.description}
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-4 w-4 p-0 ml-2"
+                    onClick={() => removeFilter(filter.id)}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </Badge>
+              ))}
             </div>
+          )}
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle>Estimated Audience Size</CardTitle>
+          <CardDescription>
+            Based on your targeting criteria
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <span className="text-lg font-medium">
+              {filters.length === 0 ? 'All Users' : `${Math.floor(Math.random() * 1000) + 100} Users`}
+            </span>
+            <Button variant="outline" size="sm">
+              View Audience Details
+            </Button>
           </div>
-        )}
-
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => onAudienceChange([])}>
-            Clear Selection
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={() => onAudienceChange(audienceSegments.map(s => s.id))}
-          >
-            Select All
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </div>
   );
-}
+};

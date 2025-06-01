@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { 
   Command,
+  CommandInput,
   CommandEmpty,
   CommandGroup,
   CommandItem,
@@ -37,6 +38,7 @@ const SearchToolbar: React.FC<SearchToolbarProps> = ({
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState(searchTerm);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   
   useEffect(() => {
     setValue(searchTerm);
@@ -47,9 +49,9 @@ const SearchToolbar: React.FC<SearchToolbarProps> = ({
     setValue(newValue);
     onSearchChange(newValue);
     if (newValue && suggestions.length > 0) {
-      setOpen(true);
+      setShowSuggestions(true);
     } else {
-      setOpen(false);
+      setShowSuggestions(false);
     }
   };
 
@@ -66,6 +68,7 @@ const SearchToolbar: React.FC<SearchToolbarProps> = ({
   const handleSelectSuggestion = (selected: string) => {
     setValue(selected);
     onSearchChange(selected);
+    setShowSuggestions(false);
     setOpen(false);
   };
 

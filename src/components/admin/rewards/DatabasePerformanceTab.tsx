@@ -1,4 +1,5 @@
 
+import React from 'react';
 import DatabaseHealthDashboard from '../database/DatabaseHealthDashboard';
 
 const DatabasePerformanceTab = () => {
