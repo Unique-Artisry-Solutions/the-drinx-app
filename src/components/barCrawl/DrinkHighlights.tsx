@@ -10,10 +10,9 @@ export interface DrinkHighlight {
 
 export interface DrinkHighlightsProps {
   drinkHighlights: DrinkHighlight[];
-  onHighlightsChange?: (highlights: DrinkHighlight[]) => void;
 }
 
-const DrinkHighlights: React.FC<DrinkHighlightsProps> = ({ drinkHighlights, onHighlightsChange }) => {
+const DrinkHighlights: React.FC<DrinkHighlightsProps> = ({ drinkHighlights }) => {
   if (!drinkHighlights || drinkHighlights.length === 0) {
     return (
       <div className="text-center p-4 bg-gray-50 rounded-lg">

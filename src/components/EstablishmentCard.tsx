@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -15,16 +16,22 @@ interface EstablishmentCardProps {
     image_url?: string;
     description?: string;
     tags?: string[];
+    distance?: string;
+    cocktailCount?: number;
   };
   onSelect?: (establishment: any) => void;
+  onClick?: () => void;
 }
 
 const EstablishmentCard: React.FC<EstablishmentCardProps> = ({ 
   establishment, 
-  onSelect 
+  onSelect,
+  onClick 
 }) => {
   const handleCardClick = () => {
-    if (onSelect) {
+    if (onClick) {
+      onClick();
+    } else if (onSelect) {
       onSelect(establishment);
     }
   };
