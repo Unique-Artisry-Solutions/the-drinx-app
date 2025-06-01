@@ -40,7 +40,7 @@ const AdminNavigation: React.FC<AdminNavigationProps> = ({
               size="sm"
               className="border-white text-white hover:text-white hover:bg-white/10 flex items-center gap-2"
             >
-              {activeNavItem && activeNavItem.icon && (
+              {activeNavItem && (
                 <>
                   <activeNavItem.icon size={16} className="mr-1" />
                   <span className="text-sm">{activeNavItem.label}</span>
@@ -50,7 +50,7 @@ const AdminNavigation: React.FC<AdminNavigationProps> = ({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56 bg-white z-50">
-            {adminNavItems.map((item) => (
+            {adminNavItems.filter(item => item.showInNav).map((item) => (
               <DropdownMenuItem key={item.path} asChild>
                 <Link
                   to={item.path}
@@ -58,7 +58,7 @@ const AdminNavigation: React.FC<AdminNavigationProps> = ({
                     isActive(item.path) ? 'bg-gray-100' : ''
                   }`}
                 >
-                  {item.icon && <item.icon className="mr-2 h-4 w-4" />}
+                  <item.icon className="mr-2 h-4 w-4" />
                   <span className="text-sm font-medium">{item.label}</span>
                 </Link>
               </DropdownMenuItem>

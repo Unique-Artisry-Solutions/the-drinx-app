@@ -1,10 +1,58 @@
 
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ChevronDown, ChevronRight, ChevronLeft } from 'lucide-react';
-import { adminNavItems } from '@/components/navigation/admin/AdminNavItems';
+import { ChevronDown, ChevronRight, ChevronLeft, BarChart3, Users, Settings, Shield, Award, DollarSign } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+
+interface NavItem {
+  path: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  children?: NavItem[];
+}
+
+const adminNavItems: NavItem[] = [
+  {
+    path: '/admin/dashboard',
+    label: 'Dashboard',
+    icon: BarChart3,
+    children: [
+      {
+        path: '/admin/system-breakdown',
+        label: 'System Overview',
+        icon: Shield
+      }
+    ]
+  },
+  {
+    path: '/admin/rewards',
+    label: 'Rewards',
+    icon: Award,
+    children: [
+      {
+        path: '/admin/rewards',
+        label: 'Rewards Admin',
+        icon: Award
+      },
+      {
+        path: '/admin/rewards/monitor',
+        label: 'System Monitor',
+        icon: BarChart3
+      }
+    ]
+  },
+  {
+    path: '/admin/users',
+    label: 'Users',
+    icon: Users
+  },
+  {
+    path: '/admin/settings',
+    label: 'Settings',
+    icon: Settings
+  }
+];
 
 const AdminSidebar: React.FC = () => {
   const location = useLocation();
@@ -12,7 +60,7 @@ const AdminSidebar: React.FC = () => {
   const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
   const [collapsed, setCollapsed] = useState<boolean>(false);
   
-  // Initialize expanded categories based on current path and defaults
+  // Initialize expanded categories based on current path
   useEffect(() => {
     const savedExpanded = localStorage.getItem('admin_sidebar_expanded');
     let initialExpanded: string[] = [];
@@ -36,12 +84,8 @@ const AdminSidebar: React.FC = () => {
       }
     });
     
-    // Default expanded categories for better UX
-    const defaultExpanded = [
-      '/admin/dashboard',
-      '/admin/content',
-      '/admin/system-tools',
-    ];
+    // Default expanded categories
+    const defaultExpanded = ['/admin/dashboard', '/admin/rewards'];
     
     const combinedExpanded = Array.from(new Set([
       ...activeCategories,
@@ -74,8 +118,8 @@ const AdminSidebar: React.FC = () => {
       (path !== '/admin/dashboard' && location.pathname.startsWith(path));
   };
   
-  const hasActiveChild = (category: any) => {
-    return category.children?.some((child: any) => isActive(child.path)) || false;
+  const hasActiveChild = (category: NavItem) => {
+    return category.children?.some((child: NavItem) => isActive(child.path)) || false;
   };
 
   const handleNavigation = (path: string) => {
@@ -119,19 +163,19 @@ const AdminSidebar: React.FC = () => {
                 onClick={() => collapsed ? toggleCollapse() : toggleCategory(category.path)}
                 title={collapsed ? category.label : undefined}
               >
-                {React.createElement(category.icon, { 
-                  className: cn("h-5 w-5", !collapsed && "mr-2 opacity-70") 
-                })}
+                <category.icon className={cn("h-5 w-5", !collapsed && "mr-2 opacity-70")} />
                 {!collapsed && (
                   <>
                     <span className="flex-1 truncate">{category.label}</span>
-                    <div className="ml-auto">
-                      {isExpanded ? (
-                        <ChevronDown className="h-4 w-4 opacity-70" />
-                      ) : (
-                        <ChevronRight className="h-4 w-4 opacity-70" />
-                      )}
-                    </div>
+                    {category.children && (
+                      <div className="ml-auto">
+                        {isExpanded ? (
+                          <ChevronDown className="h-4 w-4 opacity-70" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4 opacity-70" />
+                        )}
+                      </div>
+                    )}
                   </>
                 )}
               </button>
@@ -150,9 +194,7 @@ const AdminSidebar: React.FC = () => {
                       )}
                       title={collapsed ? item.label : undefined}
                     >
-                      {React.createElement(item.icon, { 
-                        className: "h-4 w-4 mr-2" 
-                      })}
+                      <item.icon className="h-4 w-4 mr-2" />
                       <span className="truncate">{item.label}</span>
                     </button>
                   ))}
