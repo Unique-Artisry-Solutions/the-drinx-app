@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -7,7 +7,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { DateRange } from 'react-day-picker';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { format } from 'date-fns';
-import { CalendarIcon, Download, BarChart } from 'lucide-react';
+import { CalendarIcon, Download } from 'lucide-react';
 import { useAudienceSegments } from '@/hooks/useAudienceSegments';
 import { SegmentPerformanceMetrics } from './SegmentPerformanceMetrics';
 import { SegmentOverlapAnalysis } from './SegmentOverlapAnalysis';

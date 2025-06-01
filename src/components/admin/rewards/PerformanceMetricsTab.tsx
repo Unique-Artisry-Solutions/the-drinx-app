@@ -1,9 +1,8 @@
 
-import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Activity, TrendingUp, Clock } from 'lucide-react';
+import { Activity, TrendingUp } from 'lucide-react';
 
 const PerformanceMetricsTab = () => {
   // Mock performance data

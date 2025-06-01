@@ -5,15 +5,12 @@ import { Separator } from '@/components/ui/separator';
 import AdminTopNavigation from '@/components/navigation/AdminTopNavigation';
 import AdminFooter from '@/components/admin/AdminFooter';
 import { Toaster } from '@/components/ui/toaster';
-import { useAuth } from '@/contexts/auth';
 
 interface AdminLayoutProps {
   children?: React.ReactNode;
 }
 
 const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
-  const { user } = useAuth();
-
   const handleLogout = () => {
     console.log('Admin logout requested');
   };
