@@ -9,6 +9,20 @@ import { AudienceSegmentList } from '@/components/admin/audience/AudienceSegment
 
 export function AudienceManagementTab() {
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [segments] = useState([]);
+  const [isLoading] = useState(false);
+
+  const handleSubmit = () => {
+    setShowCreateForm(false);
+  };
+
+  const handleEdit = () => {
+    // Handle edit logic
+  };
+
+  const handleDelete = () => {
+    // Handle delete logic
+  };
 
   return (
     <div className="space-y-6">
@@ -36,11 +50,17 @@ export function AudienceManagementTab() {
               <CardContent>
                 <AudienceSegmentForm 
                   onCancel={() => setShowCreateForm(false)}
+                  onSubmit={handleSubmit}
                 />
               </CardContent>
             </Card>
           ) : (
-            <AudienceSegmentList />
+            <AudienceSegmentList 
+              segments={segments}
+              isLoading={isLoading}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+            />
           )}
         </TabsContent>
         
