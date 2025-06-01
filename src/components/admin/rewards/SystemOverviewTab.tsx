@@ -1,93 +1,108 @@
 
-import React from 'react';
-import { TrendingUp, CircleCheck } from "lucide-react";
-import { RewardsSystemMonitor, SystemHealthMetric } from '@/lib/rewards/system/RewardsSystemMonitor';
-import { useQuery } from '@tanstack/react-query';
-import AnalyticsMetricCard from '@/components/charts/AnalyticsMetricCard';
-import { toast } from 'sonner';
-import { SystemHealthCard } from './system-overview/SystemHealthCard';
-import { PerformanceTestCard } from './system-overview/PerformanceTestCard';
-import { useAnalyticsExport } from '@/hooks/useAnalyticsExport';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { SystemHealthMetric } from '@/components/admin/rewards/system-overview/SystemHealthCard';
+import { PerformanceTestCard } from '@/components/admin/rewards/system-overview/PerformanceTestCard';
 
 const SystemOverviewTab = () => {
-  const { exportAnalytics } = useAnalyticsExport();
-  
-  const { data: healthMetrics, isLoading: healthLoading } = useQuery({
-    queryKey: ['systemHealth'],
-    queryFn: RewardsSystemMonitor.getSystemHealth,
-    refetchInterval: 30000 // Refresh every 30 seconds
-  });
+  // Mock system health data with proper typing
+  const systemHealth: SystemHealthMetric[] = [
+    {
+      name: 'Database Performance',
+      value: 95,
+      status: 'healthy',
+      description: 'Query response times within acceptable limits'
+    },
+    {
+      name: 'Cache Hit Rate',
+      value: 87,
+      status: 'healthy', 
+      description: 'Cache performance is optimal'
+    },
+    {
+      name: 'Transaction Processing',
+      value: 72,
+      status: 'warning',
+      description: 'Some delays in transaction processing'
+    },
+    {
+      name: 'System Load',
+      value: 45,
+      status: 'healthy',
+      description: 'Server resources are well utilized'
+    }
+  ];
 
-  const { 
-    data: performanceTests, 
-    isLoading: testLoading, 
-    error: testError, 
-    refetch: refetchTests 
-  } = useQuery({
-    queryKey: ['performanceTest'],
-    queryFn: RewardsSystemMonitor.runPerformanceTests,
-  });
-
-  const handleRefreshTests = () => {
-    toast.info("Refreshing performance tests...");
-    refetchTests();
-  };
-  
-  const handleExportMetrics = () => {
-    if (healthMetrics) {
-      exportAnalytics({
-        healthMetrics,
-        performanceTests,
-        timestamp: new Date().toISOString(),
-      }, 'system_health_metrics');
-    } else {
-      toast.error("No health metrics available to export");
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'healthy': return 'bg-green-100 text-green-800';
+      case 'warning': return 'bg-yellow-100 text-yellow-800';
+      case 'critical': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
-  // Convert performance test results to array format if needed
-  const formattedPerformanceTests = performanceTests 
-    ? Array.isArray(performanceTests) 
-        ? performanceTests 
-        : Object.entries(performanceTests).map(([name, data]) => ({
-            name,
-            duration_ms: data.duration_ms,
-            status: data.status,
-          })) 
-    : null;
-
   return (
-    <div className="grid gap-6">
-      <div className="grid gap-4 md:grid-cols-3">
-        <SystemHealthCard 
-          healthMetrics={healthMetrics}
-          isLoading={healthLoading}
-        />
-
-        <AnalyticsMetricCard 
-          title="Active Users"
-          value="1,245"
-          icon={TrendingUp}
-          iconColor="text-blue-500"
-          change={12.5}
-        />
-
-        <AnalyticsMetricCard 
-          title="Transaction Success Rate" 
-          value="99.2%"
-          icon={CircleCheck}
-          iconColor="text-green-500"
-          change={0.8}
-        />
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {systemHealth.map((metric) => {
+          // Ensure metric is not null or undefined
+          const safeMetric: SystemHealthMetric = metric || {
+            name: 'Unknown Metric',
+            value: 0,
+            status: 'unknown',
+            description: 'No data available'
+          };
+          
+          return (
+            <Card key={safeMetric.name}>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium flex items-center justify-between">
+                  {safeMetric.name}
+                  <Badge className={getStatusColor(safeMetric.status)}>
+                    {safeMetric.status}
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{safeMetric.value}%</div>
+                <CardDescription className="text-xs mt-1">
+                  {safeMetric.description}
+                </CardDescription>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
-      <PerformanceTestCard
-        performanceTest={formattedPerformanceTests}
-        isLoading={testLoading}
-        error={testError}
-        onRefresh={handleRefreshTests}
-        onExport={handleExportMetrics}
-      />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>System Status</CardTitle>
+            <CardDescription>
+              Overall system health and performance metrics
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span>Uptime</span>
+                <Badge className="bg-green-100 text-green-800">99.9%</Badge>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Active Users</span>
+                <span className="font-medium">1,247</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Transactions Today</span>
+                <span className="font-medium">3,892</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <PerformanceTestCard />
+      </div>
     </div>
   );
 };

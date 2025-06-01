@@ -91,13 +91,19 @@ const EstablishmentList: React.FC<EstablishmentListProps> = ({
               className={`relative ${selectedEstablishment === establishment.id ? 'animate-pulse-subtle' : ''}`}
             >
               <EstablishmentCard 
-                id={establishment.id} 
-                name={establishment.name} 
-                address={establishment.address} 
-                distance={establishment.distance} 
-                cocktailCount={establishment.cocktailCount} 
-                image={establishment.image} 
-                onClick={() => handleEstablishmentClick(establishment.id)} 
+                establishment={{
+                  id: establishment.id,
+                  name: establishment.name,
+                  address: establishment.address,
+                  description: '', // Add default description
+                  is_verified: false // Add default verification status
+                }}
+                distance={establishment.distance}
+                onClick={() => handleEstablishmentClick(establishment.id)}
+                showDistance={true}
+                showRating={true}
+                variant="default"
+                isLightTheme={false}
               />
               
               <Button 
