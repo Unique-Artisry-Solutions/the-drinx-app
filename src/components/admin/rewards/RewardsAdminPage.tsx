@@ -1,6 +1,6 @@
 
-import React, { useState, useEffect } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useState } from 'react';
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RewardProgramConfig } from './config/RewardProgramConfig';
 import { BulkOperationsInterface } from './bulk/BulkOperationsInterface';
 import { RewardRulesManagement } from './rules/RewardRulesManagement';
@@ -13,7 +13,7 @@ import { TierManagementTab } from './tiers/TierManagementTab';
 import { RewardOfferingsTab } from './offerings/RewardOfferingsTab';
 import { CampaignManagementTab } from './campaigns/CampaignManagementTab';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ChevronDown, ListPlus } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -31,7 +31,6 @@ interface TabOption {
 export function RewardsAdminPage() {
   const [activeTab, setActiveTab] = useState('overview');
   const isMobile = useMediaQuery("(max-width: 640px)");
-  const isTablet = useMediaQuery("(min-width: 641px) and (max-width: 1024px)");
   
   // Primary tabs to show on tablet view (most commonly used)
   const primaryTabs: TabOption[] = [

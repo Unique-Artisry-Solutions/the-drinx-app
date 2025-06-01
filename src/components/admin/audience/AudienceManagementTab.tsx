@@ -1,11 +1,11 @@
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus } from 'lucide-react';
 import { AudienceSegmentForm } from '@/components/admin/audience/AudienceSegmentForm';
-import AudienceSegmentList from '@/components/admin/audience/AudienceSegmentList';
+import { AudienceSegmentList } from '@/components/admin/audience/AudienceSegmentList';
 
 export function AudienceManagementTab() {
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -36,7 +36,6 @@ export function AudienceManagementTab() {
               <CardContent>
                 <AudienceSegmentForm 
                   onCancel={() => setShowCreateForm(false)}
-                  onSuccess={() => setShowCreateForm(false)}
                 />
               </CardContent>
             </Card>

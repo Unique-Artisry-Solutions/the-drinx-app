@@ -1,8 +1,8 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
 import { 
   CheckCircle, 
   AlertTriangle, 
@@ -13,7 +13,6 @@ import {
 } from 'lucide-react';
 import { useAdaptiveSubscriptions } from '@/hooks/useAdaptiveSubscriptions';
 import { FollowerComponentProps } from '@/types/FollowerComponentTypes';
-import FollowerErrorBoundary from './FollowerErrorBoundary';
 
 interface FollowerSystemHealthMonitorProps extends FollowerComponentProps {
   showDetails?: boolean;
@@ -71,9 +70,9 @@ const FollowerSystemHealthMonitor: React.FC<FollowerSystemHealthMonitorProps> = 
             <Database className="h-5 w-5" />
             System Health
           </span>
-          <Button variant="ghost" size="sm" onClick={handleRefresh}>
+          <button onClick={handleRefresh} className="p-1 hover:bg-gray-100 rounded">
             <RefreshCw className="h-4 w-4" />
-          </Button>
+          </button>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
