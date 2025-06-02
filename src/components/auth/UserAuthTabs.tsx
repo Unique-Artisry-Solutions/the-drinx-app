@@ -1,31 +1,52 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import LoginForm from './LoginForm';
 import SignupForm from './SignupForm';
-import { UserAuthProps } from './types';
+import UserTypeSelector from './UserTypeSelector';
 
-const UserAuthTabs: React.FC<UserAuthProps> = ({ 
-  onSuccess,
-  onClose,
-  defaultTab = 'login',
-  userType = 'individual'
-}) => {
+interface UserAuthTabsProps {
+  defaultTab?: 'login' | 'signup';
+}
+
+const UserAuthTabs: React.FC<UserAuthTabsProps> = ({ defaultTab = 'login' }) => {
+  const [userType, setUserType] = useState<'individual' | 'establishment' | 'promoter'>('individual');
+
   return (
-    <Tabs defaultValue={defaultTab} className="w-full">
-      <TabsList className="grid w-full grid-cols-2">
-        <TabsTrigger value="login">Login</TabsTrigger>
-        <TabsTrigger value="signup">Sign up</TabsTrigger>
-      </TabsList>
-      
-      <TabsContent value="login">
-        <LoginForm onClose={onClose} onSuccess={onSuccess} userType={userType} />
-      </TabsContent>
-      
-      <TabsContent value="signup">
-        <SignupForm onSuccess={onSuccess} onClose={onClose} userType={userType} />
-      </TabsContent>
-    </Tabs>
+    <div className="w-full max-w-md mx-auto">
+      <Tabs defaultValue={defaultTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="login">Login</TabsTrigger>
+          <TabsTrigger value="signup">Sign Up</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="login">
+          <LoginForm />
+        </TabsContent>
+        
+        <TabsContent value="signup">
+          <div className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Choose Account Type</CardTitle>
+                <CardDescription>
+                  Select the type of account you want to create
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <UserTypeSelector
+                  userType={userType}
+                  onUserTypeChange={setUserType}
+                />
+              </CardContent>
+            </Card>
+            
+            <SignupForm userType={userType} />
+          </div>
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 };
 

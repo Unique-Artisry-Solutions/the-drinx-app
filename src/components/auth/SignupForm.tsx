@@ -1,240 +1,136 @@
-import React, { useState } from 'react';
-import { Input } from '@/components/ui/input';
-import { CardContent, CardFooter } from '@/components/ui/card';
-import { debouncedToast } from '@/utils/debouncedToast';
-import AuthButton from './AuthButton';
-import { useAuth } from '@/contexts/auth/AuthProvider';
-import SignupConfirmationModal from './SignupConfirmationModal';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { supabase } from '@/lib/supabase';
-import { useAuthLoadingStates } from '@/hooks/useAuthLoadingStates';
 
-interface SignupFormProps {
-  onSuccess?: () => void;
-  onClose?: () => void;
-  userType?: 'individual' | 'establishment' | 'promoter' | 'admin';
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useAuth } from '@/contexts/auth/AuthProvider';
+import { useToast } from '@/hooks/use-toast';
+
+export interface SignupFormProps {
+  userType: 'individual' | 'establishment' | 'promoter';
 }
 
-const SignupForm: React.FC<SignupFormProps> = ({ 
-  onSuccess, 
-  onClose,
-  userType: initialUserType = 'individual'
-}) => {
+const SignupForm: React.FC<SignupFormProps> = ({ userType }) => {
   const [email, setEmail] = useState('');
-  const [name, setName] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [username, setUsername] = useState('');
-  const [selectedUserType, setSelectedUserType] = useState<'individual' | 'establishment' | 'promoter' | 'admin'>(initialUserType);
-  const [formError, setFormError] = useState('');
-  const [showConfirmationModal, setShowConfirmationModal] = useState(false);
-  const { signUp, isLoading, navigationReady } = useAuth();
-  const { 
-    setSigningUp, 
-    shouldPreventInteraction, 
-    getLoadingMessage,
-    loadingStates 
-  } = useAuthLoadingStates();
+  const [isLoading, setIsLoading] = useState(false);
+  
+  const { signUp } = useAuth();
+  const { toast } = useToast();
 
-  const handleUserTypeChange = (value: string) => {
-    setSelectedUserType(value as 'individual' | 'establishment' | 'promoter' | 'admin');
-  };
-
-  const handleSignup = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setFormError('');
-    setSigningUp(true);
     
-    console.log('Signup attempt:', { 
-      email, 
-      username, 
-      userType: selectedUserType 
-    });
+    if (password !== confirmPassword) {
+      toast({
+        title: 'Error',
+        description: 'Passwords do not match',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsLoading(true);
     
     try {
-      const metadata = {
-        name,
+      await signUp(email, password, {
         username,
-        user_type: selectedUserType
-      };
-      
-      const redirectTo = `${window.location.origin}/?email_confirmed=true`;
-      
-      const result = await signUp({
-        email,
-        password,
-        data: metadata,
-        emailRedirectTo: redirectTo
+        user_type: userType,
+        display_name: username
       });
       
-      if (result.error) {
-        throw result.error;
-      }
-      
-      if (email === 'jacksonmcfarland14@gmail.com') {
-        await supabase.rpc('initialize_admin_roles');
-        console.log('Admin roles initialized');
-      }
-      
-      setShowConfirmationModal(true);
-      
-      debouncedToast.success(
-        'Signup Successful',
-        'Please check your email to verify your account.',
-        { duration: 3000 }
-      );
-      
-      // Only call onSuccess callback if provided (for modal use cases)
-      if (onSuccess) {
-        onSuccess();
-      }
-      
-    } catch (error: any) {
-      const errorMessage = error.message || 'Failed to sign up';
-      setFormError(errorMessage);
-      
-      debouncedToast.error(
-        'Signup Failed',
-        errorMessage,
-        { duration: 5000 }
-      );
+      toast({
+        title: 'Success',
+        description: 'Account created successfully! Please check your email to verify your account.',
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to create account',
+        variant: 'destructive',
+      });
     } finally {
-      setSigningUp(false);
+      setIsLoading(false);
     }
   };
 
-  // Enhanced interaction prevention
-  const canSubmit = navigationReady && !isLoading && !shouldPreventInteraction();
-  const currentLoadingMessage = getLoadingMessage();
+  const getUserTypeLabel = (type: string) => {
+    switch (type) {
+      case 'individual': return 'Individual User';
+      case 'establishment': return 'Establishment Owner';
+      case 'promoter': return 'Event Promoter';
+      default: return 'User';
+    }
+  };
 
   return (
-    <>
-      <form onSubmit={handleSignup}>
-        <CardContent className="space-y-4 pt-6">
+    <Card className="w-full max-w-md">
+      <CardHeader>
+        <CardTitle>Create Account</CardTitle>
+        <CardDescription>
+          Sign up as {getUserTypeLabel(userType)}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium" htmlFor="name">
-              Display Name
-            </label>
-            <Input
-              id="name"
-              placeholder="Enter your name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              className="border-spiritless-pink/20 focus-visible:ring-spiritless-pink"
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <label className="text-sm font-medium" htmlFor="username">
-              Username
-            </label>
+            <Label htmlFor="username">Username</Label>
             <Input
               id="username"
-              placeholder="Choose a username"
+              type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               required
-              className="border-spiritless-pink/20 focus-visible:ring-spiritless-pink"
             />
           </div>
           
           <div className="space-y-2">
-            <label className="text-sm font-medium" htmlFor="signup-email">
-              Email
-            </label>
+            <Label htmlFor="email">Email</Label>
             <Input
-              id="signup-email"
+              id="email"
               type="email"
-              placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="border-spiritless-pink/20 focus-visible:ring-spiritless-pink"
             />
           </div>
           
           <div className="space-y-2">
-            <label className="text-sm font-medium" htmlFor="signup-password">
-              Password
-            </label>
+            <Label htmlFor="password">Password</Label>
             <Input
-              id="signup-password"
+              id="password"
               type="password"
-              placeholder="Create a password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="border-spiritless-pink/20 focus-visible:ring-spiritless-pink"
             />
           </div>
-
+          
           <div className="space-y-2">
-            <label className="text-sm font-medium" htmlFor="user-type">
-              Account Type
-            </label>
-            <Select value={selectedUserType} onValueChange={handleUserTypeChange}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select your account type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="individual">Personal Account</SelectItem>
-                <SelectItem value="promoter">Promoter Account</SelectItem>
-                <SelectItem value="establishment">Business Account</SelectItem>
-                <SelectItem value="admin">Admin Account</SelectItem>
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-muted-foreground">
-              Select the type of account you want to create
-            </p>
+            <Label htmlFor="confirmPassword">Confirm Password</Label>
+            <Input
+              id="confirmPassword"
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+            />
           </div>
           
-          {formError && (
-            <div className="text-red-500 text-sm mt-2">{formError}</div>
-          )}
-          
-          {currentLoadingMessage && (
-            <div className="text-blue-600 text-sm mt-2 flex items-center">
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
-              {currentLoadingMessage}
-            </div>
-          )}
-        </CardContent>
-        
-        <CardFooter className="flex flex-col gap-4">
-          <AuthButton
-            type="submit"
-            isLoading={!canSubmit}
-            disabled={!canSubmit}
-            className={`w-full ${selectedUserType === 'individual' ? 'bg-spiritless-pink hover:bg-spiritless-pink/90' : selectedUserType === 'promoter' ? 'bg-purple-600 hover:bg-purple-700' : 'bg-spiritless-green hover:bg-spiritless-green/90'} text-white`}
+          <Button 
+            type="submit" 
+            className="w-full" 
+            disabled={isLoading}
           >
-            {!canSubmit ? (currentLoadingMessage || 'Creating account...') : `Create ${selectedUserType === 'establishment' ? 'Business' : selectedUserType === 'promoter' ? 'Promoter' : 'Personal'} Account`}
-          </AuthButton>
-          
-          <p className="text-xs text-center text-muted-foreground">
-            By signing up, you'll receive a verification email to confirm your account
-          </p>
-          
-          {onClose && (
-            <AuthButton
-              type="button"
-              variant="outline"
-              onClick={onClose}
-              isLoading={false}
-              disabled={shouldPreventInteraction()}
-              className="w-full border-spiritless-orange text-spiritless-orange hover:bg-spiritless-orange/10"
-            >
-              Cancel
-            </AuthButton>
-          )}
-        </CardFooter>
-      </form>
-
-      <SignupConfirmationModal 
-        isOpen={showConfirmationModal} 
-        onClose={() => setShowConfirmationModal(false)}
-        email={email}
-      />
-    </>
+            {isLoading ? 'Creating Account...' : 'Create Account'}
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
   );
 };
 
