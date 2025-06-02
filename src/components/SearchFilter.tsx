@@ -1,144 +1,178 @@
 
-import React, { useState, useEffect, useRef } from 'react';
-import { SlidersHorizontal } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { createFuzzySearch, extractSearchSuggestions } from '@/utils/searchUtils';
-import Fuse from 'fuse.js';
-import SearchInput from './search/SearchInput';
-import FilterPanel from './search/FilterPanel';
+import React, { useState, useMemo } from 'react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Search, Filter, X } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
-export interface SearchFilterProps {
-  onSearch: (query: string) => void;
-  onFilterChange: (filters: any) => void;
-  onApplyFilters: () => void;
+interface FilterOption {
+  value: string;
+  label: string;
+}
+
+interface SearchFilterProps {
+  data: any[];
+  onFilterChange: (filteredData: any[]) => void;
+  searchFields?: string[];
+  filterOptions?: FilterOption[];
+  placeholder?: string;
   className?: string;
-  initialSearchTerm?: string;
-  cocktails?: any[];
-  establishments?: any[];
 }
 
 const SearchFilter: React.FC<SearchFilterProps> = ({
-  onSearch,
+  data,
   onFilterChange,
-  onApplyFilters,
-  className,
-  initialSearchTerm = '',
-  cocktails = [],
-  establishments = [],
+  searchFields = ['name'],
+  filterOptions = [],
+  placeholder = "Search...",
+  className = ""
 }) => {
-  const [query, setQuery] = useState(initialSearchTerm);
-  const [showFilters, setShowFilters] = useState(false);
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 25]);
-  const [distance, setDistance] = useState<number>(10);
-  const [suggestions, setSuggestions] = useState<Array<{value: string; label: string; type: 'cocktail' | 'establishment' | 'ingredient'}>>([]);
-  const [fuseInstance, setFuseInstance] = useState<Fuse<any> | null>(null);
-  const searchRef = useRef<HTMLDivElement>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [activeFilters, setActiveFilters] = useState<string[]>([]);
 
-  // Initialize fuzzy search when cocktails or establishments change
-  useEffect(() => {
-    const cocktailItems = cocktails.length > 0 ? cocktails : []; 
-    const establishmentItems = establishments.length > 0 ? establishments : [];
-    
-    if (cocktailItems.length > 0 || establishmentItems.length > 0) {
-      const searchItems = [
-        ...cocktailItems.map(c => ({
-          ...c,
-          type: 'cocktail',
-        })),
-        ...establishmentItems.map(e => ({
-          ...e,
-          type: 'establishment',
-        })),
-      ];
-      
-      setFuseInstance(createFuzzySearch(searchItems));
-      
-      const extractedSuggestions = extractSearchSuggestions(cocktailItems, establishmentItems);
-      setSuggestions(extractedSuggestions);
+  const filteredData = useMemo(() => {
+    let result = data;
+
+    // Apply search filter
+    if (searchTerm.trim()) {
+      const searchLower = searchTerm.toLowerCase();
+      result = result.filter(item =>
+        searchFields.some(field => {
+          const value = item[field];
+          return value && value.toString().toLowerCase().includes(searchLower);
+        })
+      );
     }
-  }, [cocktails, establishments]);
 
-  useEffect(() => {
-    if (initialSearchTerm !== query) {
-      setQuery(initialSearchTerm);
+    // Apply active filters
+    if (activeFilters.length > 0) {
+      result = result.filter(item =>
+        activeFilters.every(filter => {
+          // Basic filter logic - can be customized based on your needs
+          return item.category === filter || item.type === filter;
+        })
+      );
     }
-  }, [initialSearchTerm]);
 
-  // Handle clicks outside the search component
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
-        setShowFilters(false);
-      }
-    };
+    return result;
+  }, [data, searchTerm, activeFilters, searchFields]);
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
+  React.useEffect(() => {
+    onFilterChange(filteredData);
+  }, [filteredData, onFilterChange]);
 
-  const handleSearch = (value: string) => {
-    console.log('SearchFilter - handleSearch called with:', value);
-    onSearch(value);
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
   };
 
-  const handleFilterChange = () => {
-    onFilterChange({
-      priceRange,
-      distance,
-    });
+  const addFilter = (filterValue: string) => {
+    if (!activeFilters.includes(filterValue)) {
+      setActiveFilters([...activeFilters, filterValue]);
+    }
   };
 
-  const handleApplyFilters = () => {
-    console.log('SearchFilter - applying filters:', { priceRange, distance });
-    handleFilterChange();
-    onApplyFilters();
-    setShowFilters(false);
+  const removeFilter = (filterValue: string) => {
+    setActiveFilters(activeFilters.filter(f => f !== filterValue));
   };
 
-  const clearSearch = () => {
-    setQuery('');
-    onSearch('');
+  const clearAllFilters = () => {
+    setSearchTerm('');
+    setActiveFilters([]);
   };
 
   return (
-    <div className={cn("w-full", className)} ref={searchRef}>
-      <div className="relative">
-        <SearchInput
-          value={query}
-          onChange={setQuery}
-          onSearch={handleSearch}
-          onClear={clearSearch}
-          suggestions={suggestions}
-        />
-        <button
-          type="button"
-          onClick={() => {
-            console.log('Filter button clicked, current state:', showFilters);
-            setShowFilters(!showFilters);
-          }}
-          className={cn(
-            "absolute right-3 top-1/2 transform -translate-y-1/2 p-2 rounded-full transition-colors",
-            "hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary",
-            showFilters ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+    <Card className={className}>
+      <CardHeader className="pb-4">
+        <CardTitle className="text-lg">Search & Filter</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          {/* Search Input */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              type="text"
+              placeholder={placeholder}
+              value={searchTerm}
+              onChange={handleSearchChange}
+              className="pl-10"
+            />
+          </div>
+
+          {/* Filter Dropdown */}
+          {filterOptions.length > 0 && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="w-full justify-start">
+                  <Filter className="h-4 w-4 mr-2" />
+                  Add Filter
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56">
+                {filterOptions.map((option) => (
+                  <DropdownMenuItem
+                    key={option.value}
+                    onClick={() => addFilter(option.value)}
+                    disabled={activeFilters.includes(option.value)}
+                  >
+                    {option.label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
-          aria-label="Toggle filters"
-        >
-          <SlidersHorizontal size={16} />
-        </button>
-      </div>
-      
-      {showFilters && (
-        <FilterPanel
-          priceRange={priceRange}
-          distance={distance}
-          onPriceRangeChange={setPriceRange}
-          onDistanceChange={setDistance}
-          onApplyFilters={handleApplyFilters}
-        />
-      )}
-    </div>
+
+          {/* Active Filters */}
+          {(activeFilters.length > 0 || searchTerm) && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Active Filters:</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearAllFilters}
+                  className="h-6 px-2 text-xs"
+                >
+                  Clear All
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {searchTerm && (
+                  <Badge variant="secondary" className="flex items-center gap-1">
+                    Search: "{searchTerm}"
+                    <X
+                      className="h-3 w-3 cursor-pointer"
+                      onClick={() => setSearchTerm('')}
+                    />
+                  </Badge>
+                )}
+                {activeFilters.map((filter) => (
+                  <Badge key={filter} variant="secondary" className="flex items-center gap-1">
+                    {filterOptions.find(opt => opt.value === filter)?.label || filter}
+                    <X
+                      className="h-3 w-3 cursor-pointer"
+                      onClick={() => removeFilter(filter)}
+                    />
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Results Count */}
+          <div className="text-sm text-gray-600">
+            Showing {filteredData.length} of {data.length} results
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 
