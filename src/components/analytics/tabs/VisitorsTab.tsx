@@ -27,19 +27,14 @@ const mockTrafficData = [
   { name: 'Sun', visitors: 300 },
 ];
 
-export const VisitorsTab: React.FC<VisitorsTabProps> = ({
-  timeRange,
-  data,
-  isLoading
-}) => {
+export const VisitorsTab: React.FC<VisitorsTabProps> = ({ isLoading }) => {
   const renderCustomizedLabel = ({ 
     cx, 
     cy, 
     midAngle, 
     innerRadius, 
     outerRadius, 
-    percent, 
-    name 
+    percent 
   }: {
     cx: number;
     cy: number;
@@ -47,7 +42,6 @@ export const VisitorsTab: React.FC<VisitorsTabProps> = ({
     innerRadius: number;
     outerRadius: number;
     percent: number;
-    name: string;
   }) => {
     const RADIAN = Math.PI / 180;
     const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
@@ -106,7 +100,7 @@ export const VisitorsTab: React.FC<VisitorsTabProps> = ({
                 fill="#8884d8"
                 dataKey="value"
               >
-                {mockDeviceData.map((data, index) => (
+                {mockDeviceData.map((_, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>

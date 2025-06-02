@@ -25,8 +25,8 @@ const FeatureGate: React.FC<FeatureGateProps> = ({
     );
   }
 
-  // Check if the feature exists in context
-  const isFeatureEnabled = featureContext[featureKey] || false;
+  // Use the hasAccess method instead of direct property access
+  const isFeatureEnabled = featureContext.hasAccess(featureKey as any);
 
   if (!isFeatureEnabled) {
     if (showUpgradePrompt) {

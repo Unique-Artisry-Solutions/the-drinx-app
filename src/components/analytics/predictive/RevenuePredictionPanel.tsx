@@ -17,7 +17,7 @@ const mockRevenueData = [
   { month: 'Jun', actual: null, predicted: 21500 },
 ];
 
-const RevenuePredictionPanel: React.FC<RevenuePredictionPanelProps> = ({ data, isLoading }) => {
+const RevenuePredictionPanel: React.FC<RevenuePredictionPanelProps> = ({ isLoading }) => {
   if (isLoading) {
     return (
       <Card className="animate-pulse">

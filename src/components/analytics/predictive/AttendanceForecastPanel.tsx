@@ -18,7 +18,6 @@ const mockForecastData = [
 ];
 
 const AttendanceForecastPanel: React.FC<AttendanceForecastPanelProps> = ({ 
-  data, 
   isLoading 
 }) => {
   if (isLoading) {

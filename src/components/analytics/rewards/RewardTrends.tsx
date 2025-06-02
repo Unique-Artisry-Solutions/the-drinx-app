@@ -16,7 +16,7 @@ const mockTrendData = [
   { month: 'Jun', points: 3800, redemptions: 67 },
 ];
 
-const RewardTrends: React.FC<RewardTrendsProps> = ({ data }) => {
+const RewardTrends: React.FC<RewardTrendsProps> = () => {
   return (
     <Card>
       <CardHeader>

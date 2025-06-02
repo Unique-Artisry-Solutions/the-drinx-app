@@ -15,7 +15,7 @@ const mockContentData = [
   { type: 'Comments', count: 167, engagement: 83 },
 ];
 
-const ContentAnalyticsPanel: React.FC<ContentAnalyticsPanelProps> = ({ data, isLoading }) => {
+const ContentAnalyticsPanel: React.FC<ContentAnalyticsPanelProps> = ({ isLoading }) => {
   if (isLoading) {
     return (
       <Card className="animate-pulse">

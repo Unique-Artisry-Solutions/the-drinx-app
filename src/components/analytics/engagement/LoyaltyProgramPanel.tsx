@@ -17,7 +17,7 @@ const mockLoyaltyData = [
   { tier: 'Platinum', members: 15, points: 12500 },
 ];
 
-const LoyaltyProgramPanel: React.FC<LoyaltyProgramPanelProps> = ({ data, isLoading }) => {
+const LoyaltyProgramPanel: React.FC<LoyaltyProgramPanelProps> = ({ isLoading }) => {
   if (isLoading) {
     return (
       <Card className="animate-pulse">
@@ -48,7 +48,7 @@ const LoyaltyProgramPanel: React.FC<LoyaltyProgramPanelProps> = ({ data, isLoadi
               paddingAngle={5}
               dataKey="members"
             >
-              {mockLoyaltyData.map((entry, index) => (
+              {mockLoyaltyData.map((_, index) => (
                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
               ))}
             </Pie>

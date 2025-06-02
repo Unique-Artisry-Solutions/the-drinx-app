@@ -33,7 +33,6 @@ const mockRecommendations = [
 ];
 
 const PricingRecommendationPanel: React.FC<PricingRecommendationPanelProps> = ({ 
-  data, 
   isLoading 
 }) => {
   if (isLoading) {
