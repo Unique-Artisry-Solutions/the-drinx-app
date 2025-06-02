@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import StarRating from './StarRating';
+import { StarRating } from './StarRating';
 
 interface ReviewFormProps {
   establishmentId: string;
@@ -12,7 +12,6 @@ interface ReviewFormProps {
 }
 
 const ReviewForm: React.FC<ReviewFormProps> = ({
-  establishmentId,
   onSubmit,
   onCancel
 }) => {
@@ -31,12 +30,10 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
     setIsSubmitting(true);
     
     try {
-      // In a real app, this would submit to an API
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       onSubmit?.({ rating, comment });
       
-      // Reset form
       setRating(0);
       setComment('');
     } catch (error) {

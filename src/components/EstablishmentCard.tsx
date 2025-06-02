@@ -3,8 +3,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Star, Clock, Users } from 'lucide-react';
-import { useTheme } from 'next-themes';
+import { MapPin, Star, Clock } from 'lucide-react';
 
 interface EstablishmentCardProps {
   id: string;
@@ -12,8 +11,6 @@ interface EstablishmentCardProps {
   address: string;
   rating: number;
   distance?: number;
-  image?: string;
-  cocktailCount?: number;
   isOpen?: boolean;
 }
 
@@ -23,24 +20,11 @@ const EstablishmentCard: React.FC<EstablishmentCardProps> = ({
   address,
   rating,
   distance,
-  image,
-  cocktailCount = 0,
   isOpen = true
 }) => {
-  const { theme } = useTheme();
-
   return (
     <Link to={`/establishment/${id}`}>
-      <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
-        {image && (
-          <div className="aspect-video overflow-hidden rounded-t-lg">
-            <img 
-              src={image} 
-              alt={name}
-              className="w-full h-full object-cover"
-            />
-          </div>
-        )}
+      <Card className="hover:shadow-md transition-shadow cursor-pointer">
         <CardContent className="p-4">
           <div className="flex justify-between items-start mb-2">
             <h3 className="font-semibold text-lg truncate">{name}</h3>
@@ -61,19 +45,9 @@ const EstablishmentCard: React.FC<EstablishmentCardProps> = ({
                 {distance.toFixed(1)} mi away
               </Badge>
             )}
-            
-            <div className="flex items-center gap-3 text-sm">
-              {cocktailCount > 0 && (
-                <div className="flex items-center text-blue-600">
-                  <Users className="w-4 h-4 mr-1" />
-                  <span>{cocktailCount} drinks</span>
-                </div>
-              )}
-              
-              <div className={`flex items-center ${isOpen ? 'text-green-600' : 'text-red-600'}`}>
-                <Clock className="w-4 h-4 mr-1" />
-                <span>{isOpen ? 'Open' : 'Closed'}</span>
-              </div>
+            <div className={`flex items-center text-sm ${isOpen ? 'text-green-600' : 'text-red-600'}`}>
+              <Clock className="w-4 h-4 mr-1" />
+              <span>{isOpen ? 'Open' : 'Closed'}</span>
             </div>
           </div>
         </CardContent>

@@ -1,19 +1,15 @@
 
 import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useParams } from 'react-router-dom';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import LoyaltyProgramPanel from '@/components/analytics/engagement/LoyaltyProgramPanel';
 import ContentAnalyticsPanel from '@/components/analytics/engagement/ContentAnalyticsPanel';
-import FeedbackAnalyticsPanel from '@/components/analytics/engagement/FeedbackAnalyticsPanel';
 
 interface EngagementTabProps {
   establishmentId?: string;
 }
 
-export const EngagementTab: React.FC<EngagementTabProps> = ({ establishmentId }) => {
-  const { id: urlEstablishmentId } = useParams<{ id: string }>();
-  const effectiveEstablishmentId = establishmentId || urlEstablishmentId || '';
-  
+export const EngagementTab: React.FC<EngagementTabProps> = () => {
   return (
     <div className="space-y-6">
       <p className="text-sm text-muted-foreground mb-4">
@@ -29,15 +25,24 @@ export const EngagementTab: React.FC<EngagementTabProps> = ({ establishmentId })
         </TabsList>
         
         <TabsContent value="loyalty" className="mt-6">
-          <LoyaltyProgramPanel establishmentId={effectiveEstablishmentId} />
+          <LoyaltyProgramPanel />
         </TabsContent>
         
         <TabsContent value="content" className="mt-6">
-          <ContentAnalyticsPanel establishmentId={effectiveEstablishmentId} />
+          <ContentAnalyticsPanel />
         </TabsContent>
         
         <TabsContent value="feedback" className="mt-6">
-          <FeedbackAnalyticsPanel establishmentId={effectiveEstablishmentId} />
+          <Card>
+            <CardHeader>
+              <CardTitle>Customer Feedback Analytics</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">
+                Feedback analytics will be available soon.
+              </p>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

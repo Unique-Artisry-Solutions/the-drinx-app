@@ -6,8 +6,6 @@ interface FeatureGateProps {
   featureKey: string;
   children: React.ReactNode;
   fallback?: React.ReactNode;
-  requiresPremium?: boolean;
-  userType?: 'individual' | 'establishment' | 'promoter' | 'admin';
   showUpgradePrompt?: boolean;
 }
 
@@ -15,13 +13,11 @@ const FeatureGate: React.FC<FeatureGateProps> = ({
   featureKey,
   children,
   fallback = null,
-  requiresPremium = false,
-  userType,
   showUpgradePrompt = false
 }) => {
-  const { features, isLoading } = useFeatures();
+  const featureContext = useFeatures();
 
-  if (isLoading) {
+  if (!featureContext) {
     return (
       <div className="animate-pulse">
         <div className="h-4 bg-gray-200 rounded w-3/4"></div>
@@ -29,7 +25,8 @@ const FeatureGate: React.FC<FeatureGateProps> = ({
     );
   }
 
-  const isFeatureEnabled = features[featureKey];
+  // Check if the feature exists in context
+  const isFeatureEnabled = featureContext[featureKey] || false;
 
   if (!isFeatureEnabled) {
     if (showUpgradePrompt) {
