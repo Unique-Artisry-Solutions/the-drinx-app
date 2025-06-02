@@ -1,117 +1,90 @@
 
 import React from 'react';
-import { format } from 'date-fns';
-import { CalendarIcon, Download } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { DateRange } from 'react-day-picker';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
-import { cn } from '@/lib/utils';
-import { EstablishmentAnalytics, RevenueReport, DrinkPopularity } from '@/services/establishmentAnalyticsService';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { CalendarDays, Users, TrendingUp, DollarSign } from 'lucide-react';
 
 interface AnalyticsHeaderProps {
-  establishmentName: string;
-  date: DateRange | undefined;
-  setDate: React.Dispatch<React.SetStateAction<DateRange | undefined>>;
-  visitorAnalytics: EstablishmentAnalytics[];
-  revenueReports: RevenueReport[];
-  popularDrinks: DrinkPopularity[];
+  timeRange: string;
+  onTimeRangeChange: (value: string) => void;
+  data?: any;
+  isLoading?: boolean;
 }
 
-export const AnalyticsHeader: React.FC<AnalyticsHeaderProps> = ({ 
-  establishmentName, 
-  date, 
-  setDate,
-  visitorAnalytics,
-  revenueReports,
-  popularDrinks
+const AnalyticsHeader: React.FC<AnalyticsHeaderProps> = ({
+  timeRange,
+  onTimeRangeChange,
+  data,
+  isLoading
 }) => {
-  const downloadAnalyticsCSV = () => {
-    const formattedVisitorData = visitorAnalytics.map(data => ({
-      name: format(new Date(data.date), 'MMM d'),
-      visitors: data.total_visitors,
-      returningVisitors: data.returning_visitors,
-      uniqueVisitors: data.unique_visitors,
-      date: data.date
-    }));
-
-    const formattedRevenueData = revenueReports.map(report => ({
-      name: format(new Date(report.month), 'MMM yyyy'),
-      revenue: report.monthly_revenue,
-      transactions: report.transaction_count
-    }));
-    
-    const allData = {
-      visitors: formattedVisitorData,
-      revenue: formattedRevenueData,
-      drinks: popularDrinks
-    };
-    
-    const csvContent = 
-      "data:text/csv;charset=utf-8," + 
-      "Date,Total Visitors,Returning Visitors,Unique Visitors\n" +
-      formattedVisitorData.map(row => 
-        `${row.date},${row.visitors},${row.returningVisitors},${row.uniqueVisitors}`
-      ).join("\n");
-    
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `analytics_${format(new Date(), 'yyyy-MM-dd')}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
+  const stats = [
+    {
+      title: "Total Visits",
+      value: "2,847",
+      change: "+12.3%",
+      icon: Users,
+      trend: "up"
+    },
+    {
+      title: "Revenue",
+      value: "$12,450",
+      change: "+8.1%",
+      icon: DollarSign,
+      trend: "up"
+    },
+    {
+      title: "Avg. Session",
+      value: "4m 32s",
+      change: "+2.4%",
+      icon: CalendarDays,
+      trend: "up"
+    },
+    {
+      title: "Conversion",
+      value: "3.2%",
+      change: "-0.8%",
+      icon: TrendingUp,
+      trend: "down"
+    }
+  ];
 
   return (
-    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-      <h1 className="text-3xl font-bold mb-4 sm:mb-0">
-        {establishmentName ? `${establishmentName} - Analytics` : 'Establishment Analytics'}
-      </h1>
-      
-      <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              id="date"
-              variant={"outline"}
-              className={cn(
-                "w-full justify-start text-left font-normal",
-                !date && "text-muted-foreground"
-              )}
-            >
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              {date?.from ? (
-                date.to ? (
-                  <>
-                    {format(date.from, "LLL dd, y")} -{" "}
-                    {format(date.to, "LLL dd, y")}
-                  </>
-                ) : (
-                  format(date.from, "LLL dd, y")
-                )
-              ) : (
-                <span>Pick a date range</span>
-              )}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="end">
-            <Calendar
-              initialFocus
-              mode="range"
-              defaultMonth={date?.from}
-              selected={date}
-              onSelect={setDate}
-              numberOfMonths={2}
-            />
-          </PopoverContent>
-        </Popover>
-        
-        <Button variant="outline" onClick={downloadAnalyticsCSV}>
-          <Download className="mr-2 h-4 w-4" />
-          Export Data
-        </Button>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold">Analytics Dashboard</h1>
+        <Select value={timeRange} onValueChange={onTimeRangeChange}>
+          <SelectTrigger className="w-40">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="7d">Last 7 days</SelectItem>
+            <SelectItem value="30d">Last 30 days</SelectItem>
+            <SelectItem value="90d">Last 90 days</SelectItem>
+            <SelectItem value="1y">Last year</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {stats.map((stat, index) => (
+          <Card key={index}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                {stat.title}
+              </CardTitle>
+              <stat.icon className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stat.value}</div>
+              <p className={`text-xs ${stat.trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
+                {stat.change} from last period
+              </p>
+            </CardContent>
+          </Card>
+        ))}
       </div>
     </div>
   );
 };
+
+export default AnalyticsHeader;

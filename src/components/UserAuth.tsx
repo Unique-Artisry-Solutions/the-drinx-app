@@ -3,7 +3,13 @@ import React from 'react';
 import { Card } from '@/components/ui/card';
 import UserAuthHeader from './auth/UserAuthHeader';
 import UserAuthTabs from './auth/UserAuthTabs';
-import { UserAuthProps } from './auth/types';
+
+interface UserAuthProps {
+  onSuccess?: () => void;
+  onClose?: () => void;
+  defaultTab?: 'login' | 'signup';
+  userType?: 'individual' | 'establishment' | 'promoter' | 'admin';
+}
 
 const UserAuth: React.FC<UserAuthProps> = ({ 
   onSuccess,

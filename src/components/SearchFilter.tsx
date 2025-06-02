@@ -1,142 +1,204 @@
 
-import React, { useState, useEffect, useRef } from 'react';
-import { SlidersHorizontal } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { createFuzzySearch, extractSearchSuggestions } from '@/utils/searchUtils';
-import Fuse from 'fuse.js';
-import SearchInput from './search/SearchInput';
-import FilterPanel from './search/FilterPanel';
+import React, { useState, useMemo } from 'react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Search, Filter, X } from 'lucide-react';
 
-export interface SearchFilterProps {
-  onSearch: (query: string) => void;
-  onFilterChange: (filters: any) => void;
-  onApplyFilters: () => void;
-  className?: string;
-  initialSearchTerm?: string;
-  cocktails?: any[];
-  establishments?: any[];
+interface SearchFilterProps {
+  onSearch?: (query: string) => void;
+  onFilter?: (filters: FilterOptions) => void;
+  placeholder?: string;
+  showFilters?: boolean;
+}
+
+interface FilterOptions {
+  category?: string;
+  rating?: number;
+  distance?: number;
+  priceRange?: string;
 }
 
 const SearchFilter: React.FC<SearchFilterProps> = ({
   onSearch,
-  onFilterChange,
-  onApplyFilters,
-  className,
-  initialSearchTerm = '',
-  cocktails = [],
-  establishments = [],
+  onFilter,
+  placeholder = "Search...",
+  showFilters = true
 }) => {
-  const [query, setQuery] = useState(initialSearchTerm);
-  const [showFilters, setShowFilters] = useState(false);
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 25]);
-  const [distance, setDistance] = useState<number>(10);
-  const [suggestions, setSuggestions] = useState<Array<{value: string; label: string; type: 'cocktail' | 'establishment' | 'ingredient'}>>([]);
-  const [fuseInstance, setFuseInstance] = useState<Fuse<any> | null>(null);
-  const searchRef = useRef<HTMLDivElement>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showFilterPanel, setShowFilterPanel] = useState(false);
+  const [filters, setFilters] = useState<FilterOptions>({});
 
-  // Initialize fuzzy search when cocktails or establishments change
-  useEffect(() => {
-    const cocktailItems = cocktails.length > 0 ? cocktails : []; 
-    const establishmentItems = establishments.length > 0 ? establishments : [];
-    
-    if (cocktailItems.length > 0 || establishmentItems.length > 0) {
-      const searchItems = [
-        ...cocktailItems.map(c => ({
-          ...c,
-          type: 'cocktail',
-        })),
-        ...establishmentItems.map(e => ({
-          ...e,
-          type: 'establishment',
-        })),
-      ];
-      
-      setFuseInstance(createFuzzySearch(searchItems));
-      
-      const extractedSuggestions = extractSearchSuggestions(cocktailItems, establishmentItems);
-      setSuggestions(extractedSuggestions);
-    }
-  }, [cocktails, establishments]);
-
-  useEffect(() => {
-    if (initialSearchTerm !== query) {
-      setQuery(initialSearchTerm);
-    }
-  }, [initialSearchTerm]);
-
-  // Handle clicks outside the search component
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
-        setShowFilters(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
-
-  const handleSearch = (value: string) => {
-    console.log('SearchFilter - handleSearch called with:', value);
-    onSearch(value);
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    onSearch?.(query);
   };
 
-  const handleFilterChange = () => {
-    onFilterChange({
-      priceRange,
-      distance,
-    });
+  const handleFilterChange = (key: keyof FilterOptions, value: any) => {
+    const newFilters = { ...filters, [key]: value };
+    setFilters(newFilters);
+    onFilter?.(newFilters);
   };
 
-  const handleApplyFilters = () => {
-    console.log('SearchFilter - applying filters:', { priceRange, distance });
-    handleFilterChange();
-    onApplyFilters();
-    setShowFilters(false);
+  const clearFilter = (key: keyof FilterOptions) => {
+    const newFilters = { ...filters };
+    delete newFilters[key];
+    setFilters(newFilters);
+    onFilter?.(newFilters);
   };
 
-  const clearSearch = () => {
-    setQuery('');
-    onSearch('');
-  };
+  const activeFiltersCount = Object.keys(filters).length;
 
   return (
-    <div className={cn("w-full", className)} ref={searchRef}>
-      <div className="relative">
-        <SearchInput
-          value={query}
-          onChange={setQuery}
-          onSearch={handleSearch}
-          onClear={clearSearch}
-          suggestions={suggestions}
-        />
-        <button
-          type="button"
-          onClick={() => {
-            console.log('Filter button clicked, current state:', showFilters);
-            setShowFilters(!showFilters);
-          }}
-          className={cn(
-            "absolute right-3 top-1/2 transform -translate-y-1/2 p-2 rounded-full transition-colors",
-            "hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary",
-            showFilters ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-          )}
-          aria-label="Toggle filters"
-        >
-          <SlidersHorizontal size={16} />
-        </button>
+    <div className="space-y-4">
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <Input
+            value={searchQuery}
+            onChange={(e) => handleSearch(e.target.value)}
+            placeholder={placeholder}
+            className="pl-10"
+          />
+        </div>
+        
+        {showFilters && (
+          <Button
+            variant="outline"
+            onClick={() => setShowFilterPanel(!showFilterPanel)}
+            className="relative"
+          >
+            <Filter className="h-4 w-4 mr-2" />
+            Filters
+            {activeFiltersCount > 0 && (
+              <Badge variant="secondary" className="ml-2 text-xs">
+                {activeFiltersCount}
+              </Badge>
+            )}
+          </Button>
+        )}
       </div>
-      
-      {showFilters && (
-        <FilterPanel
-          priceRange={priceRange}
-          distance={distance}
-          onPriceRangeChange={setPriceRange}
-          onDistanceChange={setDistance}
-          onApplyFilters={handleApplyFilters}
-        />
+
+      {/* Active Filters */}
+      {activeFiltersCount > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {filters.category && (
+            <Badge variant="secondary" className="gap-1">
+              Category: {filters.category}
+              <X 
+                className="h-3 w-3 cursor-pointer" 
+                onClick={() => clearFilter('category')}
+              />
+            </Badge>
+          )}
+          {filters.rating && (
+            <Badge variant="secondary" className="gap-1">
+              Rating: {filters.rating}+ stars
+              <X 
+                className="h-3 w-3 cursor-pointer" 
+                onClick={() => clearFilter('rating')}
+              />
+            </Badge>
+          )}
+          {filters.distance && (
+            <Badge variant="secondary" className="gap-1">
+              Within {filters.distance} miles
+              <X 
+                className="h-3 w-3 cursor-pointer" 
+                onClick={() => clearFilter('distance')}
+              />
+            </Badge>
+          )}
+          {filters.priceRange && (
+            <Badge variant="secondary" className="gap-1">
+              Price: {filters.priceRange}
+              <X 
+                className="h-3 w-3 cursor-pointer" 
+                onClick={() => clearFilter('priceRange')}
+              />
+            </Badge>
+          )}
+        </div>
+      )}
+
+      {/* Filter Panel */}
+      {showFilterPanel && (
+        <div className="p-4 border rounded-lg bg-gray-50 space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div>
+              <label className="text-sm font-medium mb-2 block">Category</label>
+              <Select 
+                value={filters.category || ''} 
+                onValueChange={(value) => handleFilterChange('category', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="All Categories" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="restaurant">Restaurant</SelectItem>
+                  <SelectItem value="bar">Bar</SelectItem>
+                  <SelectItem value="cafe">Cafe</SelectItem>
+                  <SelectItem value="lounge">Lounge</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium mb-2 block">Minimum Rating</label>
+              <Select 
+                value={filters.rating?.toString() || ''} 
+                onValueChange={(value) => handleFilterChange('rating', parseInt(value))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Any Rating" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="4">4+ Stars</SelectItem>
+                  <SelectItem value="3">3+ Stars</SelectItem>
+                  <SelectItem value="2">2+ Stars</SelectItem>
+                  <SelectItem value="1">1+ Stars</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium mb-2 block">Distance</label>
+              <Select 
+                value={filters.distance?.toString() || ''} 
+                onValueChange={(value) => handleFilterChange('distance', parseInt(value))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Any Distance" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">Within 1 mile</SelectItem>
+                  <SelectItem value="5">Within 5 miles</SelectItem>
+                  <SelectItem value="10">Within 10 miles</SelectItem>
+                  <SelectItem value="25">Within 25 miles</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium mb-2 block">Price Range</label>
+              <Select 
+                value={filters.priceRange || ''} 
+                onValueChange={(value) => handleFilterChange('priceRange', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Any Price" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="$">$ - Budget</SelectItem>
+                  <SelectItem value="$$">$$ - Moderate</SelectItem>
+                  <SelectItem value="$$$">$$$ - Expensive</SelectItem>
+                  <SelectItem value="$$$$">$$$$ - Very Expensive</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

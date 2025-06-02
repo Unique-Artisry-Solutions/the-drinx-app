@@ -1,51 +1,31 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { DollarSign, TrendingUp, TrendingDown } from 'lucide-react';
-import type { RevenuePrediction } from '@/services/predictiveAnalyticsService';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface RevenuePredictionPanelProps {
-  prediction: RevenuePrediction | null;
-  isLoading: boolean;
+  data?: any;
+  isLoading?: boolean;
 }
 
-const RevenuePredictionPanel: React.FC<RevenuePredictionPanelProps> = ({
-  prediction,
-  isLoading
-}) => {
+const mockRevenueData = [
+  { month: 'Jan', actual: 12000, predicted: 11800 },
+  { month: 'Feb', actual: 14500, predicted: 14200 },
+  { month: 'Mar', actual: 16800, predicted: 16500 },
+  { month: 'Apr', actual: null, predicted: 18200 },
+  { month: 'May', actual: null, predicted: 19800 },
+  { month: 'Jun', actual: null, predicted: 21500 },
+];
+
+const RevenuePredictionPanel: React.FC<RevenuePredictionPanelProps> = ({ data, isLoading }) => {
   if (isLoading) {
     return (
-      <Card>
+      <Card className="animate-pulse">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <DollarSign className="h-5 w-5" />
-            Revenue Prediction
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Skeleton className="h-8 w-32" />
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-24 w-full" />
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (!prediction) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <DollarSign className="h-5 w-5" />
-            Revenue Prediction
-          </CardTitle>
+          <div className="h-6 bg-gray-200 rounded"></div>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-8 text-muted-foreground">
-            Generate attendance forecast to see revenue prediction
-          </div>
+          <div className="h-64 bg-gray-200 rounded"></div>
         </CardContent>
       </Card>
     );
@@ -54,78 +34,33 @@ const RevenuePredictionPanel: React.FC<RevenuePredictionPanelProps> = ({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <DollarSign className="h-5 w-5" />
-          Revenue Prediction
-        </CardTitle>
+        <CardTitle>Revenue Prediction</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Main Prediction */}
-        <div className="text-center">
-          <div className="text-3xl font-bold text-green-600 mb-2">
-            ${prediction.predictedRevenue.toLocaleString()}
-          </div>
-          <div className="text-sm text-muted-foreground">
-            Predicted revenue
-          </div>
-        </div>
-
-        {/* Scenarios */}
-        <div className="space-y-3">
-          <h4 className="font-medium">Revenue Scenarios</h4>
-          
-          <div className="space-y-2">
-            <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
-              <div className="flex items-center gap-2">
-                <TrendingUp className="h-4 w-4 text-green-600" />
-                <span className="font-medium">Optimistic</span>
-              </div>
-              <div className="font-bold text-green-600">
-                ${prediction.scenarios.optimistic.toLocaleString()}
-              </div>
-            </div>
-            
-            <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
-              <div className="flex items-center gap-2">
-                <span className="font-medium">Realistic</span>
-              </div>
-              <div className="font-bold text-blue-600">
-                ${prediction.scenarios.realistic.toLocaleString()}
-              </div>
-            </div>
-            
-            <div className="flex justify-between items-center p-3 bg-orange-50 rounded-lg">
-              <div className="flex items-center gap-2">
-                <TrendingDown className="h-4 w-4 text-orange-600" />
-                <span className="font-medium">Pessimistic</span>
-              </div>
-              <div className="font-bold text-orange-600">
-                ${prediction.scenarios.pessimistic.toLocaleString()}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Factor Breakdown */}
-        <div className="space-y-3">
-          <h4 className="font-medium">Key Factors</h4>
-          
-          <div className="grid grid-cols-2 gap-3">
-            <div className="bg-gray-50 p-3 rounded-lg">
-              <div className="text-sm font-medium">Avg Ticket Price</div>
-              <div className="text-lg font-bold">
-                ${prediction.factors.ticketPricing.toFixed(0)}
-              </div>
-            </div>
-            
-            <div className="bg-gray-50 p-3 rounded-lg">
-              <div className="text-sm font-medium">Expected Attendance</div>
-              <div className="text-lg font-bold">
-                {prediction.factors.attendanceForecast}
-              </div>
-            </div>
-          </div>
-        </div>
+      <CardContent>
+        <ResponsiveContainer width="100%" height={300}>
+          <LineChart data={mockRevenueData}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="month" />
+            <YAxis />
+            <Tooltip formatter={(value) => [`$${value}`, '']} />
+            <Line 
+              type="monotone" 
+              dataKey="actual" 
+              stroke="#8884d8" 
+              strokeWidth={2}
+              name="Actual Revenue"
+              connectNulls={false}
+            />
+            <Line 
+              type="monotone" 
+              dataKey="predicted" 
+              stroke="#82ca9d" 
+              strokeWidth={2}
+              strokeDasharray="5 5"
+              name="Predicted Revenue"
+            />
+          </LineChart>
+        </ResponsiveContainer>
       </CardContent>
     </Card>
   );

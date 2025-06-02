@@ -1,72 +1,50 @@
 
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
-import AnalyticsLineChart from '@/components/charts/AnalyticsLineChart';
-import { useQuery } from '@tanstack/react-query';
-import { rewardsApi } from '@/lib/rewards/api';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface RewardTrendsProps {
-  establishmentId?: string;
-  period?: 'daily' | 'weekly' | 'monthly';
+  data?: any;
 }
 
-const RewardTrends: React.FC<RewardTrendsProps> = ({ 
-  establishmentId,
-  period = 'weekly'
-}) => {
-  const [selectedPeriod, setSelectedPeriod] = React.useState(period);
-  
-  const { data, isLoading } = useQuery({
-    queryKey: ['rewardTrends', establishmentId, selectedPeriod],
-    queryFn: () => rewardsApi.getRewardAnalytics(establishmentId),
-  });
+const mockTrendData = [
+  { month: 'Jan', points: 2400, redemptions: 45 },
+  { month: 'Feb', points: 1398, redemptions: 32 },
+  { month: 'Mar', points: 9800, redemptions: 78 },
+  { month: 'Apr', points: 3908, redemptions: 56 },
+  { month: 'May', points: 4800, redemptions: 89 },
+  { month: 'Jun', points: 3800, redemptions: 67 },
+];
 
-  const chartData = React.useMemo(() => {
-    if (!data?.timeSeriesData) return [];
-    return data.timeSeriesData.map(item => ({
-      name: item.date,
-      earned: item.earned,
-      redeemed: item.redeemed,
-      net: item.earned - item.redeemed
-    }));
-  }, [data]);
-
+const RewardTrends: React.FC<RewardTrendsProps> = ({ data }) => {
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-base font-medium">Reward Usage Trends</CardTitle>
-        <Select
-          value={selectedPeriod}
-          onValueChange={(value: 'daily' | 'weekly' | 'monthly') => setSelectedPeriod(value)}
-        >
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Select period" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="daily">Daily</SelectItem>
-            <SelectItem value="weekly">Weekly</SelectItem>
-            <SelectItem value="monthly">Monthly</SelectItem>
-          </SelectContent>
-        </Select>
+      <CardHeader>
+        <CardTitle>Reward Program Trends</CardTitle>
       </CardHeader>
       <CardContent>
-        <AnalyticsLineChart
-          title=""
-          data={chartData}
-          series={[
-            { key: 'earned', name: 'Points Earned', color: '#8884d8' },
-            { key: 'redeemed', name: 'Points Redeemed', color: '#82ca9d' },
-            { key: 'net', name: 'Net Change', color: '#ffc658' }
-          ]}
-          height={350}
-        />
+        <ResponsiveContainer width="100%" height={300}>
+          <LineChart data={mockTrendData}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="month" />
+            <YAxis />
+            <Tooltip />
+            <Line 
+              type="monotone" 
+              dataKey="points" 
+              stroke="#8884d8" 
+              strokeWidth={2}
+              name="Points Earned"
+            />
+            <Line 
+              type="monotone" 
+              dataKey="redemptions" 
+              stroke="#82ca9d" 
+              strokeWidth={2}
+              name="Redemptions"
+            />
+          </LineChart>
+        </ResponsiveContainer>
       </CardContent>
     </Card>
   );

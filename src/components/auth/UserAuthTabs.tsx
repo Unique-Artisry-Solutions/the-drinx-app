@@ -8,10 +8,20 @@ import UserTypeSelector from './UserTypeSelector';
 
 interface UserAuthTabsProps {
   defaultTab?: 'login' | 'signup';
+  onSuccess?: () => void;
+  onClose?: () => void;
+  userType?: 'individual' | 'establishment' | 'promoter' | 'admin';
 }
 
-const UserAuthTabs: React.FC<UserAuthTabsProps> = ({ defaultTab = 'login' }) => {
-  const [userType, setUserType] = useState<'individual' | 'establishment' | 'promoter'>('individual');
+const UserAuthTabs: React.FC<UserAuthTabsProps> = ({ 
+  defaultTab = 'login',
+  onSuccess,
+  onClose,
+  userType: initialUserType = 'individual'
+}) => {
+  const [userType, setUserType] = useState<'individual' | 'establishment' | 'promoter'>(
+    initialUserType === 'admin' ? 'individual' : initialUserType
+  );
 
   return (
     <div className="w-full max-w-md mx-auto">
