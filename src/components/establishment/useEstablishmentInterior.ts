@@ -37,6 +37,13 @@ export const useEstablishmentInterior = (initialData?: Partial<EstablishmentData
     images: initialData?.images || [],
   });
 
+  const [isBarCrawlModalOpen, setIsBarCrawlModalOpen] = useState(false);
+  const [hasCheckedIn, setHasCheckedIn] = useState(false);
+  
+  // Mock data for now
+  const activeUsers = 12;
+  const isPromoter = false;
+
   const updateEstablishment = useCallback((field: keyof EstablishmentData, value: any) => {
     setEstablishment((prev: EstablishmentData) => ({
       ...prev,
@@ -67,11 +74,39 @@ export const useEstablishmentInterior = (initialData?: Partial<EstablishmentData
     }));
   }, []);
 
+  const getSortedTopCocktails = useCallback((cocktails: any[]) => {
+    return cocktails.sort((a, b) => (b.rating || 0) - (a.rating || 0)).slice(0, 5);
+  }, []);
+
+  const handleCheckIn = useCallback(() => {
+    setHasCheckedIn(true);
+  }, []);
+
+  const handleBarCrawlRequest = useCallback(() => {
+    setIsBarCrawlModalOpen(true);
+  }, []);
+
+  const formatBusinessHours = useCallback(() => {
+    return establishment.businessHours.map(hour => ({
+      day: hour.day,
+      hours: hour.closed ? 'Closed' : `${hour.open} - ${hour.close}`
+    }));
+  }, [establishment.businessHours]);
+
   return {
     establishment,
     updateEstablishment,
     updateBusinessHours,
     addImage,
     removeImage,
+    isBarCrawlModalOpen,
+    setIsBarCrawlModalOpen,
+    activeUsers,
+    hasCheckedIn,
+    isPromoter,
+    getSortedTopCocktails,
+    handleCheckIn,
+    handleBarCrawlRequest,
+    formatBusinessHours,
   };
 };

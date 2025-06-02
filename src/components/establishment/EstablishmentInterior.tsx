@@ -24,8 +24,7 @@ interface EstablishmentInteriorProps {
 
 const EstablishmentInterior: React.FC<EstablishmentInteriorProps> = ({
   establishment,
-  cocktails,
-  userLocation
+  cocktails
 }) => {
   const { 
     isBarCrawlModalOpen, 
@@ -99,9 +98,7 @@ const EstablishmentInterior: React.FC<EstablishmentInteriorProps> = ({
         
         <div className="space-y-4">
           <LocationCard 
-            establishment={establishment} 
-            userLocation={userLocation}
-            isLightTheme={isLightTheme}
+            establishment={establishment}
           />
           
           {/* Only show the Bar Crawl Information card for promoters */}

@@ -37,7 +37,7 @@ const SignupForm: React.FC<SignupFormProps> = ({ userType, onSuccess }) => {
     setIsLoading(true);
     
     try {
-      await signUp(email, password);
+      await signUp(email);
       
       toast({
         title: 'Success',

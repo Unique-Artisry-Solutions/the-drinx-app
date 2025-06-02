@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -25,8 +26,6 @@ const CartItem: React.FC<CartItemProps> = ({
   onDecrease,
   onRemove
 }) => {
-  const itemTotal = price * quantity;
-
   return (
     <Card className="mb-4">
       <CardContent className="flex items-center justify-between p-4">
