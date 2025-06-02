@@ -1,69 +1,56 @@
 
-import React, { useCallback } from 'react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import React from 'react';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface AnalyticsPieChartProps {
-  data: { name: string; value: number; color?: string; }[];
-  colors?: string[];
+  data: Array<{ name: string; value: number; color?: string; }>;
   title?: string;
   description?: string;
-  onSliceClick?: (entry: { name: string; value: number; }) => void;
   height?: number;
+  colors?: string[];
 }
 
 const AnalyticsPieChart: React.FC<AnalyticsPieChartProps> = ({
   data,
-  colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'],
   title,
   description,
-  onSliceClick,
-  height = 300
+  height = 300,
+  colors = ['#8884d8', '#82ca9d', '#ffc658', '#ff7300', '#8dd1e1']
 }) => {
-  const defaultColors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#14B8A6', '#F97316'];
-  const chartColors = colors?.length ? colors : defaultColors;
-  
-  const handleClick = useCallback((entry: any, index: number) => {
-    if (onSliceClick) {
-      onSliceClick(entry);
-    }
-  }, [onSliceClick]);
-
   return (
-    <div className="w-full">
+    <Card>
       {(title || description) && (
-        <div className="mb-4">
-          {title && <h3 className="text-lg font-semibold mb-1">{title}</h3>}
-          {description && <p className="text-sm text-muted-foreground">{description}</p>}
-        </div>
+        <CardHeader>
+          {title && <CardTitle>{title}</CardTitle>}
+          {description && <CardDescription>{description}</CardDescription>}
+        </CardHeader>
       )}
-      <div style={{ height: `${height}px`, width: '100%' }}>
-        <ResponsiveContainer width="100%" height="100%">
+      <CardContent>
+        <ResponsiveContainer width="100%" height={height}>
           <PieChart>
             <Pie
               data={data}
               cx="50%"
               cy="50%"
-              labelLine={false}
               outerRadius={80}
               fill="#8884d8"
               dataKey="value"
-              nameKey="name"
-              label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-              onClick={handleClick}
+              label
             >
-              {data.map((entry, index) => (
+              {data.map((entry, entryIndex) => (
                 <Cell 
-                  key={`cell-${index}`} 
-                  fill={entry.color || chartColors[index % chartColors.length]} 
+                  key={`cell-${entryIndex}`} 
+                  fill={entry.color || colors[entryIndex % colors.length]} 
                 />
               ))}
             </Pie>
-            <Tooltip formatter={(value) => [`${value}`, 'Value']} />
+            <Tooltip />
             <Legend />
           </PieChart>
         </ResponsiveContainer>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 

@@ -8,8 +8,6 @@ import UserTypeSelector from './UserTypeSelector';
 
 interface UserAuthTabsProps {
   defaultTab?: 'login' | 'signup';
-  onSuccess?: () => void;
-  onClose?: () => void;
   userType?: 'individual' | 'establishment' | 'promoter' | 'admin';
 }
 

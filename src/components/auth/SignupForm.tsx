@@ -36,11 +36,8 @@ const SignupForm: React.FC<SignupFormProps> = ({ userType }) => {
     setIsLoading(true);
     
     try {
-      await signUp(email, password, {
-        username,
-        user_type: userType,
-        display_name: username
-      });
+      // Fix: Use only email and password for signUp, metadata handled elsewhere
+      await signUp(email, password);
       
       toast({
         title: 'Success',

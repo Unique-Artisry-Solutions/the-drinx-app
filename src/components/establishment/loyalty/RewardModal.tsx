@@ -8,26 +8,44 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface RewardModalProps {
-  isOpen: boolean;
-  onClose: () => void;
+  isOpen?: boolean;
+  open?: boolean;
+  onClose?: () => void;
+  onOpenChange?: (open: boolean) => void;
   onSave: (reward: any) => void;
+  onDelete?: () => void;
   editingReward?: any;
+  reward?: any;
+  title?: string;
 }
 
 const RewardModal: React.FC<RewardModalProps> = ({
   isOpen,
+  open,
   onClose,
+  onOpenChange,
   onSave,
-  editingReward
+  onDelete,
+  editingReward,
+  reward,
+  title
 }) => {
+  const isModalOpen = isOpen ?? open ?? false;
+  const modalReward = editingReward ?? reward;
+  
   const [formData, setFormData] = useState({
-    name: editingReward?.name || '',
-    description: editingReward?.description || '',
-    pointsRequired: editingReward?.pointsRequired || '',
-    category: editingReward?.category || 'discount',
-    value: editingReward?.value || '',
-    expirationDays: editingReward?.expirationDays || '30'
+    name: modalReward?.name || '',
+    description: modalReward?.description || '',
+    pointsRequired: modalReward?.pointsRequired || '',
+    category: modalReward?.category || 'discount',
+    value: modalReward?.value || '',
+    expirationDays: modalReward?.expirationDays || '30'
   });
+
+  const handleClose = () => {
+    if (onClose) onClose();
+    if (onOpenChange) onOpenChange(false);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,7 +55,7 @@ const RewardModal: React.FC<RewardModalProps> = ({
       value: parseFloat(formData.value),
       expirationDays: parseInt(formData.expirationDays)
     });
-    onClose();
+    handleClose();
   };
 
   const handleChange = (field: string, value: string) => {
@@ -62,11 +80,11 @@ const RewardModal: React.FC<RewardModalProps> = ({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isModalOpen} onOpenChange={onOpenChange || handleClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>
-            {editingReward ? 'Edit Reward' : 'Create New Reward'}
+            {title || (modalReward ? 'Edit Reward' : 'Create New Reward')}
           </DialogTitle>
         </DialogHeader>
         
@@ -147,11 +165,16 @@ const RewardModal: React.FC<RewardModalProps> = ({
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button type="button" variant="outline" onClick={handleClose}>
               Cancel
             </Button>
+            {onDelete && (
+              <Button type="button" variant="destructive" onClick={onDelete}>
+                Delete
+              </Button>
+            )}
             <Button type="submit">
-              {editingReward ? 'Update' : 'Create'} Reward
+              {modalReward ? 'Update' : 'Create'} Reward
             </Button>
           </DialogFooter>
         </form>

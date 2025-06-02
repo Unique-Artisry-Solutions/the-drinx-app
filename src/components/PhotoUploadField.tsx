@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 interface PhotoUploadFieldProps {
   onPhotosUploaded?: (urls: string[]) => void;
   onPhotoSelect?: (file: File) => void;
+  onPhotoUploaded?: (url: string) => void;
   maxPhotos?: number;
   label?: string;
 }
@@ -14,6 +15,7 @@ interface PhotoUploadFieldProps {
 const PhotoUploadField: React.FC<PhotoUploadFieldProps> = ({
   onPhotosUploaded,
   onPhotoSelect,
+  onPhotoUploaded,
   maxPhotos = 5,
   label = "Upload Photos"
 }) => {
@@ -39,6 +41,11 @@ const PhotoUploadField: React.FC<PhotoUploadFieldProps> = ({
         
         const mockUrl = URL.createObjectURL(file);
         newPhotoUrls.push(mockUrl);
+        
+        // Call onPhotoUploaded for each individual photo
+        if (onPhotoUploaded) {
+          onPhotoUploaded(mockUrl);
+        }
       }
       
       const updatedPhotos = [...uploadedPhotos, ...newPhotoUrls];

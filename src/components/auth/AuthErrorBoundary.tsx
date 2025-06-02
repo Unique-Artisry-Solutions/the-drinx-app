@@ -161,7 +161,7 @@ class AuthErrorBoundary extends Component<Props, State> {
                   Go to Home
                 </Button>
                 
-                {!this.maxRetries && (
+                {!canRetry && (
                   <Button 
                     onClick={() => window.location.reload()}
                     className="w-full"
