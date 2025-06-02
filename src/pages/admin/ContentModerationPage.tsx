@@ -1,22 +1,23 @@
 
-import React from 'react';
-import AdminLayout from '@/components/admin/layout/AdminLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import ContentFlags from '@/components/admin/ContentFlags';
 
 const ContentModerationPage: React.FC = () => {
+  const navigate = useNavigate();
+  
+  // Check if user is authenticated as admin
+  useEffect(() => {
+    const isAdmin = localStorage.getItem('admin_authenticated') === 'true';
+    if (!isAdmin) {
+      navigate('/admin');
+    }
+  }, [navigate]);
+
   return (
-    <AdminLayout>
-      <Card>
-        <CardHeader>
-          <CardTitle>Content Moderation</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">
-            Content moderation features will be implemented here.
-          </p>
-        </CardContent>
-      </Card>
-    </AdminLayout>
+    <div className="container max-w-7xl mx-auto p-4">
+      <ContentFlags />
+    </div>
   );
 };
 

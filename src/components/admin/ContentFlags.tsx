@@ -1,13 +1,22 @@
 
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useContentFlags } from './contentFlags/useContentFlags';
+import FlaggedContentList from './contentFlags/FlaggedContentList';
+import FlagReviewModal from './contentFlags/FlagReviewModal';
 import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
 
 const ContentFlags: React.FC = () => {
-  const handleRefresh = () => {
-    console.log('Refresh content flags');
-  };
+  const {
+    flags,
+    loadingFlags,
+    selectedFlag,
+    setSelectedFlag,
+    isLoading,
+    handleDismiss,
+    handleTakeAction,
+    refetch
+  } = useContentFlags();
 
   return (
     <div className="p-4">
@@ -16,22 +25,31 @@ const ContentFlags: React.FC = () => {
           <h1 className="text-2xl font-bold mb-1">Content Moderation</h1>
           <p className="text-muted-foreground">Review and moderate flagged content</p>
         </div>
-        <Button onClick={handleRefresh} variant="outline" className="flex items-center gap-2">
-          <RefreshCw className="h-4 w-4" />
+        <Button 
+          onClick={() => refetch()} 
+          variant="outline" 
+          className="flex items-center gap-2"
+          disabled={loadingFlags}
+        >
+          <RefreshCw className={`h-4 w-4 ${loadingFlags ? 'animate-spin' : ''}`} />
           Refresh
         </Button>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Content Flags</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">
-            Content moderation features will be implemented here.
-          </p>
-        </CardContent>
-      </Card>
+      <FlaggedContentList
+        flags={flags}
+        isLoading={loadingFlags}
+        loadingStates={isLoading}
+        onDismiss={handleDismiss}
+        onSelectFlag={setSelectedFlag}
+      />
+
+      <FlagReviewModal
+        flag={selectedFlag}
+        onClose={() => setSelectedFlag(null)}
+        onDismiss={handleDismiss}
+        onTakeAction={handleTakeAction}
+      />
     </div>
   );
 };

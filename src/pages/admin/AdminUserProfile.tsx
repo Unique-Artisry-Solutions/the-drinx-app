@@ -1,26 +1,26 @@
-
 import React from 'react';
 import { useParams } from 'react-router-dom';
-import AdminLayout from '@/components/admin/layout/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 const AdminUserProfile: React.FC = () => {
   const { id } = useParams<{ id: string }>();
 
   return (
-    <AdminLayout>
-      <Card>
+    <div className="container mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-6">User Profile</h1>
+      
+      <Card className="mb-6">
         <CardHeader>
-          <CardTitle>User Profile</CardTitle>
+          <CardTitle>User Details</CardTitle>
         </CardHeader>
         <CardContent>
           <p>User ID: {id}</p>
-          <p className="text-muted-foreground">
-            User profile details will be implemented here.
-          </p>
+          <p>This page displays detailed information about a specific user.</p>
         </CardContent>
       </Card>
-    </AdminLayout>
+      
+      {/* Additional user profile content would go here */}
+    </div>
   );
 };
 

@@ -1,22 +1,19 @@
 
 import React from 'react';
-import AdminLayout from '@/components/admin/layout/AdminLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import ResponsiveLayout from '@/components/layout/ResponsiveLayout';
+import SystemBreakdownContent from '@/components/admin/systemBreakdown/SystemBreakdownContent';
+import RouteTestRunner from '@/components/development/RouteTestRunner';
 
 const SystemBreakdownPage: React.FC = () => {
   return (
-    <AdminLayout>
-      <Card>
-        <CardHeader>
-          <CardTitle>System Breakdown</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">
-            System breakdown and analytics features will be implemented here.
-          </p>
-        </CardContent>
-      </Card>
-    </AdminLayout>
+    <ResponsiveLayout>
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
+        <SystemBreakdownContent />
+        
+        {/* Add Route Testing Component in Development */}
+        <RouteTestRunner />
+      </div>
+    </ResponsiveLayout>
   );
 };
 

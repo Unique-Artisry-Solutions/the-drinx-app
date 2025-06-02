@@ -10,6 +10,7 @@
  */
 
 import { BaseModalProps } from '@/types/shared/BaseInterfaces';
+import { BaseFormProps, BaseFormDialogActionsProps } from '@/types/shared/FormInterfaces';
 
 // ===== AUTH DATA STRUCTURES =====
 // Shared auth form data interface
@@ -40,12 +41,11 @@ export interface UserAuthProps extends Partial<BaseModalProps> {
   userType?: 'individual' | 'establishment' | 'promoter' | 'admin';
 }
 
-// Auth form component props
-export interface AuthFormProps<T extends BaseAuthFormData> {
-  onSubmit: (data: T) => Promise<void>;
+// Auth form component props using generic form interface
+export interface AuthFormProps<T extends BaseAuthFormData> 
+  extends BaseFormProps<T>, BaseFormDialogActionsProps {
   userType?: 'individual' | 'establishment' | 'promoter' | 'admin';
   showUserTypeSelector?: boolean;
-  isLoading?: boolean;
 }
 
 // ===== SPECIFIC FORM PROPS =====
