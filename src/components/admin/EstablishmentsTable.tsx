@@ -3,13 +3,8 @@ import React from 'react';
 import { 
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
 } from '@/components/ui/table';
-import { 
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger 
-} from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Edit, MoreHorizontal, Trash } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { useAppNavigation } from '@/hooks/useAppNavigation';
+import { Edit, Trash } from 'lucide-react';
 
 interface Establishment {
   id: string;
@@ -27,13 +22,6 @@ const EstablishmentsTable: React.FC<EstablishmentsTableProps> = ({
   establishments,
   onDeleteEstablishment
 }) => {
-  const { navigate } = useAppNavigation();
-  const { toast } = useToast();
-
-  const handleEditClick = (id: string) => {
-    navigate(`/establishment/${id}`);
-  };
-
   return (
     <div className="bg-white rounded-md shadow-sm overflow-hidden">
       <Table>
@@ -51,28 +39,17 @@ const EstablishmentsTable: React.FC<EstablishmentsTableProps> = ({
               <TableCell className="font-medium">{est.name}</TableCell>
               <TableCell>{est.address}</TableCell>
               <TableCell>{est.cocktailCount}</TableCell>
-              <TableCell className="text-right">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                      <MoreHorizontal className="h-4 w-4" />
-                      <span className="sr-only">Actions</span>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => handleEditClick(est.id)}>
-                      <Edit className="mr-2 h-4 w-4" />
-                      Edit
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      className="text-red-600"
-                      onClick={() => onDeleteEstablishment(est.id)}
-                    >
-                      <Trash className="mr-2 h-4 w-4" />
-                      Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+              <TableCell className="text-right space-x-2">
+                <Button variant="outline" size="sm">
+                  <Edit className="h-4 w-4" />
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => onDeleteEstablishment(est.id)}
+                >
+                  <Trash className="h-4 w-4" />
+                </Button>
               </TableCell>
             </TableRow>
           ))}

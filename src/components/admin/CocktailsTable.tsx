@@ -3,23 +3,14 @@ import React from 'react';
 import { 
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
 } from '@/components/ui/table';
-import { 
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger 
-} from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Edit, MoreHorizontal, Trash } from 'lucide-react';
-import { useAppNavigation } from '@/hooks/useAppNavigation';
-
-interface Establishment {
-  id: string;
-  name: string;
-}
+import { Edit, Trash } from 'lucide-react';
 
 interface Cocktail {
   id: string;
   name: string;
-  establishment: Establishment | string;
-  price: number | string;
+  establishment: string;
+  price: string;
 }
 
 interface CocktailsTableProps {
@@ -31,12 +22,6 @@ const CocktailsTable: React.FC<CocktailsTableProps> = ({
   cocktails,
   onDeleteCocktail
 }) => {
-  const { navigate } = useAppNavigation();
-
-  const handleEditClick = (id: string) => {
-    navigate(`/cocktail/edit/${id}`);
-  };
-
   return (
     <div className="bg-white rounded-md shadow-sm overflow-hidden">
       <Table>
@@ -49,60 +34,25 @@ const CocktailsTable: React.FC<CocktailsTableProps> = ({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {cocktails.map((cocktail) => {
-            // Fix: Properly handle establishment that could be an object or string
-            let establishmentName: string;
-            if (typeof cocktail.establishment === 'object' && cocktail.establishment !== null) {
-              establishmentName = cocktail.establishment.name;
-            } else if (typeof cocktail.establishment === 'string') {
-              establishmentName = cocktail.establishment;
-            } else {
-              establishmentName = 'Unknown';
-            }
-            
-            // Fix: Properly handle price formatting for both string and number types
-            let displayPrice: string;
-            if (typeof cocktail.price === 'number') {
-              // Type assertion to ensure TypeScript knows this is a number
-              displayPrice = (cocktail.price as number).toFixed(2);
-            } else if (typeof cocktail.price === 'string') {
-              // Remove $ if it exists in the string
-              displayPrice = cocktail.price.replace('$', '');
-            } else {
-              displayPrice = '0.00';
-            }
-            
-            return (
-              <TableRow key={cocktail.id}>
-                <TableCell className="font-medium">{cocktail.name}</TableCell>
-                <TableCell>{establishmentName}</TableCell>
-                <TableCell>${displayPrice}</TableCell>
-                <TableCell className="text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
-                        <MoreHorizontal className="h-4 w-4" />
-                        <span className="sr-only">Actions</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => handleEditClick(cocktail.id)}>
-                        <Edit className="mr-2 h-4 w-4" />
-                        Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuItem 
-                        className="text-red-600"
-                        onClick={() => onDeleteCocktail(cocktail.id)}
-                      >
-                        <Trash className="mr-2 h-4 w-4" />
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            );
-          })}
+          {cocktails.map((cocktail) => (
+            <TableRow key={cocktail.id}>
+              <TableCell className="font-medium">{cocktail.name}</TableCell>
+              <TableCell>{cocktail.establishment}</TableCell>
+              <TableCell>{cocktail.price}</TableCell>
+              <TableCell className="text-right space-x-2">
+                <Button variant="outline" size="sm">
+                  <Edit className="h-4 w-4" />
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => onDeleteCocktail(cocktail.id)}
+                >
+                  <Trash className="h-4 w-4" />
+                </Button>
+              </TableCell>
+            </TableRow>
+          ))}
         </TableBody>
       </Table>
     </div>

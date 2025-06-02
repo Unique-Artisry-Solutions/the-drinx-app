@@ -1,11 +1,23 @@
 
 import React from 'react';
-import { RewardsAdminPage as RewardsAdmin } from '@/components/admin/rewards/RewardsAdminPage';
+import AdminLayout from '@/components/admin/layout/AdminLayout';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-export default function RewardsAdminPage() {
+const RewardsAdminPage: React.FC = () => {
   return (
-    <div className="container mx-auto p-4 max-w-7xl">
-      <RewardsAdmin />
-    </div>
+    <AdminLayout>
+      <Card>
+        <CardHeader>
+          <CardTitle>Rewards Administration</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground">
+            Rewards administration features will be implemented here.
+          </p>
+        </CardContent>
+      </Card>
+    </AdminLayout>
   );
-}
+};
+
+export default RewardsAdminPage;

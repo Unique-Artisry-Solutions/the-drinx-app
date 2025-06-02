@@ -1,15 +1,22 @@
 
 import React from 'react';
-import SystemBreakdownContent from '@/components/admin/systemBreakdown/SystemBreakdownContent';
+import AdminLayout from '@/components/admin/layout/AdminLayout';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 const SystemFunctionalityBreakdown: React.FC = () => {
-  // Add debugging
-  console.log('SystemFunctionalityBreakdown: Component rendered');
-  
   return (
-    <div className="container mx-auto p-6 max-w-7xl">
-      <SystemBreakdownContent />
-    </div>
+    <AdminLayout>
+      <Card>
+        <CardHeader>
+          <CardTitle>System Functionality Breakdown</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground">
+            System functionality breakdown will be implemented here.
+          </p>
+        </CardContent>
+      </Card>
+    </AdminLayout>
   );
 };
 

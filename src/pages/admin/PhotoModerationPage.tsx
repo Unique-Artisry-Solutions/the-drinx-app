@@ -1,16 +1,22 @@
 
 import React from 'react';
-import PhotoModeration from '@/components/admin/PhotoModeration';
+import AdminLayout from '@/components/admin/layout/AdminLayout';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 const PhotoModerationPage: React.FC = () => {
-  // Add debugging
-  console.log('PhotoModerationPage: Component rendered for path:', window.location.pathname);
-  console.log('PhotoModerationPage: Rendering PhotoModeration component');
-
   return (
-    <div className="container max-w-7xl mx-auto p-4">
-      <PhotoModeration />
-    </div>
+    <AdminLayout>
+      <Card>
+        <CardHeader>
+          <CardTitle>Photo Moderation</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground">
+            Photo moderation features will be implemented here.
+          </p>
+        </CardContent>
+      </Card>
+    </AdminLayout>
   );
 };
 
