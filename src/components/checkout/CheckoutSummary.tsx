@@ -5,7 +5,6 @@ import { HelpCircle } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { CartItem } from '@/contexts/CartContext';
-import { default as CartItemComponent } from '@/components/cart/CartItem';
 
 interface GroupedItems {
   subscriptions: CartItem[];
@@ -39,7 +38,22 @@ const CheckoutSummary: React.FC<CheckoutSummaryProps> = ({
         <div className="divide-y">
           {items.map(item => (
             <div key={item.id} className="py-3">
-              <CartItemComponent item={item} />
+              <div className="flex justify-between items-center">
+                <div>
+                  <h5 className="font-medium">{item.name}</h5>
+                  <p className="text-sm text-gray-500">
+                    Quantity: {item.quantity || 1}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="font-medium">${item.price.toFixed(2)}</p>
+                  {item.quantity && item.quantity > 1 && (
+                    <p className="text-sm text-gray-500">
+                      ${(item.price * item.quantity).toFixed(2)} total
+                    </p>
+                  )}
+                </div>
+              </div>
               {(item.type === 'event_ticket' && item.eventId) && (
                 <div className="mt-2 text-right">
                   <Link 

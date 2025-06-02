@@ -8,7 +8,7 @@ interface SectionContentProps {
   activeSection: string | null;
   handleTabChange: (tab: string) => void;
   visitorStats: {
-    totalVisits: number; // Match the property name from useVisitorStats
+    totalVisits: number;
     uniqueVisitors: number;
     returningVisitors: number;
     hasData: boolean;
@@ -31,8 +31,8 @@ const SectionContent: React.FC<SectionContentProps> = ({
       return <AllActionsSection handleTabChange={handleTabChange} />;
     case 'analytics':
       return <AnalyticsSection 
-        visitorStats={visitorStats} // Pass the visitor stats directly as they now match
-        establishmentId={establishmentId} 
+        visitorStats={visitorStats}
+        establishmentId={establishmentId || ''} 
       />;
     case 'settings':
       return <SettingsSection handleTabChange={handleTabChange} />;
