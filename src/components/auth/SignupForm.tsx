@@ -9,9 +9,10 @@ import { useToast } from '@/hooks/use-toast';
 
 export interface SignupFormProps {
   userType: 'individual' | 'establishment' | 'promoter';
+  onSuccess?: () => void;
 }
 
-const SignupForm: React.FC<SignupFormProps> = ({ userType }) => {
+const SignupForm: React.FC<SignupFormProps> = ({ userType, onSuccess }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -36,13 +37,16 @@ const SignupForm: React.FC<SignupFormProps> = ({ userType }) => {
     setIsLoading(true);
     
     try {
-      // Fix: Use only email and password for signUp, metadata handled elsewhere
       await signUp(email, password);
       
       toast({
         title: 'Success',
         description: 'Account created successfully! Please check your email to verify your account.',
       });
+      
+      if (onSuccess) {
+        onSuccess();
+      }
     } catch (error) {
       toast({
         title: 'Error',

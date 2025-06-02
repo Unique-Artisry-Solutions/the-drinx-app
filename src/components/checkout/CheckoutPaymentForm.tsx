@@ -1,118 +1,112 @@
 
-import React, { useState, useEffect } from 'react';
-import { CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { FormMessage } from '@/components/ui/form';
-import { Card } from '@/components/ui/card';
-import { useStripe as useStripeContext } from '@/contexts/StripeContext';
-import { Skeleton } from '@/components/ui/skeleton';
+import { CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
-interface CheckoutPaymentFormProps {
-  onPaymentMethodChange: (paymentMethod: any) => void;
-  error?: string;
+interface PaymentFormData {
+  cardNumber: string;
+  expiryDate: string;
+  cvv: string;
+  cardholderName: string;
 }
 
-const CheckoutPaymentForm: React.FC<CheckoutPaymentFormProps> = ({ 
-  onPaymentMethodChange,
-  error 
+interface CheckoutPaymentFormProps {
+  onPaymentSubmit: (paymentData: PaymentFormData) => void;
+  isLoading?: boolean;
+}
+
+const CheckoutPaymentForm: React.FC<CheckoutPaymentFormProps> = ({
+  onPaymentSubmit,
+  isLoading = false
 }) => {
-  // Ensure Stripe is enabled
-  const { enableStripe, isStripeLoading } = useStripeContext();
-  
-  // Make sure Stripe is enabled on component mount
-  useEffect(() => {
-    enableStripe();
-  }, [enableStripe]);
-  
-  const stripe = useStripe();
-  const elements = useElements();
-  const [cardError, setCardError] = useState<string | undefined>();
-  const [isCardComplete, setIsCardComplete] = useState(false);
-  
-  const cardElementOptions = {
-    style: {
-      base: {
-        fontSize: '16px',
-        color: '#424770',
-        '::placeholder': {
-          color: '#aab7c4',
-        },
-      },
-      invalid: {
-        color: '#9e2146',
-      },
-    },
-    hidePostalCode: true,
+  const [paymentData, setPaymentData] = useState<PaymentFormData>({
+    cardNumber: '',
+    expiryDate: '',
+    cvv: '',
+    cardholderName: ''
+  });
+
+  const handleInputChange = (field: keyof PaymentFormData) => (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setPaymentData(prev => ({
+      ...prev,
+      [field]: e.target.value
+    }));
   };
 
-  const handleCardChange = async (event: any) => {
-    setIsCardComplete(event.complete);
-    setCardError(event.error ? event.error.message : undefined);
-    
-    if (event.complete && stripe && elements) {
-      try {
-        const cardElement = elements.getElement(CardElement);
-        if (cardElement) {
-          const result = await stripe.createPaymentMethod({
-            type: 'card',
-            card: cardElement,
-          });
-          
-          if (result.error) {
-            setCardError(result.error.message);
-          } else if (result.paymentMethod) {
-            onPaymentMethodChange(result.paymentMethod);
-          }
-        }
-      } catch (err) {
-        console.error("Error creating payment method:", err);
-        setCardError('An unexpected error occurred while processing your payment method.');
-      }
-    }
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onPaymentSubmit(paymentData);
   };
-
-  // Show loading state when Stripe is loading
-  if (isStripeLoading) {
-    return (
-      <div className="space-y-2">
-        <h3 className="font-medium">Payment Details</h3>
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label>Card Details</Label>
-            <Skeleton className="h-[42px] w-full" />
-          </div>
-          <div className="text-sm text-gray-500">
-            <p>Loading payment processor...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
-    <div className="space-y-2">
-      <h3 className="font-medium">Payment Details</h3>
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="card-element">Card Details</Label>
-          <div className="p-3 border rounded-md bg-white">
-            <CardElement 
-              id="card-element" 
-              options={cardElementOptions}
-              onChange={handleCardChange}
+    <>
+      <CardHeader>
+        <CardTitle>Payment Information</CardTitle>
+        <CardDescription>
+          Enter your payment details to complete your purchase
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="cardholderName">Cardholder Name</Label>
+            <Input
+              id="cardholderName"
+              value={paymentData.cardholderName}
+              onChange={handleInputChange('cardholderName')}
+              placeholder="John Doe"
+              required
             />
           </div>
-        </div>
-        
-        {(cardError || error) && (
-          <FormMessage>{cardError || error}</FormMessage>
-        )}
-        
-        <div className="text-sm text-gray-500">
-          <p>Your card information is processed securely by Stripe.</p>
-        </div>
-      </div>
-    </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="cardNumber">Card Number</Label>
+            <Input
+              id="cardNumber"
+              value={paymentData.cardNumber}
+              onChange={handleInputChange('cardNumber')}
+              placeholder="1234 5678 9012 3456"
+              required
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="expiryDate">Expiry Date</Label>
+              <Input
+                id="expiryDate"
+                value={paymentData.expiryDate}
+                onChange={handleInputChange('expiryDate')}
+                placeholder="MM/YY"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="cvv">CVV</Label>
+              <Input
+                id="cvv"
+                value={paymentData.cvv}
+                onChange={handleInputChange('cvv')}
+                placeholder="123"
+                required
+              />
+            </div>
+          </div>
+
+          <Button 
+            type="submit" 
+            className="w-full"
+            disabled={isLoading}
+          >
+            {isLoading ? 'Processing...' : 'Complete Payment'}
+          </Button>
+        </form>
+      </CardContent>
+    </>
   );
 };
 

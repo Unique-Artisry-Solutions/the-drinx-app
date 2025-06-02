@@ -9,11 +9,15 @@ import UserTypeSelector from './UserTypeSelector';
 interface UserAuthTabsProps {
   defaultTab?: 'login' | 'signup';
   userType?: 'individual' | 'establishment' | 'promoter' | 'admin';
+  onSuccess?: () => void;
+  onClose?: () => void;
 }
 
 const UserAuthTabs: React.FC<UserAuthTabsProps> = ({ 
   defaultTab = 'login',
-  userType: initialUserType = 'individual'
+  userType: initialUserType = 'individual',
+  onSuccess,
+  onClose
 }) => {
   const [userType, setUserType] = useState<'individual' | 'establishment' | 'promoter'>(
     initialUserType === 'admin' ? 'individual' : initialUserType
@@ -28,7 +32,7 @@ const UserAuthTabs: React.FC<UserAuthTabsProps> = ({
         </TabsList>
         
         <TabsContent value="login">
-          <LoginForm />
+          <LoginForm onSuccess={onSuccess} onClose={onClose} />
         </TabsContent>
         
         <TabsContent value="signup">
@@ -48,7 +52,7 @@ const UserAuthTabs: React.FC<UserAuthTabsProps> = ({
               </CardContent>
             </Card>
             
-            <SignupForm userType={userType} />
+            <SignupForm userType={userType} onSuccess={onSuccess} />
           </div>
         </TabsContent>
       </Tabs>

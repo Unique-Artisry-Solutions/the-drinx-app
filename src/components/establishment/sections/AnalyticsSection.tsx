@@ -1,120 +1,77 @@
-
 import React, { useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
-import { AlertCircle } from 'lucide-react';
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { addDays } from 'date-fns';
-import { DateRange } from 'react-day-picker';
-
-import { AnalyticsHeader } from '@/components/analytics/AnalyticsHeader';
-import { AnalyticsTabContent } from '@/components/analytics/AnalyticsTabContent';
-import { useEstablishmentAnalytics } from '@/hooks/useEstablishmentAnalytics';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { DatePickerWithRange } from '@/components/ui/date-picker';
+import { Badge } from '@/components/ui/badge';
+import { TrendingUp, Users, DollarSign, Calendar } from 'lucide-react';
+import AnalyticsHeader from '@/components/analytics/AnalyticsHeader';
+import AnalyticsTabContent from '@/components/analytics/AnalyticsTabContent';
 
 interface AnalyticsSectionProps {
-  visitorStats: {
-    totalVisits: number;
-    uniqueVisitors: number;
-    returningVisitors: number;
-    hasData: boolean;
-    isLoading: boolean;
-    error: string | null;
-  };
-  establishmentId?: string;
+  establishmentId: string;
 }
 
-const AnalyticsSection: React.FC<AnalyticsSectionProps> = ({ visitorStats, establishmentId }) => {
-  const [date, setDate] = useState<DateRange | undefined>({
-    from: addDays(new Date(), -30),
+const AnalyticsSection: React.FC<AnalyticsSectionProps> = ({ establishmentId }) => {
+  const [dateRange, setDateRange] = useState<{ from: Date | undefined, to: Date | undefined }>({
+    from: new Date(new Date().setDate(new Date().getDate() - 7)),
     to: new Date(),
   });
+  const [selectedMetric, setSelectedMetric] = useState('revenue');
 
-  const {
-    visitorAnalytics,
-    visitorTrends,
-    retentionTrends,
-    revenueReports,
-    popularDrinks,
-    isLoading,
-    error
-  } = useEstablishmentAnalytics({
-    establishmentId: establishmentId || '',
-    range: {
-      startDate: date?.from || addDays(new Date(), -30),
-      endDate: date?.to || new Date()
-    }
-  });
-  
-  if (isLoading || visitorStats.isLoading) {
-    return (
-      <Card className="mb-6 mx-4 md:mx-6 lg:mx-[10%]">
-        <CardContent className="py-6">
-          <Skeleton className="h-8 w-1/3 mb-4" />
-          <Skeleton className="h-4 w-2/3 mb-6" />
-          
-          <div className="mt-6 space-y-6">
-            <Skeleton className="h-64 w-full" />
-            <Skeleton className="h-64 w-full" />
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (error || visitorStats.error) {
-    return (
-      <Card className="mb-6 mx-4 md:mx-6 lg:mx-[10%]">
-        <CardContent className="py-6">
-          <h1 className="text-2xl font-bold mb-4">Analytics</h1>
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Error</AlertTitle>
-            <AlertDescription>{error || visitorStats.error}</AlertDescription>
-          </Alert>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (!visitorStats.hasData) {
-    return (
-      <Card className="mb-6 mx-4 md:mx-6 lg:mx-[10%]">
-        <CardContent className="py-6">
-          <h1 className="text-2xl font-bold mb-4">Analytics</h1>
-          <Alert>
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>No Data Available</AlertTitle>
-            <AlertDescription>
-              There is currently no analytics data available for this establishment.
-            </AlertDescription>
-          </Alert>
-        </CardContent>
-      </Card>
-    );
-  }
+  const metrics = [
+    { value: 'revenue', label: 'Revenue', icon: DollarSign },
+    { value: 'customers', label: 'Customers', icon: Users },
+    { value: 'visits', label: 'Visits', icon: TrendingUp },
+  ];
 
   return (
-    <Card className="mb-6 mx-4 md:mx-6 lg:mx-[10%]">
-      <CardContent className="py-6">
-        <h1 className="text-2xl font-bold mb-4">Analytics Dashboard</h1>
-        
-        <AnalyticsHeader 
-          establishmentName={establishmentId ? `Your Establishment` : 'Establishment'} 
-          date={date} 
-          setDate={setDate} 
-          visitorAnalytics={visitorAnalytics}
-          revenueReports={revenueReports}
-          popularDrinks={popularDrinks}
-        />
-        
-        <AnalyticsTabContent 
-          visitorAnalytics={visitorAnalytics}
-          visitorTrends={visitorTrends}
-          retentionTrends={retentionTrends}
-          revenueReports={revenueReports}
-          popularDrinks={popularDrinks}
-          ratingData={[]}
-        />
+    <Card>
+      <CardHeader>
+        <CardTitle>Analytics Dashboard</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <Calendar className="w-4 h-4 text-muted-foreground" />
+            <span>Date Range:</span>
+            <DatePickerWithRange date={dateRange} onDateChange={setDateRange} />
+          </div>
+          <Select onValueChange={setSelectedMetric}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Select Metric" />
+            </SelectTrigger>
+            <SelectContent>
+              {metrics.map((metric) => (
+                <SelectItem key={metric.value} value={metric.value}>
+                  {metric.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <Tabs defaultValue="overview" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="detailed">Detailed</TabsTrigger>
+          </TabsList>
+          <TabsContent value="overview" className="space-y-2">
+            <div>
+              <Badge variant="secondary">
+                <TrendingUp className="w-4 h-4 mr-2" />
+                {selectedMetric}
+              </Badge>
+            </div>
+            <p>Overview analytics content for {selectedMetric} and date range.</p>
+          </TabsContent>
+          <TabsContent value="detailed">
+            <p>Detailed analytics content for {selectedMetric} and date range.</p>
+          </TabsContent>
+        </Tabs>
+
+        <Button variant="outline">Generate Report</Button>
       </CardContent>
     </Card>
   );

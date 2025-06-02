@@ -1,95 +1,77 @@
 
-import { useState, useEffect } from 'react';
-import { useToast } from '@/hooks/use-toast';
+import { useState, useCallback } from 'react';
 
-export const useEstablishmentInterior = (establishment: any) => {
-  const [isBarCrawlModalOpen, setIsBarCrawlModalOpen] = useState(false);
-  const [activeUsers, setActiveUsers] = useState(establishment.activeUsers || Math.floor(Math.random() * 11));
-  const [hasCheckedIn, setHasCheckedIn] = useState(false);
-  const [isPromoter, setIsPromoter] = useState(false);
-  const { toast } = useToast();
-  
-  // Check if the user is a promoter on component mount
-  useEffect(() => {
-    const userType = localStorage.getItem('user_type');
-    setIsPromoter(userType === 'promoter');
+interface BusinessHour {
+  day: string;
+  open: string;
+  close: string;
+  closed: boolean;
+}
+
+interface EstablishmentData {
+  name: string;
+  description: string;
+  address: string;
+  phone: string;
+  website: string;
+  businessHours: BusinessHour[];
+  images: string[];
+}
+
+export const useEstablishmentInterior = (initialData?: Partial<EstablishmentData>) => {
+  const [establishment, setEstablishment] = useState<EstablishmentData>({
+    name: initialData?.name || '',
+    description: initialData?.description || '',
+    address: initialData?.address || '',
+    phone: initialData?.phone || '',
+    website: initialData?.website || '',
+    businessHours: initialData?.businessHours || [
+      { day: 'Monday', open: '09:00', close: '17:00', closed: false },
+      { day: 'Tuesday', open: '09:00', close: '17:00', closed: false },
+      { day: 'Wednesday', open: '09:00', close: '17:00', closed: false },
+      { day: 'Thursday', open: '09:00', close: '17:00', closed: false },
+      { day: 'Friday', open: '09:00', close: '17:00', closed: false },
+      { day: 'Saturday', open: '10:00', close: '16:00', closed: false },
+      { day: 'Sunday', open: '10:00', close: '16:00', closed: true },
+    ],
+    images: initialData?.images || [],
+  });
+
+  const updateEstablishment = useCallback((field: keyof EstablishmentData, value: any) => {
+    setEstablishment((prev: EstablishmentData) => ({
+      ...prev,
+      [field]: value,
+    }));
   }, []);
 
-  // Sort cocktails by rating for top-rated display
-  const getSortedTopCocktails = (cocktails: any[]) => {
-    return [...cocktails]
-      .sort((a, b) => (b.rating || 0) - (a.rating || 0))
-      .slice(0, 3);
-  };
-  
-  const handleCheckIn = () => {
-    if (!localStorage.getItem('user_authenticated')) {
-      toast({
-        title: 'Sign in required',
-        description: 'Please sign in to check in at this establishment',
-        variant: 'destructive'
-      });
-      return;
-    }
-    setHasCheckedIn(true);
-    setActiveUsers(prev => prev + 1);
-    toast({
-      title: 'Checked In!',
-      description: `You've checked in at ${establishment.name}`
-    });
-  };
-  
-  const handleBarCrawlRequest = () => {
-    setIsBarCrawlModalOpen(true);
-  };
+  const updateBusinessHours = useCallback((dayIndex: number, field: string, value: string | boolean) => {
+    setEstablishment((prev: EstablishmentData) => ({
+      ...prev,
+      businessHours: prev.businessHours.map((hour: BusinessHour, index: number) => 
+        index === dayIndex ? { ...hour, [field]: value } : hour
+      ),
+    }));
+  }, []);
 
-  // Handle business hours display
-  const formatBusinessHours = () => {
-    // First check if we have structured business hours
-    if (establishment.businessHours && Array.isArray(establishment.businessHours)) {
-      const hours = establishment.businessHours;
-      
-      // Group days with the same hours
-      const groupedHours: Record<string, string[]> = {};
-      
-      hours.forEach(hour => {
-        const timeString = `${hour.openTime} - ${hour.closeTime}`;
-        if (!groupedHours[timeString]) {
-          groupedHours[timeString] = [];
-        }
-        groupedHours[timeString].push(hour.day);
-      });
-      
-      // Format grouped hours for display
-      return Object.entries(groupedHours).map(([hours, days]) => {
-        // If there are consecutive days with the same hours, group them
-        if (days.length > 1) {
-          return { 
-            days: `${days[0]} - ${days[days.length - 1]}`, 
-            hours 
-          };
-        }
-        return { days: days[0], hours };
-      });
-    }
-    
-    // Fallback to default display if no structured hours
-    return [
-      { days: 'Monday - Thursday', hours: '11:00 AM - 10:00 PM' },
-      { days: 'Friday - Saturday', hours: '11:00 AM - 12:00 AM' },
-      { days: 'Sunday', hours: '12:00 PM - 9:00 PM' }
-    ];
-  };
+  const addImage = useCallback((imageUrl: string) => {
+    setEstablishment((prev: EstablishmentData) => ({
+      ...prev,
+      images: [...prev.images, imageUrl],
+    }));
+  }, []);
+
+  const removeImage = useCallback((index: number) => {
+    setEstablishment((prev: EstablishmentData) => ({
+      ...prev,
+      images: prev.images.filter((_: string, i: number) => i !== index),
+    }));
+  }, []);
 
   return {
-    isBarCrawlModalOpen,
-    setIsBarCrawlModalOpen,
-    activeUsers,
-    hasCheckedIn,
-    isPromoter,
-    getSortedTopCocktails,
-    handleCheckIn,
-    handleBarCrawlRequest,
-    formatBusinessHours
+    establishment,
+    updateEstablishment,
+    updateBusinessHours,
+    addImage,
+    removeImage,
   };
 };

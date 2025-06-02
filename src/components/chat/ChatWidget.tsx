@@ -1,72 +1,72 @@
 
-import React from 'react';
-import { useMessageSystem } from '@/hooks/messages/useMessageSystem';
-import { VenueContact } from '@/hooks/promoter/types';
-import { usePromoterContacts } from '@/hooks/promoter/usePromoterContacts';
-import { usePromoterRole } from '@/hooks/promoter/usePromoterRole';
-import { useToast } from '@/hooks/use-toast';
-import MessageComposer from '../promoter/communication/messages/MessageComposer';
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { MessageCircle, Send, X } from 'lucide-react';
 
 interface ChatWidgetProps {
-  contact?: VenueContact;
-  onClose: () => void;
-  existingThreadId?: string;
+  isOpen: boolean;
+  onToggle: () => void;
 }
 
-const ChatWidget: React.FC<ChatWidgetProps> = ({ 
-  contact,
-  onClose,
-  existingThreadId 
-}) => {
-  const { createThread, sendMessage } = useMessageSystem('promoter');
-  const { contacts, isLoading } = usePromoterContacts();
-  const { ensurePromoterRole } = usePromoterRole();
-  const { toast } = useToast();
+const ChatWidget: React.FC<ChatWidgetProps> = ({ isOpen, onToggle }) => {
+  const [message, setMessage] = useState('');
+  const [messages, setMessages] = useState<Array<{ id: string; text: string; sender: 'user' | 'support' }>>([]);
 
-  const handleSendMessage = async (venueId: string, content: string) => {
-    try {
-      // First activate the promoter role
-      await ensurePromoterRole();
-      
-      // Add a delay to ensure role switch is propagated
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      let threadId = existingThreadId;
-      
-      if (!threadId) {
-        const createdThreadId = await createThread(venueId);
-        if (!createdThreadId) {
-          throw new Error("Failed to create conversation thread");
-        }
-        threadId = createdThreadId;
-      }
-
-      // Adding the venue ID as the third argument
-      await sendMessage(threadId, content, venueId);
-      
-      toast({
-        title: "Message Sent",
-        description: "Your message was sent successfully.",
-      });
-      
-      onClose();
-    } catch (err: any) {
-      console.error('Error sending message:', err);
-      toast({
-        title: "Error Sending Message",
-        description: "There was a problem sending your message. Please try again.",
-        variant: "destructive"
-      });
+  const handleSendMessage = () => {
+    if (message.trim()) {
+      setMessages(prev => [...prev, {
+        id: Date.now().toString(),
+        text: message,
+        sender: 'user'
+      }]);
+      setMessage('');
     }
   };
 
+  if (!isOpen) {
+    return (
+      <Button
+        onClick={onToggle}
+        className="fixed bottom-4 right-4 rounded-full w-12 h-12 p-0"
+      >
+        <MessageCircle className="h-6 w-6" />
+      </Button>
+    );
+  }
+
   return (
-    <MessageComposer
-      onClose={onClose}
-      onSendMessage={handleSendMessage}
-      contacts={contacts}
-      isLoading={isLoading}
-    />
+    <Card className="fixed bottom-4 right-4 w-80 h-96">
+      <CardHeader className="flex flex-row items-center justify-between py-3">
+        <CardTitle className="text-lg">Support Chat</CardTitle>
+        <Button variant="ghost" size="sm" onClick={onToggle}>
+          <X className="h-4 w-4" />
+        </Button>
+      </CardHeader>
+      <CardContent className="p-0 flex flex-col h-full">
+        <div className="flex-1 p-4 overflow-y-auto">
+          {messages.map((msg) => (
+            <div key={msg.id} className={`mb-2 ${msg.sender === 'user' ? 'text-right' : 'text-left'}`}>
+              <div className={`inline-block p-2 rounded ${msg.sender === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}>
+                {msg.text}
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="p-4 border-t flex gap-2">
+          <Input
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            placeholder="Type a message..."
+            onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+          />
+          <Button onClick={handleSendMessage}>
+            <Send className="h-4 w-4" />
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 
