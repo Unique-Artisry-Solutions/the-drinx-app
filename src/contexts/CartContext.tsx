@@ -17,6 +17,7 @@ export interface CartItem {
   time?: string;
   venue?: string;
   quantity?: number;
+  imageUrl?: string;
 }
 
 interface CartContextType {
@@ -24,6 +25,8 @@ interface CartContextType {
   addItem: (item: CartItem) => void;
   removeItem: (id: string) => void;
   clearCart: () => void;
+  increaseQuantity: (id: string) => void;
+  decreaseQuantity: (id: string) => void;
   totalPrice: number;
   serviceFee: number;
   serviceFeePercentage: number;
@@ -131,6 +134,22 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
   };
 
+  const increaseQuantity = (id: string) => {
+    setItems(items.map(item => 
+      item.id === id 
+        ? { ...item, quantity: (item.quantity || 1) + 1 }
+        : item
+    ));
+  };
+
+  const decreaseQuantity = (id: string) => {
+    setItems(items.map(item => 
+      item.id === id 
+        ? { ...item, quantity: Math.max(1, (item.quantity || 1) - 1) }
+        : item
+    ));
+  };
+
   const clearCart = () => {
     setItems([]);
     toast({
@@ -145,6 +164,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       addItem, 
       removeItem, 
       clearCart, 
+      increaseQuantity,
+      decreaseQuantity,
       totalPrice, 
       serviceFee,
       serviceFeePercentage,

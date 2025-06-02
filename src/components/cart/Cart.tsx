@@ -54,7 +54,7 @@ const Cart = () => {
               id={item.id}
               name={item.name}
               price={item.price}
-              quantity={item.quantity}
+              quantity={item.quantity || 1}
               imageUrl={item.imageUrl}
               onIncrease={increaseQuantity}
               onDecrease={decreaseQuantity}

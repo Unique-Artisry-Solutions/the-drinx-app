@@ -82,7 +82,10 @@ const EstablishmentInterior: React.FC<EstablishmentInteriorProps> = ({
               <InfoTabContent 
                 establishment={establishment}
                 activeUsers={activeUsers}
-                businessHoursDisplay={businessHoursDisplay}
+                businessHoursDisplay={businessHoursDisplay.map(hour => ({
+                  days: hour.day,
+                  hours: hour.hours
+                }))}
                 isLightTheme={isLightTheme}
               />
             </TabsContent>
