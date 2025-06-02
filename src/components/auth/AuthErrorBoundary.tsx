@@ -1,189 +1,66 @@
 
-import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Component, ErrorInfo, ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle, RefreshCw, Home, LogIn } from 'lucide-react';
-import { clearAllSessions } from '@/utils/sessionCleaner';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { AlertTriangle, RefreshCw } from 'lucide-react';
 
 interface Props {
   children: ReactNode;
-  fallbackRoute?: string;
 }
 
 interface State {
   hasError: boolean;
-  error: Error | null;
-  errorInfo: ErrorInfo | null;
-  retryCount: number;
+  error?: Error;
 }
 
 class AuthErrorBoundary extends Component<Props, State> {
-  private maxRetries = 3;
-  
-  public state: State = {
-    hasError: false,
-    error: null,
-    errorInfo: null,
-    retryCount: 0
-  };
+  constructor(props: Props) {
+    super(props);
+    this.state = { hasError: false };
+  }
 
-  public static getDerivedStateFromError(error: Error): Partial<State> {
+  static getDerivedStateFromError(error: Error): State {
     return { hasError: true, error };
   }
 
-  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('AuthErrorBoundary caught an error:', error, errorInfo);
-    
-    this.setState({
-      error,
-      errorInfo
-    });
-    
-    // Log to analytics or error reporting service
-    this.logError(error, errorInfo);
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error('Auth Error Boundary caught an error:', error, errorInfo);
   }
 
-  private logError = (error: Error, errorInfo: ErrorInfo) => {
-    // TODO: Send to error reporting service
-    console.error('Auth Error Boundary:', {
-      error: error.message,
-      stack: error.stack,
-      componentStack: errorInfo.componentStack,
-      timestamp: new Date().toISOString(),
-      retryCount: this.state.retryCount
-    });
-  };
-
-  private handleRetry = () => {
-    if (this.state.retryCount < this.maxRetries) {
-      this.setState(prevState => ({
-        hasError: false,
-        error: null,
-        errorInfo: null,
-        retryCount: prevState.retryCount + 1
-      }));
-    }
-  };
-
-  private handleClearSession = () => {
-    try {
-      clearAllSessions();
-      localStorage.removeItem('spiritless-auth-storage');
-      
-      // Force page reload to ensure clean state
-      window.location.href = this.props.fallbackRoute || '/landing';
-    } catch (error) {
-      console.error('Error clearing session:', error);
-      window.location.reload();
-    }
-  };
-
-  private handleGoHome = () => {
-    window.location.href = '/';
-  };
-
-  private handleGoToLogin = () => {
-    window.location.href = '/login';
-  };
-
-  public render() {
+  render() {
     if (this.state.hasError) {
-      const canRetry = this.state.retryCount < this.maxRetries;
-      const isAuthError = this.state.error?.message?.toLowerCase().includes('auth') ||
-                         this.state.error?.message?.toLowerCase().includes('session') ||
-                         this.state.error?.message?.toLowerCase().includes('login');
-
       return (
-        <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50">
-          <Card className="w-full max-w-md">
-            <CardHeader className="text-center">
-              <AlertTriangle className="mx-auto h-12 w-12 text-red-500 mb-4" />
-              <CardTitle className="text-xl">
-                {isAuthError ? 'Authentication Error' : 'Something went wrong'}
-              </CardTitle>
-            </CardHeader>
+        <Card className="w-full max-w-md mx-auto mt-8">
+          <CardHeader className="text-center">
+            <div className="mx-auto mb-4 w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+              <AlertTriangle className="w-6 h-6 text-red-600" />
+            </div>
+            <CardTitle className="text-red-700">Authentication Error</CardTitle>
+          </CardHeader>
+          <CardContent className="text-center space-y-4">
+            <p className="text-sm text-gray-600">
+              Something went wrong with the authentication system. Please try refreshing the page.
+            </p>
             
-            <CardContent className="space-y-4">
-              <div className="text-center text-gray-600">
-                {isAuthError ? (
-                  <p>There was a problem with your authentication session.</p>
-                ) : (
-                  <p>An unexpected error occurred while loading the application.</p>
-                )}
-              </div>
+            <div className="space-y-2">
+              <Button 
+                onClick={() => window.location.reload()} 
+                className="w-full"
+              >
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Refresh Page
+              </Button>
               
-              {process.env.NODE_ENV === 'development' && (
-                <details className="mt-4 p-3 bg-gray-100 rounded text-sm">
-                  <summary className="cursor-pointer font-medium">Error Details</summary>
-                  <div className="mt-2 space-y-2">
-                    <div>
-                      <strong>Error:</strong> {this.state.error?.message}
-                    </div>
-                    <div>
-                      <strong>Retry Count:</strong> {this.state.retryCount}/{this.maxRetries}
-                    </div>
-                    {this.state.error?.stack && (
-                      <div>
-                        <strong>Stack:</strong>
-                        <pre className="text-xs mt-1 overflow-auto">
-                          {this.state.error.stack}
-                        </pre>
-                      </div>
-                    )}
-                  </div>
-                </details>
-              )}
-              
-              <div className="space-y-3">
-                {canRetry && (
-                  <Button 
-                    onClick={this.handleRetry}
-                    className="w-full"
-                    variant="default"
-                  >
-                    <RefreshCw className="h-4 w-4 mr-2" />
-                    Try Again ({this.maxRetries - this.state.retryCount} attempts left)
-                  </Button>
-                )}
-                
-                {isAuthError && (
-                  <Button 
-                    onClick={this.handleClearSession}
-                    className="w-full"
-                    variant="outline"
-                  >
-                    <LogIn className="h-4 w-4 mr-2" />
-                    Clear Session & Sign In
-                  </Button>
-                )}
-                
-                <Button 
-                  onClick={this.handleGoHome}
-                  className="w-full"
-                  variant="outline"
-                >
-                  <Home className="h-4 w-4 mr-2" />
-                  Go to Home
-                </Button>
-                
-                {!this.maxRetries && (
-                  <Button 
-                    onClick={() => window.location.reload()}
-                    className="w-full"
-                    variant="outline"
-                  >
-                    <RefreshCw className="h-4 w-4 mr-2" />
-                    Refresh Page
-                  </Button>
-                )}
-              </div>
-              
-              <div className="text-xs text-gray-500 text-center mt-4">
-                If this problem persists, please try refreshing the page or contact support.
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+              <Button 
+                variant="outline" 
+                onClick={() => this.setState({ hasError: false })}
+                className="w-full"
+              >
+                Try Again
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       );
     }
 

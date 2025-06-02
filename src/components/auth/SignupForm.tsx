@@ -1,240 +1,134 @@
+
 import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { CardContent, CardFooter } from '@/components/ui/card';
-import { debouncedToast } from '@/utils/debouncedToast';
-import AuthButton from './AuthButton';
-import { useAuth } from '@/contexts/auth/AuthProvider';
-import SignupConfirmationModal from './SignupConfirmationModal';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { supabase } from '@/lib/supabase';
-import { useAuthLoadingStates } from '@/hooks/useAuthLoadingStates';
+import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
+import { SignupFormData, SignupFormProps } from './types';
 
-interface SignupFormProps {
-  onSuccess?: () => void;
-  onClose?: () => void;
-  userType?: 'individual' | 'establishment' | 'promoter' | 'admin';
-}
-
-const SignupForm: React.FC<SignupFormProps> = ({ 
-  onSuccess, 
-  onClose,
-  userType: initialUserType = 'individual'
+const SignupForm: React.FC<SignupFormProps> = ({
+  onSubmit,
+  userType = 'individual',
+  showUserTypeSelector = true,
+  isLoading = false
 }) => {
-  const [email, setEmail] = useState('');
-  const [name, setName] = useState('');
-  const [password, setPassword] = useState('');
-  const [username, setUsername] = useState('');
-  const [selectedUserType, setSelectedUserType] = useState<'individual' | 'establishment' | 'promoter' | 'admin'>(initialUserType);
-  const [formError, setFormError] = useState('');
-  const [showConfirmationModal, setShowConfirmationModal] = useState(false);
-  const { signUp, isLoading, navigationReady } = useAuth();
-  const { 
-    setSigningUp, 
-    shouldPreventInteraction, 
-    getLoadingMessage,
-    loadingStates 
-  } = useAuthLoadingStates();
+  const [formData, setFormData] = useState<SignupFormData>({
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    userType,
+    phone: '',
+    agreeToTerms: false
+  });
 
-  const handleUserTypeChange = (value: string) => {
-    setSelectedUserType(value as 'individual' | 'establishment' | 'promoter' | 'admin');
-  };
+  const { toast } = useToast();
 
-  const handleSignup = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setFormError('');
-    setSigningUp(true);
     
-    console.log('Signup attempt:', { 
-      email, 
-      username, 
-      userType: selectedUserType 
-    });
-    
-    try {
-      const metadata = {
-        name,
-        username,
-        user_type: selectedUserType
-      };
-      
-      const redirectTo = `${window.location.origin}/?email_confirmed=true`;
-      
-      const result = await signUp({
-        email,
-        password,
-        data: metadata,
-        emailRedirectTo: redirectTo
+    if (formData.password !== formData.confirmPassword) {
+      toast({
+        title: 'Error',
+        description: 'Passwords do not match',
+        variant: 'destructive',
       });
-      
-      if (result.error) {
-        throw result.error;
-      }
-      
-      if (email === 'jacksonmcfarland14@gmail.com') {
-        await supabase.rpc('initialize_admin_roles');
-        console.log('Admin roles initialized');
-      }
-      
-      setShowConfirmationModal(true);
-      
-      debouncedToast.success(
-        'Signup Successful',
-        'Please check your email to verify your account.',
-        { duration: 3000 }
-      );
-      
-      // Only call onSuccess callback if provided (for modal use cases)
-      if (onSuccess) {
-        onSuccess();
-      }
-      
-    } catch (error: any) {
-      const errorMessage = error.message || 'Failed to sign up';
-      setFormError(errorMessage);
-      
-      debouncedToast.error(
-        'Signup Failed',
-        errorMessage,
-        { duration: 5000 }
-      );
-    } finally {
-      setSigningUp(false);
+      return;
+    }
+
+    if (!formData.agreeToTerms) {
+      toast({
+        title: 'Error',
+        description: 'Please agree to the terms and conditions',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      await onSubmit(formData);
+    } catch (error) {
+      console.error('Signup error:', error);
     }
   };
 
-  // Enhanced interaction prevention
-  const canSubmit = navigationReady && !isLoading && !shouldPreventInteraction();
-  const currentLoadingMessage = getLoadingMessage();
+  const handleInputChange = (field: keyof SignupFormData, value: string | boolean) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
 
   return (
-    <>
-      <form onSubmit={handleSignup}>
-        <CardContent className="space-y-4 pt-6">
-          <div className="space-y-2">
-            <label className="text-sm font-medium" htmlFor="name">
-              Display Name
-            </label>
+    <Card className="w-full max-w-md mx-auto">
+      <CardHeader>
+        <CardTitle>Create Account</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label htmlFor="name">Full Name</Label>
             <Input
               id="name"
-              placeholder="Enter your name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              type="text"
+              value={formData.name}
+              onChange={(e) => handleInputChange('name', e.target.value)}
               required
-              className="border-spiritless-pink/20 focus-visible:ring-spiritless-pink"
             />
           </div>
-          
-          <div className="space-y-2">
-            <label className="text-sm font-medium" htmlFor="username">
-              Username
-            </label>
+
+          <div>
+            <Label htmlFor="email">Email</Label>
             <Input
-              id="username"
-              placeholder="Choose a username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
-              className="border-spiritless-pink/20 focus-visible:ring-spiritless-pink"
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <label className="text-sm font-medium" htmlFor="signup-email">
-              Email
-            </label>
-            <Input
-              id="signup-email"
+              id="email"
               type="email"
-              placeholder="Enter your email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              value={formData.email}
+              onChange={(e) => handleInputChange('email', e.target.value)}
               required
-              className="border-spiritless-pink/20 focus-visible:ring-spiritless-pink"
             />
           </div>
-          
-          <div className="space-y-2">
-            <label className="text-sm font-medium" htmlFor="signup-password">
-              Password
-            </label>
+
+          <div>
+            <Label htmlFor="password">Password</Label>
             <Input
-              id="signup-password"
+              id="password"
               type="password"
-              placeholder="Create a password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              value={formData.password}
+              onChange={(e) => handleInputChange('password', e.target.value)}
               required
-              className="border-spiritless-pink/20 focus-visible:ring-spiritless-pink"
             />
           </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-medium" htmlFor="user-type">
-              Account Type
-            </label>
-            <Select value={selectedUserType} onValueChange={handleUserTypeChange}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select your account type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="individual">Personal Account</SelectItem>
-                <SelectItem value="promoter">Promoter Account</SelectItem>
-                <SelectItem value="establishment">Business Account</SelectItem>
-                <SelectItem value="admin">Admin Account</SelectItem>
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-muted-foreground">
-              Select the type of account you want to create
-            </p>
+          <div>
+            <Label htmlFor="confirmPassword">Confirm Password</Label>
+            <Input
+              id="confirmPassword"
+              type="password"
+              value={formData.confirmPassword}
+              onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+              required
+            />
           </div>
-          
-          {formError && (
-            <div className="text-red-500 text-sm mt-2">{formError}</div>
-          )}
-          
-          {currentLoadingMessage && (
-            <div className="text-blue-600 text-sm mt-2 flex items-center">
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
-              {currentLoadingMessage}
-            </div>
-          )}
-        </CardContent>
-        
-        <CardFooter className="flex flex-col gap-4">
-          <AuthButton
-            type="submit"
-            isLoading={!canSubmit}
-            disabled={!canSubmit}
-            className={`w-full ${selectedUserType === 'individual' ? 'bg-spiritless-pink hover:bg-spiritless-pink/90' : selectedUserType === 'promoter' ? 'bg-purple-600 hover:bg-purple-700' : 'bg-spiritless-green hover:bg-spiritless-green/90'} text-white`}
-          >
-            {!canSubmit ? (currentLoadingMessage || 'Creating account...') : `Create ${selectedUserType === 'establishment' ? 'Business' : selectedUserType === 'promoter' ? 'Promoter' : 'Personal'} Account`}
-          </AuthButton>
-          
-          <p className="text-xs text-center text-muted-foreground">
-            By signing up, you'll receive a verification email to confirm your account
-          </p>
-          
-          {onClose && (
-            <AuthButton
-              type="button"
-              variant="outline"
-              onClick={onClose}
-              isLoading={false}
-              disabled={shouldPreventInteraction()}
-              className="w-full border-spiritless-orange text-spiritless-orange hover:bg-spiritless-orange/10"
-            >
-              Cancel
-            </AuthButton>
-          )}
-        </CardFooter>
-      </form>
 
-      <SignupConfirmationModal 
-        isOpen={showConfirmationModal} 
-        onClose={() => setShowConfirmationModal(false)}
-        email={email}
-      />
-    </>
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="agreeToTerms"
+              checked={formData.agreeToTerms}
+              onCheckedChange={(checked) => handleInputChange('agreeToTerms', checked === true)}
+            />
+            <Label htmlFor="agreeToTerms" className="text-sm">
+              I agree to the Terms and Conditions
+            </Label>
+          </div>
+
+          <Button type="submit" disabled={isLoading} className="w-full">
+            {isLoading ? 'Creating Account...' : 'Create Account'}
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
   );
 };
 

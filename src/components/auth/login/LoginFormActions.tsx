@@ -1,82 +1,50 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { isPreviewEnvironment } from '@/utils/environment';
 
 interface LoginFormActionsProps {
-  isSubmitting: boolean;
   isLoading: boolean;
-  isAdminLogin: boolean;
-  userType?: 'individual' | 'establishment' | 'promoter';
-  onClose?: () => void;
-  onBypassLogin?: (type: 'individual' | 'establishment' | 'promoter' | 'admin') => Promise<void>;
+  onForgotPassword?: () => void;
+  onSignUpClick?: () => void;
 }
 
 const LoginFormActions: React.FC<LoginFormActionsProps> = ({
-  isSubmitting,
   isLoading,
-  isAdminLogin,
-  userType = 'individual',
-  onClose,
-  onBypassLogin
+  onForgotPassword,
+  onSignUpClick
 }) => {
-  const showBypassButtons = isPreviewEnvironment() || process.env.NODE_ENV === 'development';
-
   return (
-    <div className="w-full space-y-4">
-      <Button
-        type="submit"
-        className="w-full bg-spiritless-pink hover:bg-spiritless-pink/90"
-        disabled={isSubmitting || isLoading}
-      >
-        {isSubmitting ? 'Signing in...' : 'Sign In'}
+    <div className="space-y-4">
+      <Button type="submit" disabled={isLoading} className="w-full">
+        {isLoading ? 'Signing in...' : 'Sign In'}
       </Button>
       
-      {onClose && (
-        <Button
-          type="button"
-          variant="outline"
-          className="w-full"
-          onClick={onClose}
-        >
-          Cancel
-        </Button>
-      )}
-      
-      {showBypassButtons && onBypassLogin && (
-        <div className="pt-2 border-t border-gray-200">
-          <p className="text-xs text-gray-500 mb-2">Development Bypass Login</p>
-          <div className="grid grid-cols-2 gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="text-xs"
-              onClick={() => onBypassLogin(isAdminLogin ? 'admin' : 'individual')}
+      <div className="text-center space-y-2">
+        {onForgotPassword && (
+          <Button 
+            type="button" 
+            variant="link" 
+            onClick={onForgotPassword}
+            className="text-sm"
+          >
+            Forgot your password?
+          </Button>
+        )}
+        
+        {onSignUpClick && (
+          <div className="text-sm">
+            Don't have an account?{' '}
+            <Button 
+              type="button" 
+              variant="link" 
+              onClick={onSignUpClick}
+              className="p-0 h-auto text-sm"
             >
-              {isAdminLogin ? 'Admin' : 'Individual'} Bypass
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="text-xs"
-              onClick={() => onBypassLogin('establishment')}
-            >
-              Establishment Bypass
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="text-xs w-full col-span-2"
-              onClick={() => onBypassLogin('promoter')}
-            >
-              Promoter Bypass
+              Sign up
             </Button>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };

@@ -11,7 +11,7 @@ interface Establishment {
   id: string;
   name: string;
   address: string;
-  distance?: string;
+  distance?: number; // Changed from string to number
   cocktailCount: number;
   image?: string;
   latitude: number;
@@ -44,14 +44,16 @@ const EstablishmentList: React.FC<EstablishmentListProps> = ({
   };
   
   if (isLoading) {
-    return <div className="mt-6">
+    return (
+      <div className="mt-6">
         <div className="flex justify-between items-center mb-3">
           <Skeleton className="h-7 w-40" />
           <Skeleton className="h-6 w-20" />
         </div>
         
         <div className="space-y-3">
-          {[1, 2, 3].map(i => <div key={i} className="relative">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="relative">
               <div className="flex rounded-xl overflow-hidden bg-white border border-gray-100">
                 <Skeleton className="w-24 h-24 sm:w-32 sm:h-32" />
                 <div className="flex-1 p-3">
@@ -63,12 +65,15 @@ const EstablishmentList: React.FC<EstablishmentListProps> = ({
                   <Skeleton className="h-4 w-24" />
                 </div>
               </div>
-            </div>)}
+            </div>
+          ))}
         </div>
-      </div>;
+      </div>
+    );
   }
   
-  return <div className="mt-6">
+  return (
+    <div className="mt-6">
       <div className="flex justify-between items-center mb-3">
         <h2 className="text-lg font-medium text-material-on-surface text-gray-300">
           {establishments.length > 0 ? 'Nearby Establishments' : 'All Establishments'}
@@ -93,9 +98,8 @@ const EstablishmentList: React.FC<EstablishmentListProps> = ({
                 id={establishment.id} 
                 name={establishment.name} 
                 address={establishment.address} 
-                distance={establishment.distance} 
-                cocktailCount={establishment.cocktailCount} 
-                image={establishment.image} 
+                rating={4.5}
+                distance={establishment.distance}
                 onClick={() => handleEstablishmentClick(establishment.id)} 
               />
               
@@ -126,7 +130,8 @@ const EstablishmentList: React.FC<EstablishmentListProps> = ({
           </div>
         )}
       </div>
-    </div>;
+    </div>
+  );
 };
 
 export default EstablishmentList;
