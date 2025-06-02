@@ -2,7 +2,7 @@
 import React, { Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth/AuthProvider';
-import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import ProtectedRoute from './protectedRoutes';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 // Core Pages
