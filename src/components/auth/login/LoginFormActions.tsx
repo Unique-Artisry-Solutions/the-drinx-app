@@ -7,7 +7,6 @@ interface LoginFormActionsProps {
   isSubmitting: boolean;
   isLoading: boolean;
   isAdminLogin: boolean;
-  userType?: 'individual' | 'establishment' | 'promoter';
   onClose?: () => void;
   onBypassLogin?: (type: 'individual' | 'establishment' | 'promoter' | 'admin') => Promise<void>;
 }
@@ -16,7 +15,6 @@ const LoginFormActions: React.FC<LoginFormActionsProps> = ({
   isSubmitting,
   isLoading,
   isAdminLogin,
-  userType = 'individual',
   onClose,
   onBypassLogin
 }) => {

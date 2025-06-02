@@ -44,7 +44,7 @@ export const useTestUserCreation = () => {
   const createTestUser = async (credentials: TestUserCredential) => {
     try {
       // First check if user already exists by trying to sign in
-      const { data: existingUser, error: signInError } = await supabase.auth.signInWithPassword({
+      const { data: existingUser } = await supabase.auth.signInWithPassword({
         email: credentials.email,
         password: credentials.password
       });

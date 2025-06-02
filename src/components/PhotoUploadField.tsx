@@ -6,12 +6,14 @@ import { Label } from '@/components/ui/label';
 
 interface PhotoUploadFieldProps {
   onPhotosUploaded?: (urls: string[]) => void;
+  onPhotoSelect?: (file: File) => void;
   maxPhotos?: number;
   label?: string;
 }
 
 const PhotoUploadField: React.FC<PhotoUploadFieldProps> = ({
   onPhotosUploaded,
+  onPhotoSelect,
   maxPhotos = 5,
   label = "Upload Photos"
 }) => {
@@ -25,12 +27,17 @@ const PhotoUploadField: React.FC<PhotoUploadFieldProps> = ({
     setUploading(true);
     
     try {
-      // Simulate upload process
       const newPhotoUrls: string[] = [];
       
       for (let i = 0; i < Math.min(files.length, maxPhotos - uploadedPhotos.length); i++) {
-        // In a real implementation, this would upload to a storage service
-        const mockUrl = URL.createObjectURL(files[i]);
+        const file = files[i];
+        
+        // If onPhotoSelect is provided, call it for each file
+        if (onPhotoSelect) {
+          onPhotoSelect(file);
+        }
+        
+        const mockUrl = URL.createObjectURL(file);
         newPhotoUrls.push(mockUrl);
       }
       

@@ -15,8 +15,6 @@ interface UserAuthTabsProps {
 
 const UserAuthTabs: React.FC<UserAuthTabsProps> = ({ 
   defaultTab = 'login',
-  onSuccess,
-  onClose,
   userType: initialUserType = 'individual'
 }) => {
   const [userType, setUserType] = useState<'individual' | 'establishment' | 'promoter'>(

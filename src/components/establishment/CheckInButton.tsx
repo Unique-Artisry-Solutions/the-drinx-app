@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Check, MapPin, X } from 'lucide-react';
 import { useUserVisits } from '@/hooks/useUserVisits';
@@ -14,7 +15,7 @@ interface CheckInButtonProps {
 
 const CheckInButton: React.FC<CheckInButtonProps> = ({ establishmentId, establishmentName }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [rating, setRating] = useState<number | null>(null);
+  const [rating, setRating] = useState<number | undefined>(undefined);
   const [note, setNote] = useState('');
   const [isCheckingIn, setIsCheckingIn] = useState(false);
   const { recordVisit, verifyLocationAndRecordVisit } = useUserVisits();

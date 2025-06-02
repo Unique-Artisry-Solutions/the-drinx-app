@@ -1,6 +1,5 @@
 
 import { supabase } from '@/lib/supabase';
-import { TestUserCredential } from '../types/testCredentials';
 
 export const createTestEstablishment = async (ownerId: string, phone: string) => {
   try {
