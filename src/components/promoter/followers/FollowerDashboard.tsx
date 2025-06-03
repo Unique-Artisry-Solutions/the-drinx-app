@@ -1,9 +1,9 @@
 
 import React from 'react';
-import { FollowerList } from './FollowerList';
-import { FollowerNotificationCenter } from './FollowerNotificationCenter';
-import { FollowerAnalyticsWidgets } from './FollowerAnalyticsWidgets';
-import { FollowerSystemHealthMonitor } from './FollowerSystemHealthMonitor';
+import FollowerList from './FollowerList';
+import FollowerNotificationCenter from './FollowerNotificationCenter';
+import FollowerAnalyticsWidgets from './FollowerAnalyticsWidgets';
+import FollowerSystemHealthMonitor from './FollowerSystemHealthMonitor';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
