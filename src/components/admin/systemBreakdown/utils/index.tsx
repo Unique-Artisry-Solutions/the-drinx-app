@@ -18,7 +18,7 @@ import {
   generateFeatureReport
 } from './featureShowcaseUtils';
 
-// Import from the simplified detection system
+// Import from the unified detection system
 import { 
   featureDetectionEngine,
   unifiedDetection,
@@ -51,6 +51,7 @@ import {
   isMapFeature,
   isSystemConfigurationFeature,
   isThemeFeature,
+  isThemeConfigurationFeature,
   isAccessibilityFeature,
   isSignatureFeature,
   isFeatureFlagRelated,
@@ -76,8 +77,7 @@ import {
   isPromotionValidationFeature,
   isPromotionSchedulingFeature,
   isPromotionIntegrationFeature,
-  isPromotionAIFeature,
-  isThemeConfigurationFeature
+  isPromotionAIFeature
 } from './detection';
 
 // Import directly from featureStatistics.tsx to fix circular dependency issues

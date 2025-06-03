@@ -6,7 +6,7 @@ import { FeatureItem } from '../types';
 import { 
   featureDetectionEngine,
   unifiedDetection,
-  // Import all legacy compatibility functions
+  // Import all legacy compatibility functions from the unified detection system
   isUserManagementFeature,
   isAuthFeature,
   isProfileFeature,
@@ -57,19 +57,9 @@ import {
   isPromotionValidationFeature,
   isPromotionSchedulingFeature,
   isPromotionIntegrationFeature,
-  isPromotionAIFeature
+  isPromotionAIFeature,
+  isAudienceRelationshipFeature
 } from './detection';
-
-/**
- * @deprecated Use unifiedDetection.analyzeFeature() instead
- * Detects if a feature is related to audience relationship mapping
- */
-export function isAudienceRelationshipFeature(feature: FeatureItem): boolean {
-  const result = featureDetectionEngine.detectCategory(feature);
-  return result.matchedKeywords.some(keyword => 
-    keyword.includes('audience') || keyword.includes('relationship') || keyword.includes('segment')
-  );
-}
 
 // Export all detection functions for backward compatibility
 export {
@@ -124,5 +114,6 @@ export {
   isPromoterNotificationFeature,
   isAudienceInfluencerFeature,
   isCrossSegmentEngagementFeature,
-  isAudienceVisualizationFeature
+  isAudienceVisualizationFeature,
+  isAudienceRelationshipFeature
 };
