@@ -1,40 +1,21 @@
 
 import { FeatureItem, FeatureShowcaseCategoryType } from '../../types';
-import {
-  isAIFeature,
-  isMocktailSuggestionFeature,
-  isMocktailTrendsFeature,
-  isSocialFeature,
-  isBarCrawlFeature,
-  isAnalyticsFeature,
-  isDashboardFeature,
-  isVisitTrackingFeature,
-  isExplorationFeature,
-  isUserManagementFeature,
-  isEstablishmentManagementFeature,
-  isSystemBreakdownFeature,
-  isThemeFeature,
-  isRewardProgramFeature,
-  isPromotionFeature
-} from '../detection';
+import { unifiedDetection } from '../detection/unifiedDetection';
 
 export const determineShowcaseCategory = (feature: FeatureItem): FeatureShowcaseCategoryType => {
-  if (isAIFeature(feature) || isMocktailSuggestionFeature(feature) || isMocktailTrendsFeature(feature)) {
+  if (unifiedDetection.isCategory(feature, 'ai_recommendations')) {
     return 'AI & Recommendations';
-  } else if (isSocialFeature(feature) || isBarCrawlFeature(feature)) {
+  } else if (unifiedDetection.isCategory(feature, 'social_engagement')) {
     return 'Social Experience';
-  } else if (isAnalyticsFeature(feature) || isDashboardFeature(feature)) {
+  } else if (unifiedDetection.isCategory(feature, 'business_analytics')) {
     return 'Business Analytics';
-  } else if (isVisitTrackingFeature(feature) || isExplorationFeature(feature)) {
+  } else if (unifiedDetection.isCategory(feature, 'venue_operations')) {
     return 'User Engagement';
-  } else if (isUserManagementFeature(feature) || isEstablishmentManagementFeature(feature) || isSystemBreakdownFeature(feature)) {
+  } else if (unifiedDetection.isCategory(feature, 'user_management') || unifiedDetection.isCategory(feature, 'system_administration')) {
     return 'Management Tools';
-  } else if (isThemeFeature(feature)) {
-    return 'Customization';
-  } else if (isRewardProgramFeature(feature) || isPromotionFeature(feature)) {
+  } else if (unifiedDetection.isCategory(feature, 'commerce_promotions')) {
     return 'Loyalty & Rewards';
   }
   
   return 'Management Tools';
 };
-
