@@ -1,17 +1,16 @@
 
 import React from 'react';
 import ResponsiveLayout from './layout/ResponsiveLayout';
+import { BaseComponentProps, StandardNavigationProps } from '@/components/shared/types';
 
 interface TabOption {
   value: string;
   label: string;
 }
 
-interface LayoutProps {
+// Extend with standard props
+interface LayoutProps extends BaseComponentProps, StandardNavigationProps {
   children: React.ReactNode;
-  activeTab?: string;
-  handleTabChange?: (value: string) => void;
-  tabOptions?: TabOption[];
   forceGuestNavigation?: boolean;
 }
 

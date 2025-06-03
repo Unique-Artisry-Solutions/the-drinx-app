@@ -1,10 +1,9 @@
 
 import React from 'react';
-import Breadcrumbs from '@/components/navigation/Breadcrumbs';
-import AdminPageHeader from './AdminPageHeader';
-import AdminPageContent from './AdminPageContent';
-import AdminPageActions from './AdminPageActions';
+import { StandardPageLayout } from '@/components/shared';
+import { StandardLayoutProps } from '@/components/shared/types';
 
+// Legacy interface for backward compatibility
 export interface AdminPageConfig {
   title: string;
   description?: string;
@@ -39,52 +38,31 @@ const AdminPageLayout: React.FC<AdminPageLayoutProps> = ({
   error = null,
   className = ''
 }) => {
-  const maxWidthClass = {
-    sm: 'max-w-sm',
-    md: 'max-w-md', 
-    lg: 'max-w-4xl',
-    xl: 'max-w-6xl',
-    '2xl': 'max-w-7xl',
-    full: 'max-w-none'
-  }[config.maxWidth || 'xl'];
+  // Convert legacy config to standard config
+  const standardConfig = {
+    title: config.title,
+    description: config.description,
+    showBreadcrumbs: config.showBreadcrumbs,
+    maxWidth: config.maxWidth || 'xl' as const,
+    padding: 'md' as const
+  };
 
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-xl font-semibold text-red-600 mb-2">Error</h2>
-          <p className="text-gray-600">{error}</p>
-        </div>
-      </div>
-    );
-  }
+  // Convert legacy actions to standard actions
+  const standardActions = actions.map(action => ({
+    ...action,
+    icon: action.icon as any // Type conversion for compatibility
+  }));
 
-  return (
-    <div className={`min-h-screen bg-gray-50 ${className}`}>
-      <div className={`container mx-auto ${maxWidthClass} px-4 py-6`}>
-        {config.showBreadcrumbs && (
-          <div className="mb-4">
-            <Breadcrumbs />
-          </div>
-        )}
-        
-        <AdminPageHeader
-          title={config.title}
-          description={config.description}
-        />
-        
-        {actions.length > 0 && (
-          <div className="mb-6">
-            <AdminPageActions actions={actions} />
-          </div>
-        )}
-        
-        <AdminPageContent isLoading={isLoading}>
-          {children}
-        </AdminPageContent>
-      </div>
-    </div>
-  );
+  const standardProps: StandardLayoutProps = {
+    config: standardConfig,
+    actions: standardActions,
+    children,
+    isLoading,
+    error,
+    className
+  };
+
+  return <StandardPageLayout {...standardProps} />;
 };
 
 export default AdminPageLayout;
