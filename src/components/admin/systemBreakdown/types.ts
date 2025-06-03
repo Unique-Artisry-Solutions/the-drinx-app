@@ -1,6 +1,5 @@
-
-export type FeatureStatus = 'implemented' | 'in_progress' | 'planned' | 'blocked' | 'partial';
-export type DatabaseStatus = 'complete' | 'in_progress' | 'not_started' | 'implemented' | 'partial';
+export type FeatureStatus = 'implemented' | 'in_progress' | 'not_started';
+export type DatabaseStatus = 'complete' | 'in_progress' | 'not_started';
 export type AccessLevel = 'full' | 'partial' | 'read' | 'none' | 'write' | 'moderate';
 export type FeatureComplexity = 'high' | 'medium' | 'low';
 export type FeatureCategory = string;
@@ -13,7 +12,7 @@ export interface FeatureItem {
   adminAccess: AccessLevel;
   establishmentAccess: AccessLevel;
   individualAccess: AccessLevel;
-  promoterAccess?: AccessLevel; // Added promoterAccess property
+  promoterAccess?: AccessLevel;
   databaseStatus: DatabaseStatus;
   dbStatus?: DatabaseStatus;
   userImpact: 'high' | 'medium' | 'low';
@@ -29,12 +28,12 @@ export interface FeatureItem {
   dbRequirementsText?: string;
   dependsOn?: string[];
   scheduledFor?: string;
-  integrations?: string[]; // Added integrations property
-  category?: FeatureCategory; // Added category property
-  components?: Component[]; // Added components property
-  lastUpdated?: string; // Added lastUpdated property
-  assignedTo?: string; // Added assignedTo property
-  dependencies?: string[]; // Added dependencies property
+  integrations?: string[];
+  category?: FeatureCategory;
+  components?: Component[];
+  lastUpdated?: string;
+  assignedTo?: string;
+  dependencies?: string[];
 }
 
 // Add Component interface for the components property

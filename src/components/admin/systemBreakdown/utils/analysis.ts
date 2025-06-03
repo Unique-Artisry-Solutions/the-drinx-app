@@ -8,6 +8,12 @@ import {
   updateFeaturesDbStatus as analyzeDbRequirements
 } from './analysis/index';
 import { groupFeaturesByCategory } from './featureStatistics';
+import { 
+  mapToSimplifiedStatus, 
+  mapToSimplifiedDbStatus, 
+  calculateProgressFromStatus,
+  determineOverallStatus 
+} from './stateMapping';
 
 /**
  * Analyzes all features and updates their implementation and database status
@@ -27,41 +33,23 @@ export function analyzeAllFeatures(
   // Initialize completed steps
   const completedSteps: AnalysisStep[] = [];
   
-  // Step 1: Analyze database requirements
-  const allFeatures = [
-    ...adminFeatures, 
-    ...establishmentFeatures, 
-    ...individualFeatures, 
-    ...promoterFeatures
-  ];
+  // Step 1: Simplify and normalize all feature states
+  let updatedAdminFeatures = simplifyFeatureStates(adminFeatures);
+  let updatedEstablishmentFeatures = simplifyFeatureStates(establishmentFeatures);
+  let updatedIndividualFeatures = simplifyFeatureStates(individualFeatures);
+  let updatedPromoterFeatures = simplifyFeatureStates(promoterFeatures);
+  
+  completedSteps.push({
+    name: 'Simplified feature states to core 3-state system',
+    completed: true,
+    details: 'Mapped all complex states to implemented/in_progress/not_started'
+  });
   
   // Step 2: Update database status based on detected tables
-  // Make sure the returned type is FeatureItem[] for all updateFeatures calls
-  let updatedAdminFeatures = analyzeDatabaseStatus(adminFeatures);
-  let updatedEstablishmentFeatures = analyzeDatabaseStatus(establishmentFeatures);
-  let updatedIndividualFeatures = analyzeDatabaseStatus(individualFeatures);
-  let updatedPromoterFeatures = analyzeDatabaseStatus(promoterFeatures);
-  
-  // Ensure all features have a valid databaseStatus
-  updatedAdminFeatures = updatedAdminFeatures.map(feature => ({
-    ...feature,
-    databaseStatus: feature.databaseStatus || feature.dbStatus || 'not_started'
-  }));
-  
-  updatedEstablishmentFeatures = updatedEstablishmentFeatures.map(feature => ({
-    ...feature,
-    databaseStatus: feature.databaseStatus || feature.dbStatus || 'not_started'
-  }));
-  
-  updatedIndividualFeatures = updatedIndividualFeatures.map(feature => ({
-    ...feature,
-    databaseStatus: feature.databaseStatus || feature.dbStatus || 'not_started'
-  }));
-  
-  updatedPromoterFeatures = updatedPromoterFeatures.map(feature => ({
-    ...feature,
-    databaseStatus: feature.databaseStatus || feature.dbStatus || 'not_started'
-  }));
+  updatedAdminFeatures = analyzeDatabaseStatus(updatedAdminFeatures);
+  updatedEstablishmentFeatures = analyzeDatabaseStatus(updatedEstablishmentFeatures);
+  updatedIndividualFeatures = analyzeDatabaseStatus(updatedIndividualFeatures);
+  updatedPromoterFeatures = analyzeDatabaseStatus(updatedPromoterFeatures);
   
   // Step 3: Analyze specific systems for more detailed status
   const swigCircuitResult = analyzeSwigCircuitSystem(updatedIndividualFeatures);
@@ -81,13 +69,13 @@ export function analyzeAllFeatures(
   updatedPromoterFeatures = promoterSystemResult.updatedFeatures;
   completedSteps.push(...promoterSystemResult.updatedSteps);
   
-  // Calculate implementation progress from database status and feature status
-  updatedAdminFeatures = setImplementationProgress(updatedAdminFeatures);
-  updatedEstablishmentFeatures = setImplementationProgress(updatedEstablishmentFeatures);
-  updatedIndividualFeatures = setImplementationProgress(updatedIndividualFeatures);
-  updatedPromoterFeatures = setImplementationProgress(updatedPromoterFeatures);
+  // Step 6: Recalculate implementation progress based on simplified states
+  updatedAdminFeatures = recalculateImplementationProgress(updatedAdminFeatures);
+  updatedEstablishmentFeatures = recalculateImplementationProgress(updatedEstablishmentFeatures);
+  updatedIndividualFeatures = recalculateImplementationProgress(updatedIndividualFeatures);
+  updatedPromoterFeatures = recalculateImplementationProgress(updatedPromoterFeatures);
   
-  // Analyze status changes
+  // Step 7: Analyze status changes
   updatedAdminFeatures = markStatusChanges(updatedAdminFeatures, originalAdminFeatures);
   updatedEstablishmentFeatures = markStatusChanges(updatedEstablishmentFeatures, originalEstablishmentFeatures);
   updatedIndividualFeatures = markStatusChanges(updatedIndividualFeatures, originalIndividualFeatures);
@@ -112,24 +100,40 @@ export function analyzeAllFeatures(
 }
 
 /**
- * Sets implementation progress based on feature status
+ * Simplifies feature states to the core 3-state system
  */
-function setImplementationProgress(features: FeatureItem[]): FeatureItem[] {
+function simplifyFeatureStates(features: FeatureItem[]): FeatureItem[] {
   return features.map(feature => {
-    let progress = feature.implementationProgress;
+    // Simplify main status
+    const simplifiedStatus = mapToSimplifiedStatus(feature.status);
     
-    // Set default implementation progress based on status if not already set
-    if (feature.status === 'implemented' && (!progress || progress < 90)) {
-      progress = 100;
-    } else if (feature.status === 'partial' && (!progress || progress < 40)) {
-      progress = 65;
-    } else if (feature.status === 'in_progress' && (!progress || progress < 20)) {
-      progress = 45;
-    } else if (feature.status === 'blocked' && (!progress || progress > 60)) {
-      progress = 30;
-    } else if (!progress) {
-      progress = 10; // Default for planned features
-    }
+    // Simplify database status
+    const simplifiedDbStatus = mapToSimplifiedDbStatus(
+      feature.dbStatus || feature.databaseStatus || 'not_started'
+    );
+    
+    // Determine overall status based on UI and DB
+    const overallStatus = determineOverallStatus(simplifiedStatus, simplifiedDbStatus);
+    
+    return {
+      ...feature,
+      status: overallStatus,
+      databaseStatus: simplifiedDbStatus,
+      dbStatus: simplifiedDbStatus
+    };
+  });
+}
+
+/**
+ * Recalculates implementation progress based on simplified status
+ */
+function recalculateImplementationProgress(features: FeatureItem[]): FeatureItem[] {
+  return features.map(feature => {
+    const progress = calculateProgressFromStatus(
+      feature.status,
+      feature.databaseStatus || 'not_started',
+      feature.implementationProgress
+    );
     
     return {
       ...feature,
@@ -145,12 +149,10 @@ function markStatusChanges(features: FeatureItem[], originalFeatures: FeatureIte
   return features.map((feature, index) => {
     const original = originalFeatures[index];
     
-    // Mark as updated if status or implementation progress has changed
-    if (
-      feature.status !== original.status || 
-      feature.dbStatus !== original.dbStatus ||
-      feature.implementationProgress !== original.implementationProgress
-    ) {
+    // Check if status changed after simplification
+    const originalSimplified = mapToSimplifiedStatus(original.status);
+    
+    if (feature.status !== originalSimplified) {
       return {
         ...feature,
         statusUpdated: true,
