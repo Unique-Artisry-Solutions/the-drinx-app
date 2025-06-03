@@ -5,35 +5,24 @@ import {
   FeatureBusinessValueType,
   FeatureComplexity
 } from '../../types';
-import {
-  isRewardProgramFeature,
-  isPromotionFeature,
-  isAIFeature,
-  isAnalyticsFeature,
-  isVisitTrackingFeature,
-  isMapFeature,
-  isSocialFeature,
-  isMocktailSuggestionFeature,
-  isIngredientPairingFeature,
-  isThemeFeature
-} from '../detection';
+import { unifiedDetection } from '../detection/unifiedDetection';
 
-// Business value determination
+// Business value determination using unified detection
 export const determineBusinessValue = (feature: FeatureItem): FeatureBusinessValueType => {
+  // High value features - commerce and analytics focused
   if (
-    isRewardProgramFeature(feature) ||
-    isPromotionFeature(feature) ||
-    isAIFeature(feature) ||
-    isAnalyticsFeature(feature) ||
-    isVisitTrackingFeature(feature)
+    unifiedDetection.isCategory(feature, 'commerce_promotions') ||
+    unifiedDetection.isCategory(feature, 'business_analytics') ||
+    unifiedDetection.isCategory(feature, 'ai_recommendations')
   ) {
     return 'high';
-  } else if (
-    isMapFeature(feature) ||
-    isSocialFeature(feature) ||
-    isMocktailSuggestionFeature(feature) ||
-    isIngredientPairingFeature(feature) ||
-    isThemeFeature(feature)
+  } 
+  
+  // Medium value features - engagement and operations
+  if (
+    unifiedDetection.isCategory(feature, 'social_engagement') ||
+    unifiedDetection.isCategory(feature, 'venue_operations') ||
+    unifiedDetection.isCategory(feature, 'system_administration')
   ) {
     return 'medium';
   }
@@ -41,22 +30,25 @@ export const determineBusinessValue = (feature: FeatureItem): FeatureBusinessVal
   return 'low';
 };
 
-// Complexity determination
+// Complexity determination using unified detection
 export const determineComplexity = (feature: FeatureItem): FeatureComplexity => {
+  // High complexity features - AI and analytics
   if (
-    isAIFeature(feature) ||
-    isAnalyticsFeature(feature) ||
-    isPromotionFeature(feature) && (feature.dbStatus === 'complete')
+    unifiedDetection.isCategory(feature, 'ai_recommendations') ||
+    unifiedDetection.isCategory(feature, 'business_analytics') ||
+    (unifiedDetection.isCategory(feature, 'commerce_promotions') && feature.databaseStatus === 'complete')
   ) {
     return 'high';
-  } else if (
-    isMapFeature(feature) ||
-    isSocialFeature(feature) ||
-    isThemeFeature(feature)
+  } 
+  
+  // Medium complexity features - social and venue operations
+  if (
+    unifiedDetection.isCategory(feature, 'social_engagement') ||
+    unifiedDetection.isCategory(feature, 'venue_operations') ||
+    unifiedDetection.isCategory(feature, 'system_administration')
   ) {
     return 'medium';
   }
   
   return 'low';
 };
-
