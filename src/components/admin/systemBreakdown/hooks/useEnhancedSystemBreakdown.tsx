@@ -1,7 +1,7 @@
+
 import { useState, useEffect, useMemo } from 'react';
 import { FeatureItem, ProgressSnapshot } from '../types';
-import { calculateFeatureStatistics } from '../utils/featureStatistics';
-import { createProgressSnapshot } from '../utils/progressSnapshot';
+import { calculateFeatureStats, groupFeaturesByCategory } from '../utils/SimpleFeatureDetection';
 
 export const useEnhancedSystemBreakdown = (
   adminFeatures: FeatureItem[],
@@ -9,10 +9,9 @@ export const useEnhancedSystemBreakdown = (
   individualFeatures: FeatureItem[],
   promoterFeatures: FeatureItem[]
 ) => {
-  const [progressHistory, setProgressHistory] = useState<ProgressSnapshot[]>([]);
   const [systemHealth, setSystemHealth] = useState<'operational' | 'degraded' | 'offline'>('operational');
 
-  // Calculate current system statistics
+  // Calculate current system statistics using simplified approach
   const allFeatures = useMemo(() => [
     ...adminFeatures,
     ...establishmentFeatures,
@@ -21,16 +20,17 @@ export const useEnhancedSystemBreakdown = (
   ], [adminFeatures, establishmentFeatures, individualFeatures, promoterFeatures]);
 
   const currentStats = useMemo(() => 
-    calculateFeatureStatistics(allFeatures), 
+    calculateFeatureStats(allFeatures), 
     [allFeatures]
   );
 
-  const currentSnapshot = useMemo(() => 
-    createProgressSnapshot(adminFeatures, establishmentFeatures, individualFeatures, promoterFeatures),
-    [adminFeatures, establishmentFeatures, individualFeatures, promoterFeatures]
+  // Simple feature categorization
+  const featuresByCategory = useMemo(() => 
+    groupFeaturesByCategory(allFeatures),
+    [allFeatures]
   );
 
-  // Enhanced feature analysis
+  // Enhanced feature analysis with simplified logic
   const enhancedFeatureAnalysis = useMemo(() => {
     const criticalFeatures = allFeatures.filter(f => 
       f.userImpact === 'high' && f.complexity === 'high'
@@ -50,46 +50,34 @@ export const useEnhancedSystemBreakdown = (
       quickWins,
       riskFeatures,
       totalFeatures: allFeatures.length,
-      completionRate: currentStats.implementationRate
+      completionRate: currentStats.completionRate,
+      featuresByCategory
     };
-  }, [allFeatures, currentStats]);
+  }, [allFeatures, currentStats, featuresByCategory]);
 
-  // System health monitoring
+  // Simple system health monitoring
   useEffect(() => {
-    const blockedCount = allFeatures.filter(f => f.status === 'blocked').length;
-    const totalFeatures = allFeatures.length;
-    const blockedPercentage = totalFeatures > 0 ? (blockedCount / totalFeatures) * 100 : 0;
+    const blockedPercentage = currentStats.total > 0 ? (currentStats.blocked / currentStats.total) * 100 : 0;
 
-    if (blockedPercentage > 10) {
-      setSystemHealth('degraded');
-    } else if (blockedPercentage > 25) {
+    if (blockedPercentage > 25) {
       setSystemHealth('offline');
+    } else if (blockedPercentage > 10) {
+      setSystemHealth('degraded');
     } else {
       setSystemHealth('operational');
     }
-  }, [allFeatures]);
-
-  // Update progress history
-  useEffect(() => {
-    setProgressHistory(prev => {
-      const newHistory = [...prev, currentSnapshot];
-      // Keep only last 30 entries
-      return newHistory.slice(-30);
-    });
-  }, [currentSnapshot]);
+  }, [currentStats]);
 
   return {
     currentStats,
-    currentSnapshot,
-    progressHistory,
     systemHealth,
     enhancedFeatureAnalysis,
     totalFeatures: allFeatures.length,
-    implementedFeatures: currentStats.implementedFeatures,
-    inProgressFeatures: currentStats.inProgressFeatures,
-    plannedFeatures: currentStats.plannedFeatures,
-    blockedFeatures: currentStats.blockedFeatures || 0,
-    overallProgress: currentStats.implementationRate,
-    confidenceScore: currentStats.confidenceScore
+    implementedFeatures: currentStats.implemented,
+    inProgressFeatures: currentStats.inProgress,
+    plannedFeatures: currentStats.planned,
+    blockedFeatures: currentStats.blocked,
+    overallProgress: currentStats.completionRate,
+    confidenceScore: 85 // Static confidence score for simplicity
   };
 };

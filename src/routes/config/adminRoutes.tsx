@@ -1,3 +1,4 @@
+
 import { lazy } from 'react';
 import { RouteObject } from 'react-router-dom';
 import AdminLogin from '@/pages/admin/AdminLogin';
@@ -25,10 +26,7 @@ const ContentModerationPage = lazy(() => import('@/pages/admin/ContentModeration
 const ThemeCustomizationPage = lazy(() => import('@/pages/admin/ThemeCustomizationPage'));
 const TestingInterfacePage = lazy(() => import('@/pages/admin/TestingInterfacePage'));
 
-// Import simplified routes
-import { simplifiedAdminRoutes } from './simplifiedAdminRoutes';
-
-// Add simplified routes to the export
+// Simplified admin routes - removed duplicate simplified routes
 export const adminRoutes: RouteObject[] = [
   // Admin login - separate from protected routes
   { 
@@ -36,7 +34,7 @@ export const adminRoutes: RouteObject[] = [
     element: <AdminLogin /> 
   },
   
-  // All admin routes use the AdminLayout wrapper with standardized protection
+  // Main admin routes with clear hierarchy
   {
     path: '/admin',
     element: (
@@ -49,90 +47,41 @@ export const adminRoutes: RouteObject[] = [
       </RouteProtectionWrapper>
     ),
     children: [
-      { 
-        index: true, 
-        element: <SystemFunctionalityBreakdown />
-      },
-      { 
-        path: 'dashboard', 
-        element: <AdminDashboard />
-      },
-      { 
-        path: 'system-breakdown', 
-        element: <SystemFunctionalityBreakdown />
-      },
-      { 
-        path: 'users', 
-        element: <AdminUsersPage />
-      },
-      { 
-        path: 'users/:id', 
-        element: <AdminUserProfile />
-      },
-      { 
-        path: 'establishments', 
-        element: <AdminEstablishmentsPage />
-      },
-      { 
-        path: 'establishments/:id', 
-        element: <AdminEstablishmentProfile />
-      },
-      { 
-        path: 'component-catalog', 
-        element: <ComponentCatalogPage />
-      },
-      { 
-        path: 'analytics', 
-        element: <SystemAnalyticsPage />
-      },
-      { 
-        path: 'photo-moderation', 
-        element: <PhotoModerationPage />
-      },
-      { 
-        path: 'content-moderation', 
-        element: <ContentModerationPage />
-      },
-      { 
-        path: 'theme-customization', 
-        element: <ThemeCustomizationPage />
-      },
-      { 
-        path: 'documentation', 
-        element: <AdminDocumentationPage />
-      },
-      { 
-        path: 'system-configuration', 
-        element: <SystemConfigurationPage />
-      },
-      { 
-        path: 'notifications', 
-        element: <AdminNotificationsPage />
-      },
-      { 
-        path: 'notification-testing', 
-        element: <NotificationTestingPage />
-      },
-      { 
-        path: 'reward-system-monitor', 
-        element: <RewardSystemMonitorPage />
-      },
-      { 
-        path: 'rewards', 
-        element: <RewardsAdminPage />
-      },
-      { 
-        path: 'testing', 
-        element: <TestingInterfacePage />
-      },
+      // Dashboard & System
+      { index: true, element: <SystemFunctionalityBreakdown /> },
+      { path: 'dashboard', element: <AdminDashboard /> },
+      { path: 'system-breakdown', element: <SystemFunctionalityBreakdown /> },
+      { path: 'analytics', element: <SystemAnalyticsPage /> },
+      { path: 'system-configuration', element: <SystemConfigurationPage /> },
+      
+      // User Management
+      { path: 'users', element: <AdminUsersPage /> },
+      { path: 'users/:id', element: <AdminUserProfile /> },
+      
+      // Content Management
+      { path: 'establishments', element: <AdminEstablishmentsPage /> },
+      { path: 'establishments/:id', element: <AdminEstablishmentProfile /> },
+      { path: 'photo-moderation', element: <PhotoModerationPage /> },
+      { path: 'content-moderation', element: <ContentModerationPage /> },
+      
+      // System Tools
+      { path: 'component-catalog', element: <ComponentCatalogPage /> },
+      { path: 'theme-customization', element: <ThemeCustomizationPage /> },
+      { path: 'testing', element: <TestingInterfacePage /> },
+      
+      // Communication
+      { path: 'notifications', element: <AdminNotificationsPage /> },
+      { path: 'notification-testing', element: <NotificationTestingPage /> },
+      
+      // Rewards & Commerce
+      { path: 'reward-system-monitor', element: <RewardSystemMonitorPage /> },
+      { path: 'rewards', element: <RewardsAdminPage /> },
+      
+      // Documentation
+      { path: 'documentation', element: <AdminDocumentationPage /> },
     ]
   },
-  // Admin-specific 404 handler for any /admin/* routes not matched above
-  { 
-    path: '/admin/*', 
-    element: <AdminNotFound />
-  },
   
-  // Add simplified admin routes
-  ...simplifiedAdminRoutes,
+  // Admin-specific 404 handler
+  { path: '/admin/*', element: <AdminNotFound /> },
 ];

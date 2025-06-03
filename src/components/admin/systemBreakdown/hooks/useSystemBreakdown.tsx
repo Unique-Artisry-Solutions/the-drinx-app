@@ -3,6 +3,7 @@ import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { FeatureItem, AnalysisStep } from '../types';
+import { analyzeAllFeatureSets } from '../utils/SimpleAnalysis';
 
 // Create proper mock features that match the FeatureItem interface
 const createMockFeature = (id: string, name: string, description: string, status: 'implemented' | 'in_progress' | 'planned' | 'blocked' | 'partial' = 'implemented'): FeatureItem => ({
@@ -67,12 +68,20 @@ export const useSystemBreakdown = () => {
       setAnalysisProgress(i);
     }
     
+    // Use simplified analysis
+    const analysis = analyzeAllFeatureSets(
+      adminFeatures,
+      establishmentFeatures,
+      individualFeatures,
+      promoterFeatures
+    );
+    
     setAnalyzing(false);
     toast({
       title: 'Analysis Complete',
-      description: 'System analysis has been completed successfully.',
+      description: `System analysis completed. Overall completion: ${analysis.overall.completionRate}%`,
     });
-  }, [toast]);
+  }, [toast, adminFeatures, establishmentFeatures, individualFeatures, promoterFeatures]);
 
   const handleCreateReleaseFromFeatures = useCallback(() => {
     toast({
