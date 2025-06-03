@@ -13,6 +13,7 @@ export const promotionalSystemManagement: FeatureItem = {
   userImpact: "high",
   complexity: "high",
   implementationProgress: 92,
+  category: "business_operations",
   statusUpdated: true,
   databaseAnalysis: `
     Database Implementation:

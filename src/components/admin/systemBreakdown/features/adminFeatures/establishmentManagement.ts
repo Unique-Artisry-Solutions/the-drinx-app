@@ -13,6 +13,7 @@ export const establishmentManagement: FeatureItem = {
   userImpact: "high",
   complexity: "high",
   implementationProgress: 95,
+  category: "business_operations",
   statusUpdated: true,
   databaseAnalysis: `
     Database Implementation:

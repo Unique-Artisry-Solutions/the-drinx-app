@@ -13,6 +13,7 @@ export const analyticsAndReporting: FeatureItem = {
   userImpact: "high",
   complexity: "high",
   implementationProgress: 90,
+  category: "system_intelligence",
   statusUpdated: true,
   databaseAnalysis: `
     Database Implementation:

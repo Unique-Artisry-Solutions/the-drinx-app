@@ -12,6 +12,8 @@ export const barCrawlManagement: FeatureItem = {
   databaseStatus: "complete",
   userImpact: "high",
   complexity: "medium",
+  implementationProgress: 92,
+  category: "business_operations",
   databaseAnalysis: `
     Database Implementation:
     - [x] Bar crawls table implemented with necessary fields

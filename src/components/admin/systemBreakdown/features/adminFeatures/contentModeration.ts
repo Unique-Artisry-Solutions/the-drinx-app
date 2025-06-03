@@ -12,6 +12,8 @@ export const contentModeration: FeatureItem = {
   databaseStatus: "complete",
   userImpact: "high",
   complexity: "medium",
+  implementationProgress: 91,
+  category: "administration",
   databaseAnalysis: `
     Database Implementation:
     - [x] content_flags table implemented for tracking reported items

@@ -13,6 +13,7 @@ export const rewardSystemManagement: FeatureItem = {
   userImpact: "high",
   complexity: "high",
   implementationProgress: 98,
+  category: "business_operations",
   statusUpdated: true,
   databaseAnalysis: `
     Database Implementation:

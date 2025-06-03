@@ -33,7 +33,8 @@ export const adminFeatures: FeatureItem[] = [
     databaseStatus: 'complete',
     userImpact: 'medium',
     complexity: 'medium',
-    implementationProgress: 95
+    implementationProgress: 95,
+    category: 'administration'
   },
   {
     id: 'admin-12',
@@ -46,7 +47,8 @@ export const adminFeatures: FeatureItem[] = [
     databaseStatus: 'complete',
     userImpact: 'low',
     complexity: 'high',
-    implementationProgress: 88
+    implementationProgress: 88,
+    category: 'administration'
   },
   {
     id: 'admin-13',
@@ -59,7 +61,8 @@ export const adminFeatures: FeatureItem[] = [
     databaseStatus: 'complete',
     userImpact: 'medium',
     complexity: 'medium',
-    implementationProgress: 92
+    implementationProgress: 92,
+    category: 'administration'
   },
   {
     id: 'admin-14',
@@ -72,7 +75,8 @@ export const adminFeatures: FeatureItem[] = [
     databaseStatus: 'complete',
     userImpact: 'low',
     complexity: 'high',
-    implementationProgress: 85
+    implementationProgress: 85,
+    category: 'administration'
   },
   {
     id: 'admin-15',
@@ -85,7 +89,8 @@ export const adminFeatures: FeatureItem[] = [
     databaseStatus: 'complete',
     userImpact: 'high',
     complexity: 'high',
-    implementationProgress: 90
+    implementationProgress: 90,
+    category: 'administration'
   },
   {
     id: 'admin-16',
@@ -98,7 +103,8 @@ export const adminFeatures: FeatureItem[] = [
     databaseStatus: 'in_progress',
     userImpact: 'medium',
     complexity: 'high',
-    implementationProgress: 60
+    implementationProgress: 60,
+    category: 'administration'
   },
   {
     id: 'admin-17',
@@ -111,6 +117,7 @@ export const adminFeatures: FeatureItem[] = [
     databaseStatus: 'complete',
     userImpact: 'high',
     complexity: 'high',
-    implementationProgress: 93
+    implementationProgress: 93,
+    category: 'system_intelligence'
   }
 ];
