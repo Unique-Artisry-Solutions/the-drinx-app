@@ -1,5 +1,5 @@
 
-import { Building2, Cocktail, Tag, Star, BarChart3, Users, Settings, Shield } from 'lucide-react';
+import { Building2, Wine, Tag, Star, BarChart3, Users, Settings, Shield } from 'lucide-react';
 import { AdminTabConfiguration } from '@/types/admin/TabTypes';
 
 export const DASHBOARD_TAB_CONFIG: AdminTabConfiguration = {
@@ -16,7 +16,7 @@ export const DASHBOARD_TAB_CONFIG: AdminTabConfiguration = {
       {
         value: 'cocktails',
         label: 'Cocktails',
-        icon: Cocktail,
+        icon: Wine,
         badge: 0 // Will be populated dynamically
       },
       {

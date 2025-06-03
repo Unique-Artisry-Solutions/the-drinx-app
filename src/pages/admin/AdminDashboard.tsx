@@ -14,19 +14,29 @@ import {
   AdminPageLayout, 
   AdminTabs, 
   AdminTabContent,
+  AdminTabsContainer,
   type AdminPageConfig
 } from '@/components/admin/layout';
 
-// New hooks
+// New hooks and configurations
 import {
   useAdminDashboard,
   useEstablishmentsData,
   useCocktailsData,
   useAdminNavigation,
-  useAdminActions
+  useAdminActions,
+  useAdminTabs
 } from '@/hooks/admin';
+import { DASHBOARD_TAB_CONFIG } from '@/config/admin/tabConfigurations';
+import { updateTabBadges } from '@/utils/admin/tabConfigUtils';
 
-const AdminDashboard: React.FC = () => {
+interface AdminDashboardProps {
+  useNewTabSystem?: boolean;
+}
+
+const AdminDashboard: React.FC<AdminDashboardProps> = ({ 
+  useNewTabSystem = false 
+}) => {
   const { user, isUsingDevBypass } = useDevAuthBypass();
 
   // Use consolidated hooks
@@ -48,10 +58,22 @@ const AdminDashboard: React.FC = () => {
   const { state: establishmentsState, actions: establishmentsActions } = useEstablishmentsData(establishmentData);
   const { state: cocktailsState, actions: cocktailsActions } = useCocktailsData(cocktailData);
   
+  // Navigation configuration with new/old system support
   const navigationConfig = useAdminNavigation(
     establishmentsState.items,
-    cocktailsState.items
+    cocktailsState.items,
+    [],
+    useNewTabSystem
   );
+
+  // New tab system configuration
+  const tabConfiguration = useNewTabSystem ? updateTabBadges(DASHBOARD_TAB_CONFIG, {
+    establishments: establishmentsState.items.length,
+    cocktails: cocktailsState.items.length
+  }) : null;
+
+  const adminTabsHook = useNewTabSystem && tabConfiguration ? 
+    useAdminTabs(tabConfiguration) : null;
 
   const pageActions = useAdminActions(
     {
@@ -73,7 +95,8 @@ const AdminDashboard: React.FC = () => {
   console.log('AdminDashboard: Auth state', { 
     user: !!user, 
     isUsingDevBypass,
-    userId: user?.id 
+    userId: user?.id,
+    useNewTabSystem
   });
 
   const handleDeleteEstablishment = (id: string) => {
@@ -94,6 +117,44 @@ const AdminDashboard: React.FC = () => {
     maxWidth: 'xl'
   };
 
+  // Active tab for both systems
+  const activeTab = useNewTabSystem && adminTabsHook ? 
+    adminTabsHook.state.activeTab : 
+    dashboardState.activeTab;
+
+  const handleTabChange = useNewTabSystem && adminTabsHook ? 
+    adminTabsHook.actions.setActiveTab : 
+    dashboardActions.setActiveTab;
+
+  const renderTabContent = () => (
+    <>
+      {activeTab === 'establishments' && (
+        <EstablishmentsTable 
+          establishments={filteredEstablishments} 
+          onDeleteEstablishment={handleDeleteEstablishment} 
+        />
+      )}
+      {activeTab === 'cocktails' && (
+        <CocktailsTable 
+          cocktails={filteredCocktails}
+          onDeleteCocktail={handleDeleteCocktail}
+        />
+      )}
+      {activeTab === 'promotions' && (
+        <TabContentPlaceholder
+          title="Promotions Management"
+          description="This section will allow you to manage promotional codes created by establishments."
+        />
+      )}
+      {activeTab === 'reviews' && (
+        <TabContentPlaceholder
+          title="Reviews Management"
+          description="This section will allow you to manage user reviews for mocktails."
+        />
+      )}
+    </>
+  );
+
   return (
     <AdminPageLayout config={pageConfig} actions={pageActions}>
       {isUsingDevBypass && (
@@ -111,39 +172,49 @@ const AdminDashboard: React.FC = () => {
         />
       </div>
 
-      <AdminTabs 
-        tabs={navigationConfig.tabs}
-        value={dashboardState.activeTab}
-        onValueChange={dashboardActions.setActiveTab}
-      >
-        <AdminTabContent value="establishments">
-          <EstablishmentsTable 
-            establishments={filteredEstablishments} 
-            onDeleteEstablishment={handleDeleteEstablishment} 
-          />
-        </AdminTabContent>
+      {useNewTabSystem && adminTabsHook ? (
+        <AdminTabsContainer 
+          configuration={adminTabsHook.configuration}
+          state={adminTabsHook.state}
+          actions={adminTabsHook.actions}
+        >
+          {renderTabContent()}
+        </AdminTabsContainer>
+      ) : (
+        <AdminTabs 
+          tabs={navigationConfig.tabs}
+          value={activeTab}
+          onValueChange={handleTabChange}
+        >
+          <AdminTabContent value="establishments">
+            <EstablishmentsTable 
+              establishments={filteredEstablishments} 
+              onDeleteEstablishment={handleDeleteEstablishment} 
+            />
+          </AdminTabContent>
 
-        <AdminTabContent value="cocktails">
-          <CocktailsTable 
-            cocktails={filteredCocktails}
-            onDeleteCocktail={handleDeleteCocktail}
-          />
-        </AdminTabContent>
+          <AdminTabContent value="cocktails">
+            <CocktailsTable 
+              cocktails={filteredCocktails}
+              onDeleteCocktail={handleDeleteCocktail}
+            />
+          </AdminTabContent>
 
-        <AdminTabContent value="promotions">
-          <TabContentPlaceholder
-            title="Promotions Management"
-            description="This section will allow you to manage promotional codes created by establishments."
-          />
-        </AdminTabContent>
+          <AdminTabContent value="promotions">
+            <TabContentPlaceholder
+              title="Promotions Management"
+              description="This section will allow you to manage promotional codes created by establishments."
+            />
+          </AdminTabContent>
 
-        <AdminTabContent value="reviews">
-          <TabContentPlaceholder
-            title="Reviews Management"
-            description="This section will allow you to manage user reviews for mocktails."
-          />
-        </AdminTabContent>
-      </AdminTabs>
+          <AdminTabContent value="reviews">
+            <TabContentPlaceholder
+              title="Reviews Management"
+              description="This section will allow you to manage user reviews for mocktails."
+            />
+          </AdminTabContent>
+        </AdminTabs>
+      )}
     </AdminPageLayout>
   );
 };

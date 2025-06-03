@@ -34,4 +34,4 @@ export type {
 export type {
   UseAdminTabsState,
   UseAdminTabsActions
-} from '../types/admin/TabTypes';
+} from '@/types/admin/TabTypes';
