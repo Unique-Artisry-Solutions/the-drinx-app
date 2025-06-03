@@ -1,3 +1,5 @@
+export { SimpleAdminService } from './SimpleAdminService';
+export type { SimpleQueryParams, SimpleResponse } from './SimpleAdminService';
 
 export { BaseAdminService } from './BaseAdminService';
 export { AdminEstablishmentsService, establishmentsService } from './AdminEstablishmentsService';

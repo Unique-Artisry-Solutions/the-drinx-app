@@ -1,4 +1,3 @@
-
 export { useAdminDashboard } from './useAdminDashboard';
 export { useAdminData, useEstablishmentsData, useCocktailsData } from './useAdminData';
 export { useAdminNavigation } from './useAdminNavigation';
@@ -35,3 +34,7 @@ export type {
   UseAdminTabsState,
   UseAdminTabsActions
 } from '@/types/admin/TabTypes';
+
+// Add simplified admin hook
+export { useSimpleAdmin } from './useSimpleAdmin';
+export type { SimpleAdminState, SimpleAdminActions } from './useSimpleAdmin';
