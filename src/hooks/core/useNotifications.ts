@@ -19,6 +19,8 @@ export interface NotificationState {
   unreadCount: number;
   isLoading: boolean;
   error: string | null;
+  permissionStatus: NotificationPermission;
+  isSupported: boolean;
 }
 
 export interface NotificationActions {
@@ -27,6 +29,9 @@ export interface NotificationActions {
   sendTestNotification: () => Promise<void>;
   refreshNotifications: () => Promise<void>;
   deleteNotification: (id: string) => Promise<void>;
+  requestPermission: () => Promise<void>;
+  checkPermission: () => void;
+  resetPermissionState: () => Promise<void>;
 }
 
 export function useNotifications(): { state: NotificationState; actions: NotificationActions } {
@@ -37,8 +42,65 @@ export function useNotifications(): { state: NotificationState; actions: Notific
     notifications: [],
     unreadCount: 0,
     isLoading: false,
-    error: null
+    error: null,
+    permissionStatus: typeof window !== 'undefined' && 'Notification' in window 
+      ? Notification.permission 
+      : 'denied',
+    isSupported: typeof window !== 'undefined' && 'Notification' in window
   });
+
+  const checkPermission = useCallback(() => {
+    if (state.isSupported) {
+      setState(prev => ({
+        ...prev,
+        permissionStatus: Notification.permission
+      }));
+    }
+  }, [state.isSupported]);
+
+  const requestPermission = useCallback(async () => {
+    if (!state.isSupported) {
+      toast({
+        title: 'Not Supported',
+        description: 'Browser notifications are not supported',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    try {
+      const permission = await Notification.requestPermission();
+      setState(prev => ({ ...prev, permissionStatus: permission }));
+      
+      if (permission === 'granted') {
+        toast({
+          title: 'Success',
+          description: 'Notification permission granted'
+        });
+      } else {
+        toast({
+          title: 'Permission Denied',
+          description: 'Notification permission was denied',
+          variant: 'destructive'
+        });
+      }
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to request notification permission',
+        variant: 'destructive'
+      });
+    }
+  }, [state.isSupported, toast]);
+
+  const resetPermissionState = useCallback(async () => {
+    // Note: Cannot programmatically reset permission, user must do it manually
+    toast({
+      title: 'Reset Instructions',
+      description: 'Please reset notification permissions manually in your browser settings',
+      variant: 'info'
+    });
+  }, [toast]);
 
   const refreshNotifications = useCallback(async () => {
     if (!authState.user) return;
@@ -104,14 +166,31 @@ export function useNotifications(): { state: NotificationState; actions: Notific
       return;
     }
 
+    if (!state.isSupported) {
+      toast({
+        title: 'Not Supported',
+        description: 'Browser notifications are not supported',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    if (state.permissionStatus !== 'granted') {
+      toast({
+        title: 'Permission Required',
+        description: 'Please grant notification permission first',
+        variant: 'destructive'
+      });
+      return;
+    }
+
     try {
-      // Show browser notification if permission granted
-      if ('Notification' in window && Notification.permission === 'granted') {
-        new Notification('Test Notification', {
-          body: 'This is a test notification',
-          icon: '/favicon.ico'
-        });
-      }
+      // Show browser notification
+      new Notification('Test Notification', {
+        body: 'This is a test notification',
+        icon: '/favicon.ico',
+        tag: `test-${Date.now()}`
+      });
       
       toast({
         title: 'Success',
@@ -124,7 +203,7 @@ export function useNotifications(): { state: NotificationState; actions: Notific
         variant: 'destructive'
       });
     }
-  }, [authState.user, toast]);
+  }, [authState.user, state.isSupported, state.permissionStatus, toast]);
 
   const deleteNotification = useCallback(async (id: string) => {
     setState(prev => ({
@@ -141,15 +220,19 @@ export function useNotifications(): { state: NotificationState; actions: Notific
     markAllAsRead,
     sendTestNotification,
     refreshNotifications,
-    deleteNotification
+    deleteNotification,
+    requestPermission,
+    checkPermission,
+    resetPermissionState
   };
 
-  // Auto-fetch notifications on mount
+  // Auto-fetch notifications and check permission on mount
   useEffect(() => {
+    checkPermission();
     if (authState.user) {
       refreshNotifications();
     }
-  }, [authState.user, refreshNotifications]);
+  }, [authState.user, refreshNotifications, checkPermission]);
 
   return { state, actions };
 }

@@ -1,27 +1,26 @@
 
-import { useNotificationSupport } from './notifications/useNotificationSupport';
-import { useNotificationPermission } from './notifications/useNotificationPermission';
-import { useNotificationTesting } from './notifications/useNotificationTesting';
-import { useNotificationReset } from './notifications/useNotificationReset';
+// Legacy hook - redirects to core useNotifications hook for backward compatibility
+// This file is deprecated and will be removed in a future version
+import { useNotifications } from './core/useNotifications';
 
+/**
+ * @deprecated Use useNotifications from '@/hooks/core' instead
+ * This hook is maintained for backward compatibility only
+ */
 export function useDirectNotifications() {
-  const { isSupported, permissionStatus, lastCheck, checkPermission } = useNotificationSupport();
-  const { isLoading: isLoadingPermission, error: permissionError, requestPermission } = useNotificationPermission();
-  const { isLoading: isLoadingTest, error: testError, sendTestNotification } = useNotificationTesting();
-  const { isLoading: isLoadingReset, error: resetError, resetPermissionState } = useNotificationReset();
-
-  const isLoading = isLoadingPermission || isLoadingTest || isLoadingReset;
-  const error = permissionError || testError || resetError;
+  console.warn('useDirectNotifications is deprecated. Use useNotifications from @/hooks/core instead.');
+  
+  const { state, actions } = useNotifications();
 
   return {
-    isSupported,
-    permissionStatus,
-    lastCheck,
-    isLoading,
-    error,
-    requestPermission,
-    checkPermission,
-    sendTestNotification,
-    resetPermissionState
+    isSupported: state.isSupported,
+    permissionStatus: state.permissionStatus,
+    lastCheck: new Date().toISOString(), // Mock value for compatibility
+    isLoading: state.isLoading,
+    error: state.error,
+    requestPermission: actions.requestPermission,
+    checkPermission: actions.checkPermission,
+    sendTestNotification: actions.sendTestNotification,
+    resetPermissionState: actions.resetPermissionState
   };
 }
