@@ -1,0 +1,90 @@
+
+import { BaseAdminService } from './BaseAdminService';
+
+export interface AdminCocktail {
+  id: string;
+  name: string;
+  description: string;
+  price: string;
+  ingredients: any;
+  image_url?: string;
+  establishment_id: string;
+  created_at: string;
+  updated_at?: string;
+  establishment?: {
+    name: string;
+  };
+}
+
+export class AdminCocktailsService extends BaseAdminService<AdminCocktail> {
+  constructor() {
+    super('cocktails');
+  }
+
+  async getAllWithEstablishments(params: any = {}) {
+    const { page = 1, limit = 20, sortBy, sortOrder = 'desc', filters } = params;
+    const offset = (page - 1) * limit;
+
+    let query = supabase
+      .from(this.tableName)
+      .select(`
+        *,
+        establishment:establishments(name)
+      `, { count: 'exact' });
+
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          if (key === 'establishment_name') {
+            query = query.ilike('establishments.name', `%${value}%`);
+          } else {
+            query = query.eq(key, value);
+          }
+        }
+      });
+    }
+
+    if (sortBy) {
+      query = query.order(sortBy, { ascending: sortOrder === 'asc' });
+    } else {
+      query = query.order('created_at', { ascending: false });
+    }
+
+    query = query.range(offset, offset + limit - 1);
+
+    const { data, error, count } = await query;
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    return {
+      data: data || [],
+      total: count || 0,
+      page,
+      limit,
+      totalPages: Math.ceil((count || 0) / limit)
+    };
+  }
+
+  async getPopularCocktails(limit: number = 10) {
+    // This would require tracking popularity metrics
+    // For now, we'll return recent cocktails
+    const { data, error } = await supabase
+      .from(this.tableName)
+      .select(`
+        *,
+        establishment:establishments(name)
+      `)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    return data || [];
+  }
+}
+
+export const cocktailsService = new AdminCocktailsService();
