@@ -15,7 +15,7 @@ export function useDirectNotifications() {
   return {
     isSupported: state.isSupported,
     permissionStatus: state.permissionStatus,
-    lastCheck: new Date().toISOString(), // Mock value for compatibility
+    lastCheck: new Date(), // Return Date object for compatibility
     isLoading: state.isLoading,
     error: state.error,
     requestPermission: actions.requestPermission,

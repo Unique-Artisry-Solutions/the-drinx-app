@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -27,12 +26,12 @@ const SimplifiedAdminUsersPage: React.FC = () => {
 
   const handleSearch = (value: string) => {
     setSearchTerm(value);
-    actions.setSearchTerm(value);
+    actions.setSearch(value);
   };
 
   const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this user?')) {
-      await actions.delete(id);
+      await actions.deleteItem(id);
     }
   };
 
