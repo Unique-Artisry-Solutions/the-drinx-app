@@ -10,7 +10,7 @@ interface InteractiveElementsProps {
   onJoin?: () => void;
   onCheckIn?: (locationId: string) => void;
   isParticipant?: boolean;
-  currentLocation?: string;
+  // currentLocation?: string; // Commented out to preserve future functionality
 }
 
 const InteractiveElements: React.FC<InteractiveElementsProps> = ({
@@ -18,7 +18,7 @@ const InteractiveElements: React.FC<InteractiveElementsProps> = ({
   onJoin,
   onCheckIn,
   isParticipant = false,
-  currentLocation
+  // currentLocation // Commented out to preserve future functionality
 }) => {
   const [checkedInLocations, setCheckedInLocations] = useState<string[]>([]);
 

@@ -1,82 +1,74 @@
 
-import React, { useState } from 'react';
-import { Card, CardContent, CardFooter } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CalendarIcon, MapPinIcon, UsersIcon, ChevronDown, ChevronUp } from 'lucide-react';
-import { BarCrawlRequest } from '@/hooks/useBarCrawlRequests';
+import { Button } from '@/components/ui/button';
+import { Calendar, Users, Clock } from 'lucide-react';
+// import { MapPinIcon } from 'lucide-react'; // Commented out to preserve future functionality
 
-interface BarCrawlCardProps {
-  crawl: BarCrawlRequest;
-  handleEndParticipation?: (id: string) => void;
-  handleAcceptRequest?: (id: string) => void;
+interface BarCrawl {
+  id: string;
+  name: string;
+  date: string;
+  time: string;
+  participants: number;
+  maxParticipants: number;
+  status: 'active' | 'upcoming' | 'completed';
 }
 
-const BarCrawlCard: React.FC<BarCrawlCardProps> = ({
-  crawl,
-  handleEndParticipation,
-  handleAcceptRequest
+interface BarCrawlCardProps {
+  barCrawl: BarCrawl;
+  onViewDetails?: (id: string) => void;
+  onJoin?: (id: string) => void;
+}
+
+const BarCrawlCard: React.FC<BarCrawlCardProps> = ({ 
+  barCrawl, 
+  onViewDetails, 
+  onJoin 
 }) => {
-  const [showDetails, setShowDetails] = useState(false);
-  const isPending = crawl.status === 'pending';
-  
-  return <Card className="hover:shadow transition-shadow">
-      <CardContent className="p-4">
-        <div className="flex justify-between items-start my-0 py-[8px]">
-          <div>
-            <h3 className="font-medium">{crawl.name}</h3>
-            <p className="text-sm text-material-on-surface-variant">Organized by {crawl.organizer}</p>
-          </div>
-          
-          <Badge variant={isPending ? "destructive" : "outline"} className={isPending ? "" : "bg-green-50 text-green-600 border-green-200"}>
-            {isPending ? 'Pending' : 'Accepted'}
+  return (
+    <Card className="hover:shadow-lg transition-shadow">
+      <CardHeader>
+        <div className="flex justify-between items-start">
+          <CardTitle className="text-lg">{barCrawl.name}</CardTitle>
+          <Badge variant={barCrawl.status === 'active' ? 'default' : 'secondary'}>
+            {barCrawl.status}
           </Badge>
         </div>
-        
-        <div className="flex flex-wrap gap-4 mt-4">
-          <div className="flex items-center text-sm">
-            <CalendarIcon className="h-4 w-4 mr-1 text-material-on-surface-variant" />
-            <span>
-              {crawl.startDate === crawl.endDate ? crawl.date : `${crawl.startDate} - ${crawl.endDate}`}
-            </span>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-3">
+          <div className="grid grid-cols-1 gap-2 text-sm text-gray-600">
+            <div className="flex items-center">
+              <Calendar className="w-4 h-4 mr-2" />
+              {barCrawl.date}
+            </div>
+            <div className="flex items-center">
+              <Clock className="w-4 h-4 mr-2" />
+              {barCrawl.time}
+            </div>
+            <div className="flex items-center">
+              <Users className="w-4 h-4 mr-2" />
+              {barCrawl.participants}/{barCrawl.maxParticipants} participants
+            </div>
           </div>
           
-          <div className="flex items-center text-sm">
-            <UsersIcon className="h-4 w-4 mr-1 text-material-on-surface-variant" />
-            <span>{crawl.participants} participants</span>
+          <div className="flex gap-2">
+            {onViewDetails && (
+              <Button variant="outline" size="sm" onClick={() => onViewDetails(barCrawl.id)}>
+                View Details
+              </Button>
+            )}
+            {onJoin && barCrawl.status === 'upcoming' && (
+              <Button size="sm" onClick={() => onJoin(barCrawl.id)}>
+                Join
+              </Button>
+            )}
           </div>
         </div>
-        
-        <Button variant="ghost" size="sm" onClick={() => setShowDetails(!showDetails)} className="mt-3 p-0 text-primary font-normal">
-          {showDetails ? "Hide details" : "Show details"}
-          {showDetails ? <ChevronUp className="h-4 w-4 ml-1" /> : <ChevronDown className="h-4 w-4 ml-1" />}
-        </Button>
-        
-        {showDetails && <div className="mt-4 pt-4 border-t space-y-3">
-            {crawl.description && <div>
-                <h4 className="text-sm font-medium">Description</h4>
-                <p className="text-sm text-material-on-surface-variant">{crawl.description}</p>
-              </div>}
-            
-            {crawl.otherEstablishments.length > 0 && <div>
-                <h4 className="text-sm font-medium">Other Establishments</h4>
-                <div className="flex flex-wrap gap-2 mt-1">
-                  {crawl.otherEstablishments.map((e, i) => <Badge key={i} variant="outline" className="bg-material-surface-container-low">
-                      {e}
-                    </Badge>)}
-                </div>
-              </div>}
-          </div>}
       </CardContent>
-      
-      <CardFooter className="flex justify-end gap-2 p-4 pt-0">
-        {isPending && handleAcceptRequest ? <Button variant="outline" onClick={() => handleAcceptRequest(crawl.id)}>
-            Accept Request
-          </Button> : handleEndParticipation ? <Button variant="outline" onClick={() => handleEndParticipation(crawl.id)}>
-            End Participation
-          </Button> : null}
-      </CardFooter>
-    </Card>;
+    </Card>
+  );
 };
 
 export default BarCrawlCard;

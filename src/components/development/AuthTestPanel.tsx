@@ -1,96 +1,49 @@
 
-import React from 'react';
-import { useAuth } from '@/contexts/auth/AuthProvider';
-import { useDevAuthBypass } from '@/hooks/useDevAuthBypass';
-import { useDevelopmentMode } from '@/contexts/DevelopmentModeContext';
-import { Button } from '@/components/ui/button';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { useAuth } from '@/contexts/auth/AuthProvider';
 
-const AuthTestPanel = () => {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const { isDevelopment, isDevModeActive } = useDevelopmentMode();
-  const { 
-    user, 
-    session, 
-    isLoading, 
-    authStable, 
-    userType: authUserType 
-  } = useAuth();
-  
-  const { 
-    isAuthenticated: devIsAuthenticated, 
-    userType: devUserType,
-    isUsingDevBypass 
-  } = useDevAuthBypass();
+const AuthTestPanel: React.FC = () => {
+  const { user, isAuthenticated, signOut } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
 
-  if (!isDevelopment) {
-    return null;
-  }
-
-  const testRoutes = [
-    { path: '/', label: 'Index' },
-    { path: '/landing', label: 'Landing' },
-    { path: '/explore', label: 'Explore' },
-    { path: '/login', label: 'Login' },
-    { path: '/admin/system-breakdown', label: 'Admin Dashboard' }
-  ];
+  const handleSignOut = async () => {
+    setIsLoading(true);
+    try {
+      await signOut();
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
-    <Card className="fixed bottom-4 left-4 w-80 z-50 bg-white shadow-lg">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm">Auth & Route Test Panel</CardTitle>
+    <Card>
+      <CardHeader>
+        <CardTitle>Authentication Test Panel</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-2 text-xs">
-        <div className="grid grid-cols-2 gap-1 text-xs">
-          <div>Current Path:</div>
-          <div className="font-mono">{location.pathname}</div>
-          
-          <div>Is Loading:</div>
-          <div>{isLoading ? '✅' : '❌'}</div>
-          
-          <div>Auth Stable:</div>
-          <div>{authStable ? '✅' : '❌'}</div>
-          
-          <div>Has User:</div>
-          <div>{user ? '✅' : '❌'}</div>
-          
-          <div>Has Session:</div>
-          <div>{session ? '✅' : '❌'}</div>
-          
-          <div>Auth User Type:</div>
-          <div>{authUserType || 'none'}</div>
-          
-          <div>Dev Mode Active:</div>
-          <div>{isDevModeActive ? '✅' : '❌'}</div>
-          
-          <div>Dev User Type:</div>
-          <div>{devUserType || 'none'}</div>
-          
-          <div>Using Dev Bypass:</div>
-          <div>{isUsingDevBypass ? '✅' : '❌'}</div>
-          
-          <div>Dev Authenticated:</div>
-          <div>{devIsAuthenticated ? '✅' : '❌'}</div>
+      <CardContent className="space-y-4">
+        <div className="flex items-center gap-2">
+          <span>Status:</span>
+          <Badge variant={isAuthenticated ? "default" : "secondary"}>
+            {isAuthenticated ? "Authenticated" : "Not Authenticated"}
+          </Badge>
         </div>
         
-        <div className="border-t pt-2">
-          <div className="text-xs font-medium mb-1">Test Routes:</div>
-          <div className="grid grid-cols-2 gap-1">
-            {testRoutes.map(route => (
-              <Button
-                key={route.path}
-                size="sm"
-                variant="outline"
-                className="text-xs h-6"
-                onClick={() => navigate(route.path)}
-              >
-                {route.label}
-              </Button>
-            ))}
+        {user && (
+          <div className="space-y-2">
+            <p><strong>User ID:</strong> {user.id}</p>
+            <p><strong>Email:</strong> {user.email}</p>
+            <p><strong>User Type:</strong> {user.user_metadata?.user_type || 'Unknown'}</p>
           </div>
-        </div>
+        )}
+        
+        {isAuthenticated && (
+          <Button onClick={handleSignOut} disabled={isLoading}>
+            {isLoading ? 'Signing out...' : 'Sign Out'}
+          </Button>
+        )}
       </CardContent>
     </Card>
   );

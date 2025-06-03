@@ -1,38 +1,51 @@
 
-import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import RecentActivityCard from './RecentActivityCard';
-import { Activity, useActivitiesData } from '@/hooks/useActivitiesData';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+// import { CardDescription, CardTitle } from '@/components/ui/card'; // Commented out to preserve future functionality
+// import { Activity } from 'lucide-react'; // Commented out to preserve future functionality
 
-const ActivitiesSection: React.FC = () => {
-  const { activities, isLoadingActivities } = useActivitiesData();
+interface ActivityItem {
+  id: string;
+  type: string;
+  description: string;
+  timestamp: string;
+  user?: string;
+}
 
-  if (isLoadingActivities) {
-    return (
-      <Card className="w-full">
-        <CardHeader>
-          <Skeleton className="h-8 w-48" />
-          <Skeleton className="h-4 w-36" />
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="flex items-start gap-3 border-b border-material-outline/10 pb-3">
-                <Skeleton className="h-8 w-8 rounded-full" />
+interface ActivitiesSectionProps {
+  activities: ActivityItem[];
+}
+
+const ActivitiesSection: React.FC<ActivitiesSectionProps> = ({ activities }) => {
+  return (
+    <Card>
+      <CardHeader>
+        <h3 className="text-lg font-semibold">Recent Activities</h3>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-3">
+          {activities.length === 0 ? (
+            <p className="text-gray-500 text-center py-4">No recent activities</p>
+          ) : (
+            activities.map((activity) => (
+              <div key={activity.id} className="flex items-start justify-between p-3 border rounded-lg">
                 <div className="flex-1">
-                  <Skeleton className="h-4 w-24 mb-2" />
-                  <Skeleton className="h-3 w-full" />
+                  <div className="flex items-center gap-2 mb-1">
+                    <Badge variant="secondary">{activity.type}</Badge>
+                    {activity.user && (
+                      <span className="text-sm text-gray-600">by {activity.user}</span>
+                    )}
+                  </div>
+                  <p className="text-sm">{activity.description}</p>
                 </div>
+                <span className="text-xs text-gray-500">{activity.timestamp}</span>
               </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  return <RecentActivityCard activities={activities} />;
+            ))
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
 };
 
 export default ActivitiesSection;
