@@ -8,11 +8,17 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { UserCog } from 'lucide-react';
-import { useRoleSwitch } from '@/hooks/useRoleSwitch';
+import { useAuth } from '@/hooks/core';
 import { cn } from '@/lib/utils';
 
 export function RoleSwitcher() {
-  const { availableRoles, currentRole, isLoading, switchRole } = useRoleSwitch();
+  const { state, actions } = useAuth();
+  const { user, isLoading } = state;
+  const { switchRole } = actions;
+
+  // Mock available roles - in real app this would come from user data
+  const availableRoles = user ? ['individual', 'establishment', 'promoter'] : [];
+  const currentRole = state.userType || 'individual';
 
   // Don't show the switcher if user has no multiple roles
   if (availableRoles.length <= 1) return null;
@@ -39,6 +45,12 @@ export function RoleSwitcher() {
     }
   };
 
+  const handleRoleSwitch = async (role: string) => {
+    if (role !== currentRole) {
+      await switchRole(role);
+    }
+  };
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -59,7 +71,7 @@ export function RoleSwitcher() {
         {availableRoles.map((role) => (
           <DropdownMenuItem
             key={role}
-            onClick={() => role !== currentRole && switchRole(role)}
+            onClick={() => handleRoleSwitch(role)}
             className={cn(
               "cursor-pointer",
               role === currentRole && "bg-accent",

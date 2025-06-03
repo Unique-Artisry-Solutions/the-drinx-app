@@ -1,9 +1,10 @@
+
 import React from 'react';
 import { AdminPageLayout } from '@/components/admin/layout';
 import { AdminTabsContainer } from '@/components/admin/layout';
 import { AdminTabs } from '@/components/admin/layout';
 import { TabsContent } from '@/components/ui/tabs';
-import { useAdminDashboard, useAdminData } from '@/hooks/admin';
+import { useData, useAuth } from '@/hooks/core';
 import { useAdminNavigation } from '@/hooks/admin/useAdminNavigation';
 import { DASHBOARD_TAB_CONFIG } from '@/config/admin/tabConfigurations';
 import { updateTabBadges } from '@/utils/admin/tabConfigUtils';
@@ -21,6 +22,9 @@ const mockCocktails = [
   { id: '102', name: 'Cosmopolitan', establishment: 'Sunset Lounge' },
   { id: '103', name: 'Old Fashioned', establishment: 'The Beer Garden' },
 ];
+
+const mockFetchEstablishments = async () => mockEstablishments;
+const mockFetchCocktails = async () => mockCocktails;
 
 const EstablishmentsTab: React.FC<{
   establishments: any[];
@@ -77,13 +81,21 @@ interface AdminDashboardProps {
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ 
   useNewTabSystem = false 
 }) => {
-  const { state: dashboardState, actions: dashboardActions } = useAdminDashboard();
-  const establishmentsData = useAdminData(mockEstablishments);
-  const cocktailsData = useAdminData(mockCocktails);
+  const { state: authState } = useAuth();
+  const { state: establishmentsState, actions: establishmentsActions } = useData({
+    initialData: mockEstablishments,
+    fetchFn: mockFetchEstablishments,
+    itemType: 'establishment'
+  });
+  const { state: cocktailsState, actions: cocktailsActions } = useData({
+    initialData: mockCocktails,
+    fetchFn: mockFetchCocktails,
+    itemType: 'cocktail'
+  });
   
   const navigationConfig = useAdminNavigation(
-    establishmentsData.state.items,
-    cocktailsData.state.items,
+    establishmentsState.data,
+    cocktailsState.data,
     [],
     useNewTabSystem
   );
@@ -99,36 +111,36 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     {
       label: 'Refresh Data',
       onClick: () => {
-        establishmentsData.actions.refreshData();
-        cocktailsData.actions.refreshData();
+        establishmentsActions.refetch();
+        cocktailsActions.refetch();
       }
     }
   ];
 
   if (useNewTabSystem && navigationConfig.configuration) {
     const configWithBadges = updateTabBadges(navigationConfig.configuration, {
-      establishments: establishmentsData.state.items.length,
-      cocktails: cocktailsData.state.items.length
+      establishments: establishmentsState.data.length,
+      cocktails: cocktailsState.data.length
     });
 
     return (
       <AdminPageLayout
         config={pageConfig}
         actions={pageActions}
-        isLoading={establishmentsData.state.isLoading || cocktailsData.state.isLoading}
-        error={establishmentsData.state.error || cocktailsData.state.error}
+        isLoading={establishmentsState.isLoading || cocktailsState.isLoading}
+        error={establishmentsState.error || cocktailsState.error}
       >
         <AdminTabsContainer configuration={configWithBadges}>
           <TabsContent value="establishments">
             <EstablishmentsTab
-              establishments={establishmentsData.state.items}
-              onDelete={establishmentsData.actions.deleteItem}
+              establishments={establishmentsState.data}
+              onDelete={establishmentsActions.deleteItem}
             />
           </TabsContent>
           <TabsContent value="cocktails">
             <CocktailsTab
-              cocktails={cocktailsData.state.items}
-              onDelete={cocktailsData.actions.deleteItem}
+              cocktails={cocktailsState.data}
+              onDelete={cocktailsActions.deleteItem}
             />
           </TabsContent>
           <TabsContent value="promotions">
@@ -146,8 +158,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     <AdminPageLayout
       config={pageConfig}
       actions={pageActions}
-      isLoading={establishmentsData.state.isLoading || cocktailsData.state.isLoading}
-      error={establishmentsData.state.error || cocktailsData.state.error}
+      isLoading={establishmentsState.isLoading || cocktailsState.isLoading}
+      error={establishmentsState.error || cocktailsState.error}
     >
       <AdminTabs
         tabs={navigationConfig.tabs}
@@ -155,14 +167,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       >
         <TabsContent value="establishments">
           <EstablishmentsTab
-            establishments={establishmentsData.state.items}
-            onDelete={establishmentsData.actions.deleteItem}
+            establishments={establishmentsState.data}
+            onDelete={establishmentsActions.deleteItem}
           />
         </TabsContent>
         <TabsContent value="cocktails">
           <CocktailsTab
-            cocktails={cocktailsData.state.items}
-            onDelete={cocktailsData.actions.deleteItem}
+            cocktails={cocktailsState.data}
+            onDelete={cocktailsActions.deleteItem}
           />
         </TabsContent>
         <TabsContent value="promotions">

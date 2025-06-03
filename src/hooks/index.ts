@@ -1,4 +1,3 @@
-
 // Core consolidated hooks - Use these for new development
 export * from './core';
 
@@ -21,3 +20,6 @@ export { useSimplifiedAdminData } from './admin/useSimplifiedAdminData';
 export { useUserRecipes } from './useUserRecipes';
 export { useSwigCircuits } from './useSwigCircuits';
 export { useStreakData } from './useStreakData';
+
+// Keep legacy useNotifications for backward compatibility
+export { useNotifications } from './useNotifications';

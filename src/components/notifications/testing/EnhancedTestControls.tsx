@@ -5,15 +5,35 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { useEnhancedNotificationTesting } from '@/hooks/notifications/testing/useEnhancedNotificationTesting';
+import { useNotifications } from '@/hooks/core';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
-export function EnhancedTestControls() {
-  const { config, setConfig, isLoading, sendEnhancedTestNotification } = useEnhancedNotificationTesting();
+interface EnhancedTestConfig {
+  category: string;
+  content: string;
+  delay: number;
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  animate: boolean;
+  useScreenReader: boolean;
+}
 
-  const handleSubmit = (e: React.FormEvent) => {
+export function EnhancedTestControls() {
+  const { state, actions } = useNotifications();
+  const { isLoading } = state;
+  const { sendTestNotification } = actions;
+  
+  const [config, setConfig] = React.useState<EnhancedTestConfig>({
+    category: 'test',
+    content: 'Enhanced test notification',
+    delay: 0,
+    priority: 'medium',
+    animate: true,
+    useScreenReader: false
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    sendEnhancedTestNotification();
+    await sendTestNotification(config.category);
   };
 
   return (

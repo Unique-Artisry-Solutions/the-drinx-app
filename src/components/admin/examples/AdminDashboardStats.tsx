@@ -1,19 +1,48 @@
 
 import React from 'react';
 import { AdminStatsCard } from '../charts/AdminStatsCard';
-import { useAdminService } from '@/hooks/admin/useAdminService';
-import { establishmentsService, cocktailsService, usersService } from '@/services/admin';
+import { useData } from '@/hooks/core';
 import { Building2, Wine, Users, TrendingUp } from 'lucide-react';
 
+// Mock services for data fetching
+const fetchEstablishments = async () => [
+  { id: '1', name: 'The Tipsy Tavern' },
+  { id: '2', name: 'Sunset Lounge' },
+];
+
+const fetchCocktails = async () => [
+  { id: '1', name: 'Mojito' },
+  { id: '2', name: 'Cosmopolitan' },
+];
+
+const fetchUsers = async () => [
+  { id: '1', name: 'John Doe' },
+  { id: '2', name: 'Jane Smith' },
+];
+
 export const AdminDashboardStats: React.FC = () => {
-  const { state: establishmentsState } = useAdminService(establishmentsService);
-  const { state: cocktailsState } = useAdminService(cocktailsService);
-  const { state: usersState } = useAdminService(usersService);
+  const { state: establishmentsState } = useData({
+    initialData: [],
+    fetchFn: fetchEstablishments,
+    itemType: 'establishment'
+  });
+  
+  const { state: cocktailsState } = useData({
+    initialData: [],
+    fetchFn: fetchCocktails,
+    itemType: 'cocktail'
+  });
+  
+  const { state: usersState } = useData({
+    initialData: [],
+    fetchFn: fetchUsers,
+    itemType: 'user'
+  });
 
   const statsConfig = [
     {
       title: 'Total Establishments',
-      value: establishmentsState.pagination.total,
+      value: establishmentsState.data.length,
       description: 'Active venues',
       trend: {
         value: 12,
@@ -25,7 +54,7 @@ export const AdminDashboardStats: React.FC = () => {
     },
     {
       title: 'Total Cocktails',
-      value: cocktailsState.pagination.total,
+      value: cocktailsState.data.length,
       description: 'Recipes available',
       trend: {
         value: 8,
@@ -37,7 +66,7 @@ export const AdminDashboardStats: React.FC = () => {
     },
     {
       title: 'Total Users',
-      value: usersState.pagination.total,
+      value: usersState.data.length,
       description: 'Registered users',
       trend: {
         value: 5,

@@ -3,7 +3,7 @@ import React, { useState, KeyboardEvent } from 'react';
 import { Bell, AlertTriangle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useNotificationTesting } from '@/hooks/notifications/useNotificationTesting';
+import { useNotifications } from '@/hooks/core';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
@@ -15,7 +15,9 @@ import {
 } from "@/components/ui/select";
 
 const NotificationTestPanel = () => {
-  const { sendTestNotification, isLoading, error } = useNotificationTesting();
+  const { state, actions } = useNotifications();
+  const { isLoading, error } = state;
+  const { sendTestNotification } = actions;
   const [priority, setPriority] = useState<'low' | 'medium' | 'high' | 'urgent'>('medium');
   const [type, setType] = useState('default');
 
@@ -25,8 +27,8 @@ const NotificationTestPanel = () => {
     }
   };
 
-  const handleSendTest = () => {
-    sendTestNotification();
+  const handleSendTest = async () => {
+    await sendTestNotification(type);
   };
 
   return (
