@@ -2,9 +2,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MapPin, Phone, Globe, Clock } from 'lucide-react';
-// import { useTheme } from 'next-themes'; // Commented out unused import
 import { Establishment } from '@/types/ProfileTypes';
-// import { BusinessHour } from '../BusinessHoursEditor'; // Commented out unused import
 
 interface InfoTabContentProps {
   establishment: Establishment;
@@ -51,13 +49,13 @@ const InfoTabContent: React.FC<InfoTabContentProps> = ({ establishment }) => {
         </CardContent>
       </Card>
 
-      {establishment.description && (
+      {establishment.bio && (
         <Card>
           <CardHeader>
             <CardTitle>About</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-gray-700 leading-relaxed">{establishment.description}</p>
+            <p className="text-gray-700 leading-relaxed">{establishment.bio}</p>
           </CardContent>
         </Card>
       )}

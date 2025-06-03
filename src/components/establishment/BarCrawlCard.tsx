@@ -11,7 +11,7 @@ interface BarCrawl {
   date: string;
   time: string;
   participants: number;
-  maxParticipants: number;
+  maxParticipants?: number;
   status: 'active' | 'upcoming' | 'completed';
 }
 
@@ -63,7 +63,8 @@ const BarCrawlCard: React.FC<BarCrawlCardProps> = ({
             {'participants' in data && (
               <div className="flex items-center">
                 <Users className="w-4 h-4 mr-2" />
-                {data.participants}/{data.maxParticipants} participants
+                {data.participants}
+                {(data as BarCrawl).maxParticipants && `/${(data as BarCrawl).maxParticipants}`} participants
               </div>
             )}
           </div>

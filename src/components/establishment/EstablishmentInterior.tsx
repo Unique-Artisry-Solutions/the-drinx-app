@@ -29,13 +29,11 @@ const EstablishmentInterior: React.FC<EstablishmentInteriorProps> = ({
   const { 
     isBarCrawlModalOpen, 
     setIsBarCrawlModalOpen, 
-    activeUsers, 
     hasCheckedIn, 
     isPromoter,
     getSortedTopCocktails, 
     handleCheckIn, 
-    handleBarCrawlRequest,
-    formatBusinessHours
+    handleBarCrawlRequest
   } = useEstablishmentInterior(establishment);
 
   const { theme } = useTheme();
@@ -43,9 +41,6 @@ const EstablishmentInterior: React.FC<EstablishmentInteriorProps> = ({
   
   // Get top rated cocktails for the tab
   const topRatedCocktails = getSortedTopCocktails(cocktails);
-  
-  // Format business hours for display
-  const businessHoursDisplay = formatBusinessHours();
   
   return (
     <div className={cn(
@@ -79,15 +74,7 @@ const EstablishmentInterior: React.FC<EstablishmentInteriorProps> = ({
             </TabsContent>
             
             <TabsContent value="info">
-              <InfoTabContent 
-                establishment={establishment}
-                activeUsers={activeUsers}
-                businessHoursDisplay={businessHoursDisplay.map(hour => ({
-                  days: hour.day,
-                  hours: hour.hours
-                }))}
-                isLightTheme={isLightTheme}
-              />
+              <InfoTabContent establishment={establishment} />
             </TabsContent>
             
             <TabsContent value="top-rated">

@@ -14,10 +14,10 @@ const EstablishmentDashboard: React.FC = () => {
   const { establishmentId } = useParams<{ establishmentId: string }>();
   const { user } = useAuth();
   const establishmentProfileData = useEstablishmentProfile(establishmentId);
-  const userEstablishmentData = useUserEstablishment(user?.id);
+  const userEstablishmentData = useUserEstablishment();
   
   const [activeTab, setActiveTab] = useState('overview');
-  const [dateRange] = useState({ from: new Date(), to: new Date() });
+  const [_dateRange] = useState({ from: new Date(), to: new Date() });
 
   const mockStats = {
     totalVisitors: 1234,
@@ -26,7 +26,7 @@ const EstablishmentDashboard: React.FC = () => {
     averageRating: 4.7
   };
 
-  if (establishmentProfileData.isLoading) {
+  if (establishmentProfileData.isLoading || userEstablishmentData.isLoading) {
     return (
       <Layout>
         <div className="container mx-auto py-8">
@@ -36,7 +36,7 @@ const EstablishmentDashboard: React.FC = () => {
     );
   }
 
-  const displayEstablishment = establishmentProfileData.establishment || userEstablishmentData.userEstablishment;
+  const displayEstablishment = establishmentProfileData.establishment || userEstablishmentData.establishment;
 
   if (!displayEstablishment) {
     return (
@@ -151,7 +151,7 @@ const EstablishmentDashboard: React.FC = () => {
                 <CardTitle>Analytics Dashboard</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-600">Analytics data for the selected date range: {dateRange.from.toDateString()} to {dateRange.to.toDateString()}</p>
+                <p className="text-gray-600">Analytics data coming soon</p>
               </CardContent>
             </Card>
           </TabsContent>
