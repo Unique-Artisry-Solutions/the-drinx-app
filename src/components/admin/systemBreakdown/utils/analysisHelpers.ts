@@ -2,7 +2,7 @@
 import { FeatureItem } from '../types';
 
 /**
- * Parses database requirements or analysis text to identify tasks and their completion status
+ * Simple task parser - extracts checkbox-style tasks from text
  */
 export function parseTaskStatuses(analysisText?: string): { text: string; isCompleted: boolean }[] {
   if (!analysisText) return [];
@@ -11,28 +11,16 @@ export function parseTaskStatuses(analysisText?: string): { text: string; isComp
   const lines = analysisText.split('\n');
   
   for (const line of lines) {
-    // Match markdown-style checkboxes: - [x] task or - [ ] task
-    if (line.includes('- [x]')) {
+    const trimmed = line.trim();
+    if (trimmed.includes('- [x]')) {
       tasks.push({
-        text: line.replace('- [x]', '').trim(),
+        text: trimmed.replace('- [x]', '').trim(),
         isCompleted: true
       });
-    } else if (line.includes('- [ ]')) {
+    } else if (trimmed.includes('- [ ]')) {
       tasks.push({
-        text: line.replace('- [ ]', '').trim(),
+        text: trimmed.replace('- [ ]', '').trim(),
         isCompleted: false
-      });
-    } else if (line.match(/^\d+\.\s+/)) {
-      // For numbered lists: 1. Create table
-      tasks.push({
-        text: line.trim(),
-        isCompleted: false
-      });
-    } else if (line.includes('✓')) {
-      // Also match checkmarks: ✓ task
-      tasks.push({
-        text: line.replace('✓', '').trim(),
-        isCompleted: true
       });
     }
   }
@@ -41,7 +29,7 @@ export function parseTaskStatuses(analysisText?: string): { text: string; isComp
 }
 
 /**
- * Analyzes database requirements for a feature and returns a structured analysis
+ * Simplified database requirements analysis
  */
 export function analyzeDbRequirements(feature: FeatureItem): {
   completedTasks: number;
@@ -51,26 +39,20 @@ export function analyzeDbRequirements(feature: FeatureItem): {
 } {
   const tasks = parseTaskStatuses(feature.databaseAnalysis);
   
-  // If no tasks were found in the analysis, generate default ones based on status
+  // If no specific tasks found, create simple defaults based on status
   if (tasks.length === 0) {
     const dbStatus = feature.dbStatus || feature.databaseStatus || 'not_started';
-    const isComplete = dbStatus === 'complete';
-    const isInProgress = dbStatus === 'in_progress';
-    
     const defaultTasks = [
-      { text: 'Create database schema', isCompleted: isComplete || isInProgress },
-      { text: 'Define table relationships', isCompleted: isComplete || isInProgress },
-      { text: 'Implement API endpoints', isCompleted: isComplete },
-      { text: 'Create database triggers', isCompleted: isComplete },
-      { text: 'Optimize query performance', isCompleted: isComplete }
+      { text: 'Database schema', isCompleted: dbStatus === 'complete' },
+      { text: 'API endpoints', isCompleted: dbStatus === 'complete' },
+      { text: 'Data validation', isCompleted: dbStatus === 'complete' }
     ];
-    
     tasks.push(...defaultTasks);
   }
   
   const completedTasks = tasks.filter(task => task.isCompleted).length;
   const totalTasks = tasks.length;
-  const completionPercentage = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+  const completionPercentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
   
   return {
     completedTasks,

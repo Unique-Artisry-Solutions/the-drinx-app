@@ -1,66 +1,91 @@
 
-import { FeatureDetectionEngine } from './FeatureDetectionEngine';
-import { unifiedDetection } from './unifiedDetection';
-import type { CoreFeatureCategory } from './FeatureDetectionEngine';
+// Simplified detection system - consolidate all exports in one place
+export { FeatureDetectionEngine, type CoreFeatureCategory } from './FeatureDetectionEngine';
+export { unifiedDetection } from './unifiedDetection';
 
-// Create the detection engine instance
-export const featureDetectionEngine = new FeatureDetectionEngine();
+// Legacy compatibility functions - simplified implementations
+import { FeatureItem } from '../../types';
 
-// Legacy compatibility functions - all route through unified detection
-export const isFeatureFlagRelated = (feature: any) => unifiedDetection.isCategory(feature, 'system_administration');
-export const isUserManagementFeature = (feature: any) => unifiedDetection.isCategory(feature, 'user_management');
-export const isAuthFeature = (feature: any) => unifiedDetection.isCategory(feature, 'user_management');
-export const isProfileFeature = (feature: any) => unifiedDetection.isCategory(feature, 'user_management');
-export const isContentFeature = (feature: any) => unifiedDetection.isCategory(feature, 'content_operations');
-export const isContentModerationFeature = (feature: any) => unifiedDetection.isCategory(feature, 'content_operations');
-export const isPhotoFeature = (feature: any) => unifiedDetection.isCategory(feature, 'content_operations');
-export const isPhotoModerationFeature = (feature: any) => unifiedDetection.isCategory(feature, 'content_operations');
-export const isAnalyticsFeature = (feature: any) => unifiedDetection.isCategory(feature, 'business_analytics');
-export const isDashboardFeature = (feature: any) => unifiedDetection.isCategory(feature, 'business_analytics');
-export const isSystemBreakdownFeature = (feature: any) => unifiedDetection.isCategory(feature, 'system_administration');
-export const isSocialFeature = (feature: any) => unifiedDetection.isCategory(feature, 'social_engagement');
-export const isExplorationFeature = (feature: any) => unifiedDetection.isCategory(feature, 'social_engagement');
-export const isNotificationFeature = (feature: any) => unifiedDetection.isCategory(feature, 'system_administration');
-export const isPromotionFeature = (feature: any) => unifiedDetection.isCategory(feature, 'commerce_promotions');
-export const isRewardProgramFeature = (feature: any) => unifiedDetection.isCategory(feature, 'commerce_promotions');
-export const isAIFeature = (feature: any) => unifiedDetection.isCategory(feature, 'ai_recommendations');
-export const isMocktailSuggestionFeature = (feature: any) => unifiedDetection.isCategory(feature, 'ai_recommendations');
-export const isMocktailTrendsFeature = (feature: any) => unifiedDetection.isCategory(feature, 'ai_recommendations');
-export const isIngredientPairingFeature = (feature: any) => unifiedDetection.isCategory(feature, 'ai_recommendations');
-export const isRecipeFeature = (feature: any) => unifiedDetection.isCategory(feature, 'ai_recommendations');
-export const isEstablishmentManagementFeature = (feature: any) => unifiedDetection.isCategory(feature, 'venue_operations');
-export const isVisitTrackingFeature = (feature: any) => unifiedDetection.isCategory(feature, 'venue_operations');
-export const isBarCrawlFeature = (feature: any) => unifiedDetection.isCategory(feature, 'venue_operations');
-export const isSwigCircuitFeature = (feature: any) => unifiedDetection.isCategory(feature, 'venue_operations');
-export const isMapFeature = (feature: any) => unifiedDetection.isCategory(feature, 'venue_operations');
-export const isSystemConfigurationFeature = (feature: any) => unifiedDetection.isCategory(feature, 'system_administration');
-export const isThemeFeature = (feature: any) => unifiedDetection.isCategory(feature, 'system_administration');
-export const isThemeConfigurationFeature = (feature: any) => unifiedDetection.isCategory(feature, 'system_administration');
-export const isAccessibilityFeature = (feature: any) => unifiedDetection.isCategory(feature, 'system_administration');
-export const isSignatureFeature = (feature: any) => unifiedDetection.isCategory(feature, 'system_administration');
-export const isAudienceRelationshipFeature = (feature: any) => unifiedDetection.isCategory(feature, 'business_analytics');
-export const isAudienceInfluencerFeature = (feature: any) => unifiedDetection.isCategory(feature, 'business_analytics');
-export const isCrossSegmentEngagementFeature = (feature: any) => unifiedDetection.isCategory(feature, 'business_analytics');
-export const isAudienceVisualizationFeature = (feature: any) => unifiedDetection.isCategory(feature, 'business_analytics');
-export const isPromoterCommunicationFeature = (feature: any) => unifiedDetection.isCategory(feature, 'social_engagement');
-export const isBrandConnectionFeature = (feature: any) => unifiedDetection.isCategory(feature, 'social_engagement');
-export const isPromoterAnalyticsFeature = (feature: any) => unifiedDetection.isCategory(feature, 'business_analytics');
-export const isEventManagementFeature = (feature: any) => unifiedDetection.isCategory(feature, 'venue_operations');
-export const isPromoterDashboardFeature = (feature: any) => unifiedDetection.isCategory(feature, 'business_analytics');
-export const isCustomPromotionFeature = (feature: any) => unifiedDetection.isCategory(feature, 'commerce_promotions');
-export const isPromoterNotificationFeature = (feature: any) => unifiedDetection.isCategory(feature, 'system_administration');
-export const isTicketManagementFeature = (feature: any) => unifiedDetection.isCategory(feature, 'venue_operations');
-export const isPromotionAnalyticsFeature = (feature: any) => unifiedDetection.isCategory(feature, 'business_analytics');
-export const isPromotionSecurityFeature = (feature: any) => unifiedDetection.isCategory(feature, 'system_administration');
-export const isPromotionNotificationFeature = (feature: any) => unifiedDetection.isCategory(feature, 'system_administration');
-export const isPromotionCreationFeature = (feature: any) => unifiedDetection.isCategory(feature, 'commerce_promotions');
-export const isPromotionManagementFeature = (feature: any) => unifiedDetection.isCategory(feature, 'commerce_promotions');
-export const isPromotionRedemptionFeature = (feature: any) => unifiedDetection.isCategory(feature, 'commerce_promotions');
-export const isPromotionReportingFeature = (feature: any) => unifiedDetection.isCategory(feature, 'business_analytics');
-export const isPromotionValidationFeature = (feature: any) => unifiedDetection.isCategory(feature, 'system_administration');
-export const isPromotionSchedulingFeature = (feature: any) => unifiedDetection.isCategory(feature, 'system_administration');
-export const isPromotionIntegrationFeature = (feature: any) => unifiedDetection.isCategory(feature, 'system_administration');
-export const isPromotionAIFeature = (feature: any) => unifiedDetection.isCategory(feature, 'ai_recommendations');
+const createLegacyDetector = (keywords: string[]) => (feature: FeatureItem): boolean => {
+  const searchText = `${feature.name} ${feature.description}`.toLowerCase();
+  return keywords.some(keyword => searchText.includes(keyword.toLowerCase()));
+};
 
-// Export unified detection and engine
-export { unifiedDetection, CoreFeatureCategory };
+// User Management & Authentication
+export const isUserManagementFeature = createLegacyDetector(['user', 'profile', 'account', 'management']);
+export const isAuthFeature = createLegacyDetector(['auth', 'login', 'signup', 'authentication']);
+export const isProfileFeature = createLegacyDetector(['profile', 'bio', 'avatar', 'personal']);
+
+// Content & Social
+export const isContentFeature = createLegacyDetector(['content', 'post', 'share', 'upload']);
+export const isContentModerationFeature = createLegacyDetector(['moderation', 'flag', 'review', 'approve']);
+export const isPhotoFeature = createLegacyDetector(['photo', 'image', 'camera', 'upload']);
+export const isPhotoModerationFeature = createLegacyDetector(['photo', 'moderation', 'image', 'review']);
+export const isSocialFeature = createLegacyDetector(['social', 'friend', 'follow', 'share']);
+
+// Analytics & Dashboard
+export const isAnalyticsFeature = createLegacyDetector(['analytics', 'metrics', 'report', 'stats']);
+export const isDashboardFeature = createLegacyDetector(['dashboard', 'overview', 'summary']);
+export const isSystemBreakdownFeature = createLegacyDetector(['system', 'breakdown', 'analysis']);
+
+// Exploration & Discovery
+export const isExplorationFeature = createLegacyDetector(['explore', 'discover', 'search', 'browse']);
+export const isMapFeature = createLegacyDetector(['map', 'location', 'gps', 'nearby']);
+
+// Notifications & Communication
+export const isNotificationFeature = createLegacyDetector(['notification', 'alert', 'message', 'push']);
+
+// Business & Commerce
+export const isPromotionFeature = createLegacyDetector(['promotion', 'discount', 'coupon', 'deal']);
+export const isRewardProgramFeature = createLegacyDetector(['reward', 'loyalty', 'points', 'tier']);
+export const isEstablishmentManagementFeature = createLegacyDetector(['establishment', 'venue', 'business']);
+export const isVisitTrackingFeature = createLegacyDetector(['visit', 'check-in', 'tracking']);
+
+// Events & Circuits
+export const isBarCrawlFeature = createLegacyDetector(['bar crawl', 'crawl', 'route']);
+export const isSwigCircuitFeature = createLegacyDetector(['swig circuit', 'circuit', 'event']);
+export const isEventManagementFeature = createLegacyDetector(['event', 'ticket', 'attendee']);
+export const isTicketManagementFeature = createLegacyDetector(['ticket', 'purchase', 'sale']);
+
+// AI & Recommendations
+export const isAIFeature = createLegacyDetector(['ai', 'artificial intelligence', 'machine learning']);
+export const isMocktailSuggestionFeature = createLegacyDetector(['mocktail', 'suggestion', 'recommend']);
+export const isMocktailTrendsFeature = createLegacyDetector(['mocktail', 'trends', 'popular']);
+export const isIngredientPairingFeature = createLegacyDetector(['ingredient', 'pairing', 'combination']);
+export const isRecipeFeature = createLegacyDetector(['recipe', 'ingredient', 'preparation']);
+
+// System & Configuration
+export const isSystemConfigurationFeature = createLegacyDetector(['system', 'config', 'setting']);
+export const isThemeFeature = createLegacyDetector(['theme', 'appearance', 'style']);
+export const isThemeConfigurationFeature = createLegacyDetector(['theme', 'config', 'customization']);
+export const isAccessibilityFeature = createLegacyDetector(['accessibility', 'a11y', 'screen reader']);
+export const isSignatureFeature = createLegacyDetector(['signature', 'unique', 'special']);
+
+// Promoter & Audience
+export const isPromoterCommunicationFeature = createLegacyDetector(['promoter', 'communication', 'message']);
+export const isBrandConnectionFeature = createLegacyDetector(['brand', 'connection', 'partnership']);
+export const isPromoterAnalyticsFeature = createLegacyDetector(['promoter', 'analytics', 'metrics']);
+export const isPromoterDashboardFeature = createLegacyDetector(['promoter', 'dashboard']);
+export const isCustomPromotionFeature = createLegacyDetector(['custom', 'promotion', 'campaign']);
+export const isPromoterNotificationFeature = createLegacyDetector(['promoter', 'notification']);
+
+export const isAudienceRelationshipFeature = createLegacyDetector(['audience', 'relationship', 'segment']);
+export const isAudienceInfluencerFeature = createLegacyDetector(['audience', 'influencer', 'reach']);
+export const isCrossSegmentEngagementFeature = createLegacyDetector(['cross-segment', 'engagement']);
+export const isAudienceVisualizationFeature = createLegacyDetector(['audience', 'visualization', 'chart']);
+
+// Promotion specific
+export const isPromotionAnalyticsFeature = createLegacyDetector(['promotion', 'analytics']);
+export const isPromotionSecurityFeature = createLegacyDetector(['promotion', 'security', 'fraud']);
+export const isPromotionNotificationFeature = createLegacyDetector(['promotion', 'notification']);
+export const isPromotionCreationFeature = createLegacyDetector(['promotion', 'creation', 'create']);
+export const isPromotionManagementFeature = createLegacyDetector(['promotion', 'management', 'manage']);
+export const isPromotionRedemptionFeature = createLegacyDetector(['promotion', 'redemption', 'redeem']);
+export const isPromotionReportingFeature = createLegacyDetector(['promotion', 'reporting', 'report']);
+export const isPromotionValidationFeature = createLegacyDetector(['promotion', 'validation', 'verify']);
+export const isPromotionSchedulingFeature = createLegacyDetector(['promotion', 'scheduling', 'schedule']);
+export const isPromotionIntegrationFeature = createLegacyDetector(['promotion', 'integration', 'api']);
+export const isPromotionAIFeature = createLegacyDetector(['promotion', 'ai', 'intelligent']);
+
+// Utility function
+export const isFeatureFlagRelated = createLegacyDetector(['feature flag', 'flag', 'toggle']);
