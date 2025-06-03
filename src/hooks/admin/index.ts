@@ -38,3 +38,7 @@ export type {
 // Add simplified admin hook
 export { useSimpleAdmin } from './useSimpleAdmin';
 export type { SimpleAdminState, SimpleAdminActions } from './useSimpleAdmin';
+
+// Add simplified admin hook
+export { useSimplifiedAdminData } from './useSimplifiedAdminData';
+export type { SimplifiedAdminState, SimplifiedAdminActions } from './useSimplifiedAdminData';

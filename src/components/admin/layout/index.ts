@@ -1,4 +1,3 @@
-
 export { default as AdminPageLayout } from './AdminPageLayout';
 export { default as AdminPageHeader } from './AdminPageHeader';
 export { default as AdminPageContent } from './AdminPageContent';
@@ -9,3 +8,4 @@ export { AdminTabs, AdminTabContent } from './AdminTabs';
 export { TabSystemMigration } from '../migration/TabSystemMigration';
 export type { AdminPageConfig, AdminPageAction } from './AdminPageLayout';
 export type { AdminTabConfig } from './AdminTabs';
+export { AdminSimplifiedLayout } from './AdminSimplifiedLayout';

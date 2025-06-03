@@ -1,4 +1,3 @@
-
 import { lazy } from 'react';
 import { RouteObject } from 'react-router-dom';
 import AdminLogin from '@/pages/admin/AdminLogin';
@@ -26,6 +25,10 @@ const ContentModerationPage = lazy(() => import('@/pages/admin/ContentModeration
 const ThemeCustomizationPage = lazy(() => import('@/pages/admin/ThemeCustomizationPage'));
 const TestingInterfacePage = lazy(() => import('@/pages/admin/TestingInterfacePage'));
 
+// Import simplified routes
+import { simplifiedAdminRoutes } from './simplifiedAdminRoutes';
+
+// Add simplified routes to the export
 export const adminRoutes: RouteObject[] = [
   // Admin login - separate from protected routes
   { 
@@ -129,4 +132,7 @@ export const adminRoutes: RouteObject[] = [
     path: '/admin/*', 
     element: <AdminNotFound />
   },
+  
+  // Add simplified admin routes
+  ...simplifiedAdminRoutes,
 ];
