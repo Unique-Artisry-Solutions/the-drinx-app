@@ -12,8 +12,6 @@ export const photoModeration: FeatureItem = {
   databaseStatus: "complete",
   userImpact: "high",
   complexity: "medium",
-  implementationProgress: 89,
-  category: "administration",
   databaseAnalysis: `
     Database Implementation:
     - [x] Photos table implemented with necessary fields

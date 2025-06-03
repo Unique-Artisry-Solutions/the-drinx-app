@@ -1,185 +1,201 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { FeatureItem } from './types';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Activity, TrendingUp, Database, Users } from 'lucide-react';
+import AnalysisProgress from './AnalysisProgress';
+import StatusUpdateNotification from './StatusUpdateNotification';
 import DevelopmentProgressDashboard from './DevelopmentProgressDashboard';
-import { useFeatureStatus } from './hooks/useFeatureStatus';
+import CreateReleaseFromFeaturesButton from './CreateReleaseFromFeaturesButton';
+import { FeatureItem, AnalysisStep, ProgressSnapshot, MonthlyProgressData } from './types';
+import { calculateFeatureStatistics } from './utils';
 
-const OverviewTab: React.FC = () => {
-  const {
-    adminFeatures,
-    establishmentFeatures,
-    individualFeatures,
-    promoterFeatures,
-    updatedFeaturesCount
-  } = useFeatureStatus();
+interface OverviewTabProps {
+  adminFeatures: FeatureItem[];
+  establishmentFeatures: FeatureItem[];
+  individualFeatures: FeatureItem[];
+  promoterFeatures: FeatureItem[];
+  analyzing: boolean;
+  analysisProgress: number;
+  analysisSteps: AnalysisStep[];
+  updatedFeaturesCount: number;
+  onCreateRelease: () => void;
+  progressHistory?: ProgressSnapshot[];
+  monthlyProgressData?: MonthlyProgressData[];
+  currentSnapshot?: ProgressSnapshot | null;
+  dataValidation?: { isValid: boolean; issues: string[] };
+}
 
-  // Combine all features for overall statistics
-  const allFeatures = [
-    ...adminFeatures,
-    ...establishmentFeatures,
-    ...individualFeatures,
-    ...promoterFeatures
-  ];
+const OverviewTab: React.FC<OverviewTabProps> = ({
+  adminFeatures,
+  establishmentFeatures,
+  individualFeatures,
+  promoterFeatures,
+  analyzing,
+  analysisProgress,
+  analysisSteps,
+  updatedFeaturesCount,
+  onCreateRelease,
+  progressHistory = [],
+  monthlyProgressData = [],
+  currentSnapshot,
+  dataValidation
+}) => {
+  console.log('OverviewTab: Rendering with features:', {
+    admin: adminFeatures.length,
+    establishment: establishmentFeatures.length,
+    individual: individualFeatures.length,
+    promoter: promoterFeatures.length
+  });
 
-  // Calculate overall statistics
-  const totalFeatures = allFeatures.length;
-  const implementedFeatures = allFeatures.filter(f => f.status === 'implemented').length;
-  const inProgressFeatures = allFeatures.filter(f => f.status === 'in_progress').length;
-  const notStartedFeatures = allFeatures.filter(f => f.status === 'not_started').length;
+  const allFeatures = [...adminFeatures, ...establishmentFeatures, ...individualFeatures, ...promoterFeatures];
+  const stats = calculateFeatureStatistics(allFeatures);
 
-  const overallProgress = totalFeatures > 0 ? Math.round((implementedFeatures / totalFeatures) * 100) : 0;
-
-  // Mock data for progress tracking
-  const currentSnapshot = {
-    timestamp: new Date().toISOString(),
-    date: new Date().toLocaleDateString(),
-    totalFeatures,
-    implementedFeatures,
-    inProgressFeatures,
-    plannedFeatures: notStartedFeatures,
-    blockedFeatures: 0,
-    averageImplementationProgress: Math.round(
-      allFeatures.reduce((sum, f) => sum + (f.implementationProgress || 0), 0) / totalFeatures
-    ),
-    frontendProgress: 85,
-    backendProgress: 90,
-    adminFeatureCount: adminFeatures.length,
-    establishmentFeatureCount: establishmentFeatures.length,
-    individualFeatureCount: individualFeatures.length,
-    promoterFeatureCount: promoterFeatures.length,
-    adminImplementationRate: Math.round((adminFeatures.filter(f => f.status === 'implemented').length / adminFeatures.length) * 100),
-    establishmentImplementationRate: Math.round((establishmentFeatures.filter(f => f.status === 'implemented').length / establishmentFeatures.length) * 100),
-    individualImplementationRate: Math.round((individualFeatures.filter(f => f.status === 'implemented').length / individualFeatures.length) * 100),
-    promoterImplementationRate: Math.round((promoterFeatures.filter(f => f.status === 'implemented').length / promoterFeatures.length) * 100),
-    overallProgress,
-    dbComplete: 92,
-    confidenceScore: 95
-  };
-
-  const monthlyProgressData = [
-    { month: 'Jan', frontend: 45, backend: 50 },
-    { month: 'Feb', frontend: 55, backend: 60 },
-    { month: 'Mar', frontend: 70, backend: 75 },
-    { month: 'Apr', frontend: 80, backend: 85 },
-    { month: 'May', frontend: 85, backend: 90 }
-  ];
+  const implementedCount = allFeatures.filter(f => f.status === 'implemented').length;
+  const inProgressCount = allFeatures.filter(f => f.status === 'in_progress').length;
+  const plannedCount = allFeatures.filter(f => f.status === 'planned').length;
+  const overallProgress = (implementedCount / allFeatures.length) * 100;
 
   return (
     <div className="space-y-6">
-      {/* Quick Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Features</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalFeatures}</div>
-          </CardContent>
-        </Card>
+      {/* Analysis Progress */}
+      {analyzing && (
+        <AnalysisProgress 
+          progress={analysisProgress}
+          steps={analysisSteps}
+          analyzing={analyzing}
+        />
+      )}
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Implemented</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{implementedFeatures}</div>
-            <div className="text-xs text-muted-foreground">{Math.round((implementedFeatures / totalFeatures) * 100)}% complete</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">In Progress</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{inProgressFeatures}</div>
-            <div className="text-xs text-muted-foreground">{Math.round((inProgressFeatures / totalFeatures) * 100)}% of total</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Overall Progress</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{overallProgress}%</div>
-            <Progress value={overallProgress} className="h-2 mt-2" />
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Feature Categories Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Admin Features</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-xl font-bold">{adminFeatures.length}</div>
-            <Badge variant="outline" className="mt-1">
-              {adminFeatures.filter(f => f.status === 'implemented').length} implemented
-            </Badge>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Establishment Features</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-xl font-bold">{establishmentFeatures.length}</div>
-            <Badge variant="outline" className="mt-1">
-              {establishmentFeatures.filter(f => f.status === 'implemented').length} implemented
-            </Badge>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Individual Features</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-xl font-bold">{individualFeatures.length}</div>
-            <Badge variant="outline" className="mt-1">
-              {individualFeatures.filter(f => f.status === 'implemented').length} implemented
-            </Badge>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Promoter Features</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-xl font-bold">{promoterFeatures.length}</div>
-            <Badge variant="outline" className="mt-1">
-              {promoterFeatures.filter(f => f.status === 'implemented').length} implemented
-            </Badge>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Detailed Progress Dashboard */}
-      <DevelopmentProgressDashboard
-        features={allFeatures}
-      />
-
-      {/* Recent Updates */}
+      {/* Status Update Notification */}
       {updatedFeaturesCount > 0 && (
-        <Card>
+        <StatusUpdateNotification updatedFeaturesCount={updatedFeaturesCount} />
+      )}
+
+      {/* Data Validation Warning */}
+      {dataValidation && !dataValidation.isValid && (
+        <Card className="border-orange-200 bg-orange-50">
           <CardHeader>
-            <CardTitle>Recent Updates</CardTitle>
+            <CardTitle className="text-orange-800 flex items-center gap-2">
+              <Activity className="h-5 w-5" />
+              Data Validation Issues
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-sm text-muted-foreground">
-              {updatedFeaturesCount} features have been recently updated with new status information.
-            </div>
+            <ul className="list-disc list-inside space-y-1 text-orange-700">
+              {dataValidation.issues.map((issue, index) => (
+                <li key={index}>{issue}</li>
+              ))}
+            </ul>
           </CardContent>
         </Card>
       )}
+
+      {/* Quick Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Features</CardTitle>
+            <Database className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{allFeatures.length}</div>
+            <p className="text-xs text-muted-foreground">
+              Across all user types
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Implemented</CardTitle>
+            <TrendingUp className="h-4 w-4 text-green-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">{implementedCount}</div>
+            <p className="text-xs text-muted-foreground">
+              {Math.round((implementedCount / allFeatures.length) * 100)}% complete
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">In Progress</CardTitle>
+            <Activity className="h-4 w-4 text-yellow-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-yellow-600">{inProgressCount}</div>
+            <p className="text-xs text-muted-foreground">
+              Currently developing
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Planned</CardTitle>
+            <Users className="h-4 w-4 text-blue-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-600">{plannedCount}</div>
+            <p className="text-xs text-muted-foreground">
+              Future development
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Overall Progress */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            Overall Implementation Progress
+            <Badge variant="outline">
+              {Math.round(overallProgress)}% Complete
+            </Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Progress value={overallProgress} className="w-full h-3" />
+          <div className="flex justify-between text-sm text-muted-foreground mt-2">
+            <span>{implementedCount} implemented</span>
+            <span>{allFeatures.length} total features</span>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Development Progress Dashboard */}
+      {currentSnapshot && (
+        <DevelopmentProgressDashboard
+          adminFeatures={adminFeatures}
+          establishmentFeatures={establishmentFeatures}
+          individualFeatures={individualFeatures}
+          promoterFeatures={promoterFeatures}
+          currentSnapshot={currentSnapshot}
+          monthlyProgressData={monthlyProgressData}
+        />
+      )}
+
+      {/* Quick Actions */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Quick Actions</CardTitle>
+        </CardHeader>
+        <CardContent className="flex gap-4">
+          <CreateReleaseFromFeaturesButton 
+            onClick={onCreateRelease}
+          />
+          <Button variant="outline">
+            View Analytics
+          </Button>
+          <Button variant="outline">
+            Export Report
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 };

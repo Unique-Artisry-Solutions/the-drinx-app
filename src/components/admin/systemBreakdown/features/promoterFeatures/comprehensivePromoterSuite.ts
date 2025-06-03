@@ -14,7 +14,6 @@ export const comprehensivePromoterSuite: FeatureItem = {
   userImpact: "high",
   complexity: "high",
   implementationProgress: 93,
-  category: "business_operations",
   statusUpdated: true,
   databaseAnalysis: `
     Database Implementation:

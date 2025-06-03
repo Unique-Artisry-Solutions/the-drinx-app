@@ -1,4 +1,3 @@
-
 import { FeatureStatus, DatabaseStatus } from '../types';
 
 /**
@@ -27,15 +26,7 @@ export function mapToSimplifiedStatus(legacyStatus: string): FeatureStatus {
     return 'in_progress';
   }
   
-  // Map planned/not started variants
-  if (normalized.includes('planned') ||
-      normalized.includes('not_started') ||
-      normalized.includes('pending') ||
-      normalized.includes('queued')) {
-    return 'not_started';
-  }
-  
-  // Default fallback for any unknown states
+  // Default to not_started for planned, new, etc.
   return 'not_started';
 }
 
@@ -168,53 +159,4 @@ export function getNextState(currentStatus: FeatureStatus): FeatureStatus | null
   }
   
   return null;
-}
-
-/**
- * Auto-categorizes a feature based on its description and access patterns
- */
-export function autoDetectCategory(feature: any): 'user_experience' | 'business_operations' | 'system_intelligence' | 'administration' {
-  const description = feature.description?.toLowerCase() || '';
-  const name = feature.name?.toLowerCase() || '';
-  const text = `${name} ${description}`;
-  
-  // Check for system intelligence keywords
-  if (text.includes('analytics') || text.includes('reporting') || 
-      text.includes('ai') || text.includes('intelligence') ||
-      text.includes('prediction') || text.includes('recommendation')) {
-    return 'system_intelligence';
-  }
-  
-  // Check for business operations keywords
-  if (text.includes('establishment') || text.includes('venue') ||
-      text.includes('promotion') || text.includes('commerce') ||
-      text.includes('revenue') || text.includes('reward')) {
-    return 'business_operations';
-  }
-  
-  // Check for user experience keywords
-  if (text.includes('user') || text.includes('profile') ||
-      text.includes('social') || text.includes('follow')) {
-    return 'user_experience';
-  }
-  
-  // Default to administration for admin-only features
-  return 'administration';
-}
-
-/**
- * Ensures all features have the required properties with defaults
- */
-export function normalizeFeature(feature: any): any {
-  return {
-    ...feature,
-    implementationProgress: feature.implementationProgress || 
-      calculateProgressFromStatus(
-        mapToSimplifiedStatus(feature.status || 'not_started'),
-        mapToSimplifiedDbStatus(feature.databaseStatus || feature.dbStatus || 'not_started')
-      ),
-    category: feature.category || autoDetectCategory(feature),
-    status: mapToSimplifiedStatus(feature.status || 'not_started'),
-    databaseStatus: mapToSimplifiedDbStatus(feature.databaseStatus || feature.dbStatus || 'not_started')
-  };
 }

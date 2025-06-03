@@ -12,8 +12,6 @@ export const systemConfiguration: FeatureItem = {
   databaseStatus: "complete",
   userImpact: "high",
   complexity: "medium",
-  implementationProgress: 93,
-  category: "administration",
   databaseAnalysis: `
     Database Implementation:
     - [x] Settings table implemented with necessary fields

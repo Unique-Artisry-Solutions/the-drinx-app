@@ -20,12 +20,67 @@ import {
 
 // Import from the simplified detection system
 import { 
+  featureDetectionEngine,
   unifiedDetection,
-  unifiedFeatureEngine,
-  CATEGORY_INFO
+  type CoreFeatureCategory,
+  // Legacy compatibility exports
+  isUserManagementFeature,
+  isAuthFeature,
+  isProfileFeature,
+  isContentFeature,
+  isContentModerationFeature,
+  isPhotoFeature,
+  isPhotoModerationFeature,
+  isAnalyticsFeature,
+  isDashboardFeature,
+  isSystemBreakdownFeature,
+  isSocialFeature,
+  isExplorationFeature,
+  isNotificationFeature,
+  isPromotionFeature,
+  isRewardProgramFeature,
+  isAIFeature,
+  isMocktailSuggestionFeature,
+  isMocktailTrendsFeature,
+  isIngredientPairingFeature,
+  isRecipeFeature,
+  isEstablishmentManagementFeature,
+  isVisitTrackingFeature,
+  isBarCrawlFeature,
+  isSwigCircuitFeature,
+  isMapFeature,
+  isSystemConfigurationFeature,
+  isThemeFeature,
+  isAccessibilityFeature,
+  isSignatureFeature,
+  isFeatureFlagRelated,
+  isAudienceRelationshipFeature,
+  isAudienceInfluencerFeature,
+  isCrossSegmentEngagementFeature,
+  isAudienceVisualizationFeature,
+  isPromoterCommunicationFeature,
+  isBrandConnectionFeature,
+  isPromoterAnalyticsFeature,
+  isEventManagementFeature,
+  isPromoterDashboardFeature,
+  isCustomPromotionFeature,
+  isPromoterNotificationFeature,
+  isTicketManagementFeature,
+  isPromotionAnalyticsFeature,
+  isPromotionSecurityFeature,
+  isPromotionNotificationFeature,
+  isPromotionCreationFeature,
+  isPromotionManagementFeature,
+  isPromotionRedemptionFeature,
+  isPromotionReportingFeature,
+  isPromotionValidationFeature,
+  isPromotionSchedulingFeature,
+  isPromotionIntegrationFeature,
+  isPromotionAIFeature,
+  isThemeConfigurationFeature
 } from './detection';
 
-// Import statistics utilities
+// Import directly from featureStatistics.tsx to fix circular dependency issues
 import { 
   calculateFeatureStatistics,
   calculateCategoryProgress, 
@@ -62,18 +117,73 @@ export {
   prepareFeatureShowcaseData,
   generateFeatureReport,
 
-  // Unified detection system
+  // New unified detection system
+  featureDetectionEngine,
   unifiedDetection,
-  unifiedFeatureEngine,
-  CATEGORY_INFO
+
+  // Legacy detection functions (for backward compatibility)
+  isFeatureFlagRelated,
+  isUserManagementFeature,
+  isAuthFeature,
+  isProfileFeature,
+  isContentFeature,
+  isContentModerationFeature,
+  isPhotoFeature,
+  isPhotoModerationFeature,
+  isAnalyticsFeature,
+  isDashboardFeature,
+  isSystemBreakdownFeature,
+  isSocialFeature,
+  isExplorationFeature,
+  isNotificationFeature,
+  isPromotionFeature,
+  isPromotionAnalyticsFeature,
+  isPromotionSecurityFeature,
+  isPromotionNotificationFeature,
+  isPromotionCreationFeature,
+  isPromotionManagementFeature,
+  isPromotionRedemptionFeature,
+  isPromotionReportingFeature,
+  isPromotionValidationFeature,
+  isPromotionSchedulingFeature,
+  isPromotionIntegrationFeature,
+  isPromotionAIFeature,
+  isRewardProgramFeature,
+  isAIFeature,
+  isMocktailSuggestionFeature,
+  isMocktailTrendsFeature,
+  isIngredientPairingFeature,
+  isRecipeFeature,
+  isEstablishmentManagementFeature,
+  isVisitTrackingFeature,
+  isBarCrawlFeature,
+  isSwigCircuitFeature,
+  isMapFeature,
+  isSystemConfigurationFeature,
+  isThemeFeature,
+  isThemeConfigurationFeature,
+  isAccessibilityFeature,
+  isSignatureFeature,
+  isAudienceRelationshipFeature,
+  isAudienceInfluencerFeature,
+  isCrossSegmentEngagementFeature,
+  isAudienceVisualizationFeature,
+  isPromoterCommunicationFeature,
+  isBrandConnectionFeature,
+  isPromoterAnalyticsFeature,
+  isEventManagementFeature,
+  isPromoterDashboardFeature,
+  isCustomPromotionFeature,
+  isPromoterNotificationFeature,
+  isTicketManagementFeature
 };
 
-// Export types
+// Use 'export type' for type exports when isolatedModules is enabled
 export type { AnalysisStep } from '../types';
 export type { ReleaseProgress } from '../types/releaseTypes';
 export type { MonthlyProgressData } from '../types';
 export type { FeatureShowcaseData, FeatureShowcaseCategoryType, FeatureBusinessValueType } from '../types';
-export type { CoreFeatureCategory } from '../types';
+export type { CoreFeatureCategory };
 
 export { determineBusinessValue, determineComplexity } from './featureShowcase/featureTransformation';
 export { determineShowcaseCategory } from './featureShowcase/categoryDetection';

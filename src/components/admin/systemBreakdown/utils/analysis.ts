@@ -14,7 +14,6 @@ import {
   calculateProgressFromStatus,
   determineOverallStatus 
 } from './stateMapping';
-import { unifiedDetection } from './detection';
 
 /**
  * Analyzes all features and updates their implementation and database status
@@ -70,38 +69,24 @@ export function analyzeAllFeatures(
   updatedPromoterFeatures = promoterSystemResult.updatedFeatures;
   completedSteps.push(...promoterSystemResult.updatedSteps);
   
-  // Step 6: Categorize features using unified detection engine
-  updatedAdminFeatures = categorizeFeatures(updatedAdminFeatures);
-  updatedEstablishmentFeatures = categorizeFeatures(updatedEstablishmentFeatures);
-  updatedIndividualFeatures = categorizeFeatures(updatedIndividualFeatures);
-  updatedPromoterFeatures = categorizeFeatures(updatedPromoterFeatures);
-  
-  completedSteps.push({
-    name: 'Categorized features using unified detection engine',
-    completed: true,
-    details: 'Applied 4 core business domain categories to all features'
-  });
-  
-  // Step 7: Recalculate implementation progress based on simplified states
+  // Step 6: Recalculate implementation progress based on simplified states
   updatedAdminFeatures = recalculateImplementationProgress(updatedAdminFeatures);
   updatedEstablishmentFeatures = recalculateImplementationProgress(updatedEstablishmentFeatures);
   updatedIndividualFeatures = recalculateImplementationProgress(updatedIndividualFeatures);
   updatedPromoterFeatures = recalculateImplementationProgress(updatedPromoterFeatures);
   
-  // Step 8: Analyze status changes
+  // Step 7: Analyze status changes
   updatedAdminFeatures = markStatusChanges(updatedAdminFeatures, originalAdminFeatures);
   updatedEstablishmentFeatures = markStatusChanges(updatedEstablishmentFeatures, originalEstablishmentFeatures);
   updatedIndividualFeatures = markStatusChanges(updatedIndividualFeatures, originalIndividualFeatures);
   updatedPromoterFeatures = markStatusChanges(updatedPromoterFeatures, originalPromoterFeatures);
   
-  // Analyze feature categories using unified engine
-  const allFeatures = [...updatedAdminFeatures, ...updatedEstablishmentFeatures, ...updatedIndividualFeatures, ...updatedPromoterFeatures];
-  const categoryStats = unifiedDetection.getCategoryStats(allFeatures);
-  
+  // Analyze promoter feature categories and requirements
+  const promoterCategories = groupFeaturesByCategory(updatedPromoterFeatures);
   completedSteps.push({
-    name: 'Generated category statistics',
+    name: 'Categorized promoter features',
     completed: true,
-    details: `Analyzed ${Object.keys(categoryStats).length} core business domain categories`
+    details: `Found ${Object.keys(promoterCategories).length} feature categories`
   });
   
   return {
@@ -110,7 +95,7 @@ export function analyzeAllFeatures(
     individualFeatures: updatedIndividualFeatures,
     promoterFeatures: updatedPromoterFeatures,
     completedSteps,
-    categoryStats
+    promoterCategories
   };
 }
 
@@ -135,20 +120,6 @@ function simplifyFeatureStates(features: FeatureItem[]): FeatureItem[] {
       status: overallStatus,
       databaseStatus: simplifiedDbStatus,
       dbStatus: simplifiedDbStatus
-    };
-  });
-}
-
-/**
- * Categorize features using the unified detection engine
- */
-function categorizeFeatures(features: FeatureItem[]): FeatureItem[] {
-  return features.map(feature => {
-    const detectionResult = unifiedDetection.analyzeFeature(feature);
-    
-    return {
-      ...feature,
-      category: detectionResult.category
     };
   });
 }

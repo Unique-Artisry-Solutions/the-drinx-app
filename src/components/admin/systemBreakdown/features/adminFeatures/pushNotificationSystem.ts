@@ -12,8 +12,6 @@ export const pushNotificationSystem: FeatureItem = {
   databaseStatus: "complete",
   userImpact: "high",
   complexity: "high",
-  implementationProgress: 89,
-  category: "administration",
   databaseAnalysis: `
     Database Implementation:
     - [x] Core notification tables implemented

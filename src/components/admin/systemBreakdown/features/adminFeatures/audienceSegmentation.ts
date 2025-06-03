@@ -12,9 +12,8 @@ export const audienceSegmentation: FeatureItem = {
   databaseStatus: "complete",
   userImpact: "high",
   complexity: "high",
-  implementationProgress: 100,
-  category: "system_intelligence",
   tags: ["audience", "analytics", "relationship", "marketing"],
+  implementationProgress: 100,
   databaseAnalysis: `
     Database Implementation:
     - [x] User connections table with relationship strength

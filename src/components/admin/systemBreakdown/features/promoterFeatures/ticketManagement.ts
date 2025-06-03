@@ -10,11 +10,10 @@ export const ticketManagement: FeatureItem = {
   establishmentAccess: "none",
   individualAccess: "none",
   promoterAccess: "full",
-  databaseStatus: "complete",
+  databaseStatus: "implemented",
   userImpact: "high",
   complexity: "high",
-  implementationProgress: 100,
-  category: "business_operations",
+  implementationProgress: 100, // Updated to fully implemented
   tags: ["event management", "promoter", "ticketing", "payments"],
   databaseAnalysis: `
     Database Implementation:

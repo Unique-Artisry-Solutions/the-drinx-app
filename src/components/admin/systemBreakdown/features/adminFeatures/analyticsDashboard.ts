@@ -12,8 +12,6 @@ export const analyticsDashboard: FeatureItem = {
   databaseStatus: "complete",
   userImpact: "high",
   complexity: "medium",
-  implementationProgress: 95,
-  category: "system_intelligence",
   databaseAnalysis: `
     Database Implementation:
     - [x] Analytics data tables implemented with necessary fields

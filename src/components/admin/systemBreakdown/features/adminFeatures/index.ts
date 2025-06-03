@@ -12,6 +12,7 @@ import { contentModeration } from './contentModeration';
 import { audienceSegmentation } from './audienceSegmentation';
 import { FeatureItem } from '../../types';
 
+// Add the feature flags system to the admin features
 export const adminFeatures: FeatureItem[] = [
   userManagement,
   establishmentManagement,
@@ -30,14 +31,13 @@ export const adminFeatures: FeatureItem[] = [
     description: 'A system to manage feature access based on subscription tiers and user segments',
     status: 'implemented',
     statusUpdated: true,
-    category: 'administration',
+    category: 'system', // Now this is valid with the updated interface
     complexity: 'medium',
     adminAccess: 'full',
     establishmentAccess: 'partial',
     individualAccess: 'partial',
-    databaseStatus: 'complete',
+    databaseStatus: 'implemented',
     userImpact: 'medium',
-    implementationProgress: 100,
     components: [
       {
         name: 'Feature Flags Database',

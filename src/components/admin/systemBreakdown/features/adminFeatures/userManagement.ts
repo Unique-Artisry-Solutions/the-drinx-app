@@ -13,7 +13,6 @@ export const userManagement: FeatureItem = {
   userImpact: "high",
   complexity: "medium",
   implementationProgress: 100,
-  category: "administration",
   statusUpdated: true,
   databaseAnalysis: `
     Database Implementation:

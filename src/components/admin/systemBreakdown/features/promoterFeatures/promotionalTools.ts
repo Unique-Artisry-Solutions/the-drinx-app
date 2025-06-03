@@ -13,8 +13,7 @@ export const promotionalTools: FeatureItem = {
   databaseStatus: "in_progress",
   userImpact: "high",
   complexity: "medium",
-  implementationProgress: 40,
-  category: "business_operations",
+  implementationProgress: 40, // Starting implementation
   tags: ["marketing", "promoter", "events", "social media"],
   databaseAnalysis: `
     Database Implementation:

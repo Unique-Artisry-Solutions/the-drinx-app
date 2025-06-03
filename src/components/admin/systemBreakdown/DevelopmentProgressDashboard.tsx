@@ -1,102 +1,175 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
-import { Badge } from '@/components/ui/badge';
-import { FeatureItem } from './types';
-import { mapToSimplifiedStatus } from './utils/stateMapping';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { BarChart3 } from 'lucide-react';
+import { DashboardHeader } from './components/dashboard/DashboardHeader';
+import { ImplementationStats } from './components/dashboard/ImplementationStats';
+import { CategoryMetrics } from './components/dashboard/CategoryMetrics';
+import { FeatureItem, MonthlyProgressData, ProgressSnapshot } from './types';
+import OverviewTab from './tabs/OverviewTab';
+import CategoriesTab from './tabs/CategoriesTab';
+import ComparisonTab from './tabs/ComparisonTab';
+import TimelineTab from './tabs/TimelineTab';
 
 interface DevelopmentProgressDashboardProps {
-  features: FeatureItem[];
+  adminFeatures: FeatureItem[];
+  establishmentFeatures: FeatureItem[];
+  individualFeatures: FeatureItem[];
+  promoterFeatures?: FeatureItem[];
+  monthlyProgressData?: MonthlyProgressData[];
+  confidenceScore?: number;
+  currentSnapshot?: ProgressSnapshot;
 }
 
-const DevelopmentProgressDashboard: React.FC<DevelopmentProgressDashboardProps> = ({ features }) => {
-  // Calculate stats using simplified states
-  const totalFeatures = features.length;
-  const implementedFeatures = features.filter(f => f.status === 'implemented').length;
-  const inProgressFeatures = features.filter(f => f.status === 'in_progress').length;
-  const notStartedFeatures = features.filter(f => f.status === 'not_started').length;
+const DevelopmentProgressDashboard: React.FC<DevelopmentProgressDashboardProps> = ({
+  adminFeatures,
+  establishmentFeatures,
+  individualFeatures,
+  promoterFeatures = [],
+  monthlyProgressData = [],
+  confidenceScore,
+  currentSnapshot
+}) => {
+  const [activeTab, setActiveTab] = useState<string>('overview');
+  
+  // Calculate feature counts
+  const allFeatures = [...adminFeatures, ...establishmentFeatures, ...individualFeatures, ...promoterFeatures];
+  const totalFeatures = allFeatures.length;
+  const implementedFeatures = allFeatures.filter(f => f.status === 'implemented').length;
+  const partialFeatures = allFeatures.filter(f => f.status === 'partial').length;
+  const plannedFeatures = allFeatures.filter(f => f.status === 'planned').length;
+  const blockedFeatures = allFeatures.filter(f => f.status === 'blocked').length;
+  const inProgressFeatures = allFeatures.filter(f => f.status === 'in_progress').length;
 
-  const overallProgress = totalFeatures > 0 ? Math.round((implementedFeatures / totalFeatures) * 100) : 0;
+  // Calculate overall progress percentage
+  const totalImplementationProgress = allFeatures.reduce((sum, feature) => {
+    const progress = feature.implementationProgress ?? (
+      feature.status === 'implemented' ? 100 :
+      feature.status === 'partial' ? 65 :
+      feature.status === 'in_progress' ? 45 :
+      feature.status === 'blocked' ? 30 : 10
+    );
+    return sum + progress;
+  }, 0);
+  
+  const overallProgressPercentage = Math.round(totalImplementationProgress / totalFeatures);
+  const frontendProgressPercentage = Math.round(totalImplementationProgress / totalFeatures);
+  const backendProgressPercentage = Math.round((totalImplementationProgress / totalFeatures) * 0.85);
 
-  // Handle legacy state mapping for display purposes
-  const getDisplayStatus = (feature: FeatureItem) => {
-    // Map any legacy states that might still exist in data
-    return mapToSimplifiedStatus(feature.status);
+  // Calculate progress for each category
+  const adminProgress = {
+    frontend: Math.round(adminFeatures.reduce((sum, f) => sum + (f.implementationProgress || 0), 0) / adminFeatures.length),
+    backend: Math.round(adminFeatures.reduce((sum, f) => sum + (f.implementationProgress || 0), 0) / adminFeatures.length * 0.85),
+    overall: Math.round(adminFeatures.reduce((sum, f) => sum + (f.implementationProgress || 0), 0) / adminFeatures.length)
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'implemented':
-        return 'bg-green-100 text-green-800 border-green-300';
-      case 'in_progress':
-        return 'bg-blue-100 text-blue-800 border-blue-300';
-      case 'not_started':
-        return 'bg-gray-100 text-gray-800 border-gray-300';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-300';
-    }
+  const establishmentProgress = {
+    frontend: Math.round(establishmentFeatures.reduce((sum, f) => sum + (f.implementationProgress || 0), 0) / establishmentFeatures.length),
+    backend: Math.round(establishmentFeatures.reduce((sum, f) => sum + (f.implementationProgress || 0), 0) / establishmentFeatures.length * 0.85),
+    overall: Math.round(establishmentFeatures.reduce((sum, f) => sum + (f.implementationProgress || 0), 0) / establishmentFeatures.length)
+  };
+
+  const individualProgress = {
+    frontend: Math.round(individualFeatures.reduce((sum, f) => sum + (f.implementationProgress || 0), 0) / individualFeatures.length),
+    backend: Math.round(individualFeatures.reduce((sum, f) => sum + (f.implementationProgress || 0), 0) / individualFeatures.length * 0.85),
+    overall: Math.round(individualFeatures.reduce((sum, f) => sum + (f.implementationProgress || 0), 0) / individualFeatures.length)
+  };
+
+  const promoterProgress = {
+    frontend: promoterFeatures.length ? Math.round(promoterFeatures.reduce((sum, f) => sum + (f.implementationProgress || 0), 0) / promoterFeatures.length) : 0,
+    backend: promoterFeatures.length ? Math.round(promoterFeatures.reduce((sum, f) => sum + (f.implementationProgress || 0), 0) / promoterFeatures.length * 0.85) : 0,
+    overall: promoterFeatures.length ? Math.round(promoterFeatures.reduce((sum, f) => sum + (f.implementationProgress || 0), 0) / promoterFeatures.length) : 0
   };
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Development Progress Overview</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">{implementedFeatures}</div>
-              <div className="text-sm text-muted-foreground">Implemented</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600">{inProgressFeatures}</div>
-              <div className="text-sm text-muted-foreground">In Progress</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-gray-600">{notStartedFeatures}</div>
-              <div className="text-sm text-muted-foreground">Not Started</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold">{overallProgress}%</div>
-              <div className="text-sm text-muted-foreground">Overall Progress</div>
-            </div>
-          </div>
-          
-          <Progress value={overallProgress} className="h-3" />
-        </CardContent>
-      </Card>
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <BarChart3 className="h-5 w-5 text-blue-500" />
+          Development Progress Dashboard
+        </CardTitle>
+      </CardHeader>
+      
+      <CardContent>
+        <DashboardHeader 
+          overallProgressPercentage={overallProgressPercentage}
+          confidenceScore={confidenceScore}
+        />
+        
+        <ImplementationStats 
+          implementedFeatures={implementedFeatures}
+          partialFeatures={partialFeatures}
+          plannedFeatures={plannedFeatures}
+          blockedFeatures={blockedFeatures}
+          totalFeatures={totalFeatures}
+        />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Feature Status Breakdown</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {features.map((feature) => {
-              const displayStatus = getDisplayStatus(feature);
-              return (
-                <div key={feature.id} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div className="flex-1">
-                    <h4 className="font-medium">{feature.name}</h4>
-                    <p className="text-sm text-muted-foreground">{feature.description}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge className={getStatusColor(displayStatus)}>
-                      {displayStatus.replace('_', ' ')}
-                    </Badge>
-                    <div className="text-sm text-muted-foreground">
-                      {feature.implementationProgress || 0}%
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+          <TabsList className="grid grid-cols-4 mb-4">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="categories">Categories</TabsTrigger>
+            <TabsTrigger value="comparison">FE/BE Comparison</TabsTrigger>
+            <TabsTrigger value="timeline">Timeline</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="overview">
+            <OverviewTab
+              overallProgressPercentage={overallProgressPercentage}
+              frontendProgressPercentage={frontendProgressPercentage}
+              backendProgressPercentage={backendProgressPercentage}
+              implementedFeatures={implementedFeatures}
+              partialFeatures={partialFeatures}
+              totalFeatures={totalFeatures}
+              plannedFeatures={plannedFeatures}
+              blockedFeatures={blockedFeatures}
+              confidenceScore={confidenceScore}
+              currentSnapshot={currentSnapshot}
+              needsAttentionFeatures={allFeatures.filter(f => 
+                f.status === 'partial' || 
+                f.status === 'planned' || 
+                f.status === 'blocked' || 
+                f.status === 'in_progress'
+              )}
+            />
+            <CategoryMetrics 
+              adminFeatures={adminFeatures}
+              establishmentFeatures={establishmentFeatures}
+              individualFeatures={individualFeatures}
+              promoterFeatures={promoterFeatures}
+            />
+          </TabsContent>
+          
+          <TabsContent value="categories">
+            <CategoriesTab
+              adminFeatures={adminFeatures}
+              establishmentFeatures={establishmentFeatures}
+              individualFeatures={individualFeatures}
+              promoterFeatures={promoterFeatures}
+              adminProgress={adminProgress}
+              establishmentProgress={establishmentProgress}
+              individualProgress={individualProgress}
+              promoterProgress={promoterProgress}
+            />
+          </TabsContent>
+          
+          <TabsContent value="comparison">
+            <ComparisonTab
+              frontendProgressPercentage={frontendProgressPercentage}
+              backendProgressPercentage={backendProgressPercentage}
+              confidenceScore={confidenceScore}
+            />
+          </TabsContent>
+          
+          <TabsContent value="timeline">
+            <TimelineTab
+              monthlyProgress={monthlyProgressData}
+              confidenceScore={confidenceScore}
+            />
+          </TabsContent>
+        </Tabs>
+      </CardContent>
+    </Card>
   );
 };
 

@@ -12,8 +12,6 @@ export const contentManagement: FeatureItem = {
   databaseStatus: "complete",
   userImpact: "high",
   complexity: "medium",
-  implementationProgress: 88,
-  category: "administration",
   databaseAnalysis: `
     Database Implementation:
     - [x] Content table implemented with necessary fields

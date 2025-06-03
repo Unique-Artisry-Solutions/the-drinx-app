@@ -5,7 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import { FeatureItem, AnalysisStep } from '../types';
 
 // Create proper mock features that match the FeatureItem interface
-const createMockFeature = (id: string, name: string, description: string, status: 'implemented' | 'in_progress' | 'not_started' = 'implemented'): FeatureItem => ({
+const createMockFeature = (id: string, name: string, description: string, status: 'implemented' | 'in_progress' | 'planned' | 'blocked' | 'partial' = 'implemented'): FeatureItem => ({
   id,
   name,
   description,
@@ -16,15 +16,13 @@ const createMockFeature = (id: string, name: string, description: string, status
   promoterAccess: 'read',
   databaseStatus: 'complete',
   userImpact: 'medium',
-  complexity: 'medium',
-  implementationProgress: status === 'implemented' ? 100 : status === 'in_progress' ? 60 : 0,
-  category: 'administration'
+  complexity: 'medium'
 });
 
 const mockFeatures: FeatureItem[] = [
   createMockFeature('feature-1', 'User Management', 'Complete user management system', 'implemented'),
   createMockFeature('feature-2', 'Authentication', 'User authentication and authorization', 'in_progress'),
-  createMockFeature('feature-3', 'Analytics Dashboard', 'Comprehensive analytics and reporting', 'not_started'),
+  createMockFeature('feature-3', 'Analytics Dashboard', 'Comprehensive analytics and reporting', 'planned'),
   createMockFeature('feature-4', 'Reward System', 'User rewards and loyalty program', 'implemented'),
   createMockFeature('feature-5', 'Event Management', 'Event creation and management tools', 'in_progress')
 ];

@@ -54,7 +54,7 @@ export function analyzeDbRequirements(feature: FeatureItem): {
   // If no tasks were found in the analysis, generate default ones based on status
   if (tasks.length === 0) {
     const dbStatus = feature.dbStatus || feature.databaseStatus || 'not_started';
-    const isComplete = dbStatus === 'complete';
+    const isComplete = dbStatus === 'complete' || dbStatus === 'implemented';
     const isInProgress = dbStatus === 'in_progress';
     
     const defaultTasks = [

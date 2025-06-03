@@ -40,9 +40,9 @@ export const useEnhancedSystemBreakdown = (
       f.userImpact === 'high' && f.complexity === 'low'
     );
 
-    // Only use valid statuses for risk features
     const riskFeatures = allFeatures.filter(f => 
-      f.complexity === 'high' && f.status === 'in_progress'
+      f.status === 'blocked' || 
+      (f.complexity === 'high' && f.status === 'in_progress')
     );
 
     return {
@@ -54,15 +54,15 @@ export const useEnhancedSystemBreakdown = (
     };
   }, [allFeatures, currentStats]);
 
-  // System health monitoring (simplified - no 'blocked' status exists)
+  // System health monitoring
   useEffect(() => {
-    const inProgressCount = allFeatures.filter(f => f.status === 'in_progress').length;
+    const blockedCount = allFeatures.filter(f => f.status === 'blocked').length;
     const totalFeatures = allFeatures.length;
-    const inProgressPercentage = totalFeatures > 0 ? (inProgressCount / totalFeatures) * 100 : 0;
+    const blockedPercentage = totalFeatures > 0 ? (blockedCount / totalFeatures) * 100 : 0;
 
-    if (inProgressPercentage > 50) {
+    if (blockedPercentage > 10) {
       setSystemHealth('degraded');
-    } else if (inProgressPercentage > 75) {
+    } else if (blockedPercentage > 25) {
       setSystemHealth('offline');
     } else {
       setSystemHealth('operational');
@@ -88,7 +88,7 @@ export const useEnhancedSystemBreakdown = (
     implementedFeatures: currentStats.implementedFeatures,
     inProgressFeatures: currentStats.inProgressFeatures,
     plannedFeatures: currentStats.plannedFeatures,
-    blockedFeatures: 0, // No blocked status in simplified system
+    blockedFeatures: currentStats.blockedFeatures || 0,
     overallProgress: currentStats.implementationRate,
     confidenceScore: currentStats.confidenceScore
   };

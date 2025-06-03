@@ -12,8 +12,6 @@ export const systemBreakdown: FeatureItem = {
   databaseStatus: "complete",
   userImpact: "high",
   complexity: "medium",
-  implementationProgress: 95,
-  category: "administration",
   databaseAnalysis: `
     Database Implementation:
     - [x] Feature status tracking table implemented

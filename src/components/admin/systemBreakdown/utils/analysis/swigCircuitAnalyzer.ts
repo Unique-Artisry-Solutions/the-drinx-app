@@ -1,6 +1,6 @@
 
 import { FeatureItem } from '../../types';
-import { unifiedDetection } from '../detection';
+import { unifiedDetection } from '../detection/unifiedDetection';
 
 /**
  * Analyzes all Swig Circuit related features
@@ -10,25 +10,25 @@ import { unifiedDetection } from '../detection';
 export const analyzeSwigCircuitFeatures = (features: FeatureItem[]): FeatureItem[] => {
   return features.map(feature => {
     // Check if feature is related to venue operations (includes swig circuits)
-    const isVenueFeature = unifiedDetection.isCategory(feature, 'business_operations');
+    const isVenueFeature = unifiedDetection.isCategory(feature, 'venue_operations');
     
     // Check for VIP-related features
-    const isVipFeature = feature.name?.toLowerCase().includes('vip') || 
+    const isVipFeature = feature.title?.toLowerCase().includes('vip') || 
                         feature.description?.toLowerCase().includes('vip package');
     
     // Check for theme configuration features
-    const isThemeFeature = feature.name?.toLowerCase().includes('theme') ||
+    const isThemeFeature = feature.title?.toLowerCase().includes('theme') ||
                           feature.description?.toLowerCase().includes('theme customization');
     
     // Check for promoter communication features
-    const isPromoterCommFeature = feature.name?.toLowerCase().includes('communication') ||
+    const isPromoterCommFeature = feature.title?.toLowerCase().includes('communication') ||
                                  feature.description?.toLowerCase().includes('messaging');
     
     // Check for event management features
-    const isEventFeature = feature.name?.toLowerCase().includes('event') ||
+    const isEventFeature = feature.title?.toLowerCase().includes('event') ||
                           feature.description?.toLowerCase().includes('event management');
     
-    if (isVenueFeature || feature.name?.toLowerCase().includes('swig circuit')) {
+    if (isVenueFeature || feature.title?.toLowerCase().includes('swig circuit')) {
       return {
         ...feature,
         dbStatus: feature.dbStatus || 'not_started',
