@@ -33,6 +33,14 @@ import { useAuth } from '@/hooks/core';
 const { state, actions } = useAuth();
 // state: { user, isLoading, isAuthenticated, userType, error }
 // actions: { login, logout, signup, resetPassword, updateProfile, switchRole }
+
+// Method mappings from auth context:
+// login() calls auth.signIn()
+// logout() calls auth.signOut() 
+// signup() calls auth.signUp()
+// updateProfile() calls auth.updateUserProfile()
+// resetPassword() uses supabase.auth.resetPasswordForEmail()
+// switchRole() uses supabase.rpc('switch_active_role')
 ```
 
 ### 3. `useAnalytics` - Analytics & Tracking
@@ -85,9 +93,21 @@ const { state, actions } = useNotifications();
 4. **Simplify notifications**: Use core `useNotifications`
 5. **Remove testing infrastructure**: Keep only essential test utilities
 
+## Method Alignment Notes
+
+The core `useAuth` hook provides a simplified interface that maps to the existing auth context:
+
+- `login(email, password)` → calls `auth.signIn(email, password)`
+- `logout()` → calls `auth.signOut()`
+- `signup(email, password, userData)` → calls `auth.signUp(userData)`
+- `updateProfile(updates)` → calls `auth.updateUserProfile(updates)`
+- `resetPassword(email)` → calls `supabase.auth.resetPasswordForEmail()`
+- `switchRole(role)` → calls `supabase.rpc('switch_active_role')`
+
 ## Benefits
 - 85% reduction in hook complexity
 - Consistent patterns across the app
 - Easier maintenance and debugging
 - Better TypeScript support
 - Reduced bundle size
+- Proper method alignment with existing auth context
