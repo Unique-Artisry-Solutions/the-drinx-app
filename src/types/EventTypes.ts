@@ -1,22 +1,24 @@
 
-export type EventStatus = 'draft' | 'published' | 'cancelled' | 'completed';
+/**
+ * EventTypes.ts
+ * Event-specific type definitions that extend core types
+ */
 
-export interface EventLocation {
-  address: string;
-  city: string;
-  state: string;
-  zip: string;
-  country: string;
-  latitude?: number;
-  longitude?: number;
-}
+// Import and re-export core types
+import {
+  Event,
+  BaseEvent,
+  EventStatus,
+  EventLocation,
+  EventContactInfo,
+  User,
+  WithOptionalId
+} from './CoreTypes';
 
-export interface EventContactInfo {
-  name: string;
-  email: string;
-  phone?: string;
-}
+// Re-export core types for backward compatibility
+export type { Event, EventStatus, EventLocation, EventContactInfo };
 
+// Event-specific interfaces that extend core types
 export interface ABTestConfig {
   variantA: string;
   variantB: string;
@@ -58,22 +60,6 @@ export interface EventMarketingCampaign {
   updated_at?: string;
 }
 
-export interface EventTicketType {
-  id?: string;
-  event_id?: string;
-  name: string;
-  description: string;
-  price: number;
-  quantity: number;
-  sold?: number;    // Added field for ticket sales count
-  available?: number; // Added field for available tickets
-  created_at?: string;
-  hasLimitedInventory?: boolean;
-  lowInventoryThreshold?: number;
-  hasDynamicPricing?: boolean;
-  pricingTiers?: EventTicketPricingTier[];
-}
-
 export interface EventTicketPricingTier {
   id?: string;
   name: string;
@@ -81,6 +67,22 @@ export interface EventTicketPricingTier {
   endDate?: string;
   priceAdjustment: number;
   adjustmentType: 'percentage' | 'fixed';
+}
+
+export interface EventTicketType {
+  id?: string;
+  event_id?: string;
+  name: string;
+  description: string;
+  price: number;
+  quantity: number;
+  sold?: number;
+  available?: number;
+  created_at?: string;
+  hasLimitedInventory?: boolean;
+  lowInventoryThreshold?: number;
+  hasDynamicPricing?: boolean;
+  pricingTiers?: EventTicketPricingTier[];
 }
 
 export interface EventDiscountCode {
@@ -113,7 +115,7 @@ export interface EventAttendee {
   notes?: string;
   created_at?: string;
   updated_at?: string;
-  // Add missing properties for compatibility
+  // Contact information
   first_name?: string;
   last_name?: string;
   phone?: string;
@@ -132,70 +134,16 @@ export interface EventCustomField {
   updated_at?: string;
 }
 
-export interface Event {
-  id?: string;
-  name: string;
-  description?: string;
-  date: string;
-  time: string;
-  venue_id?: string;
-  image_url?: string;
-  promotional_materials?: string[];
-  status?: EventStatus;
-  created_by: string;
-  created_at?: string;
-  updated_at?: string;
-  capacity?: number;
-  event_type?: string;
-  event_url?: string;
-  location_details?: EventLocation;
-  contact_info?: EventContactInfo;
-  custom_settings?: Record<string, any>;
-  is_public?: boolean;
+// Form data interface that extends base Event with wizard-specific fields
+export interface EventFormData extends WithOptionalId<Event> {
+  // Alternative field names used in wizard
+  venueId?: string;
+  imageUrl?: string;
+  promotionalMaterials?: string[];
+  location?: EventLocation;
+  contact?: EventContactInfo;
   
-  // Fields for EventsSection compatibility
-  venue?: {
-    id: string;
-    name: string;
-    address?: string;
-  };
-  distance?: number;
-  attendees?: {
-    registered: number;
-    checked_in?: number;
-    capacity?: number;
-  };
-  ticketTypes?: EventTicketType[];
-}
-
-// Added missing types that were causing errors
-export type EventType = Event;
-
-export interface EventFormData {
-  id?: string; 
-  name: string;
-  description?: string;
-  date: string;
-  time: string;
-  venue_id?: string;
-  venueId?: string; // Alternative name used in wizard
-  image_url?: string;
-  imageUrl?: string; // Alternative name used in wizard
-  promotional_materials?: string[];
-  promotionalMaterials?: string[]; // Alternative name used in wizard
-  status?: EventStatus;
-  created_by: string;
-  capacity?: number;
-  event_type?: string;
-  event_url?: string;
-  location_details?: EventLocation;
-  location?: EventLocation; // Alternative name used in wizard
-  contact_info?: EventContactInfo;
-  contact?: EventContactInfo; // Alternative name used in wizard
-  custom_settings?: Record<string, any>;
-  is_public?: boolean;
-  
-  // Add fields needed by the event wizard components
+  // Wizard-specific fields
   ticketTypes: EventTicketType[];
   notificationSchedules?: Array<{
     id: string;
@@ -207,11 +155,7 @@ export interface EventFormData {
     coordinates?: { latitude: number; longitude: number };
     targetRadius?: number;
   }>;
-  
-  // Add discount codes
   discountCodes?: EventDiscountCode[];
-  
-  // Add payment settings
   paymentSettings?: {
     enablePayments: boolean;
     paymentProvider?: 'stripe' | 'paypal' | 'square' | 'other';
@@ -243,3 +187,6 @@ export interface EventStatistics {
   date?: string;
   status?: EventStatus;
 }
+
+// Backward compatibility
+export type EventType = Event;

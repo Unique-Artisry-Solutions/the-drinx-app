@@ -2,6 +2,9 @@
 import { ReactNode } from 'react';
 import { LucideIcon } from 'lucide-react';
 
+// Import core User type for consistency
+import { User } from '../CoreTypes';
+
 /**
  * Enum for different navigation types in the application
  */
@@ -17,7 +20,7 @@ export enum NavigationType {
 export interface UnifiedNavItem {
   label: string;
   path: string;
-  icon: LucideIcon; // Required field to match AdminNavItem
+  icon: LucideIcon;
   isActive?: boolean;
   children?: UnifiedNavItem[];
   onClick?: (e: React.MouseEvent) => void;
@@ -75,3 +78,6 @@ export interface NavigationConfig {
   enableActiveTabDetection?: boolean;
   customNavItems?: NavigationItem[];
 }
+
+// Re-export User type for navigation components
+export type { User };
