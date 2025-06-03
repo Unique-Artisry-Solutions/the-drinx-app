@@ -34,7 +34,7 @@ export interface UseAdminServiceReturn<T> {
   actions: AdminEntityActions<T>;
 }
 
-export function useAdminService<T extends Record<string, any>>(
+export function useAdminService<T = any>(
   service: BaseAdminService<T>
 ): UseAdminServiceReturn<T> {
   const [state, setState] = useState<AdminEntityState<T>>({
