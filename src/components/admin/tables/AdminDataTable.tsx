@@ -10,21 +10,22 @@ import { Badge } from '@/components/ui/badge';
 import { 
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
-import { Search, MoreHorizontal, ArrowUpDown } from 'lucide-react';
+import { MoreHorizontal, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import type { AdminEntityState, AdminEntityActions } from '@/hooks/admin/useAdminService';
 
 export interface AdminTableColumn<T = any> {
   key: string;
   label: string;
   sortable?: boolean;
-  type?: 'text' | 'date' | 'number' | 'badge';
+  type?: 'text' | 'number' | 'date' | 'boolean';
   render?: (value: any, item: T) => React.ReactNode;
 }
 
 export interface AdminTableAction<T = any> {
   label: string;
   action: string;
-  icon?: React.ComponentType<{ className?: string }>;
-  variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost';
+  icon: React.ComponentType<{ className?: string }>;
+  variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
   onClick: (item: T) => void;
 }
 
@@ -32,7 +33,7 @@ export interface AdminTableFilter {
   key: string;
   label: string;
   type: 'text' | 'select' | 'date';
-  options?: { value: string; label: string }[];
+  options?: Array<{ value: string; label: string }>;
 }
 
 export interface AdminTableConfig<T = any> {
@@ -47,45 +48,31 @@ export interface AdminTableConfig<T = any> {
 
 interface AdminDataTableProps<T = any> {
   config: AdminTableConfig<T>;
-  state: {
-    items: T[];
-    isLoading: boolean;
-    error: string;
-    total: number;
-    page: number;
-    limit: number;
-  };
-  actions: {
-    setPage: (page: number) => void;
-    setLimit: (limit: number) => void;
-    setSearch: (query: string) => void;
-    refresh: () => void;
-  };
-  title?: string;
+  state: AdminEntityState<T>;
+  actions: AdminEntityActions<T>;
+  title: string;
   description?: string;
 }
 
-export const AdminDataTable = <T extends Record<string, any>>({
-  config,
-  state,
-  actions,
-  title,
-  description
-}: AdminDataTableProps<T>) => {
-  const [selectedItems, setSelectedItems] = useState<T[]>([]);
+export function AdminDataTable<T = any>({ 
+  config, 
+  state, 
+  actions, 
+  title, 
+  description 
+}: AdminDataTableProps<T>) {
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortField, setSortField] = useState<string | null>(null);
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
   const handleSelectAll = (checked: boolean) => {
-    setSelectedItems(checked ? state.items : []);
+    setSelectedIds(checked ? state.items.map((item: any) => item.id) : []);
   };
 
-  const handleSelectItem = (item: T, checked: boolean) => {
-    setSelectedItems(prev => 
+  const handleSelectItem = (id: string, checked: boolean) => {
+    setSelectedIds(prev => 
       checked 
-        ? [...prev, item]
-        : prev.filter(selected => selected.id !== item.id)
+        ? [...prev, id]
+        : prev.filter(selectedId => selectedId !== id)
     );
   };
 
@@ -94,16 +81,14 @@ export const AdminDataTable = <T extends Record<string, any>>({
     actions.setSearch(searchQuery);
   };
 
-  const handleSort = (field: string) => {
-    if (!config.sortable) return;
-    
-    const newOrder = sortField === field && sortOrder === 'asc' ? 'desc' : 'asc';
-    setSortField(field);
-    setSortOrder(newOrder);
+  const handleBulkAction = (action: AdminTableAction<T[]>) => {
+    const selectedItems = state.items.filter((item: any) => selectedIds.includes(item.id));
+    action.onClick(selectedItems);
+    setSelectedIds([]);
   };
 
-  const renderCellContent = (column: AdminTableColumn<T>, item: T) => {
-    const value = item[column.key];
+  const renderCellValue = (column: AdminTableColumn<T>, item: T) => {
+    const value = (item as any)[column.key];
     
     if (column.render) {
       return column.render(value, item);
@@ -112,10 +97,14 @@ export const AdminDataTable = <T extends Record<string, any>>({
     switch (column.type) {
       case 'date':
         return value ? new Date(value).toLocaleDateString() : '-';
-      case 'badge':
-        return <Badge variant="secondary">{value || '-'}</Badge>;
+      case 'boolean':
+        return (
+          <Badge variant={value ? 'default' : 'secondary'}>
+            {value ? 'Yes' : 'No'}
+          </Badge>
+        );
       case 'number':
-        return typeof value === 'number' ? value.toLocaleString() : '-';
+        return typeof value === 'number' ? value.toLocaleString() : value || '-';
       default:
         return value || '-';
     }
@@ -123,45 +112,32 @@ export const AdminDataTable = <T extends Record<string, any>>({
 
   return (
     <div className="space-y-4">
-      {/* Header */}
-      <div className="flex justify-between items-start">
+      <div className="flex justify-between items-center">
         <div>
-          {title && <h2 className="text-2xl font-bold">{title}</h2>}
+          <h2 className="text-2xl font-bold">{title}</h2>
           {description && (
-            <p className="text-muted-foreground mt-1">{description}</p>
+            <p className="text-muted-foreground">{description}</p>
           )}
         </div>
         
-        <div className="flex items-center gap-2">
-          {selectedItems.length > 0 && config.bulkActions && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm">
-                  Actions ({selectedItems.length})
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                {config.bulkActions.map((action, index) => (
-                  <DropdownMenuItem
-                    key={index}
-                    onClick={() => action.onClick(selectedItems)}
-                    className={action.variant === 'destructive' ? 'text-red-600' : ''}
-                  >
-                    {action.icon && <action.icon className="h-4 w-4 mr-2" />}
-                    {action.label}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
-          
-          <Button variant="outline" size="sm" onClick={actions.refresh}>
-            Refresh
-          </Button>
-        </div>
+        {selectedIds.length > 0 && config.bulkActions && (
+          <div className="flex gap-2">
+            {config.bulkActions.map((action, index) => (
+              <Button
+                key={index}
+                variant={action.variant || 'outline'}
+                size="sm"
+                onClick={() => handleBulkAction(action)}
+                className="flex items-center gap-2"
+              >
+                <action.icon className="h-4 w-4" />
+                {action.label} ({selectedIds.length})
+              </Button>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* Search */}
       {config.searchable && (
         <form onSubmit={handleSearch} className="flex gap-2 max-w-md">
           <Input
@@ -175,7 +151,6 @@ export const AdminDataTable = <T extends Record<string, any>>({
         </form>
       )}
 
-      {/* Table */}
       <div className="border rounded-lg">
         <Table>
           <TableHeader>
@@ -183,29 +158,19 @@ export const AdminDataTable = <T extends Record<string, any>>({
               {config.selectable && (
                 <TableHead className="w-12">
                   <Checkbox
-                    checked={selectedItems.length === state.items.length && state.items.length > 0}
+                    checked={selectedIds.length === state.items.length && state.items.length > 0}
                     onCheckedChange={handleSelectAll}
                   />
                 </TableHead>
               )}
               {config.columns.map((column) => (
                 <TableHead key={column.key}>
-                  <div className="flex items-center gap-2">
-                    {column.label}
-                    {column.sortable && config.sortable && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleSort(column.key)}
-                        className="h-4 w-4 p-0"
-                      >
-                        <ArrowUpDown className="h-3 w-3" />
-                      </Button>
-                    )}
-                  </div>
+                  {column.label}
                 </TableHead>
               ))}
-              {config.actions && <TableHead className="w-20">Actions</TableHead>}
+              {config.actions && config.actions.length > 0 && (
+                <TableHead className="w-20">Actions</TableHead>
+              )}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -222,22 +187,22 @@ export const AdminDataTable = <T extends Record<string, any>>({
                 </TableCell>
               </TableRow>
             ) : (
-              state.items.map((item) => (
+              state.items.map((item: any) => (
                 <TableRow key={item.id}>
                   {config.selectable && (
                     <TableCell>
                       <Checkbox
-                        checked={selectedItems.some(selected => selected.id === item.id)}
-                        onCheckedChange={(checked) => handleSelectItem(item, !!checked)}
+                        checked={selectedIds.includes(item.id)}
+                        onCheckedChange={(checked) => handleSelectItem(item.id, !!checked)}
                       />
                     </TableCell>
                   )}
                   {config.columns.map((column) => (
                     <TableCell key={column.key}>
-                      {renderCellContent(column, item)}
+                      {renderCellValue(column, item)}
                     </TableCell>
                   ))}
-                  {config.actions && (
+                  {config.actions && config.actions.length > 0 && (
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -246,13 +211,13 @@ export const AdminDataTable = <T extends Record<string, any>>({
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent>
-                          {config.actions.map((action, index) => (
+                          {config.actions.map((action, actionIndex) => (
                             <DropdownMenuItem
-                              key={index}
+                              key={actionIndex}
                               onClick={() => action.onClick(item)}
-                              className={action.variant === 'destructive' ? 'text-red-600' : ''}
+                              className="flex items-center gap-2"
                             >
-                              {action.icon && <action.icon className="h-4 w-4 mr-2" />}
+                              <action.icon className="h-4 w-4" />
                               {action.label}
                             </DropdownMenuItem>
                           ))}
@@ -267,17 +232,41 @@ export const AdminDataTable = <T extends Record<string, any>>({
         </Table>
       </div>
 
-      {/* Error Display */}
+      {/* Simple pagination */}
+      <div className="flex items-center justify-between">
+        <div className="text-sm text-muted-foreground">
+          Showing {state.items.length} of {state.pagination.total} items
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => actions.setPage(state.pagination.page - 1)}
+            disabled={state.pagination.page <= 1}
+          >
+            <ChevronLeft className="h-4 w-4" />
+            Previous
+          </Button>
+          <span className="text-sm">
+            Page {state.pagination.page} of {state.pagination.totalPages}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => actions.setPage(state.pagination.page + 1)}
+            disabled={state.pagination.page >= state.pagination.totalPages}
+          >
+            Next
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+
       {state.error && (
         <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-md">
           <p className="text-red-600">{state.error}</p>
         </div>
       )}
-
-      {/* Pagination Info */}
-      <div className="text-sm text-muted-foreground">
-        Showing {state.items.length} of {state.total} items
-      </div>
     </div>
   );
-};
+}

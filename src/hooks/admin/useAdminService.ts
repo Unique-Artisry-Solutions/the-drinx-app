@@ -25,6 +25,7 @@ export interface AdminEntityActions<T> {
   setSort: (field: string, order: 'asc' | 'desc') => void;
   setFilters: (filters: Record<string, any>) => void;
   refreshData: () => void;
+  refresh: () => void; // Add alias for compatibility
   deleteItem: (id: string) => void;
   bulkDelete: (ids: string[]) => void;
 }
@@ -128,6 +129,9 @@ export function useAdminService<T = any>(
     },
     refreshData: () => {
       fetchData();
+    },
+    refresh: () => {
+      fetchData(); // Alias for compatibility
     },
     deleteItem: async (id: string) => {
       try {
