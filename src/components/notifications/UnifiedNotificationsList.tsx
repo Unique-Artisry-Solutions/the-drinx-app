@@ -4,18 +4,20 @@ import { Notification } from '@/types/notification';
 import NotificationItem from './NotificationItem';
 import { AlertCircle } from 'lucide-react';
 
-interface EnhancedNotificationsListProps {
+interface UnifiedNotificationsListProps {
   notifications: Notification[];
   isLoading: boolean;
   error: string | null;
-  onMarkAsRead: (id: string) => void;
+  onMarkAsRead?: (id: string) => void;
+  enhanced?: boolean;
 }
 
-const EnhancedNotificationsList: React.FC<EnhancedNotificationsListProps> = ({
+const UnifiedNotificationsList: React.FC<UnifiedNotificationsListProps> = ({
   notifications,
   isLoading,
   error,
-  onMarkAsRead
+  onMarkAsRead,
+  enhanced = false
 }) => {
   if (isLoading) {
     return (
@@ -45,17 +47,23 @@ const EnhancedNotificationsList: React.FC<EnhancedNotificationsListProps> = ({
     );
   }
 
+  const handleMarkAsRead = (id: string) => {
+    if (onMarkAsRead) {
+      onMarkAsRead(id);
+    }
+  };
+
   return (
     <div className="space-y-4">
       {notifications.map((notification) => (
         <NotificationItem
           key={notification.id}
           notification={notification}
-          onMarkAsRead={onMarkAsRead}
+          onMarkAsRead={handleMarkAsRead}
         />
       ))}
     </div>
   );
 };
 
-export default EnhancedNotificationsList;
+export default UnifiedNotificationsList;

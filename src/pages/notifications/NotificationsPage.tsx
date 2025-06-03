@@ -4,7 +4,7 @@ import { useNotifications } from '@/hooks/useNotifications';
 import Layout from '@/components/Layout';
 import NotificationsLayout from '@/components/notifications/NotificationsLayout';
 import NotificationsHeader from './components/NotificationsHeader';
-import NotificationsList from './components/NotificationsList';
+import UnifiedNotificationsList from '@/components/notifications/UnifiedNotificationsList';
 import { NotificationError } from '@/components/notifications/NotificationError';
 
 export default function NotificationsPage() {
@@ -26,7 +26,7 @@ export default function NotificationsPage() {
         {error && <NotificationError error={error} />}
         
         <div className="mt-6">
-          <NotificationsList 
+          <UnifiedNotificationsList 
             notifications={notifications}
             isLoading={isLoading}
             error={error}

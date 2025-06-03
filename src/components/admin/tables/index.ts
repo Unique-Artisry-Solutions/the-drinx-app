@@ -1,6 +1,7 @@
 
 export { AdminDataTable } from './AdminDataTable';
 export { SimpleAdminTable } from './SimpleAdminTable';
+export { UnifiedAdminTable } from './UnifiedAdminTable';
 export { AdminTableFilters } from './AdminTableFilters';
 export { AdminTablePagination } from './AdminTablePagination';
 export { AdminTableSearch } from './AdminTableSearch';

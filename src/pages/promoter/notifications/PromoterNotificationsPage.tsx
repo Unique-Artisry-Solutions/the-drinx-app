@@ -1,7 +1,7 @@
 
 import { useEffect } from 'react';
 import { useRoleNotifications } from '@/hooks/notifications/useRoleNotifications';
-import EnhancedNotificationsList from '@/components/notifications/EnhancedNotificationsList';
+import UnifiedNotificationsList from '@/components/notifications/UnifiedNotificationsList';
 import NotificationsHeader from '@/pages/notifications/components/NotificationsHeader';
 import NotificationsLayout from '@/components/notifications/NotificationsLayout';
 import Layout from '@/components/Layout';
@@ -23,11 +23,12 @@ export default function PromoterNotificationsPage() {
         />
         
         <div className="mt-6">
-          <EnhancedNotificationsList 
+          <UnifiedNotificationsList 
             notifications={notifications}
             isLoading={isLoading}
             error={error}
             onMarkAsRead={markAsRead}
+            enhanced={true}
           />
         </div>
       </NotificationsLayout>

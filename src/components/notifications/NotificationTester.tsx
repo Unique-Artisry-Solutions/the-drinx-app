@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -11,6 +10,7 @@ import { SystemStatusPanel } from './direct/SystemStatusPanel';
 import { ResetSystemSection } from './direct/ResetSystemSection';
 import { EnhancedTestControls } from './testing/EnhancedTestControls';
 import { NotificationSystemDiagnostics } from './diagnostics/NotificationSystemDiagnostics';
+import { NotificationSubscriptionManager } from './NotificationSubscriptionManager';
 
 const NotificationTester = () => {
   const {
@@ -28,6 +28,14 @@ const NotificationTester = () => {
       await sendEnhancedTestNotification();
     } catch (err) {
       console.error("Failed to send test notification:", err);
+    }
+  };
+
+  const handleRequestPermission = async () => {
+    try {
+      await Notification.requestPermission();
+    } catch (err) {
+      console.error("Failed to request permission:", err);
     }
   };
 
@@ -50,8 +58,6 @@ const NotificationTester = () => {
   return (
     <div className="space-y-4">
       <NotificationStatusAlert permissionStatus={Notification.permission} />
-      
-      {/* Add diagnostics panel */}
       <NotificationSystemDiagnostics />
       
       <Tabs defaultValue="test" value={activeTab} onValueChange={setActiveTab}>
@@ -63,24 +69,12 @@ const NotificationTester = () => {
         
         <TabsContent value="test" className="py-4">
           <div className="space-y-4">
-            <Button 
-              onClick={handleSendTest}
-              disabled={isLoading}
-              className="w-full"
-              aria-label={isLoading ? "Sending test notification..." : "Send test notification"}
-            >
-              {isLoading ? (
-                <span className="flex items-center gap-2">
-                  <Bell className="h-4 w-4 animate-pulse" aria-hidden="true" />
-                  <span>Sending...</span>
-                </span>
-              ) : (
-                <span className="flex items-center gap-2">
-                  <Bell className="h-4 w-4" aria-hidden="true" />
-                  <span>Send Test Notification</span>
-                </span>
-              )}
-            </Button>
+            <NotificationSubscriptionManager
+              permissionStatus={Notification.permission}
+              isSending={isLoading}
+              onSendTest={handleSendTest}
+              onRequestPermission={handleRequestPermission}
+            />
 
             {error && (
               <Alert variant="destructive">
