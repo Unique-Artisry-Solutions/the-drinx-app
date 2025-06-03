@@ -7,6 +7,10 @@ import { UnifiedPromotionalService } from './promotional';
 import { NotificationService } from './NotificationService';
 import { toastService } from './ToastService';
 import { subscriptionAdapter } from './SubscriptionAdapter';
+import { UnifiedAnalyticsService } from './UnifiedAnalyticsService';
+import { UnifiedEventService } from './UnifiedEventService';
+import { UnifiedPaymentService } from './UnifiedPaymentService';
+import { UnifiedMobileService } from './UnifiedMobileService';
 
 // Import admin service with fallback
 let SimplifiedAdminService: any;
@@ -15,7 +19,6 @@ try {
 } catch (error) {
   console.warn('SimplifiedAdminService not found, using fallback');
   SimplifiedAdminService = {
-    // Minimal fallback implementation
     healthCheck: () => true
   };
 }
@@ -23,6 +26,10 @@ try {
 export interface ServiceDependencies {
   admin: typeof SimplifiedAdminService;
   promotional: typeof UnifiedPromotionalService;
+  analytics: typeof UnifiedAnalyticsService;
+  events: typeof UnifiedEventService;
+  payments: typeof UnifiedPaymentService;
+  mobile: typeof UnifiedMobileService;
   notification: typeof NotificationService;
   toast: typeof toastService;
   subscription: typeof subscriptionAdapter;
@@ -36,6 +43,10 @@ class ServiceRegistryManager {
     this.services = {
       admin: SimplifiedAdminService,
       promotional: UnifiedPromotionalService,
+      analytics: UnifiedAnalyticsService,
+      events: UnifiedEventService,
+      payments: UnifiedPaymentService,
+      mobile: UnifiedMobileService,
       notification: NotificationService,
       toast: toastService,
       subscription: subscriptionAdapter
@@ -48,6 +59,14 @@ class ServiceRegistryManager {
     const config = serviceConfig.getConfig();
     
     try {
+      // Initialize all unified services
+      await Promise.all([
+        this.services.analytics.initialize(),
+        this.services.events.initialize(),
+        this.services.payments.initialize(),
+        this.services.mobile.initialize()
+      ]);
+
       // Initialize promotional services
       if (this.services.promotional && typeof this.services.promotional.initialize === 'function') {
         this.services.promotional.initialize(config);
@@ -73,10 +92,47 @@ class ServiceRegistryManager {
     return this.services[serviceName];
   }
 
+  // Service discovery - get all services of a category
+  getServicesByCategory(category: 'core' | 'analytics' | 'promotional' | 'mobile'): Partial<ServiceDependencies> {
+    const categories = {
+      core: ['admin', 'notification', 'toast', 'subscription'],
+      analytics: ['analytics'],
+      promotional: ['promotional'],
+      mobile: ['mobile']
+    };
+
+    const serviceNames = categories[category] || [];
+    const services: Partial<ServiceDependencies> = {};
+    
+    serviceNames.forEach(name => {
+      if (name in this.services) {
+        services[name as keyof ServiceDependencies] = this.services[name as keyof ServiceDependencies];
+      }
+    });
+
+    return services;
+  }
+
   async healthCheck(): Promise<{ [key: string]: boolean }> {
     const health: { [key: string]: boolean } = {};
     
     try {
+      // Check unified services
+      const healthChecks = await Promise.allSettled([
+        this.services.analytics.healthCheck().then(result => ({ analytics: result })),
+        this.services.events.healthCheck().then(result => ({ events: result })),
+        this.services.payments.healthCheck().then(result => ({ payments: result })),
+        this.services.mobile.healthCheck().then(result => ({ mobile: result }))
+      ]);
+
+      healthChecks.forEach(result => {
+        if (result.status === 'fulfilled') {
+          Object.assign(health, result.value);
+        } else {
+          console.error('Health check failed:', result.reason);
+        }
+      });
+
       // Check promotional services
       if (this.services.promotional && typeof this.services.promotional.healthCheck === 'function') {
         const promotionalHealth = await this.services.promotional.healthCheck();
@@ -94,6 +150,33 @@ class ServiceRegistryManager {
       console.error('ServiceRegistry: Health check failed:', error);
       return { error: false };
     }
+  }
+
+  // Runtime service switching
+  switchService<K extends keyof ServiceDependencies>(
+    serviceName: K, 
+    newService: ServiceDependencies[K]
+  ): void {
+    const config = serviceConfig.getConfig();
+    if (config.enableLogging) {
+      console.log(`ServiceRegistry: Switching service ${serviceName}`);
+    }
+    
+    this.services[serviceName] = newService;
+  }
+
+  // Get service metadata
+  getServiceMetadata(): { [K in keyof ServiceDependencies]: { initialized: boolean; available: boolean } } {
+    const metadata = {} as any;
+    
+    Object.keys(this.services).forEach(serviceName => {
+      metadata[serviceName] = {
+        initialized: this.initialized,
+        available: !!this.services[serviceName as keyof ServiceDependencies]
+      };
+    });
+    
+    return metadata;
   }
 
   isInitialized(): boolean {
