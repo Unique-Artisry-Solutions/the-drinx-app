@@ -35,14 +35,14 @@ const AdminDashboard: React.FC = () => {
   // Cast the sample data to match expected types for the components
   const establishmentData = sampleEstablishments.map(est => ({
     ...est,
-    cocktailCount: est.cocktail_count || 0
+    cocktailCount: est.cocktailCount || 0
   }));
   
   const cocktailData = sampleCocktails.map(cocktail => ({
     ...cocktail,
     establishment: typeof cocktail.establishment === 'string' 
       ? cocktail.establishment 
-      : cocktail.establishment.name
+      : cocktail.establishment?.name || 'Unknown'
   }));
   
   const { state: establishmentsState, actions: establishmentsActions } = useEstablishmentsData(establishmentData);
