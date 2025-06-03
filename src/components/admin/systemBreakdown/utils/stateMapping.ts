@@ -1,3 +1,4 @@
+
 import { FeatureStatus, DatabaseStatus } from '../types';
 
 /**
@@ -18,15 +19,28 @@ export function mapToSimplifiedStatus(legacyStatus: string): FeatureStatus {
   
   // Map in-progress variants
   if (normalized.includes('progress') || 
-      normalized.includes('partial') || 
       normalized.includes('development') ||
       normalized.includes('testing') ||
-      normalized.includes('review') ||
-      normalized.includes('blocked')) {
+      normalized.includes('review')) {
     return 'in_progress';
   }
+
+  // Map partial variants
+  if (normalized.includes('partial')) {
+    return 'partial';
+  }
+
+  // Map blocked variants
+  if (normalized.includes('blocked')) {
+    return 'blocked';
+  }
+
+  // Map planned variants
+  if (normalized.includes('planned')) {
+    return 'planned';
+  }
   
-  // Default to not_started for planned, new, etc.
+  // Default to not_started for new, etc.
   return 'not_started';
 }
 
@@ -76,6 +90,15 @@ export function calculateProgressFromStatus(
     case 'in_progress':
       uiProgress = 50;
       break;
+    case 'partial':
+      uiProgress = 65;
+      break;
+    case 'planned':
+      uiProgress = 15;
+      break;
+    case 'blocked':
+      uiProgress = 30;
+      break;
     case 'not_started':
       uiProgress = 0;
       break;
@@ -119,6 +142,19 @@ export function determineOverallStatus(
   if (uiStatus === 'implemented' && dbStatus === 'not_started') {
     return 'in_progress';
   }
+
+  // Handle extended status types
+  if (uiStatus === 'partial') {
+    return 'partial';
+  }
+
+  if (uiStatus === 'blocked') {
+    return 'blocked';
+  }
+
+  if (uiStatus === 'planned') {
+    return 'planned';
+  }
   
   // Default to not started
   return 'not_started';
@@ -128,8 +164,11 @@ export function determineOverallStatus(
  * State transition rules for feature progression
  */
 export const STATE_TRANSITIONS: Record<FeatureStatus, FeatureStatus[]> = {
-  'not_started': ['in_progress'],
-  'in_progress': ['implemented', 'not_started'], // Can go back if blocked
+  'not_started': ['in_progress', 'planned'],
+  'planned': ['in_progress', 'not_started'],
+  'in_progress': ['implemented', 'partial', 'blocked', 'not_started'],
+  'partial': ['implemented', 'in_progress', 'blocked'],
+  'blocked': ['in_progress', 'not_started'],
   'implemented': ['in_progress'] // Can regress if issues found
 };
 
@@ -151,11 +190,23 @@ export function getNextState(currentStatus: FeatureStatus): FeatureStatus | null
   
   // Return the progressive state (forward progression)
   if (currentStatus === 'not_started') {
+    return 'planned';
+  }
+  
+  if (currentStatus === 'planned') {
     return 'in_progress';
   }
   
   if (currentStatus === 'in_progress') {
     return 'implemented';
+  }
+
+  if (currentStatus === 'partial') {
+    return 'implemented';
+  }
+
+  if (currentStatus === 'blocked') {
+    return 'in_progress';
   }
   
   return null;

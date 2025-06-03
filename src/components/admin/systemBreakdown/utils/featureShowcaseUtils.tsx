@@ -1,88 +1,96 @@
 
+import React from 'react';
 import { FeatureItem, FeatureShowcaseData } from '../types';
-import { isSignatureFeature } from './detection';
-import { determineBusinessValue } from './featureShowcase/featureTransformation';
 import { determineShowcaseCategory } from './featureShowcase/categoryDetection';
-import { generateMarketingPoints } from './featureShowcase/marketingUtils';
+import { determineBusinessValue, determineComplexity } from './featureShowcase/featureTransformation';
 import { determineFeatureIcon } from './featureShowcase/iconSelection';
+import { generateMarketingPoints } from './featureShowcase/marketingUtils';
 import { generateMockImplementationStats } from './featureShowcase/mockStats';
 
-// Main function to transform feature data for showcase display
-export const prepareFeatureShowcaseData = (
-  adminFeatures: FeatureItem[],
-  establishmentFeatures: FeatureItem[], 
-  individualFeatures: FeatureItem[]
-): FeatureShowcaseData[] => {
-  const allFeatures = [...adminFeatures, ...establishmentFeatures, ...individualFeatures];
-  
-  // Only include implemented or partially implemented features
-  const implementedFeatures = allFeatures.filter(
-    feature => feature.status === 'implemented' || feature.status === 'partial'
-  );
-  
-  return implementedFeatures.map(feature => {
-    const stats = generateMockImplementationStats(feature);
-    
-    return {
-      id: feature.id,
-      name: feature.name,
-      description: feature.description,
-      businessValue: determineBusinessValue(feature),
-      complexity: feature.complexity,
-      implementationStatus: feature.status,
-      showcaseCategory: determineShowcaseCategory(feature),
-      marketingPoints: generateMarketingPoints(feature),
-      isSignature: isSignatureFeature(feature),
-      implementations: stats.implementations,
-      avgRating: stats.avgRating,
-      icon: determineFeatureIcon(feature),
-      categories: [feature.tags?.[0] || 'default'],
-      businessValues: [feature.userImpact]
-    };
-  });
-};
-
-// Generate client-ready feature report
-export const generateFeatureReport = (
-  features: FeatureShowcaseData[],
-  includeDevelopmentDetails: boolean = false
-): string => {
-  const signatureFeatures = features.filter(f => f.isSignature);
-  const categories = Array.from(new Set(features.map(f => f.showcaseCategory)));
-  
-  let report = `# Spiritless Platform Feature Report\n\n`;
-  report += `## Executive Summary\n\n`;
-  report += `The Spiritless platform offers ${features.length} robust features across ${categories.length} functional categories, `;
-  report += `with ${signatureFeatures.length} signature capabilities that set it apart from competitors.\n\n`;
-  
-  report += `## Signature Features\n\n`;
-  signatureFeatures.forEach(feature => {
-    report += `### ${feature.name}\n`;
-    report += `${feature.description}\n\n`;
-    report += `**Value Proposition:**\n`;
-    feature.marketingPoints?.forEach(point => {
-      report += `- ${point}\n`;
-    });
-    report += '\n';
-  });
-  
-  report += `## Feature Categories\n\n`;
-  categories.forEach(category => {
-    const categoryFeatures = features.filter(f => f.showcaseCategory === category);
-    report += `### ${category} (${categoryFeatures.length} features)\n`;
-    
-    categoryFeatures.forEach(feature => {
-      report += `- **${feature.name}**: ${feature.description}\n`;
-      
-      if (includeDevelopmentDetails) {
-        report += `  - Implementation Status: ${feature.implementationStatus}\n`;
-        report += `  - Business Value: ${feature.businessValue}\n`;
-        report += `  - Complexity: ${feature.complexity}\n`;
+/**
+ * Transforms features into showcase data format
+ */
+export function prepareFeatureShowcaseData(
+  features: FeatureItem[], 
+  filterCriteria: any = {}, 
+  sortOptions: any = {}
+): FeatureShowcaseData[] {
+  return features
+    .filter(feature => {
+      // Apply basic filters
+      if (filterCriteria.status && feature.status !== filterCriteria.status) {
+        return false;
       }
-    });
-    report += '\n';
-  });
-  
-  return report;
-};
+      if (filterCriteria.complexity && feature.complexity !== filterCriteria.complexity) {
+        return false;
+      }
+      return true;
+    })
+    .map(feature => {
+      const showcaseCategory = determineShowcaseCategory(feature);
+      const businessValue = determineBusinessValue(feature);
+      const complexity = determineComplexity(feature);
+      const icon = determineFeatureIcon(feature);
+      const marketingPoints = generateMarketingPoints(feature);
+      const mockStats = generateMockImplementationStats(feature);
 
+      return {
+        id: feature.id,
+        name: feature.name,
+        description: feature.description,
+        businessValue,
+        complexity,
+        implementationStatus: feature.status,
+        showcaseCategory,
+        isSignature: feature.userImpact === 'high' && feature.status === 'implemented',
+        icon,
+        implementations: mockStats.implementations,
+        avgRating: mockStats.avgRating,
+        marketingPoints,
+        categories: [showcaseCategory],
+        businessValues: [businessValue]
+      };
+    })
+    .sort((a, b) => {
+      // Apply sorting
+      if (sortOptions.field === 'name') {
+        return sortOptions.order === 'asc' 
+          ? a.name.localeCompare(b.name)
+          : b.name.localeCompare(a.name);
+      }
+      return 0;
+    });
+}
+
+/**
+ * Generates a comprehensive feature report
+ */
+export function generateFeatureReport(features: FeatureItem[]): {
+  totalFeatures: number;
+  implementedFeatures: number;
+  inProgressFeatures: number;
+  plannedFeatures: number;
+  categories: string[];
+  businessValueDistribution: Record<string, number>;
+} {
+  const implementedFeatures = features.filter(f => f.status === 'implemented').length;
+  const inProgressFeatures = features.filter(f => f.status === 'in_progress' || f.status === 'partial').length;
+  const plannedFeatures = features.filter(f => f.status === 'planned' || f.status === 'not_started').length;
+
+  const categories = [...new Set(features.map(f => f.category).filter(Boolean))];
+  
+  const businessValueDistribution = features.reduce((acc, feature) => {
+    const businessValue = determineBusinessValue(feature);
+    acc[businessValue] = (acc[businessValue] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  return {
+    totalFeatures: features.length,
+    implementedFeatures,
+    inProgressFeatures,
+    plannedFeatures,
+    categories,
+    businessValueDistribution
+  };
+}

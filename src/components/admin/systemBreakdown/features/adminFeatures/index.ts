@@ -36,7 +36,7 @@ export const adminFeatures: FeatureItem[] = [
     adminAccess: 'full',
     establishmentAccess: 'partial',
     individualAccess: 'partial',
-    databaseStatus: 'implemented',
+    databaseStatus: 'complete', // Changed from 'implemented' to 'complete'
     userImpact: 'medium',
     components: [
       {

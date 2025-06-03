@@ -97,7 +97,7 @@ export const establishmentFeatures: FeatureItem[] = [
     id: 'est-008',
     name: 'Mocktail Recommendation Engine',
     description: 'AI-powered mocktail suggestions based on customer preferences',
-    status: 'planned',
+    status: 'not_started', // Changed from 'planned' to 'not_started'
     adminAccess: 'full',
     establishmentAccess: 'full',
     individualAccess: 'read',

@@ -1,4 +1,5 @@
-export type FeatureStatus = 'implemented' | 'in_progress' | 'not_started';
+
+export type FeatureStatus = 'implemented' | 'in_progress' | 'not_started' | 'partial' | 'planned' | 'blocked';
 export type DatabaseStatus = 'complete' | 'in_progress' | 'not_started';
 export type AccessLevel = 'full' | 'partial' | 'read' | 'none' | 'write' | 'moderate';
 export type FeatureComplexity = 'high' | 'medium' | 'low';
