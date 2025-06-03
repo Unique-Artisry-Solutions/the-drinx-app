@@ -3,7 +3,9 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth as useSupabaseAuth } from '@/contexts/auth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import type { AuthState as ContextAuthState, AuthActions as ContextAuthActions } from '@/contexts/auth/types';
 
+// Simplified interface that aligns with the existing auth context
 export interface AuthState {
   user: any;
   isLoading: boolean;
@@ -27,11 +29,19 @@ export function useAuth(): { state: AuthState; actions: AuthActions } {
   
   const [error, setError] = useState<string | null>(null);
 
+  // Ensure userType is properly typed by providing a fallback
+  const getUserType = (): 'individual' | 'establishment' | 'promoter' | 'admin' => {
+    if (!auth.userType) return 'individual';
+    // Ensure the userType matches our expected union type
+    const validTypes = ['individual', 'establishment', 'promoter', 'admin'] as const;
+    return validTypes.includes(auth.userType as any) ? auth.userType as any : 'individual';
+  };
+
   const state: AuthState = {
     user: auth.user,
     isLoading: auth.isLoading,
     isAuthenticated: auth.isAuthenticated,
-    userType: auth.userType,
+    userType: getUserType(),
     error
   };
 
