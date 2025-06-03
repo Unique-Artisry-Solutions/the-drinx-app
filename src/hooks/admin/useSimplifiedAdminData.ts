@@ -1,6 +1,6 @@
 
-import { useState, useEffect, useCallback } from 'react';
-import { useToast } from '@/hooks/use-toast';
+// Legacy hook - now redirects to core useData hook
+import { useData } from '../core/useData';
 
 export interface SimplifiedAdminState<T> {
   items: T[];
@@ -26,73 +26,32 @@ export function useSimplifiedAdminData<T extends { id: string; name: string }>(
   initialData: T[] = [],
   itemType: string = 'item'
 ) {
-  const { toast } = useToast();
-  
-  const [state, setState] = useState<SimplifiedAdminState<T>>({
-    items: initialData,
-    isLoading: false,
-    error: null,
-    total: initialData.length,
-    page: 1,
-    limit: 20,
-    searchTerm: '',
+  const { state, actions } = useData<T>({
+    initialData,
+    itemType,
+    searchFields: ['name']
   });
 
-  const actions: SimplifiedAdminActions<T> = {
-    setPage: useCallback((page: number) => {
-      setState(prev => ({ ...prev, page }));
-    }, []),
-
-    setLimit: useCallback((limit: number) => {
-      setState(prev => ({ ...prev, limit, page: 1 }));
-    }, []),
-
-    setSearchTerm: useCallback((searchTerm: string) => {
-      setState(prev => ({ ...prev, searchTerm, page: 1 }));
-    }, []),
-
-    refresh: useCallback(() => {
-      setState(prev => ({ ...prev, isLoading: true }));
-      // Simulate refresh
-      setTimeout(() => {
-        setState(prev => ({ ...prev, isLoading: false }));
-        toast({
-          title: 'Data refreshed',
-          description: `${itemType} data has been updated`,
-        });
-      }, 500);
-    }, [itemType, toast]),
-
-    deleteItem: useCallback((id: string) => {
-      setState(prev => ({
-        ...prev,
-        items: prev.items.filter(item => item.id !== id),
-        total: prev.total - 1
-      }));
-      toast({
-        title: `${itemType} deleted`,
-        description: `The ${itemType} has been removed successfully`,
-      });
-    }, [itemType, toast]),
-
-    bulkDelete: useCallback((ids: string[]) => {
-      setState(prev => ({
-        ...prev,
-        items: prev.items.filter(item => !ids.includes(item.id)),
-        total: prev.total - ids.length
-      }));
-      toast({
-        title: `${ids.length} ${itemType}s deleted`,
-        description: `The selected ${itemType}s have been removed successfully`,
-      });
-    }, [itemType, toast]),
-
-    filterItems: useCallback((searchTerm: string) => {
-      return state.items.filter(item =>
-        item.name.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }, [state.items]),
+  // Map to legacy interface for backward compatibility
+  const legacyState: SimplifiedAdminState<T> = {
+    items: state.data,
+    isLoading: state.isLoading,
+    error: state.error,
+    total: state.total,
+    page: state.page,
+    limit: state.limit,
+    searchTerm: state.searchTerm
   };
 
-  return { state, actions };
+  const legacyActions: SimplifiedAdminActions<T> = {
+    setPage: actions.setPage,
+    setLimit: actions.setLimit,
+    setSearchTerm: actions.setSearchTerm,
+    refresh: () => actions.refresh(),
+    deleteItem: (id: string) => actions.delete(id),
+    bulkDelete: (ids: string[]) => actions.bulkDelete(ids),
+    filterItems: actions.filter
+  };
+
+  return { state: legacyState, actions: legacyActions };
 }

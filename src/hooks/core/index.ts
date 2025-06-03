@@ -1,0 +1,30 @@
+
+// Core consolidated hooks
+export { useData } from './useData';
+export { useAuth } from './useAuth';
+export { useAnalytics } from './useAnalytics';
+export { useNotifications } from './useNotifications';
+
+// Types
+export type { 
+  DataState, 
+  DataActions, 
+  UseDataOptions 
+} from './useData';
+
+export type { 
+  AuthState, 
+  AuthActions 
+} from './useAuth';
+
+export type { 
+  AnalyticsData,
+  AnalyticsState, 
+  AnalyticsActions 
+} from './useAnalytics';
+
+export type { 
+  NotificationItem,
+  NotificationState, 
+  NotificationActions 
+} from './useNotifications';

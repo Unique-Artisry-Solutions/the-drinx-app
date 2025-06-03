@@ -1,3 +1,6 @@
+import { useData as useAdminData } from '../core/useData';
+import { useAuth as useAdminAuth } from '../core/useAuth';
+import { useAnalytics as useAdminAnalytics } from '../core/useAnalytics';
 
 export { useAdminDashboard } from './useAdminDashboard';
 export { useAdminData, useEstablishmentsData, useCocktailsData } from './useAdminData';
