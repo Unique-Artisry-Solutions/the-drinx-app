@@ -45,7 +45,7 @@ export const CocktailsAdminTable: React.FC = () => {
       {
         key: 'price',
         label: 'Price',
-        type: 'currency',
+        type: 'text',
         sortable: true
       },
       {

@@ -114,14 +114,10 @@ export const EstablishmentsAdminTable: React.FC = () => {
     ],
     filters: [
       {
-        key: 'user_type',
-        label: 'Type',
-        type: 'select',
-        options: [
-          { value: 'bar', label: 'Bar' },
-          { value: 'restaurant', label: 'Restaurant' },
-          { value: 'club', label: 'Club' }
-        ]
+        key: 'name',
+        label: 'Name',
+        type: 'text',
+        options: []
       }
     ],
     searchable: true,

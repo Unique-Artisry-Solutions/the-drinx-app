@@ -1,5 +1,6 @@
 
 import { BaseAdminService } from './BaseAdminService';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface AdminUser {
   id: string;
