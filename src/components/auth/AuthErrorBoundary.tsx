@@ -1,8 +1,8 @@
 
-import { Component, ErrorInfo, ReactNode } from 'react';
+import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
+import { AlertTriangle, RefreshCw, Home, LogIn } from 'lucide-react';
 import { clearAllSessions } from '@/utils/sessionCleaner';
 
 interface Props {
@@ -82,6 +82,10 @@ class AuthErrorBoundary extends Component<Props, State> {
     window.location.href = '/';
   };
 
+  private handleGoToLogin = () => {
+    window.location.href = '/login';
+  };
+
   public render() {
     if (this.state.hasError) {
       const canRetry = this.state.retryCount < this.maxRetries;
@@ -148,6 +152,7 @@ class AuthErrorBoundary extends Component<Props, State> {
                     className="w-full"
                     variant="outline"
                   >
+                    <LogIn className="h-4 w-4 mr-2" />
                     Clear Session & Sign In
                   </Button>
                 )}
@@ -161,7 +166,7 @@ class AuthErrorBoundary extends Component<Props, State> {
                   Go to Home
                 </Button>
                 
-                {!canRetry && (
+                {!this.maxRetries && (
                   <Button 
                     onClick={() => window.location.reload()}
                     className="w-full"

@@ -1,162 +1,222 @@
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState, useEffect } from 'react';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Users, Target, TrendingUp } from 'lucide-react';
-// import { AlertCircle } from 'lucide-react'; // Commented out to preserve future functionality
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Separator } from '@/components/ui/separator';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Loader2, Plus, Search, AlertCircle, XCircle } from 'lucide-react';
+import { EventMarketingCampaign } from '@/types/EventTypes';
+import { AudienceSegment } from '@/types/AudienceTypes';
+import { CampaignSegmentMapping } from '@/types/CampaignSegmentTypes';
 
-interface CampaignSegment {
+export interface SegmentSelection {
   id: string;
   name: string;
-  audienceSize: number;
-  criteria: string[];
-  performance: {
-    openRate: number;
-    clickRate: number;
-    conversionRate: number;
-  };
+  allocation?: number;
+  isControlGroup?: boolean;
+  description?: string;
 }
 
 interface CampaignSegmentPanelProps {
-  eventId: string;
-  segments?: CampaignSegment[];
-  onCreateSegment?: () => void;
+  campaign: EventMarketingCampaign;
+  availableSegments: AudienceSegment[];
+  existingMappings: CampaignSegmentMapping[];
+  isLoading: boolean;
+  onAssignSegments: (campaign: EventMarketingCampaign, segments: SegmentSelection[]) => Promise<any>;
 }
 
-const defaultSegments: CampaignSegment[] = [
-  {
-    id: '1',
-    name: 'Frequent Attendees',
-    audienceSize: 250,
-    criteria: ['Attended 3+ events', 'High engagement'],
-    performance: { openRate: 85, clickRate: 12, conversionRate: 8 }
-  },
-  {
-    id: '2',
-    name: 'Local Enthusiasts',
-    audienceSize: 180,
-    criteria: ['Within 10 miles', 'Cocktail interest'],
-    performance: { openRate: 78, clickRate: 15, conversionRate: 12 }
-  }
-];
-
-const CampaignSegmentPanel: React.FC<CampaignSegmentPanelProps> = ({
-  eventId,
-  segments = defaultSegments,
-  onCreateSegment
+export const CampaignSegmentPanel: React.FC<CampaignSegmentPanelProps> = ({
+  campaign,
+  availableSegments,
+  existingMappings,
+  isLoading,
+  onAssignSegments
 }) => {
-  const handleSegmentAction = (action: string, segmentId: string) => {
-    console.log(`${action} segment ${segmentId} for event ${eventId}`);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedSegments, setSelectedSegments] = useState<SegmentSelection[]>([]);
+  const [isAssigning, setIsAssigning] = useState(false);
+  const [showDescriptionInput, setShowDescriptionInput] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Initialize selected segments with existing mappings
+    const initialSegments = existingMappings.map(mapping => ({
+      id: mapping.segment_id,
+      name: availableSegments.find(s => s.id === mapping.segment_id)?.name || 'Unknown Segment',
+      allocation: mapping.allocation_percentage,
+      isControlGroup: mapping.is_control_group,
+      description: mapping.description
+    }));
+    setSelectedSegments(initialSegments);
+  }, [existingMappings, availableSegments]);
+
+  const handleSegmentSelect = (segment: AudienceSegment) => {
+    const isSelected = selectedSegments.some(s => s.id === segment.id);
+    
+    if (isSelected) {
+      setSelectedSegments(prev => prev.filter(s => s.id !== segment.id));
+    } else {
+      setSelectedSegments(prev => [...prev, { 
+        id: segment.id, 
+        name: segment.name,
+        allocation: 100,
+        isControlGroup: false
+      }]);
+    }
+  };
+
+  const handleAllocationChange = (segmentId: string, value: number) => {
+    setSelectedSegments(prev => 
+      prev.map(s => s.id === segmentId ? { ...s, allocation: value } : s)
+    );
+  };
+
+  const handleControlGroupChange = (segmentId: string, checked: boolean) => {
+    setSelectedSegments(prev =>
+      prev.map(s => s.id === segmentId ? { ...s, isControlGroup: checked } : s)
+    );
+  };
+
+  const handleDescriptionChange = (segmentId: string, description: string) => {
+    setSelectedSegments(prev =>
+      prev.map(s => s.id === segmentId ? { ...s, description: description } : s)
+    );
+  };
+
+  const handleAssign = async () => {
+    setIsAssigning(true);
+    try {
+      await onAssignSegments(campaign, selectedSegments);
+    } finally {
+      setIsAssigning(false);
+    }
+  };
+
+  const filteredSegments = availableSegments.filter(segment =>
+    segment.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const isSegmentSelected = (segmentId: string) => {
+    return selectedSegments.some(s => s.id === segmentId);
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h3 className="text-lg font-semibold">Campaign Segments</h3>
-          <p className="text-sm text-gray-600">Target specific audience groups for your marketing campaigns</p>
+    <Card>
+      <CardHeader>
+        <CardTitle>Campaign Segments</CardTitle>
+        <CardDescription>
+          Target specific audience segments with this campaign.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex items-center space-x-2">
+          <Search className="h-4 w-4 text-gray-500" />
+          <Input
+            type="search"
+            placeholder="Search segments..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full"
+          />
         </div>
-        {onCreateSegment && (
-          <Button onClick={onCreateSegment}>
-            <Target className="w-4 h-4 mr-2" />
-            Create Segment
-          </Button>
-        )}
-      </div>
-
-      <div className="grid gap-4">
-        {segments.map((segment) => (
-          <Card key={segment.id} className="hover:shadow-md transition-shadow">
-            <CardHeader>
-              <div className="flex justify-between items-start">
-                <div>
-                  <CardTitle className="text-lg">{segment.name}</CardTitle>
-                  <div className="flex items-center mt-2 text-sm text-gray-600">
-                    <Users className="w-4 h-4 mr-1" />
-                    {segment.audienceSize} people
-                  </div>
-                </div>
-                <Select onValueChange={(action) => handleSegmentAction(action, segment.id)}>
-                  <SelectTrigger className="w-32">
-                    <SelectValue placeholder="Actions" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="edit">Edit</SelectItem>
-                    <SelectItem value="duplicate">Duplicate</SelectItem>
-                    <SelectItem value="delete">Delete</SelectItem>
-                  </SelectContent>
-                </Select>
+        <Separator />
+        
+        {isLoading ? (
+          <div className="flex items-center justify-center h-32">
+            <Loader2 className="h-6 w-6 animate-spin" />
+          </div>
+        ) : (
+          <ScrollArea className="h-[300px] pr-2">
+            {filteredSegments.length === 0 ? (
+              <div className="text-sm text-gray-500 text-center mt-4">
+                No segments found.
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {/* Criteria */}
-                <div>
-                  <h4 className="text-sm font-medium mb-2">Criteria</h4>
-                  <div className="flex flex-wrap gap-1">
-                    {segment.criteria.map((criterion, index) => (
-                      <Badge key={index} variant="outline" className="text-xs">
-                        {criterion}
-                      </Badge>
-                    ))}
+            ) : (
+              filteredSegments.map(segment => (
+                <div key={segment.id} className="py-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor={`segment-${segment.id}`} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`segment-${segment.id}`}
+                        checked={isSegmentSelected(segment.id)}
+                        onCheckedChange={() => handleSegmentSelect(segment)}
+                      />
+                      <span>{segment.name}</span>
+                    </Label>
                   </div>
-                </div>
-
-                {/* Performance Metrics */}
-                <div>
-                  <h4 className="text-sm font-medium mb-2">Performance</h4>
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="text-center">
-                      <div className="text-lg font-semibold text-blue-600">
-                        {segment.performance.openRate}%
+                  {isSegmentSelected(segment.id) && (
+                    <div className="mt-2 pl-6 space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <Label htmlFor={`allocation-${segment.id}`} className="text-sm">
+                          Allocation %:
+                        </Label>
+                        <Input
+                          type="number"
+                          id={`allocation-${segment.id}`}
+                          value={selectedSegments.find(s => s.id === segment.id)?.allocation || 100}
+                          onChange={(e) => handleAllocationChange(segment.id, Number(e.target.value))}
+                          min="1"
+                          max="100"
+                          className="w-20 text-sm"
+                        />
                       </div>
-                      <div className="text-xs text-gray-500">Open Rate</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-lg font-semibold text-green-600">
-                        {segment.performance.clickRate}%
+                      <div className="flex items-center space-x-2">
+                        <Label htmlFor={`control-group-${segment.id}`} className="text-sm">
+                          Control Group:
+                        </Label>
+                        <Checkbox
+                          id={`control-group-${segment.id}`}
+                          checked={selectedSegments.find(s => s.id === segment.id)?.isControlGroup || false}
+                          onCheckedChange={(checked) => handleControlGroupChange(segment.id, !!checked)}
+                        />
                       </div>
-                      <div className="text-xs text-gray-500">Click Rate</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-lg font-semibold text-purple-600">
-                        {segment.performance.conversionRate}%
+                      <div className="space-y-1">
+                        <Label htmlFor={`description-${segment.id}`} className="text-sm">
+                          Description:
+                        </Label>
+                        {showDescriptionInput === segment.id ? (
+                          <div className="flex items-center space-x-2">
+                            <Input
+                              type="text"
+                              id={`description-${segment.id}`}
+                              value={selectedSegments.find(s => s.id === segment.id)?.description || ''}
+                              onChange={(e) => handleDescriptionChange(segment.id, e.target.value)}
+                              className="text-sm"
+                            />
+                            <Button variant="ghost" size="icon" onClick={() => setShowDescriptionInput(null)}>
+                              <XCircle className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <Button variant="link" size="sm" onClick={() => setShowDescriptionInput(segment.id)}>
+                            Add Description
+                          </Button>
+                        )}
                       </div>
-                      <div className="text-xs text-gray-500">Conversion</div>
                     </div>
-                  </div>
+                  )}
                 </div>
-
-                <div className="flex justify-between items-center pt-2">
-                  <div className="flex items-center text-sm text-green-600">
-                    <TrendingUp className="w-4 h-4 mr-1" />
-                    Performing well
-                  </div>
-                  <Button size="sm" variant="outline">
-                    View Analytics
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {segments.length === 0 && (
-        <Card>
-          <CardContent className="p-8 text-center text-gray-500">
-            <Target className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-            <h4 className="text-lg font-medium mb-2">No segments created</h4>
-            <p className="mb-4">Create your first audience segment to start targeted marketing campaigns.</p>
-            {onCreateSegment && (
-              <Button onClick={onCreateSegment}>Create First Segment</Button>
+              ))
             )}
-          </CardContent>
-        </Card>
-      )}
-    </div>
+          </ScrollArea>
+        )}
+
+        <Button onClick={handleAssign} disabled={isLoading || isAssigning}>
+          {isAssigning ? (
+            <>
+              Assigning...
+              <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+            </>
+          ) : (
+            <>
+              <Plus className="mr-2 h-4 w-4" />
+              Assign Segments
+            </>
+          )}
+        </Button>
+      </CardContent>
+    </Card>
   );
 };
-
-export default CampaignSegmentPanel;

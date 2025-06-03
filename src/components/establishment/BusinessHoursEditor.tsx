@@ -1,138 +1,153 @@
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Clock, Plus, Trash2 } from 'lucide-react';
 
-export interface BusinessHour {
+export type BusinessHour = {
   day: string;
-  open: string;
-  close: string;
-  isClosed: boolean;
-}
+  openTime: string;
+  closeTime: string;
+};
 
 interface BusinessHoursEditorProps {
   hours: BusinessHour[];
-  onUpdate?: (hours: BusinessHour[]) => void;
-  setHours?: React.Dispatch<React.SetStateAction<BusinessHour[]>>;
-  isEditing?: boolean;
+  setHours: React.Dispatch<React.SetStateAction<BusinessHour[]>>;
+  isEditing: boolean;
 }
 
 const daysOfWeek = [
-  'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+  'Sunday',
 ];
 
-const BusinessHoursEditor: React.FC<BusinessHoursEditorProps> = ({ 
-  hours, 
-  onUpdate, 
-  setHours, 
-  isEditing = true 
+const BusinessHoursEditor: React.FC<BusinessHoursEditorProps> = ({
+  hours,
+  setHours,
+  isEditing,
 }) => {
-  const handleTimeChange = (day: string, field: 'open' | 'close', value: string) => {
-    const updatedHours = hours.map(hour => 
-      hour.day === day ? { ...hour, [field]: value } : hour
-    );
-    
-    if (onUpdate) {
-      onUpdate(updatedHours);
-    } else if (setHours) {
-      setHours(updatedHours);
-    }
+  const handleAddHours = () => {
+    const newDay = daysOfWeek.find(day => !hours.some(hour => hour.day === day)) || 'Monday';
+    setHours([...hours, { day: newDay, openTime: '09:00', closeTime: '17:00' }]);
   };
 
-  const toggleClosed = (day: string) => {
-    const updatedHours = hours.map(hour =>
-      hour.day === day ? { ...hour, isClosed: !hour.isClosed } : hour
-    );
-    
-    if (onUpdate) {
-      onUpdate(updatedHours);
-    } else if (setHours) {
-      setHours(updatedHours);
-    }
+  const handleRemoveHours = (index: number) => {
+    setHours(hours.filter((_, i) => i !== index));
+  };
+
+  const handleHoursChange = (
+    index: number,
+    field: keyof BusinessHour,
+    value: string
+  ) => {
+    const updatedHours = [...hours];
+    updatedHours[index] = { ...updatedHours[index], [field]: value };
+    setHours(updatedHours);
   };
 
   if (!isEditing) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Business Hours</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          {daysOfWeek.map((day) => {
-            const dayHours = hours.find(h => h.day === day) || { 
-              day, 
-              open: '09:00', 
-              close: '17:00', 
-              isClosed: false 
-            };
-            
-            return (
-              <div key={day} className="flex justify-between">
-                <span className="capitalize font-medium">{day}</span>
-                <span className="text-gray-600">
-                  {dayHours.isClosed ? 'Closed' : `${dayHours.open} - ${dayHours.close}`}
-                </span>
-              </div>
-            );
-          })}
-        </CardContent>
-      </Card>
+      <div className="mt-4">
+        <h3 className="text-sm font-medium text-gray-500 mb-2 text-left">Business Hours</h3>
+        {hours.length > 0 ? (
+          <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+            {hours.map((hour, index) => (
+              <React.Fragment key={index}>
+                <div>{hour.day}</div>
+                <div>{hour.openTime} - {hour.closeTime}</div>
+              </React.Fragment>
+            ))}
+          </div>
+        ) : (
+          <p className="text-gray-500 text-sm">No business hours specified.</p>
+        )}
+      </div>
     );
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Business Hours</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {daysOfWeek.map((day) => {
-          const dayHours = hours.find(h => h.day === day) || { 
-            day, 
-            open: '09:00', 
-            close: '17:00', 
-            isClosed: false 
-          };
+    <div className="mt-4 space-y-4">
+      <div className="flex items-center justify-between">
+        <Label className="text-sm font-medium">Business Hours</Label>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={handleAddHours}
+          disabled={hours.length >= 7}
+        >
+          <Plus className="h-4 w-4 mr-1" />
+          Add Hours
+        </Button>
+      </div>
+
+      {hours.map((hour, index) => (
+        <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-2 items-center border p-2 rounded-md">
+          <div>
+            <Label htmlFor={`day-${index}`} className="sr-only">
+              Day
+            </Label>
+            <select
+              id={`day-${index}`}
+              value={hour.day}
+              onChange={(e) => handleHoursChange(index, 'day', e.target.value)}
+              className="w-full rounded-md border border-input p-2 text-sm"
+            >
+              {daysOfWeek.map((day) => (
+                <option 
+                  key={day} 
+                  value={day}
+                  disabled={hours.some(h => h.day === day && h !== hour)}
+                >
+                  {day}
+                </option>
+              ))}
+            </select>
+          </div>
           
-          return (
-            <div key={day} className="flex items-center gap-4">
-              <div className="w-20">
-                <Label className="capitalize">{day}</Label>
-              </div>
-              
-              {dayHours.isClosed ? (
-                <div className="flex-1 text-gray-500">Closed</div>
-              ) : (
-                <div className="flex gap-2 flex-1">
-                  <Input
-                    type="time"
-                    value={dayHours.open}
-                    onChange={(e) => handleTimeChange(day, 'open', e.target.value)}
-                    className="w-32"
-                  />
-                  <span className="self-center">-</span>
-                  <Input
-                    type="time"
-                    value={dayHours.close}
-                    onChange={(e) => handleTimeChange(day, 'close', e.target.value)}
-                    className="w-32"
-                  />
-                </div>
-              )}
-              
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => toggleClosed(day)}
-              >
-                {dayHours.isClosed ? 'Open' : 'Close'}
-              </Button>
+          <div className="flex items-center gap-2">
+            <Clock className="h-4 w-4 text-gray-500" />
+            <div className="grid grid-cols-2 gap-2 w-full">
+              <Input
+                type="time"
+                value={hour.openTime}
+                onChange={(e) => handleHoursChange(index, 'openTime', e.target.value)}
+                className="text-sm"
+              />
+              <Input
+                type="time"
+                value={hour.closeTime}
+                onChange={(e) => handleHoursChange(index, 'closeTime', e.target.value)}
+                className="text-sm"
+              />
             </div>
-          );
-        })}
-      </CardContent>
-    </Card>
+          </div>
+          
+          <div className="flex justify-end">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => handleRemoveHours(index)}
+              className="text-red-500 hover:text-red-600 hover:bg-red-50"
+            >
+              <Trash2 className="h-4 w-4" />
+              <span className="sr-only">Remove</span>
+            </Button>
+          </div>
+        </div>
+      ))}
+      
+      {hours.length === 0 && (
+        <p className="text-sm text-gray-500 italic">No business hours added yet.</p>
+      )}
+    </div>
   );
 };
 

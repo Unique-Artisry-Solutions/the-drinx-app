@@ -1,161 +1,148 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
+import React from 'react';
+import { 
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
+} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Mail, Send, Users, TrendingUp } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { BrainCircuit, Mail, Settings } from 'lucide-react';
+import { EventMarketingCampaign } from '@/types/EventTypes';
+import { safeJsonToRecord, toJsonCompatible } from '@/utils/typeGuards';
 
-interface EmailCampaign {
-  id: string;
-  subject: string;
-  status: 'draft' | 'scheduled' | 'sent';
-  recipients: number;
-  openRate?: number;
-  clickRate?: number;
-}
-
-interface EmailMarketingPanelProps {
-  eventId: string;
-  campaigns?: EmailCampaign[];
-  onCreateCampaign?: () => void;
-}
-
-const defaultCampaigns: EmailCampaign[] = [
-  {
-    id: '1',
-    subject: 'Event Reminder: Don\'t Miss Out!',
-    status: 'sent',
-    recipients: 150,
-    openRate: 68,
-    clickRate: 12
-  },
-  {
-    id: '2',
-    subject: 'Last Chance: Limited Tickets Available',
-    status: 'scheduled',
-    recipients: 200
-  }
-];
-
-const EmailMarketingPanel: React.FC<EmailMarketingPanelProps> = ({
-  eventId,
-  campaigns = defaultCampaigns,
-  onCreateCampaign
+// Email marketing component that displays campaign metrics and allows for creating/editing campaigns
+const EmailMarketingPanel = ({ 
+  campaign, 
+  onConfigureClick 
+}: { 
+  campaign: EventMarketingCampaign | null;
+  onConfigureClick: () => void;
 }) => {
-  const handleCreateCampaign = () => {
-    console.log('Creating email campaign for event:', eventId);
-    if (onCreateCampaign) {
-      onCreateCampaign();
-    }
-  };
-
-  return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h3 className="text-lg font-semibold">Email Marketing</h3>
-          <p className="text-sm text-gray-600">Create and manage email campaigns for your event</p>
-        </div>
-        <Button onClick={handleCreateCampaign}>
-          <Mail className="w-4 h-4 mr-2" />
-          New Campaign
-        </Button>
-      </div>
-
-      {/* Quick Campaign Creator */}
-      <Card>
+  if (!campaign) {
+    return (
+      <Card className="h-full">
         <CardHeader>
-          <CardTitle className="text-lg">Quick Email Campaign</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Mail className="h-5 w-5" />
+            Email Marketing
+          </CardTitle>
+          <CardDescription>
+            Configure email campaigns to promote your event
+          </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <Label htmlFor="subject">Subject Line</Label>
-            <Input 
-              id="subject" 
-              placeholder="Enter email subject..." 
-              className="mt-1"
-            />
-          </div>
-          <div>
-            <Label htmlFor="content">Message</Label>
-            <Textarea 
-              id="content"
-              placeholder="Write your email content..." 
-              rows={4}
-              className="mt-1"
-            />
-          </div>
-          <div className="flex justify-between items-center">
-            <div className="text-sm text-gray-600">
-              Will be sent to all event subscribers
-            </div>
-            <Button>
-              <Send className="w-4 h-4 mr-2" />
-              Send Now
-            </Button>
-          </div>
+        <CardContent className="flex flex-col items-center justify-center py-10 space-y-4">
+          <p className="text-center text-muted-foreground">
+            No email marketing campaigns configured yet.
+          </p>
+          <Button onClick={onConfigureClick}>
+            Set Up Email Campaign
+          </Button>
         </CardContent>
       </Card>
+    );
+  }
 
-      {/* Existing Campaigns */}
-      <div className="space-y-4">
-        <h4 className="font-medium">Previous Campaigns</h4>
-        {campaigns.map((campaign) => (
-          <Card key={campaign.id}>
-            <CardContent className="p-4">
-              <div className="flex justify-between items-start">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <h5 className="font-medium">{campaign.subject}</h5>
-                    <Badge variant={
-                      campaign.status === 'sent' ? 'default' : 
-                      campaign.status === 'scheduled' ? 'secondary' : 'outline'
-                    }>
-                      {campaign.status}
-                    </Badge>
-                  </div>
-                  
-                  <div className="flex items-center gap-4 text-sm text-gray-600">
-                    <div className="flex items-center">
-                      <Users className="w-4 h-4 mr-1" />
-                      {campaign.recipients} recipients
-                    </div>
-                    {campaign.openRate && (
-                      <div className="flex items-center">
-                        <Mail className="w-4 h-4 mr-1" />
-                        {campaign.openRate}% opened
-                      </div>
-                    )}
-                    {campaign.clickRate && (
-                      <div className="flex items-center">
-                        <TrendingUp className="w-4 h-4 mr-1" />
-                        {campaign.clickRate}% clicked
-                      </div>
-                    )}
-                  </div>
-                </div>
-                
-                <Button variant="outline" size="sm">
-                  View Details
-                </Button>
+  // Check if campaign has A/B testing configured - fix type conversion
+  const targetAudience = safeJsonToRecord(toJsonCompatible(campaign.target_audience) || {});
+  const abTest = targetAudience.abTest || {};
+  const isABTesting = Boolean(abTest.variantA && abTest.variantB);
+  const trafficSplit = abTest.distribution || 50;
+
+  // Get metrics
+  const metrics = safeJsonToRecord(campaign.metrics || {});
+  const emailsSent = metrics.emails_sent || 0;
+  const openRate = metrics.open_rate || 0;
+  const clicks = metrics.clicks || 0;
+
+  return (
+    <Card className="h-full">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Mail className="h-5 w-5" />
+          Email Marketing
+        </CardTitle>
+        <CardDescription>
+          Campaign: {campaign.name}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Tabs defaultValue="overview">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="ab-testing" disabled={!isABTesting}>A/B Testing</TabsTrigger>
+            <TabsTrigger value="settings">Settings</TabsTrigger>
+          </TabsList>
+          <TabsContent value="overview" className="space-y-4 pt-4">
+            <div className="grid grid-cols-3 gap-4">
+              <div className="flex flex-col items-center justify-center p-4 bg-slate-100 dark:bg-slate-900 rounded-md">
+                <span className="text-2xl font-bold">{emailsSent}</span>
+                <span className="text-sm text-muted-foreground">Emails Sent</span>
               </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {campaigns.length === 0 && (
-        <Card>
-          <CardContent className="p-8 text-center text-gray-500">
-            <Mail className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-            <h4 className="text-lg font-medium mb-2">No email campaigns yet</h4>
-            <p className="mb-4">Start engaging your audience with targeted email marketing.</p>
-            <Button onClick={handleCreateCampaign}>Create First Campaign</Button>
-          </CardContent>
-        </Card>
-      )}
-    </div>
+              <div className="flex flex-col items-center justify-center p-4 bg-slate-100 dark:bg-slate-900 rounded-md">
+                <span className="text-2xl font-bold">{openRate.toFixed(1)}%</span>
+                <span className="text-sm text-muted-foreground">Open Rate</span>
+              </div>
+              <div className="flex flex-col items-center justify-center p-4 bg-slate-100 dark:bg-slate-900 rounded-md">
+                <span className="text-2xl font-bold">{clicks}</span>
+                <span className="text-sm text-muted-foreground">Clicks</span>
+              </div>
+            </div>
+            <Button variant="outline" className="w-full mt-4" onClick={onConfigureClick}>
+              Edit Campaign
+            </Button>
+          </TabsContent>
+          <TabsContent value="ab-testing" className="space-y-4 pt-4">
+            <div className="flex justify-between items-center mb-2">
+              <div>
+                <h4 className="font-medium">Traffic Split</h4>
+                <div className="text-sm text-muted-foreground">
+                  A: {trafficSplit}% / B: {100 - trafficSplit}%
+                </div>
+              </div>
+              <BrainCircuit className="h-6 w-6 text-blue-500" />
+            </div>
+            <div className="mt-4 grid grid-cols-2 gap-4">
+              <div className="border rounded p-3">
+                <h5 className="font-medium">Variant A</h5>
+                <p className="text-sm truncate">{abTest.variantA || 'Default'}</p>
+              </div>
+              <div className="border rounded p-3">
+                <h5 className="font-medium">Variant B</h5>
+                <p className="text-sm truncate">{abTest.variantB || 'Alternative'}</p>
+              </div>
+            </div>
+            <Button variant="outline" className="w-full mt-4" onClick={onConfigureClick}>
+              Configure A/B Test
+            </Button>
+          </TabsContent>
+          <TabsContent value="settings" className="pt-4">
+            <div className="space-y-4">
+              <div>
+                <h4 className="font-medium">Campaign Type</h4>
+                <p className="text-sm text-muted-foreground">{campaign.campaign_type}</p>
+              </div>
+              <div>
+                <h4 className="font-medium">Status</h4>
+                <p className="text-sm text-muted-foreground">{campaign.status}</p>
+              </div>
+              <div>
+                <h4 className="font-medium">Description</h4>
+                <p className="text-sm text-muted-foreground">{campaign.description || 'No description'}</p>
+              </div>
+            </div>
+            <div className="flex justify-end mt-6">
+              <Button variant="default" size="sm" className="flex items-center gap-2" onClick={onConfigureClick}>
+                <Settings className="h-4 w-4" />
+                Configure Settings
+              </Button>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </CardContent>
+    </Card>
   );
 };
 

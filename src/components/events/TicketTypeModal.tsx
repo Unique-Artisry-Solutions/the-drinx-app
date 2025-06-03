@@ -27,8 +27,6 @@ const initialState: Omit<EventTicketType, 'id' | 'sold' | 'available'> = {
   description: '',
   price: 0,
   quantity: 100,
-  created_at: new Date().toISOString(),
-  updated_at: new Date().toISOString(),
 };
 
 const TicketTypeModal: React.FC<TicketTypeModalProps> = ({
@@ -44,9 +42,7 @@ const TicketTypeModal: React.FC<TicketTypeModalProps> = ({
       name: ticketType.name,
       description: ticketType.description,
       price: ticketType.price,
-      quantity: ticketType.quantity,
-      created_at: ticketType.created_at || new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      quantity: ticketType.quantity
     } : initialState
   );
   const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -58,9 +54,7 @@ const TicketTypeModal: React.FC<TicketTypeModalProps> = ({
         name: ticketType.name,
         description: ticketType.description,
         price: ticketType.price,
-        quantity: ticketType.quantity,
-        created_at: ticketType.created_at || new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+        quantity: ticketType.quantity
       });
     } else {
       setFormData(initialState);
@@ -69,20 +63,12 @@ const TicketTypeModal: React.FC<TicketTypeModalProps> = ({
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ 
-      ...prev, 
-      [name]: value,
-      updated_at: new Date().toISOString()
-    }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ 
-      ...prev, 
-      [name]: parseFloat(value),
-      updated_at: new Date().toISOString()
-    }));
+    setFormData(prev => ({ ...prev, [name]: parseFloat(value) }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

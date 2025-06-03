@@ -2,86 +2,123 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { StarRating } from './StarRating';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Star } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface ReviewFormProps {
-  establishmentId: string;
-  onSubmit?: (review: { rating: number; comment: string }) => void;
-  onCancel?: () => void;
+  cocktailId: string;
+  cocktailName: string;
+  onSuccess?: () => void;
 }
 
-const ReviewForm: React.FC<ReviewFormProps> = ({
-  onSubmit,
-  onCancel
-}) => {
+const ReviewForm: React.FC<ReviewFormProps> = ({ cocktailId, cocktailName, onSuccess }) => {
   const [rating, setRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
   const [comment, setComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     if (rating === 0) {
-      alert('Please select a rating');
+      toast({
+        title: 'Rating required',
+        description: 'Please select a rating before submitting',
+        variant: 'destructive',
+      });
       return;
     }
-
+    
     setIsSubmitting(true);
     
-    try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      onSubmit?.({ rating, comment });
-      
-      setRating(0);
-      setComment('');
-    } catch (error) {
-      console.error('Error submitting review:', error);
-    } finally {
+    // In a real app, this would call an API endpoint to save the review
+    setTimeout(() => {
+      toast({
+        title: 'Review submitted',
+        description: 'Thanks for sharing your feedback!',
+      });
       setIsSubmitting(false);
-    }
+      if (onSuccess) onSuccess();
+    }, 1000);
   };
 
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <Label>Rating</Label>
-        <div className="mt-2">
-          <StarRating 
-            rating={rating} 
-            onRatingChange={setRating}
-            interactive={true}
+  const renderStars = () => {
+    return Array(5)
+      .fill(0)
+      .map((_, index) => {
+        const starValue = index + 1;
+        return (
+          <Star
+            key={index}
+            size={24}
+            className={`cursor-pointer transition-colors ${
+              (hoverRating || rating) >= starValue
+                ? 'fill-yellow-400 text-yellow-400'
+                : 'text-gray-300'
+            }`}
+            onClick={() => setRating(starValue)}
+            onMouseEnter={() => setHoverRating(starValue)}
+            onMouseLeave={() => setHoverRating(0)}
           />
-        </div>
-      </div>
+        );
+      });
+  };
 
-      <div>
-        <Label htmlFor="comment">Your Review</Label>
-        <Textarea
-          id="comment"
-          placeholder="Share your experience..."
-          value={comment}
-          onChange={(e) => setComment(e.target.value)}
-          rows={4}
-          className="mt-1"
-        />
-      </div>
+  const isAuthenticated = localStorage.getItem('user_authenticated') === 'true';
 
-      <div className="flex gap-2 justify-end">
-        {onCancel && (
-          <Button type="button" variant="outline" onClick={onCancel}>
-            Cancel
+  if (!isAuthenticated) {
+    return (
+      <Card>
+        <CardContent className="pt-6">
+          <div className="text-center py-4">
+            <p className="text-material-on-surface-variant mb-4">
+              Please sign in to leave a review
+            </p>
+            <Button onClick={() => window.location.href = '/profile'}>
+              Sign In
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg">Write a Review</CardTitle>
+      </CardHeader>
+      <form onSubmit={handleSubmit}>
+        <CardContent className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-2">
+              How would you rate {cocktailName}?
+            </label>
+            <div className="flex gap-1">{renderStars()}</div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-2" htmlFor="comment">
+              Your Review
+            </label>
+            <Textarea
+              id="comment"
+              placeholder="Tell others what you thought of this mocktail..."
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              rows={4}
+              required
+            />
+          </div>
+        </CardContent>
+        <CardFooter className="flex justify-end">
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? 'Submitting...' : 'Submit Review'}
           </Button>
-        )}
-        <Button 
-          type="submit" 
-          disabled={isSubmitting || rating === 0}
-        >
-          {isSubmitting ? 'Submitting...' : 'Submit Review'}
-        </Button>
-      </div>
-    </form>
+        </CardFooter>
+      </form>
+    </Card>
   );
 };
 

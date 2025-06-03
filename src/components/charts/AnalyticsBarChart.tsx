@@ -1,65 +1,74 @@
 
 import React from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { 
+  ResponsiveContainer, BarChart, Bar, 
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend 
+} from 'recharts';
 
-interface ChartSeriesConfig {
+interface DataPoint {
+  name: string;
+  [key: string]: any;
+}
+
+interface SeriesConfig {
   key: string;
   name: string;
   color: string;
 }
 
 interface AnalyticsBarChartProps {
-  data: Array<{ name: string; [key: string]: any; }>;
+  data: DataPoint[];
+  height?: number;
   title?: string;
   description?: string;
-  height?: number;
-  series?: ChartSeriesConfig[];
+  series?: SeriesConfig[];
   formatter?: (value: any) => any;
 }
 
 const AnalyticsBarChart: React.FC<AnalyticsBarChartProps> = ({
   data,
+  height = 300,
   title,
   description,
-  height = 300,
-  series = [
-    { key: 'value', name: 'Value', color: '#8884d8' }
-  ],
+  series,
   formatter
 }) => {
-  const formatValue = (value: any) => {
-    if (formatter) return formatter(value);
-    return value;
-  };
+  const defaultFormatter = formatter || ((value: any) => [value, '']);
+  
+  // If no series provided, use legacy 'clicks' and 'conversions' keys
+  const renderSeries = series && series.length > 0 ? series : [
+    { key: 'clicks', name: 'Clicks', color: '#8884d8' },
+    { key: 'conversions', name: 'Conversions', color: '#82ca9d' }
+  ];
 
   return (
-    <Card>
+    <div className="w-full">
       {(title || description) && (
-        <CardHeader>
-          {title && <CardTitle>{title}</CardTitle>}
-          {description && <CardDescription>{description}</CardDescription>}
-        </CardHeader>
+        <div className="mb-4">
+          {title && <h3 className="text-lg font-semibold mb-1">{title}</h3>}
+          {description && <p className="text-sm text-muted-foreground">{description}</p>}
+        </div>
       )}
-      <CardContent>
-        <ResponsiveContainer width="100%" height={height}>
-          <BarChart data={data}>
+      <div style={{ height: `${height}px`, width: '100%' }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="name" />
             <YAxis />
-            <Tooltip formatter={formatValue} />
-            {series.map((s) => (
-              <Bar
-                key={s.key}
-                dataKey={s.key}
-                fill={s.color}
-                name={s.name}
+            <Tooltip formatter={defaultFormatter} />
+            <Legend />
+            {renderSeries.map((seriesItem, index) => (
+              <Bar 
+                key={seriesItem.key}
+                dataKey={seriesItem.key} 
+                name={seriesItem.name} 
+                fill={seriesItem.color} 
               />
             ))}
           </BarChart>
         </ResponsiveContainer>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };
 

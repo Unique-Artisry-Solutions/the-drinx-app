@@ -1,45 +1,91 @@
 
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Home, Map, User, Search } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import React, { useMemo, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
+import { useAppNavigation } from '@/hooks/useAppNavigation';
+import { MobileNavigationProps } from './mobile/types';
+import ProfileMenu from './mobile/ProfileMenu';
+import NavigationBar from './mobile/NavigationBar';
+import { useMobileNavigation } from './hooks/useMobileNavigation';
+import { useNavigation } from '@/contexts/NavigationContext';
 
-const MobileNavigation: React.FC = () => {
+interface ExtendedMobileNavigationProps extends MobileNavigationProps {
+  forceGuestNavigation?: boolean;
+}
+
+const MobileNavigation: React.FC<ExtendedMobileNavigationProps> = React.memo(({ 
+  type, 
+  userType = 'individual',
+  forceGuestNavigation = false
+}) => {
   const location = useLocation();
+  const { goToHomePage } = useAppNavigation();
+  const { navigationItems, userType: contextUserType, isAuthenticated } = useNavigation();
+  
+  const effectiveUserType = contextUserType || 'individual';
+  const mobileUserType = useMemo(() => {
+    if (!effectiveUserType || effectiveUserType === 'admin') {
+      return 'individual';
+    }
+    return effectiveUserType;
+  }, [effectiveUserType]);
+  
+  const profileUserType = useMemo((): 'individual' | 'establishment' | 'promoter' | 'admin' => {
+    if (effectiveUserType === 'admin') return 'admin';
+    if (effectiveUserType === 'establishment') return 'establishment';
+    if (effectiveUserType === 'promoter') return 'promoter';
+    return 'individual';
+  }, [effectiveUserType]);
+  
+  const {
+    expanded,
+    toggleExpand,
+    getProfilePath,
+  } = useMobileNavigation(type, profileUserType, forceGuestNavigation);
 
-  const navItems = [
-    { icon: Home, label: 'Home', path: '/' },
-    { icon: Map, label: 'Map', path: '/map' },
-    { icon: Search, label: 'Search', path: '/search' },
-    { icon: User, label: 'Profile', path: '/profile' },
-  ];
+  const handleHomeClick = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    const targetUserType = !effectiveUserType ? 'individual' : effectiveUserType;
+    goToHomePage(targetUserType);
+  }, [goToHomePage, effectiveUserType]);
+
+  const handleProfileClick = useCallback((item: any, e: React.MouseEvent) => {
+    if (item.path === getProfilePath() && shouldShowProfileItems) {
+      e.preventDefault();
+      toggleExpand();
+    }
+  }, [getProfilePath, toggleExpand]);
+
+  const shouldShowProfileItems = useMemo(() => {
+    return type === 'user' && 
+      ((location.pathname === '/profile' || location.pathname.startsWith('/profile/')) ||
+       (effectiveUserType === 'establishment' && 
+        (location.pathname === '/establishment' || location.pathname.startsWith('/establishment/'))));
+  }, [type, location.pathname, effectiveUserType]);
+
+  const hiddenNavPaths = useMemo(() => ['/admin/login'], []);
+
+  if (hiddenNavPaths.includes(location.pathname)) {
+    return null;
+  }
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 md:hidden z-50">
-      <div className="flex items-center justify-around py-2">
-        {navItems.map((item) => {
-          const isActive = location.pathname === item.path || 
-            (item.path !== '/' && location.pathname.startsWith(item.path));
-          
-          return (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={cn(
-                "flex flex-col items-center space-y-1 px-3 py-2 text-xs font-medium",
-                isActive
-                  ? "text-material-primary"
-                  : "text-gray-600"
-              )}
-            >
-              <item.icon className="h-5 w-5" />
-              <span>{item.label}</span>
-            </Link>
-          );
-        })}
-      </div>
-    </nav>
+    <>
+      <ProfileMenu 
+        expanded={shouldShowProfileItems && expanded} 
+        userType={mobileUserType} 
+      />
+      <NavigationBar
+        navItems={navigationItems}
+        type={type}
+        handleHomeClick={handleHomeClick}
+        handleProfileClick={handleProfileClick}
+        getProfilePath={getProfilePath}
+        currentUserType={mobileUserType}
+      />
+    </>
   );
-};
+});
+
+MobileNavigation.displayName = 'MobileNavigation';
 
 export default MobileNavigation;

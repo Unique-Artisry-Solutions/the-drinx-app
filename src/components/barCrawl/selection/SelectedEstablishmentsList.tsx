@@ -1,81 +1,60 @@
 
+import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { MapPin, Clock, X } from 'lucide-react';
-
-interface Establishment {
-  id: string;
-  name: string;
-  address: string;
-  type: string;
-  hours: string;
-  position?: number;
-}
+import { Establishment } from '@/types/ProfileTypes';
+import EstablishmentItem from './EstablishmentItem';
+import { Save, Route } from 'lucide-react';
 
 interface SelectedEstablishmentsListProps {
   establishments: Establishment[];
-  onRemove: (id: string) => void;
-  onReorder?: (fromIndex: number, toIndex: number) => void;
+  onRemove: (establishment: Establishment) => void;
+  onSave: () => void;
 }
 
-const SelectedEstablishmentsList: React.FC<SelectedEstablishmentsListProps> = ({
-  establishments,
-  onRemove,
-  // onReorder // Commented out to preserve future functionality
-}) => {
+const SelectedEstablishmentsList = ({ 
+  establishments, 
+  onRemove, 
+  onSave 
+}: SelectedEstablishmentsListProps) => {
   if (establishments.length === 0) {
     return (
-      <Card>
-        <CardContent className="p-6 text-center text-gray-500">
-          No establishments selected yet. Add some to get started!
-        </CardContent>
-      </Card>
+      <div className="text-center py-8 bg-muted/20 rounded-lg border border-dashed">
+        <Route className="mx-auto h-10 w-10 text-gray-300 mb-2" />
+        <p className="text-material-on-surface-variant">
+          Select establishments below to build your Swig Circuit
+        </p>
+      </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      <CardHeader>
-        <CardTitle>Selected Establishments ({establishments.length})</CardTitle>
-      </CardHeader>
-      
-      {establishments.map((establishment, index) => (
-        <Card key={establishment.id} className="relative">
-          <CardContent className="p-4">
-            <div className="flex justify-between items-start">
-              <div className="flex-1">
-                <div className="flex items-center gap-3 mb-2">
-                  <Badge variant="outline">Stop {index + 1}</Badge>
-                  <h3 className="font-semibold">{establishment.name}</h3>
-                  <Badge variant="secondary">{establishment.type}</Badge>
-                </div>
-                
-                <div className="space-y-1 text-sm text-gray-600">
-                  <div className="flex items-center">
-                    <MapPin className="w-4 h-4 mr-2" />
-                    {establishment.address}
-                  </div>
-                  <div className="flex items-center">
-                    <Clock className="w-4 h-4 mr-2" />
-                    {establishment.hours}
-                  </div>
-                </div>
-              </div>
-              
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onRemove(establishment.id)}
-                className="text-red-500 hover:text-red-700 hover:bg-red-50"
-              >
-                <X className="w-4 h-4" />
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
+    <>
+      <div className="space-y-2 mb-4">
+        <h4 className="font-medium text-sm flex items-center">
+          <span className="w-6 h-6 rounded-full bg-spiritless-pink text-white flex items-center justify-center text-xs mr-2">{establishments.length}</span>
+          Selected Venues
+        </h4>
+        <div className="space-y-2 max-h-[240px] overflow-y-auto p-1">
+          {establishments.map((est, index) => (
+            <EstablishmentItem
+              key={est.id}
+              establishment={est}
+              index={index}
+              onRemove={onRemove}
+            />
+          ))}
+        </div>
+      </div>
+      <Button 
+        className="w-full" 
+        variant="default"
+        onClick={onSave}
+        disabled={establishments.length < 2}
+      >
+        <Save className="mr-2 h-4 w-4" />
+        Save Swig Circuit ({establishments.length} stops)
+      </Button>
+    </>
   );
 };
 

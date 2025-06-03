@@ -1,183 +1,219 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Loader2, AlertTriangle } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
-interface RewardModalProps {
-  isOpen?: boolean;
-  open?: boolean;
-  onClose?: () => void;
-  onOpenChange?: (open: boolean) => void;
-  onSave: (reward: any) => void;
-  onDelete?: () => void;
-  editingReward?: any;
-  reward?: any;
-  title?: string;
+interface LoyaltyReward {
+  id: string;
+  name: string;
+  description: string;
+  pointsRequired: number;
+  isActive: boolean;
+  imageUrl?: string;
+  expirationDays?: number;
 }
 
+interface RewardModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSave: (reward: any) => void;
+  onDelete?: () => void;
+  title: string;
+  reward?: LoyaltyReward;
+}
+
+const defaultReward = {
+  name: '',
+  description: '',
+  pointsRequired: 100,
+  isActive: true,
+  imageUrl: '',
+  expirationDays: 30
+};
+
 const RewardModal: React.FC<RewardModalProps> = ({
-  isOpen,
   open,
-  onClose,
   onOpenChange,
   onSave,
   onDelete,
-  editingReward,
-  reward,
-  title
+  title,
+  reward
 }) => {
-  const isModalOpen = isOpen ?? open ?? false;
-  const modalReward = editingReward ?? reward;
+  const [formData, setFormData] = useState<any>(defaultReward);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDeleteConfirm, setIsDeleteConfirm] = useState(false);
   
-  const [formData, setFormData] = useState({
-    name: modalReward?.name || '',
-    description: modalReward?.description || '',
-    pointsRequired: modalReward?.pointsRequired || '',
-    category: modalReward?.category || 'discount',
-    value: modalReward?.value || '',
-    expirationDays: modalReward?.expirationDays || '30'
-  });
-
-  const handleClose = () => {
-    if (onClose) onClose();
-    if (onOpenChange) onOpenChange(false);
+  useEffect(() => {
+    if (reward) {
+      setFormData(reward);
+    } else {
+      setFormData(defaultReward);
+    }
+    setIsDeleteConfirm(false);
+  }, [reward, open]);
+  
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSave({
-      ...formData,
-      pointsRequired: parseInt(formData.pointsRequired),
-      value: parseFloat(formData.value),
-      expirationDays: parseInt(formData.expirationDays)
-    });
-    handleClose();
+  
+  const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: parseInt(value, 10) || 0 }));
   };
-
-  const handleChange = (field: string, value: string) => {
-    setFormData((prev: any) => ({
-      ...prev,
-      [field]: value
-    }));
+  
+  const handleToggleActive = (checked: boolean) => {
+    setFormData(prev => ({ ...prev, isActive: checked }));
   };
-
-  const handleSelectChange = (field: string, value: string) => {
-    setFormData((prev: any) => ({
-      ...prev,
-      [field]: value
-    }));
+  
+  const handleSubmit = () => {
+    setIsSaving(true);
+    
+    // Simulate API call delay
+    setTimeout(() => {
+      onSave(formData);
+      setIsSaving(false);
+    }, 500);
   };
-
-  const handleNumberChange = (field: string, value: string) => {
-    setFormData((prev: any) => ({
-      ...prev,
-      [field]: value
-    }));
+  
+  const handleDelete = () => {
+    if (isDeleteConfirm && onDelete) {
+      onDelete();
+    } else {
+      setIsDeleteConfirm(true);
+    }
   };
-
+  
   return (
-    <Dialog open={isModalOpen} onOpenChange={onOpenChange || handleClose}>
-      <DialogContent className="max-w-md">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>
-            {title || (modalReward ? 'Edit Reward' : 'Create New Reward')}
-          </DialogTitle>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>
+            Customize reward details that your loyalty program members can redeem.
+          </DialogDescription>
         </DialogHeader>
         
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="grid gap-4 py-4">
           <div>
             <Label htmlFor="name">Reward Name</Label>
-            <Input
-              id="name"
+            <Input 
+              id="name" 
+              name="name"
               value={formData.name}
-              onChange={(e) => handleChange('name', e.target.value)}
-              placeholder="e.g., Free Drink"
-              required
+              onChange={handleChange}
+              placeholder="Enter reward name"
+              className="mt-1"
             />
           </div>
-
+          
           <div>
             <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
+            <Textarea 
+              id="description" 
+              name="description"
               value={formData.description}
-              onChange={(e) => handleChange('description', e.target.value)}
-              placeholder="Describe the reward..."
+              onChange={handleChange}
+              placeholder="Enter a clear description of the reward"
+              rows={3}
+              className="mt-1"
             />
           </div>
-
+          
           <div>
-            <Label htmlFor="category">Category</Label>
-            <Select 
-              value={formData.category} 
-              onValueChange={(value) => handleSelectChange('category', value)}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="discount">Discount</SelectItem>
-                <SelectItem value="freeItem">Free Item</SelectItem>
-                <SelectItem value="experience">Experience</SelectItem>
-                <SelectItem value="merchandise">Merchandise</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="pointsRequired">Points Required</Label>
-              <Input
-                id="pointsRequired"
-                type="number"
-                value={formData.pointsRequired}
-                onChange={(e) => handleNumberChange('pointsRequired', e.target.value)}
-                required
-              />
-            </div>
-            
-            <div>
-              <Label htmlFor="value">Value ($)</Label>
-              <Input
-                id="value"
-                type="number"
-                step="0.01"
-                value={formData.value}
-                onChange={(e) => handleNumberChange('value', e.target.value)}
-                required
-              />
-            </div>
-          </div>
-
-          <div>
-            <Label htmlFor="expirationDays">Expiration (Days)</Label>
-            <Input
-              id="expirationDays"
+            <Label htmlFor="pointsRequired">Points Required</Label>
+            <Input 
+              id="pointsRequired" 
+              name="pointsRequired"
               type="number"
-              value={formData.expirationDays}
-              onChange={(e) => handleNumberChange('expirationDays', e.target.value)}
-              required
+              value={formData.pointsRequired}
+              onChange={handleNumberChange}
+              min={1}
+              className="mt-1"
             />
           </div>
-
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={handleClose}>
-              Cancel
-            </Button>
+          
+          <div>
+            <Label htmlFor="imageUrl">Image URL</Label>
+            <Input 
+              id="imageUrl" 
+              name="imageUrl"
+              value={formData.imageUrl || ''}
+              onChange={handleChange}
+              placeholder="https://example.com/image.jpg"
+              className="mt-1"
+            />
+          </div>
+          
+          <div>
+            <Label htmlFor="expirationDays">Expiration Days</Label>
+            <Input 
+              id="expirationDays" 
+              name="expirationDays"
+              type="number"
+              value={formData.expirationDays || ''}
+              onChange={handleNumberChange}
+              min={0}
+              placeholder="Leave empty for no expiration"
+              className="mt-1"
+            />
+            <p className="text-xs text-gray-500 mt-1">Number of days until reward expires after redemption. 0 for no expiration.</p>
+          </div>
+          
+          <div className="flex items-center justify-between">
+            <Label htmlFor="isActive">Active Status</Label>
+            <Switch
+              id="isActive"
+              checked={formData.isActive}
+              onCheckedChange={handleToggleActive}
+            />
+          </div>
+          
+          {isDeleteConfirm && onDelete && (
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                Are you sure you want to delete this reward? This action cannot be undone.
+              </AlertDescription>
+            </Alert>
+          )}
+        </div>
+        
+        <DialogFooter className="flex justify-between sm:justify-between">
+          <div className="flex gap-2">
             {onDelete && (
-              <Button type="button" variant="destructive" onClick={onDelete}>
-                Delete
+              <Button
+                variant="destructive"
+                onClick={handleDelete}
+                disabled={isSaving}
+              >
+                {isDeleteConfirm ? 'Confirm Delete' : 'Delete'}
               </Button>
             )}
-            <Button type="submit">
-              {modalReward ? 'Update' : 'Create'} Reward
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSaving}>
+              Cancel
             </Button>
-          </DialogFooter>
-        </form>
+            <Button onClick={handleSubmit} disabled={isSaving}>
+              {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isSaving ? 'Saving...' : 'Save'}
+            </Button>
+          </div>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

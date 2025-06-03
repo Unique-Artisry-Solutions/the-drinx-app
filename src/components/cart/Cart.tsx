@@ -1,4 +1,5 @@
 
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '@/contexts/CartContext';
 import { Button } from '@/components/ui/button';
@@ -10,7 +11,7 @@ import { ShoppingCart, CreditCard } from 'lucide-react';
 
 const Cart = () => {
   const navigate = useNavigate();
-  const { items, totalPrice, serviceFee, totalWithFees, increaseQuantity, decreaseQuantity, removeItem } = useCart();
+  const { items, totalPrice, serviceFee, totalWithFees } = useCart();
 
   const handleCheckout = () => {
     navigate('/checkout');
@@ -49,17 +50,7 @@ const Cart = () => {
       <CardContent className="space-y-4">
         <div className="space-y-3">
           {items.map((item) => (
-            <CartItem 
-              key={item.id}
-              id={item.id}
-              name={item.name}
-              price={item.price}
-              quantity={item.quantity || 1}
-              imageUrl={item.imageUrl}
-              onIncrease={increaseQuantity}
-              onDecrease={decreaseQuantity}
-              onRemove={removeItem}
-            />
+            <CartItem key={item.id} item={item} />
           ))}
         </div>
 

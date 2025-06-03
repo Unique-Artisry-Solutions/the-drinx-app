@@ -24,16 +24,19 @@ interface EstablishmentInteriorProps {
 
 const EstablishmentInterior: React.FC<EstablishmentInteriorProps> = ({
   establishment,
-  cocktails
+  cocktails,
+  userLocation
 }) => {
   const { 
     isBarCrawlModalOpen, 
     setIsBarCrawlModalOpen, 
+    activeUsers, 
     hasCheckedIn, 
     isPromoter,
     getSortedTopCocktails, 
     handleCheckIn, 
-    handleBarCrawlRequest
+    handleBarCrawlRequest,
+    formatBusinessHours
   } = useEstablishmentInterior(establishment);
 
   const { theme } = useTheme();
@@ -41,6 +44,9 @@ const EstablishmentInterior: React.FC<EstablishmentInteriorProps> = ({
   
   // Get top rated cocktails for the tab
   const topRatedCocktails = getSortedTopCocktails(cocktails);
+  
+  // Format business hours for display
+  const businessHoursDisplay = formatBusinessHours();
   
   return (
     <div className={cn(
@@ -74,7 +80,12 @@ const EstablishmentInterior: React.FC<EstablishmentInteriorProps> = ({
             </TabsContent>
             
             <TabsContent value="info">
-              <InfoTabContent establishment={establishment} />
+              <InfoTabContent 
+                establishment={establishment}
+                activeUsers={activeUsers}
+                businessHoursDisplay={businessHoursDisplay}
+                isLightTheme={isLightTheme}
+              />
             </TabsContent>
             
             <TabsContent value="top-rated">
@@ -88,7 +99,9 @@ const EstablishmentInterior: React.FC<EstablishmentInteriorProps> = ({
         
         <div className="space-y-4">
           <LocationCard 
-            establishment={establishment}
+            establishment={establishment} 
+            userLocation={userLocation}
+            isLightTheme={isLightTheme}
           />
           
           {/* Only show the Bar Crawl Information card for promoters */}

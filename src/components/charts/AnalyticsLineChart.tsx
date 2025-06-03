@@ -1,67 +1,75 @@
 
 import React from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { 
+  ResponsiveContainer, LineChart, Line, 
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend 
+} from 'recharts';
 
-interface ChartSeriesConfig {
+interface DataPoint {
+  name: string;
+  [key: string]: any;
+}
+
+interface SeriesConfig {
   key: string;
   name: string;
   color: string;
 }
 
 interface AnalyticsLineChartProps {
-  data: Array<{ name: string; [key: string]: any; }>;
+  data: DataPoint[];
+  height?: number;
   title?: string;
   description?: string;
-  height?: number;
-  series?: ChartSeriesConfig[];
+  series?: SeriesConfig[];
   formatter?: (value: any) => any;
 }
 
 const AnalyticsLineChart: React.FC<AnalyticsLineChartProps> = ({
   data,
+  height = 300,
   title,
   description,
-  height = 300,
-  series = [
-    { key: 'value', name: 'Value', color: '#8884d8' }
-  ],
+  series,
   formatter
 }) => {
-  const formatValue = (value: any) => {
-    if (formatter) return formatter(value);
-    return value;
-  };
+  const defaultFormatter = formatter || ((value: any) => [value, '']);
+  
+  // If no series provided, use legacy 'value' key
+  const renderSeries = series && series.length > 0 ? series : [
+    { key: 'value', name: 'Value', color: '#8884d8' }
+  ];
 
   return (
-    <Card>
+    <div className="w-full">
       {(title || description) && (
-        <CardHeader>
-          {title && <CardTitle>{title}</CardTitle>}
-          {description && <CardDescription>{description}</CardDescription>}
-        </CardHeader>
+        <div className="mb-4">
+          {title && <h3 className="text-lg font-semibold mb-1">{title}</h3>}
+          {description && <p className="text-sm text-muted-foreground">{description}</p>}
+        </div>
       )}
-      <CardContent>
-        <ResponsiveContainer width="100%" height={height}>
-          <LineChart data={data}>
+      <div style={{ height: `${height}px`, width: '100%' }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="name" />
             <YAxis />
-            <Tooltip formatter={formatValue} />
-            {series.map((s) => (
-              <Line
-                key={s.key}
-                type="monotone"
-                dataKey={s.key}
-                stroke={s.color}
-                name={s.name}
-                strokeWidth={2}
+            <Tooltip formatter={defaultFormatter} />
+            <Legend />
+            {renderSeries.map((seriesItem, index) => (
+              <Line 
+                key={seriesItem.key}
+                type="monotone" 
+                dataKey={seriesItem.key}
+                name={seriesItem.name}
+                stroke={seriesItem.color} 
+                activeDot={{ r: 8 }} 
               />
             ))}
           </LineChart>
         </ResponsiveContainer>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };
 
