@@ -1,8 +1,8 @@
 
 import React, { useState } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { useDevAuthBypass } from '@/hooks/useDevAuthBypass';
+import { Plus, Download, RefreshCw } from 'lucide-react';
 
 // Sample data - would be fetched from API in a real application
 import { sampleEstablishments, sampleCocktails } from '@/data/sampleData';
@@ -12,11 +12,20 @@ import SearchToolbar from '@/components/admin/SearchToolbar';
 import EstablishmentsTable from '@/components/admin/EstablishmentsTable';
 import CocktailsTable from '@/components/admin/CocktailsTable';
 import TabContentPlaceholder from '@/components/admin/TabContentPlaceholder';
+import { 
+  AdminPageLayout, 
+  AdminTabs, 
+  AdminTabContent,
+  type AdminPageConfig,
+  type AdminPageAction,
+  type AdminTabConfig
+} from '@/components/admin/layout';
 
 const AdminDashboard: React.FC = () => {
   const [establishments, setEstablishments] = useState(sampleEstablishments);
   const [cocktails, setCocktails] = useState(sampleCocktails);
   const [searchTerm, setSearchTerm] = useState('');
+  const [activeTab, setActiveTab] = useState('establishments');
   const { toast } = useToast();
   const { user, isUsingDevBypass } = useDevAuthBypass();
 
@@ -42,6 +51,27 @@ const AdminDashboard: React.FC = () => {
     });
   };
 
+  const handleRefresh = () => {
+    toast({
+      title: 'Data refreshed',
+      description: 'All data has been updated',
+    });
+  };
+
+  const handleExport = () => {
+    toast({
+      title: 'Export started',
+      description: 'Your data export will be ready shortly',
+    });
+  };
+
+  const handleAddNew = () => {
+    toast({
+      title: 'Add new item',
+      description: 'This would open the creation dialog',
+    });
+  };
+
   const filteredEstablishments = establishments.filter(
     est => est.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -50,74 +80,106 @@ const AdminDashboard: React.FC = () => {
     cocktail => cocktail.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const pageConfig: AdminPageConfig = {
+    title: 'Dashboard',
+    description: 'Manage your establishments, cocktails, and more',
+    showBreadcrumbs: true,
+    maxWidth: 'xl'
+  };
+
+  const pageActions: AdminPageAction[] = [
+    {
+      label: 'Add New',
+      icon: Plus,
+      onClick: handleAddNew,
+      variant: 'default'
+    },
+    {
+      label: 'Export Data',
+      icon: Download,
+      onClick: handleExport,
+      variant: 'outline'
+    },
+    {
+      label: 'Refresh',
+      icon: RefreshCw,
+      onClick: handleRefresh,
+      variant: 'ghost'
+    }
+  ];
+
+  const tabConfigs: AdminTabConfig[] = [
+    {
+      value: 'establishments',
+      label: 'Establishments',
+      badge: establishments.length
+    },
+    {
+      value: 'cocktails',
+      label: 'Cocktails',
+      badge: cocktails.length
+    },
+    {
+      value: 'promotions',
+      label: 'Promotions'
+    },
+    {
+      value: 'reviews',
+      label: 'Reviews'
+    }
+  ];
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <main className="container max-w-5xl mx-auto p-4 pt-6">
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-          <h1 className="text-2xl font-semibold mb-2 text-gray-800">Dashboard</h1>
-          <p className="text-gray-600 mb-4">
-            Manage your establishments, cocktails, and more
-            {isUsingDevBypass && (
-              <span className="ml-2 text-sm bg-orange-100 text-orange-800 px-2 py-1 rounded">
-                Dev Mode Active
-              </span>
-            )}
-          </p>
-          
-          <SearchToolbar 
-            searchTerm={searchTerm} 
-            onSearchChange={setSearchTerm} 
+    <AdminPageLayout config={pageConfig} actions={pageActions}>
+      {isUsingDevBypass && (
+        <div className="mb-6 p-3 bg-orange-100 border border-orange-200 rounded-md">
+          <span className="text-sm text-orange-800 font-medium">
+            Dev Mode Active - Using development authentication bypass
+          </span>
+        </div>
+      )}
+
+      <div className="mb-6">
+        <SearchToolbar 
+          searchTerm={searchTerm} 
+          onSearchChange={setSearchTerm} 
+        />
+      </div>
+
+      <AdminTabs 
+        tabs={tabConfigs}
+        value={activeTab}
+        onValueChange={setActiveTab}
+      >
+        <AdminTabContent value="establishments">
+          <EstablishmentsTable 
+            establishments={filteredEstablishments} 
+            onDeleteEstablishment={handleDeleteEstablishment} 
           />
-        </div>
+        </AdminTabContent>
 
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <Tabs defaultValue="establishments" className="w-full">
-            <TabsList className="mb-6 bg-gray-100 p-1 rounded-md">
-              <TabsTrigger value="establishments" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
-                Establishments
-              </TabsTrigger>
-              <TabsTrigger value="cocktails" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
-                Cocktails
-              </TabsTrigger>
-              <TabsTrigger value="promotions" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
-                Promotions
-              </TabsTrigger>
-              <TabsTrigger value="reviews" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
-                Reviews
-              </TabsTrigger>
-            </TabsList>
+        <AdminTabContent value="cocktails">
+          <CocktailsTable 
+            cocktails={filteredCocktails}
+            onDeleteCocktail={handleDeleteCocktail}
+          />
+        </AdminTabContent>
 
-            <TabsContent value="establishments">
-              <EstablishmentsTable 
-                establishments={filteredEstablishments} 
-                onDeleteEstablishment={handleDeleteEstablishment} 
-              />
-            </TabsContent>
+        <AdminTabContent value="promotions">
+          <TabContentPlaceholder
+            title="Promotions Management"
+            description="This section will allow you to manage promotional codes created by establishments."
+          />
+        </AdminTabContent>
 
-            <TabsContent value="cocktails">
-              <CocktailsTable 
-                cocktails={filteredCocktails}
-                onDeleteCocktail={handleDeleteCocktail}
-              />
-            </TabsContent>
-
-            <TabsContent value="promotions">
-              <TabContentPlaceholder
-                title="Promotions Management"
-                description="This section will allow you to manage promotional codes created by establishments."
-              />
-            </TabsContent>
-
-            <TabsContent value="reviews">
-              <TabContentPlaceholder
-                title="Reviews Management"
-                description="This section will allow you to manage user reviews for mocktails."
-              />
-            </TabsContent>
-          </Tabs>
-        </div>
-      </main>
-    </div>
+        <AdminTabContent value="reviews">
+          <TabContentPlaceholder
+            title="Reviews Management"
+            description="This section will allow you to manage user reviews for mocktails."
+          />
+        </AdminTabContent>
+      </AdminTabs>
+    </AdminPageLayout>
   );
 };
 
