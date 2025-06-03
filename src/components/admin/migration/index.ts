@@ -1,8 +1,5 @@
 
-export { default as MigrationDashboard } from './MigrationDashboard';
-export { useAdminMigration } from '@/hooks/admin/useAdminMigration';
-export type { 
-  MigrationStep, 
-  MigrationState, 
-  MigrationActions 
-} from '@/hooks/admin/useAdminMigration';
+// Migration system has been removed in favor of simplified admin approach
+// This file is kept for backwards compatibility but exports nothing
+
+export {};
