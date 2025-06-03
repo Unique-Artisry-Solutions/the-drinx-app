@@ -23,7 +23,7 @@ import {
   featureDetectionEngine,
   unifiedDetection,
   type CoreFeatureCategory,
-  // Legacy compatibility exports
+  // All legacy compatibility exports
   isUserManagementFeature,
   isAuthFeature,
   isProfileFeature,
@@ -96,8 +96,8 @@ export function getDateMonthsFromNow(months: number): string {
   return date.toISOString().split('T')[0]; // YYYY-MM-DD format
 }
 
+// Core utilities
 export {
-  // Core utilities
   renderStatusBadge,
   renderDatabaseStatusBadge,
   renderAccessIcon,
@@ -115,13 +115,17 @@ export {
   validateProgressData,
   generateHistoricalProgressData,
   prepareFeatureShowcaseData,
-  generateFeatureReport,
+  generateFeatureReport
+};
 
-  // New unified detection system
+// Unified detection system
+export {
   featureDetectionEngine,
-  unifiedDetection,
+  unifiedDetection
+};
 
-  // Legacy detection functions (for backward compatibility)
+// Legacy detection functions (for backward compatibility)
+export {
   isFeatureFlagRelated,
   isUserManagementFeature,
   isAuthFeature,

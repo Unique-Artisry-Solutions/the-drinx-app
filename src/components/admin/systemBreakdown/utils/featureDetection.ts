@@ -1,67 +1,10 @@
 
-// This file now serves as a bridge to the new unified detection system
+// This file serves as a bridge to the new unified detection system
 // All detection logic has been moved to the FeatureDetectionEngine
 
 import { FeatureItem } from '../types';
-import { 
-  featureDetectionEngine,
-  unifiedDetection,
-  // Import all legacy compatibility functions from the unified detection system
-  isUserManagementFeature,
-  isAuthFeature,
-  isProfileFeature,
-  isContentFeature,
-  isContentModerationFeature,
-  isPhotoFeature,
-  isPhotoModerationFeature,
-  isAnalyticsFeature,
-  isDashboardFeature,
-  isSystemBreakdownFeature,
-  isSocialFeature,
-  isExplorationFeature,
-  isNotificationFeature,
-  isPromotionFeature,
-  isRewardProgramFeature,
-  isAIFeature,
-  isMocktailSuggestionFeature,
-  isMocktailTrendsFeature,
-  isIngredientPairingFeature,
-  isRecipeFeature,
-  isEstablishmentManagementFeature,
-  isVisitTrackingFeature,
-  isBarCrawlFeature,
-  isSwigCircuitFeature,
-  isMapFeature,
-  isSystemConfigurationFeature,
-  isThemeFeature,
-  isAccessibilityFeature,
-  isSignatureFeature,
-  isFeatureFlagRelated,
-  isAudienceInfluencerFeature,
-  isCrossSegmentEngagementFeature,
-  isAudienceVisualizationFeature,
-  isPromoterCommunicationFeature,
-  isBrandConnectionFeature,
-  isPromoterAnalyticsFeature,
-  isEventManagementFeature,
-  isPromoterDashboardFeature,
-  isCustomPromotionFeature,
-  isPromoterNotificationFeature,
-  isPromotionAnalyticsFeature,
-  isPromotionSecurityFeature,
-  isPromotionNotificationFeature,
-  isPromotionCreationFeature,
-  isPromotionManagementFeature,
-  isPromotionRedemptionFeature,
-  isPromotionReportingFeature,
-  isPromotionValidationFeature,
-  isPromotionSchedulingFeature,
-  isPromotionIntegrationFeature,
-  isPromotionAIFeature,
-  isAudienceRelationshipFeature
-} from './detection';
 
-// Export all detection functions for backward compatibility
+// Re-export everything from the unified detection index
 export {
   featureDetectionEngine,
   unifiedDetection,
@@ -115,5 +58,6 @@ export {
   isAudienceInfluencerFeature,
   isCrossSegmentEngagementFeature,
   isAudienceVisualizationFeature,
-  isAudienceRelationshipFeature
-};
+  isAudienceRelationshipFeature,
+  isTicketManagementFeature
+} from './detection';
