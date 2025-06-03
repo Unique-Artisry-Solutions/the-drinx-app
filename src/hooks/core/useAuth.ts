@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth as useAuthContext } from '@/contexts/auth/AuthProvider';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
+import { SwitchableUserRole } from '@/types/userRole';
 
 export interface AuthState {
   user: any;
@@ -19,7 +20,7 @@ export interface AuthActions {
   signup: (userData: any) => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   updateProfile: (updates: any) => Promise<void>;
-  switchRole: (role: string) => Promise<void>;
+  switchRole: (role: SwitchableUserRole) => Promise<void>;
 }
 
 export function useAuth(): { state: AuthState; actions: AuthActions } {
@@ -133,7 +134,7 @@ export function useAuth(): { state: AuthState; actions: AuthActions } {
       }
     }, [authContext, toast]),
 
-    switchRole: useCallback(async (role: string) => {
+    switchRole: useCallback(async (role: SwitchableUserRole) => {
       try {
         setError(null);
         const { error } = await supabase.rpc('switch_active_role', { role_to_activate: role });
