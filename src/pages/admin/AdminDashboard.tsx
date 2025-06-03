@@ -31,8 +31,22 @@ const AdminDashboard: React.FC = () => {
 
   // Use consolidated hooks
   const { state: dashboardState, actions: dashboardActions } = useAdminDashboard('establishments');
-  const { state: establishmentsState, actions: establishmentsActions } = useEstablishmentsData(sampleEstablishments);
-  const { state: cocktailsState, actions: cocktailsActions } = useCocktailsData(sampleCocktails);
+  
+  // Cast the sample data to match expected types for the components
+  const establishmentData = sampleEstablishments.map(est => ({
+    ...est,
+    cocktailCount: est.cocktail_count || 0
+  }));
+  
+  const cocktailData = sampleCocktails.map(cocktail => ({
+    ...cocktail,
+    establishment: typeof cocktail.establishment === 'string' 
+      ? cocktail.establishment 
+      : cocktail.establishment.name
+  }));
+  
+  const { state: establishmentsState, actions: establishmentsActions } = useEstablishmentsData(establishmentData);
+  const { state: cocktailsState, actions: cocktailsActions } = useCocktailsData(cocktailData);
   
   const navigationConfig = useAdminNavigation(
     establishmentsState.items,
