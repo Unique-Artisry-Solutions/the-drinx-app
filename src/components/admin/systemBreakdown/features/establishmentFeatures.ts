@@ -1,7 +1,9 @@
 
 import { FeatureItem } from '../types';
+import { advancedEstablishmentTools } from './establishmentFeatures/advancedEstablishmentTools';
 
 export const establishmentFeatures: FeatureItem[] = [
+  advancedEstablishmentTools,
   {
     id: 'est-001',
     name: 'Establishment Profile Management',
@@ -13,7 +15,8 @@ export const establishmentFeatures: FeatureItem[] = [
     databaseStatus: 'complete',
     userImpact: 'high',
     complexity: 'medium',
-    implementationProgress: 95
+    implementationProgress: 95,
+    category: 'business_operations'
   },
   {
     id: 'est-002',
@@ -26,7 +29,8 @@ export const establishmentFeatures: FeatureItem[] = [
     databaseStatus: 'complete',
     userImpact: 'high',
     complexity: 'high',
-    implementationProgress: 90
+    implementationProgress: 90,
+    category: 'business_operations'
   },
   {
     id: 'est-003',
@@ -39,7 +43,8 @@ export const establishmentFeatures: FeatureItem[] = [
     databaseStatus: 'complete',
     userImpact: 'high',
     complexity: 'high',
-    implementationProgress: 85
+    implementationProgress: 85,
+    category: 'system_intelligence'
   },
   {
     id: 'est-004',
@@ -52,7 +57,8 @@ export const establishmentFeatures: FeatureItem[] = [
     databaseStatus: 'in_progress',
     userImpact: 'high',
     complexity: 'medium',
-    implementationProgress: 65
+    implementationProgress: 65,
+    category: 'business_operations'
   },
   {
     id: 'est-005',
@@ -65,7 +71,8 @@ export const establishmentFeatures: FeatureItem[] = [
     databaseStatus: 'complete',
     userImpact: 'medium',
     complexity: 'medium',
-    implementationProgress: 80
+    implementationProgress: 80,
+    category: 'user_experience'
   },
   {
     id: 'est-006',
@@ -78,7 +85,8 @@ export const establishmentFeatures: FeatureItem[] = [
     databaseStatus: 'complete',
     userImpact: 'high',
     complexity: 'medium',
-    implementationProgress: 88
+    implementationProgress: 88,
+    category: 'system_intelligence'
   },
   {
     id: 'est-007',
@@ -91,20 +99,22 @@ export const establishmentFeatures: FeatureItem[] = [
     databaseStatus: 'in_progress',
     userImpact: 'high',
     complexity: 'high',
-    implementationProgress: 70
+    implementationProgress: 70,
+    category: 'business_operations'
   },
   {
     id: 'est-008',
     name: 'Mocktail Recommendation Engine',
     description: 'AI-powered mocktail suggestions based on customer preferences',
-    status: 'planned',
+    status: 'not_started',
     adminAccess: 'full',
     establishmentAccess: 'full',
     individualAccess: 'read',
     databaseStatus: 'not_started',
     userImpact: 'medium',
     complexity: 'high',
-    implementationProgress: 25
+    implementationProgress: 25,
+    category: 'system_intelligence'
   },
   {
     id: 'est-009',
@@ -117,7 +127,8 @@ export const establishmentFeatures: FeatureItem[] = [
     databaseStatus: 'complete',
     userImpact: 'medium',
     complexity: 'low',
-    implementationProgress: 100
+    implementationProgress: 100,
+    category: 'business_operations'
   },
   {
     id: 'est-010',
@@ -130,7 +141,8 @@ export const establishmentFeatures: FeatureItem[] = [
     databaseStatus: 'complete',
     userImpact: 'high',
     complexity: 'medium',
-    implementationProgress: 92
+    implementationProgress: 92,
+    category: 'system_intelligence'
   },
   {
     id: 'est-011',
@@ -143,7 +155,8 @@ export const establishmentFeatures: FeatureItem[] = [
     databaseStatus: 'complete',
     userImpact: 'high',
     complexity: 'medium',
-    implementationProgress: 95
+    implementationProgress: 95,
+    category: 'business_operations'
   },
   {
     id: 'est-012',
@@ -156,6 +169,7 @@ export const establishmentFeatures: FeatureItem[] = [
     databaseStatus: 'complete',
     userImpact: 'medium',
     complexity: 'medium',
-    implementationProgress: 85
+    implementationProgress: 85,
+    category: 'user_experience'
   }
 ];

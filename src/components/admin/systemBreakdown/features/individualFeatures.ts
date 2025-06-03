@@ -15,7 +15,8 @@ export const individualFeatures: FeatureItem[] = [
     databaseStatus: 'complete',
     userImpact: 'high',
     complexity: 'medium',
-    implementationProgress: 100
+    implementationProgress: 100,
+    category: 'user_experience'
   },
   {
     id: 'ind-002',
@@ -28,7 +29,8 @@ export const individualFeatures: FeatureItem[] = [
     databaseStatus: 'complete',
     userImpact: 'high',
     complexity: 'high',
-    implementationProgress: 90
+    implementationProgress: 90,
+    category: 'user_experience'
   },
   {
     id: 'ind-003',
@@ -41,7 +43,8 @@ export const individualFeatures: FeatureItem[] = [
     databaseStatus: 'complete',
     userImpact: 'high',
     complexity: 'high',
-    implementationProgress: 95
+    implementationProgress: 95,
+    category: 'business_operations'
   },
   {
     id: 'ind-004',
@@ -54,7 +57,8 @@ export const individualFeatures: FeatureItem[] = [
     databaseStatus: 'complete',
     userImpact: 'high',
     complexity: 'high',
-    implementationProgress: 100
+    implementationProgress: 100,
+    category: 'business_operations'
   },
   {
     id: 'ind-005',
@@ -67,7 +71,8 @@ export const individualFeatures: FeatureItem[] = [
     databaseStatus: 'complete',
     userImpact: 'medium',
     complexity: 'low',
-    implementationProgress: 100
+    implementationProgress: 100,
+    category: 'user_experience'
   },
   {
     id: 'ind-006',
@@ -80,7 +85,8 @@ export const individualFeatures: FeatureItem[] = [
     databaseStatus: 'in_progress',
     userImpact: 'medium',
     complexity: 'medium',
-    implementationProgress: 60
+    implementationProgress: 60,
+    category: 'user_experience'
   },
   {
     id: 'ind-007',
@@ -93,7 +99,8 @@ export const individualFeatures: FeatureItem[] = [
     databaseStatus: 'complete',
     userImpact: 'high',
     complexity: 'medium',
-    implementationProgress: 88
+    implementationProgress: 88,
+    category: 'business_operations'
   },
   {
     id: 'ind-008',
@@ -106,7 +113,8 @@ export const individualFeatures: FeatureItem[] = [
     databaseStatus: 'complete',
     userImpact: 'medium',
     complexity: 'medium',
-    implementationProgress: 95
+    implementationProgress: 95,
+    category: 'user_experience'
   },
   {
     id: 'ind-009',
@@ -119,7 +127,8 @@ export const individualFeatures: FeatureItem[] = [
     databaseStatus: 'in_progress',
     userImpact: 'medium',
     complexity: 'high',
-    implementationProgress: 45
+    implementationProgress: 45,
+    category: 'user_experience'
   },
   {
     id: 'ind-010',
@@ -132,7 +141,8 @@ export const individualFeatures: FeatureItem[] = [
     databaseStatus: 'complete',
     userImpact: 'high',
     complexity: 'medium',
-    implementationProgress: 92
+    implementationProgress: 92,
+    category: 'user_experience'
   },
   {
     id: 'ind-011',
@@ -145,7 +155,8 @@ export const individualFeatures: FeatureItem[] = [
     databaseStatus: 'complete',
     userImpact: 'medium',
     complexity: 'low',
-    implementationProgress: 100
+    implementationProgress: 100,
+    category: 'user_experience'
   },
   {
     id: 'ind-012',
@@ -158,7 +169,8 @@ export const individualFeatures: FeatureItem[] = [
     databaseStatus: 'complete',
     userImpact: 'medium',
     complexity: 'medium',
-    implementationProgress: 98
+    implementationProgress: 98,
+    category: 'user_experience'
   },
   {
     id: 'ind-013',
@@ -171,7 +183,8 @@ export const individualFeatures: FeatureItem[] = [
     databaseStatus: 'in_progress',
     userImpact: 'high',
     complexity: 'high',
-    implementationProgress: 35
+    implementationProgress: 35,
+    category: 'system_intelligence'
   },
   {
     id: 'ind-014',
@@ -184,7 +197,8 @@ export const individualFeatures: FeatureItem[] = [
     databaseStatus: 'complete',
     userImpact: 'medium',
     complexity: 'medium',
-    implementationProgress: 85
+    implementationProgress: 85,
+    category: 'user_experience'
   },
   {
     id: 'ind-015',
@@ -197,6 +211,7 @@ export const individualFeatures: FeatureItem[] = [
     databaseStatus: 'complete',
     userImpact: 'high',
     complexity: 'high',
-    implementationProgress: 88
+    implementationProgress: 88,
+    category: 'user_experience'
   }
 ];

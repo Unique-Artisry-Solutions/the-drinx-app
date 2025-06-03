@@ -13,6 +13,7 @@ export const enhancedUserExperience: FeatureItem = {
   userImpact: "high",
   complexity: "high",
   implementationProgress: 85,
+  category: "user_experience",
   statusUpdated: true,
   databaseAnalysis: `
     Database Implementation:
