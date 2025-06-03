@@ -26,67 +26,81 @@ export class AdminCocktailsService extends BaseAdminService<AdminCocktail> {
     const { page = 1, limit = 20, sortBy, sortOrder = 'desc', filters } = params;
     const offset = (page - 1) * limit;
 
-    let query = supabase
-      .from('cocktails')
-      .select(`
-        *,
-        establishment:establishments(name)
-      `, { count: 'exact' });
+    try {
+      let query = supabase
+        .from('cocktails')
+        .select(`
+          *,
+          establishment:establishments(name)
+        `, { count: 'exact' });
 
-    if (filters) {
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value !== undefined && value !== null && value !== '') {
-          if (key === 'establishment_name') {
-            // For establishment name filtering, we need to handle it differently
-            // This is a simplified approach - in production you'd want proper joins
-            query = query.ilike('establishments.name', `%${value}%`);
-          } else {
-            query = query.eq(key, value);
+      if (filters) {
+        Object.entries(filters).forEach(([key, value]) => {
+          if (value !== undefined && value !== null && value !== '') {
+            if (key === 'establishment_name') {
+              // For establishment name filtering, we need to handle it differently
+              // This is a simplified approach - in production you'd want proper joins
+              query = query.ilike('establishments.name', `%${value}%`);
+            } else {
+              query = query.eq(key, value);
+            }
           }
-        }
-      });
+        });
+      }
+
+      if (sortBy) {
+        query = query.order(sortBy, { ascending: sortOrder === 'asc' });
+      } else {
+        query = query.order('created_at', { ascending: false });
+      }
+
+      query = query.range(offset, offset + limit - 1);
+
+      const { data, error, count } = await query;
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      return {
+        data: data || [],
+        total: count || 0,
+        page,
+        limit,
+        totalPages: Math.ceil((count || 0) / limit)
+      };
+    } catch (error) {
+      console.error('Error getting cocktails with establishments:', error);
+      return {
+        data: [],
+        total: 0,
+        page,
+        limit,
+        totalPages: 0
+      };
     }
-
-    if (sortBy) {
-      query = query.order(sortBy, { ascending: sortOrder === 'asc' });
-    } else {
-      query = query.order('created_at', { ascending: false });
-    }
-
-    query = query.range(offset, offset + limit - 1);
-
-    const { data, error, count } = await query;
-
-    if (error) {
-      throw new Error(error.message);
-    }
-
-    return {
-      data: data || [],
-      total: count || 0,
-      page,
-      limit,
-      totalPages: Math.ceil((count || 0) / limit)
-    };
   }
 
   async getPopularCocktails(limit: number = 10) {
-    // This would require tracking popularity metrics
-    // For now, we'll return recent cocktails
-    const { data, error } = await supabase
-      .from('cocktails')
-      .select(`
-        *,
-        establishment:establishments(name)
-      `)
-      .order('created_at', { ascending: false })
-      .limit(limit);
+    try {
+      const { data, error } = await supabase
+        .from('cocktails')
+        .select(`
+          *,
+          establishment:establishments(name)
+        `)
+        .order('created_at', { ascending: false })
+        .limit(limit);
 
-    if (error) {
-      throw new Error(error.message);
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      return data || [];
+    } catch (error) {
+      console.error('Error getting popular cocktails:', error);
+      return [];
     }
-
-    return data || [];
   }
 }
 

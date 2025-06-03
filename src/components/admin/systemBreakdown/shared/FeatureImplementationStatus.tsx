@@ -17,13 +17,14 @@ export const FeatureImplementationStatus: React.FC<FeatureImplementationStatusPr
     uiStatus === 'implemented' ? 100 :
     uiStatus === 'partial' ? 65 :
     uiStatus === 'in_progress' ? 45 :
-    uiStatus === 'blocked' ? 30 : 10
+    uiStatus === 'blocked' ? 30 : 
+    uiStatus === 'planned' ? 15 : 10
   );
 
   // Get database implementation status
   const dbStatus = feature.dbStatus || feature.databaseStatus || 'not_started';
   const dbProgress = 
-    dbStatus === 'complete' || dbStatus === 'implemented' ? 100 :
+    dbStatus === 'complete' ? 100 :
     dbStatus === 'in_progress' ? 50 :
     dbStatus === 'not_started' ? 0 : 25;
 
@@ -38,6 +39,8 @@ export const FeatureImplementationStatus: React.FC<FeatureImplementationStatusPr
         return 'Partial';
       case 'blocked':
         return 'Blocked';
+      case 'planned':
+        return 'Planned';
       case 'not_started':
         return 'Not Started';
       default:
@@ -56,6 +59,8 @@ export const FeatureImplementationStatus: React.FC<FeatureImplementationStatusPr
         return 'bg-amber-100 text-amber-800 border-amber-300';
       case 'blocked':
         return 'bg-red-100 text-red-800 border-red-300';
+      case 'planned':
+        return 'bg-purple-100 text-purple-800 border-purple-300';
       case 'not_started':
       default:
         return 'bg-gray-100 text-gray-800 border-gray-300';

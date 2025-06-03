@@ -40,7 +40,7 @@ export function calculateFeatureStatistics(features: FeatureItem[]): FeatureStat
   const blockedFeatures = features.filter(f => f.status === 'blocked').length;
 
   const dbCompleted = features.filter(f => 
-    f.databaseStatus === 'complete' || f.databaseStatus === 'implemented'
+    f.databaseStatus === 'complete'
   ).length;
 
   const implementationRate = (implementedFeatures / totalFeatures) * 100;
