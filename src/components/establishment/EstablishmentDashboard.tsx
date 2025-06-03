@@ -13,12 +13,11 @@ import { useAuth } from '@/contexts/auth/AuthProvider';
 const EstablishmentDashboard: React.FC = () => {
   const { establishmentId } = useParams<{ establishmentId: string }>();
   const { user } = useAuth();
-  const { establishment, isLoading: establishmentLoading } = useEstablishmentProfile(establishmentId);
-  const { userEstablishment } = useUserEstablishment(user?.id);
+  const establishmentProfileData = useEstablishmentProfile(establishmentId);
+  const userEstablishmentData = useUserEstablishment(user?.id);
   
   const [activeTab, setActiveTab] = useState('overview');
   const [dateRange] = useState({ from: new Date(), to: new Date() });
-  // const [dateRange, setDateRange] = useState({ from: new Date(), to: new Date() }); // Commented out setDateRange to preserve future functionality
 
   const mockStats = {
     totalVisitors: 1234,
@@ -27,7 +26,7 @@ const EstablishmentDashboard: React.FC = () => {
     averageRating: 4.7
   };
 
-  if (establishmentLoading) {
+  if (establishmentProfileData.isLoading) {
     return (
       <Layout>
         <div className="container mx-auto py-8">
@@ -37,7 +36,7 @@ const EstablishmentDashboard: React.FC = () => {
     );
   }
 
-  const displayEstablishment = establishment || userEstablishment;
+  const displayEstablishment = establishmentProfileData.establishment || userEstablishmentData.userEstablishment;
 
   if (!displayEstablishment) {
     return (

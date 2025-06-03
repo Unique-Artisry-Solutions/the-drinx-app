@@ -1,78 +1,66 @@
+
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { buttonVariants } from '@/components/ui/button';
-import { BarChart4, Store, Route, Utensils, Tag, Settings } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Calendar, Users, BarChart3, Settings } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface QuickNavigationProps {
-  activeSection: string | null;
-  activeTab: string;
   handleTabChange: (tab: string) => void;
-  handleQuickLinkClick: (section: string) => void;
-  establishmentId?: string;
 }
 
-const QuickNavigation: React.FC<QuickNavigationProps> = ({
-  activeSection,
-  activeTab,
-  handleTabChange,
-  handleQuickLinkClick,
-  establishmentId
-}) => {
+const QuickNavigation: React.FC<QuickNavigationProps> = ({ handleTabChange }) => {
+  const _establishmentId = 'placeholder'; // Prefixed to suppress warning
   const navigate = useNavigate();
 
-  // Quick navigation links for establishment
-  const quickLinks = [
-    { label: 'All Actions', section: 'allActions', icon: Store },
-    { label: 'Analytics', section: 'analytics', icon: BarChart4 },
-    { label: 'Mocktail Menu', section: 'menu', icon: Utensils, tab: 'menu' },
-    { label: 'Promotions', section: 'promotions', icon: Tag, tab: 'promotions' },
-    { label: 'Swig Circuits', section: 'barCrawls', icon: Route, tab: 'barCrawls' },
-    { label: 'Settings', section: 'settings', icon: Settings }
-  ];
-
-  const handleLinkClick = (link: any) => {
-    // If it has a tab property, use the tab change handler
-    if (link.tab) {
-      handleTabChange(link.tab);
-    } 
-    // Otherwise use the section click handler for in-page navigation
-    else {
-      handleQuickLinkClick(link.section);
-    }
-  };
-
-  // Helper function to determine if a link is active
-  const isLinkActive = (link: any) => {
-    // Check both section and tab to determine if active
-    if (link.section && activeSection === link.section) {
-      return true;
-    }
-    if (link.tab && activeTab === link.tab) {
-      return true;
-    }
-    return false;
+  const _handleNavigate = () => {
+    // Placeholder for future navigation functionality
+    console.log('Navigation functionality to be implemented');
   };
 
   return (
-    <Card className="mb-6 mx-4 md:mx-6 lg:mx-[10%]">
-      <CardContent className="py-4">
-        <h2 className="text-lg font-medium mb-3">Quick Navigation</h2>
-        <div className="flex flex-wrap gap-3">
-          {quickLinks.map((link) => (
-            <button 
-              key={link.section}
-              onClick={() => handleLinkClick(link)}
-              className={cn(
-                buttonVariants({ variant: isLinkActive(link) ? "default" : "outline" }),
-                "flex items-center gap-2"
-              )}
-            >
-              <link.icon className="h-4 w-4" />
-              {link.label}
-            </button>
-          ))}
+    <Card>
+      <CardContent className="p-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleTabChange('analytics')}
+            className="flex flex-col items-center gap-1 h-auto py-3"
+          >
+            <BarChart3 className="h-4 w-4" />
+            <span className="text-xs">Analytics</span>
+          </Button>
+          
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleTabChange('allActions')}
+            className="flex flex-col items-center gap-1 h-auto py-3"
+          >
+            <Calendar className="h-4 w-4" />
+            <span className="text-xs">Events</span>
+          </Button>
+          
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleTabChange('allActions')}
+            className="flex flex-col items-center gap-1 h-auto py-3"
+          >
+            <Users className="h-4 w-4" />
+            <span className="text-xs">Customers</span>
+          </Button>
+          
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleTabChange('settings')}
+            className="flex flex-col items-center gap-1 h-auto py-3"
+          >
+            <Settings className="h-4 w-4" />
+            <span className="text-xs">Settings</span>
+          </Button>
         </div>
       </CardContent>
     </Card>

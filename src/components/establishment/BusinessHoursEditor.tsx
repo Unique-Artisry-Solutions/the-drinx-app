@@ -3,9 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-// import { useState } from 'react'; // Commented out to preserve future functionality
 
-interface BusinessHour {
+export interface BusinessHour {
   day: string;
   open: string;
   close: string;
@@ -14,27 +13,73 @@ interface BusinessHour {
 
 interface BusinessHoursEditorProps {
   hours: BusinessHour[];
-  onUpdate: (hours: BusinessHour[]) => void;
+  onUpdate?: (hours: BusinessHour[]) => void;
+  setHours?: React.Dispatch<React.SetStateAction<BusinessHour[]>>;
+  isEditing?: boolean;
 }
 
 const daysOfWeek = [
-  'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'
+  'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'
 ];
 
-const BusinessHoursEditor: React.FC<BusinessHoursEditorProps> = ({ hours, onUpdate }) => {
+const BusinessHoursEditor: React.FC<BusinessHoursEditorProps> = ({ 
+  hours, 
+  onUpdate, 
+  setHours, 
+  isEditing = true 
+}) => {
   const handleTimeChange = (day: string, field: 'open' | 'close', value: string) => {
     const updatedHours = hours.map(hour => 
       hour.day === day ? { ...hour, [field]: value } : hour
     );
-    onUpdate(updatedHours);
+    
+    if (onUpdate) {
+      onUpdate(updatedHours);
+    } else if (setHours) {
+      setHours(updatedHours);
+    }
   };
 
   const toggleClosed = (day: string) => {
     const updatedHours = hours.map(hour =>
       hour.day === day ? { ...hour, isClosed: !hour.isClosed } : hour
     );
-    onUpdate(updatedHours);
+    
+    if (onUpdate) {
+      onUpdate(updatedHours);
+    } else if (setHours) {
+      setHours(updatedHours);
+    }
   };
+
+  if (!isEditing) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Business Hours</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          {daysOfWeek.map((day) => {
+            const dayHours = hours.find(h => h.day === day) || { 
+              day, 
+              open: '09:00', 
+              close: '17:00', 
+              isClosed: false 
+            };
+            
+            return (
+              <div key={day} className="flex justify-between">
+                <span className="capitalize font-medium">{day}</span>
+                <span className="text-gray-600">
+                  {dayHours.isClosed ? 'Closed' : `${dayHours.open} - ${dayHours.close}`}
+                </span>
+              </div>
+            );
+          })}
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
@@ -53,7 +98,7 @@ const BusinessHoursEditor: React.FC<BusinessHoursEditorProps> = ({ hours, onUpda
           return (
             <div key={day} className="flex items-center gap-4">
               <div className="w-20">
-                <Label>{day}</Label>
+                <Label className="capitalize">{day}</Label>
               </div>
               
               {dayHours.isClosed ? (
