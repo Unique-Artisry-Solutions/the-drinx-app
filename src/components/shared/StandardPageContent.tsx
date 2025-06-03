@@ -1,11 +1,9 @@
 
-// Standardized page content component
-
 import React from 'react';
 import { StandardContentProps } from './types';
 import { mergeClassNames, paddingClasses, StandardLoadingSpinner, StandardErrorDisplay } from './utils';
 
-const StandardPageContent: React.FC<StandardContentProps> = ({
+export const StandardPageContent: React.FC<StandardContentProps> = ({
   children,
   isLoading = false,
   error,
@@ -36,5 +34,3 @@ const StandardPageContent: React.FC<StandardContentProps> = ({
     </div>
   );
 };
-
-export default StandardPageContent;

@@ -1,5 +1,5 @@
 
-// Core consolidated hooks - Use these instead of specialized hooks
+// Core consolidated hooks - Phase 9A standardized exports
 export { useData } from './useData';
 export { useAuth } from './useAuth';
 export { useAnalytics } from './useAnalytics';

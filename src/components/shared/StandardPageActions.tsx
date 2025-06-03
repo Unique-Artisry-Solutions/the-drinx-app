@@ -1,6 +1,4 @@
 
-// Standardized page actions component
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { StandardAction } from './types';
@@ -9,7 +7,7 @@ interface StandardPageActionsProps {
   actions: StandardAction[];
 }
 
-const StandardPageActions: React.FC<StandardPageActionsProps> = ({ actions }) => {
+export const StandardPageActions: React.FC<StandardPageActionsProps> = ({ actions }) => {
   if (actions.length === 0) return null;
 
   return (
@@ -29,5 +27,3 @@ const StandardPageActions: React.FC<StandardPageActionsProps> = ({ actions }) =>
     </div>
   );
 };
-
-export default StandardPageActions;

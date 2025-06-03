@@ -1,0 +1,48 @@
+
+// Standardized icon exports - Phase 9A
+export { PlusCircle } from './PlusCircle';
+
+// Re-export commonly used Lucide icons with consistent naming
+export {
+  Menu,
+  X,
+  Search,
+  Filter,
+  Download,
+  Upload,
+  Edit,
+  Trash2 as Delete,
+  Plus,
+  Minus,
+  ChevronLeft,
+  ChevronRight,
+  ChevronUp,
+  ChevronDown,
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  AlertCircle,
+  Info,
+  Settings,
+  User,
+  Users,
+  Home,
+  Calendar,
+  Map,
+  Star,
+  Heart,
+  Share,
+  Bell,
+  Mail,
+  Phone,
+  Globe,
+  Lock,
+  Unlock,
+  Eye,
+  EyeOff,
+  Copy,
+  ExternalLink,
+  Refresh,
+  Save,
+  Cancel
+} from 'lucide-react';

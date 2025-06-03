@@ -1,10 +1,10 @@
 
-// Shared components exports
+// Shared components exports - Phase 9A standardized exports
 
-export { default as StandardPageLayout } from './StandardPageLayout';
-export { default as StandardPageHeader } from './StandardPageHeader';
-export { default as StandardPageContent } from './StandardPageContent';
-export { default as StandardPageActions } from './StandardPageActions';
+export { StandardPageLayout } from './StandardPageLayout';
+export { StandardPageHeader } from './StandardPageHeader';
+export { StandardPageContent } from './StandardPageContent';
+export { StandardPageActions } from './StandardPageActions';
 
 export * from './types';
 export * from './utils';
