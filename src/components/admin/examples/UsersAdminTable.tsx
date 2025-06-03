@@ -3,35 +3,13 @@ import React from 'react';
 import { AdminDataTable } from '../tables/AdminDataTable';
 import { useAdminService } from '@/hooks/admin/useAdminService';
 import { usersService } from '@/services/admin';
-import { Edit, Trash, Eye, User, Shield, Crown } from 'lucide-react';
+import { Edit, Trash, Eye, User, Phone } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { AdminTableConfig } from '../tables/AdminDataTable';
 import type { AdminUser } from '@/services/admin';
 
 export const UsersAdminTable: React.FC = () => {
   const { state, actions } = useAdminService(usersService);
-
-  const getUserTypeIcon = (userType: string) => {
-    switch (userType) {
-      case 'admin':
-        return <Shield className="h-3 w-3" />;
-      case 'promoter':
-        return <Crown className="h-3 w-3" />;
-      default:
-        return <User className="h-3 w-3" />;
-    }
-  };
-
-  const getUserTypeBadgeVariant = (userType: string) => {
-    switch (userType) {
-      case 'admin':
-        return 'destructive';
-      case 'promoter':
-        return 'default';
-      default:
-        return 'secondary';
-    }
-  };
 
   const config: AdminTableConfig<AdminUser> = {
     columns: [
@@ -41,6 +19,7 @@ export const UsersAdminTable: React.FC = () => {
         sortable: true,
         render: (value, item) => (
           <div className="flex items-center gap-2">
+            <User className="h-4 w-4 text-muted-foreground" />
             <div>
               <div className="font-medium">{value || item.username || 'Unknown User'}</div>
               {item.bio && (
@@ -55,30 +34,20 @@ export const UsersAdminTable: React.FC = () => {
       {
         key: 'user_type',
         label: 'Type',
-        sortable: true,
         render: (value) => (
-          <Badge 
-            variant={getUserTypeBadgeVariant(value)}
-            className="flex items-center gap-1"
-          >
-            {getUserTypeIcon(value)}
-            {value.charAt(0).toUpperCase() + value.slice(1)}
+          <Badge variant="secondary">
+            {value?.charAt(0).toUpperCase() + value?.slice(1) || 'User'}
           </Badge>
         )
       },
       {
         key: 'phone',
         label: 'Contact',
-        render: (value) => value || 'Not provided'
-      },
-      {
-        key: 'email_notifications',
-        label: 'Email Notifications',
-        type: 'boolean',
         render: (value) => (
-          <Badge variant={value ? 'default' : 'secondary'}>
-            {value ? 'Enabled' : 'Disabled'}
-          </Badge>
+          <div className="flex items-center gap-1">
+            <Phone className="h-3 w-3 text-muted-foreground" />
+            <span className="text-sm">{value || 'Not provided'}</span>
+          </div>
         )
       },
       {
@@ -94,7 +63,7 @@ export const UsersAdminTable: React.FC = () => {
         action: 'view',
         icon: Eye,
         onClick: (item) => {
-          console.log('View user profile:', item);
+          console.log('View user:', item);
         }
       },
       {
@@ -137,20 +106,9 @@ export const UsersAdminTable: React.FC = () => {
         type: 'select',
         options: [
           { value: 'all', label: 'All Types' },
-          { value: 'user', label: 'Users' },
-          { value: 'promoter', label: 'Promoters' },
-          { value: 'establishment', label: 'Establishments' },
-          { value: 'admin', label: 'Admins' }
-        ]
-      },
-      {
-        key: 'email_notifications',
-        label: 'Email Notifications',
-        type: 'select',
-        options: [
-          { value: 'all', label: 'All' },
-          { value: 'true', label: 'Enabled' },
-          { value: 'false', label: 'Disabled' }
+          { value: 'individual', label: 'Individual' },
+          { value: 'establishment', label: 'Establishment' },
+          { value: 'promoter', label: 'Promoter' }
         ]
       }
     ],
@@ -165,7 +123,7 @@ export const UsersAdminTable: React.FC = () => {
       state={state}
       actions={actions}
       title="Users"
-      description="Manage all user accounts and profiles"
+      description="Manage all users in the system"
     />
   );
 };

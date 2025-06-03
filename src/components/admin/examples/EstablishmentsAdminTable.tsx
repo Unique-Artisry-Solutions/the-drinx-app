@@ -3,7 +3,7 @@ import React from 'react';
 import { AdminDataTable } from '../tables/AdminDataTable';
 import { useAdminService } from '@/hooks/admin/useAdminService';
 import { establishmentsService } from '@/services/admin';
-import { Edit, Trash, Eye, Building2, Phone, Mail } from 'lucide-react';
+import { Edit, Trash, Eye, Building2, MapPin } from 'lucide-react';
 import type { AdminTableConfig } from '../tables/AdminDataTable';
 import type { AdminEstablishment } from '@/services/admin';
 
@@ -34,33 +34,16 @@ export const EstablishmentsAdminTable: React.FC = () => {
         key: 'address',
         label: 'Address',
         render: (value) => (
-          <div className="max-w-[200px] truncate">{value}</div>
-        )
-      },
-      {
-        key: 'phone',
-        label: 'Contact',
-        render: (_, item) => (
-          <div className="space-y-1">
-            {item.phone && (
-              <div className="flex items-center gap-1 text-sm">
-                <Phone className="h-3 w-3" />
-                {item.phone}
-              </div>
-            )}
-            {item.email && (
-              <div className="flex items-center gap-1 text-sm">
-                <Mail className="h-3 w-3" />
-                {item.email}
-              </div>
-            )}
+          <div className="flex items-center gap-1">
+            <MapPin className="h-3 w-3 text-muted-foreground" />
+            <span className="text-sm">{value}</span>
           </div>
         )
       },
       {
         key: 'cocktailCount',
         label: 'Cocktails',
-        type: 'badge',
+        type: 'number',
         sortable: true
       },
       {
@@ -114,10 +97,9 @@ export const EstablishmentsAdminTable: React.FC = () => {
     ],
     filters: [
       {
-        key: 'name',
-        label: 'Name',
-        type: 'text',
-        options: []
+        key: 'location',
+        label: 'Location',
+        type: 'text'
       }
     ],
     searchable: true,
