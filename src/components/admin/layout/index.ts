@@ -12,8 +12,13 @@ export { default as StreamlinedAdminLayout } from './StreamlinedAdminLayout';
 export { default as AdminPageWrapper } from './AdminPageWrapper';
 export { AdminLayoutProvider, useAdminLayout } from './AdminLayoutProvider';
 
+// Tab components
+export { AdminTabs, AdminTabContent } from './AdminTabs';
+export { default as AdminTabsContainer } from './AdminTabsContainer';
+
 // Types
 export type { AdminPageConfig, AdminPageAction } from './AdminPageWrapper';
+export type { AdminTabConfig } from './AdminTabs';
 
 // Utilities
 export { createPageConfig, COMMON_PAGE_CONFIGS, getPageConfigByPath } from './utils';
