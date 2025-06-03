@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth as useSupabaseAuth } from '@/contexts/auth';
 import { useToast } from '@/hooks/use-toast';
@@ -20,7 +19,7 @@ export interface AuthActions {
   signup: (email: string, password: string, userData?: any) => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   updateProfile: (updates: any) => Promise<void>;
-  switchRole: (role: string) => Promise<void>;
+  switchRole: (role: 'individual' | 'establishment' | 'promoter' | 'admin') => Promise<void>;
 }
 
 export function useAuth(): { state: AuthState; actions: AuthActions } {
@@ -146,7 +145,7 @@ export function useAuth(): { state: AuthState; actions: AuthActions } {
     }
   }, [auth.updateUserProfile, toast]);
 
-  const switchRole = useCallback(async (role: string) => {
+  const switchRole = useCallback(async (role: 'individual' | 'establishment' | 'promoter' | 'admin') => {
     try {
       setError(null);
       // Use Supabase RPC function for role switching if available
