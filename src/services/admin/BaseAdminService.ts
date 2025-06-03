@@ -38,7 +38,8 @@ export interface FilterParams {
   [key: string]: any;
 }
 
-export class BaseAdminService<T extends Record<string, any>> {
+// Simplified base class to avoid type recursion
+export class BaseAdminService<T = Record<string, any>> {
   protected tableName: string;
 
   constructor(tableName: string) {
@@ -53,7 +54,7 @@ export class BaseAdminService<T extends Record<string, any>> {
       // Use dynamic import to avoid typing issues
       const { supabase } = await import('@/integrations/supabase/client');
       
-      let query = (supabase as any)
+      let query = supabase
         .from(this.tableName)
         .select('*', { count: 'exact' });
 
@@ -107,7 +108,7 @@ export class BaseAdminService<T extends Record<string, any>> {
     try {
       const { supabase } = await import('@/integrations/supabase/client');
       
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from(this.tableName)
         .select('*')
         .eq('id', id)
@@ -128,7 +129,7 @@ export class BaseAdminService<T extends Record<string, any>> {
     try {
       const { supabase } = await import('@/integrations/supabase/client');
       
-      const { data: result, error } = await (supabase as any)
+      const { data: result, error } = await supabase
         .from(this.tableName)
         .insert(data)
         .select()
@@ -149,7 +150,7 @@ export class BaseAdminService<T extends Record<string, any>> {
     try {
       const { supabase } = await import('@/integrations/supabase/client');
       
-      const { data: result, error } = await (supabase as any)
+      const { data: result, error } = await supabase
         .from(this.tableName)
         .update(data)
         .eq('id', id)
@@ -171,7 +172,7 @@ export class BaseAdminService<T extends Record<string, any>> {
     try {
       const { supabase } = await import('@/integrations/supabase/client');
       
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from(this.tableName)
         .delete()
         .eq('id', id);
@@ -191,7 +192,7 @@ export class BaseAdminService<T extends Record<string, any>> {
     try {
       const { supabase } = await import('@/integrations/supabase/client');
       
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from(this.tableName)
         .delete()
         .in('id', ids);
@@ -211,7 +212,7 @@ export class BaseAdminService<T extends Record<string, any>> {
     try {
       const { supabase } = await import('@/integrations/supabase/client');
       
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from(this.tableName)
         .update(data.data)
         .in('id', data.ids);
@@ -232,7 +233,7 @@ export class BaseAdminService<T extends Record<string, any>> {
       const { supabase } = await import('@/integrations/supabase/client');
       const { query, fields = ['name'] } = params;
       
-      let supabaseQuery = (supabase as any).from(this.tableName).select('*');
+      let supabaseQuery = supabase.from(this.tableName).select('*');
       
       // Simple OR search across specified fields
       const orConditions = fields.map(field => `${field}.ilike.%${query}%`).join(',');

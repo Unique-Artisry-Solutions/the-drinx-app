@@ -1,3 +1,5 @@
+
+import { BaseAdminService } from './BaseAdminService';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface AdminCocktail {
@@ -15,56 +17,10 @@ export interface AdminCocktail {
   };
 }
 
-// Simplified service without extending BaseAdminService to avoid type depth issues
-export class AdminCocktailsService {
-  async getAll(params: any = {}) {
-    const { page = 1, limit = 20, sortBy, sortOrder = 'desc', filters } = params;
-    const offset = (page - 1) * limit;
-
-    try {
-      let query = supabase
-        .from('cocktails')
-        .select('*', { count: 'exact' });
-
-      if (filters) {
-        Object.entries(filters).forEach(([key, value]) => {
-          if (value !== undefined && value !== null && value !== '') {
-            query = query.eq(key, value);
-          }
-        });
-      }
-
-      if (sortBy) {
-        query = query.order(sortBy, { ascending: sortOrder === 'asc' });
-      } else {
-        query = query.order('created_at', { ascending: false });
-      }
-
-      query = query.range(offset, offset + limit - 1);
-
-      const { data, error, count } = await query;
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      return {
-        data: data || [],
-        total: count || 0,
-        page,
-        limit,
-        totalPages: Math.ceil((count || 0) / limit)
-      };
-    } catch (error) {
-      console.error('Error getting cocktails:', error);
-      return {
-        data: [],
-        total: 0,
-        page,
-        limit,
-        totalPages: 0
-      };
-    }
+// Restore inheritance but use simple typing to avoid depth issues
+export class AdminCocktailsService extends BaseAdminService<AdminCocktail> {
+  constructor() {
+    super('cocktails');
   }
 
   async getAllWithEstablishments(params: any = {}) {
@@ -143,42 +99,6 @@ export class AdminCocktailsService {
     } catch (error) {
       console.error('Error getting popular cocktails:', error);
       return [];
-    }
-  }
-
-  async delete(id: string): Promise<boolean> {
-    try {
-      const { error } = await supabase
-        .from('cocktails')
-        .delete()
-        .eq('id', id);
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      return true;
-    } catch (error) {
-      console.error('Error deleting cocktail:', error);
-      return false;
-    }
-  }
-
-  async bulkDelete(ids: string[]): Promise<boolean> {
-    try {
-      const { error } = await supabase
-        .from('cocktails')
-        .delete()
-        .in('id', ids);
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      return true;
-    } catch (error) {
-      console.error('Error bulk deleting cocktails:', error);
-      return false;
     }
   }
 }

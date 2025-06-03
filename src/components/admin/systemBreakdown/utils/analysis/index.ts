@@ -11,4 +11,5 @@ export { analyzePromoterSystem } from './promoterSystemAnalyzer';
 export { analyzeRewardSystem } from './rewardSystemAnalyzer';
 export { analyzeAudienceRelationshipSystem } from './audienceRelationshipAnalyzer';
 
-// Don't re-export analyzeSwigCircuitSystem to avoid conflicts - it's defined locally where needed
+// Export the analyzeAllFeatures function from the main analysis file
+export { analyzeAllFeatures } from '../analysis';
