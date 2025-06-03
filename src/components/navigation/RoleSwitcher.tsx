@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { UserCog } from 'lucide-react';
 import { useAuth } from '@/hooks/core';
 import { cn } from '@/lib/utils';
+import { SwitchableUserRole } from '@/types/userRole';
 
 export function RoleSwitcher() {
   const { state, actions } = useAuth();
@@ -45,7 +46,7 @@ export function RoleSwitcher() {
     }
   };
 
-  const handleRoleSwitch = async (role: string) => {
+  const handleRoleSwitch = async (role: SwitchableUserRole) => {
     if (role !== currentRole) {
       await switchRole(role);
     }
@@ -71,7 +72,7 @@ export function RoleSwitcher() {
         {availableRoles.map((role) => (
           <DropdownMenuItem
             key={role}
-            onClick={() => handleRoleSwitch(role)}
+            onClick={() => handleRoleSwitch(role as SwitchableUserRole)}
             className={cn(
               "cursor-pointer",
               role === currentRole && "bg-accent",
