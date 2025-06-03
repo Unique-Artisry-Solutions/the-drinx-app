@@ -1,11 +1,19 @@
 
+// Original components
+export { default as AdminLayout } from './AdminLayout';
+export { default as AdminSidebar } from './AdminSidebar';
 export { default as AdminPageLayout } from './AdminPageLayout';
 export { default as AdminPageHeader } from './AdminPageHeader';
 export { default as AdminPageContent } from './AdminPageContent';
 export { default as AdminPageActions } from './AdminPageActions';
-export { default as AdminSidebar } from './AdminSidebar';
-export { default as AdminTabsContainer } from './AdminTabsContainer';
-export { AdminTabs, AdminTabContent } from './AdminTabs';
-export type { AdminPageConfig, AdminPageAction } from './AdminPageLayout';
-export type { AdminTabConfig } from './AdminTabs';
-export { AdminSimplifiedLayout } from './AdminSimplifiedLayout';
+
+// Streamlined components
+export { default as StreamlinedAdminLayout } from './StreamlinedAdminLayout';
+export { default as AdminPageWrapper } from './AdminPageWrapper';
+export { AdminLayoutProvider, useAdminLayout } from './AdminLayoutProvider';
+
+// Types
+export type { AdminPageConfig, AdminPageAction } from './AdminPageWrapper';
+
+// Utilities
+export { createPageConfig, COMMON_PAGE_CONFIGS, getPageConfigByPath } from './utils';
