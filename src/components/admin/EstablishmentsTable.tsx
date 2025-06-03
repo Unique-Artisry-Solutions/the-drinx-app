@@ -10,13 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Edit, MoreHorizontal, Trash } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAppNavigation } from '@/hooks/useAppNavigation';
-
-interface Establishment {
-  id: string;
-  name: string;
-  address: string;
-  cocktailCount: number;
-}
+import { Establishment } from '@/types/CoreTypes';
 
 interface EstablishmentsTableProps {
   establishments: Establishment[];
@@ -50,7 +44,7 @@ const EstablishmentsTable: React.FC<EstablishmentsTableProps> = ({
             <TableRow key={est.id}>
               <TableCell className="font-medium">{est.name}</TableCell>
               <TableCell>{est.address}</TableCell>
-              <TableCell>{est.cocktailCount}</TableCell>
+              <TableCell>{est.cocktailCount ?? est.cocktail_count ?? 0}</TableCell>
               <TableCell className="text-right">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>

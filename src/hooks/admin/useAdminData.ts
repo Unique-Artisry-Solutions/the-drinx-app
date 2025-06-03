@@ -50,7 +50,7 @@ export const useAdminData = <T extends { id: string; name: string }>(
   return { state, actions };
 };
 
-// Specialized hooks for specific data types
+// Specialized hooks for specific data types using CoreTypes
 export const useEstablishmentsData = (initialData: Establishment[]) => {
   return useAdminData(initialData, 'establishment');
 };
