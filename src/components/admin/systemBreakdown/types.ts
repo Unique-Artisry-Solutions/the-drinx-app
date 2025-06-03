@@ -1,8 +1,15 @@
+
 export type FeatureStatus = 'implemented' | 'in_progress' | 'not_started';
 export type DatabaseStatus = 'complete' | 'in_progress' | 'not_started';
 export type AccessLevel = 'full' | 'partial' | 'read' | 'none' | 'write' | 'moderate';
 export type FeatureComplexity = 'high' | 'medium' | 'low';
-export type FeatureCategory = string;
+
+// Simplified to 4 core business domains
+export type CoreFeatureCategory = 
+  | 'user_experience'          // user management + social engagement
+  | 'business_operations'      // venue operations + commerce promotions  
+  | 'system_intelligence'      // AI recommendations + business analytics
+  | 'administration';          // system administration + content operations
 
 export interface FeatureItem {
   id: string;
@@ -14,29 +21,29 @@ export interface FeatureItem {
   individualAccess: AccessLevel;
   promoterAccess?: AccessLevel;
   databaseStatus: DatabaseStatus;
-  dbStatus?: DatabaseStatus;
   userImpact: 'high' | 'medium' | 'low';
   complexity: FeatureComplexity;
-  databaseAnalysis?: string;
+  implementationProgress: number;
+  category: CoreFeatureCategory;
+  lastUpdated?: string;
+  assignedTo?: string;
+  dependencies?: string[];
+  tags?: string[];
+  
+  // Optional legacy support fields (will be removed in future phases)
+  dbStatus?: DatabaseStatus;
   statusUpdated?: boolean;
-  implementationProgress?: number;
-  dbCompleted?: number;
+  originalStatus?: string;
   testSteps?: string[];
   subFeatures?: SubFeature[];
-  originalStatus?: string;
-  tags?: string[];
   dbRequirementsText?: string;
   dependsOn?: string[];
   scheduledFor?: string;
   integrations?: string[];
-  category?: FeatureCategory;
   components?: Component[];
-  lastUpdated?: string;
-  assignedTo?: string;
-  dependencies?: string[];
+  databaseAnalysis?: string;
 }
 
-// Add Component interface for the components property
 export interface Component {
   name: string;
   type: string;

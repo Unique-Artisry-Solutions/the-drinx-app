@@ -3,60 +3,43 @@ import {
   FeatureItem, 
   FeatureShowcaseData, 
   FeatureBusinessValueType,
-  FeatureComplexity
+  FeatureComplexity,
+  CoreFeatureCategory
 } from '../../types';
-import {
-  isRewardProgramFeature,
-  isPromotionFeature,
-  isAIFeature,
-  isAnalyticsFeature,
-  isVisitTrackingFeature,
-  isMapFeature,
-  isSocialFeature,
-  isMocktailSuggestionFeature,
-  isIngredientPairingFeature,
-  isThemeFeature
-} from '../detection';
+import { unifiedDetection } from '../detection';
 
-// Business value determination
+// Business value determination based on simplified categories
 export const determineBusinessValue = (feature: FeatureItem): FeatureBusinessValueType => {
-  if (
-    isRewardProgramFeature(feature) ||
-    isPromotionFeature(feature) ||
-    isAIFeature(feature) ||
-    isAnalyticsFeature(feature) ||
-    isVisitTrackingFeature(feature)
-  ) {
-    return 'high';
-  } else if (
-    isMapFeature(feature) ||
-    isSocialFeature(feature) ||
-    isMocktailSuggestionFeature(feature) ||
-    isIngredientPairingFeature(feature) ||
-    isThemeFeature(feature)
-  ) {
-    return 'medium';
-  }
+  const category = unifiedDetection.detectCategory(feature);
   
-  return 'low';
+  switch(category) {
+    case 'business_operations':
+    case 'system_intelligence':
+      return 'high';
+    case 'user_experience':
+      return 'medium';
+    case 'administration':
+      return 'low';
+    default:
+      return 'low';
+  }
 };
 
-// Complexity determination
+// Complexity determination based on simplified categories
 export const determineComplexity = (feature: FeatureItem): FeatureComplexity => {
-  if (
-    isAIFeature(feature) ||
-    isAnalyticsFeature(feature) ||
-    isPromotionFeature(feature) && (feature.dbStatus === 'complete')
-  ) {
+  const category = unifiedDetection.detectCategory(feature);
+  
+  // Check for AI/ML keywords in name or description
+  const text = `${feature.name} ${feature.description}`.toLowerCase();
+  const isAIFeature = text.includes('ai') || text.includes('recommendation') || text.includes('intelligent');
+  
+  if (isAIFeature || category === 'system_intelligence') {
     return 'high';
-  } else if (
-    isMapFeature(feature) ||
-    isSocialFeature(feature) ||
-    isThemeFeature(feature)
-  ) {
+  }
+  
+  if (category === 'business_operations' || category === 'user_experience') {
     return 'medium';
   }
   
   return 'low';
 };
-
