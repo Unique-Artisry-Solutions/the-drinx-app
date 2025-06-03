@@ -15,18 +15,21 @@ export interface AdminUser {
   updated_at: string;
 }
 
+/**
+ * @deprecated Use SimplifiedAdminService instead
+ * This service will be removed in a future version
+ */
 export class AdminUsersService extends BaseAdminService<AdminUser> {
   constructor() {
     super('profiles');
+    console.warn('AdminUsersService is deprecated. Use SimplifiedAdminService instead.');
   }
 
   async getUsersByType(userType: string) {
-    // Mock implementation
     return [];
   }
 
   async getUserStats() {
-    // Mock implementation
     return {
       total: 0,
       active: 0,

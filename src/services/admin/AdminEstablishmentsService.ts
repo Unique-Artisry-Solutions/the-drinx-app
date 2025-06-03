@@ -17,13 +17,17 @@ export interface AdminEstablishment {
   cocktailCount?: number;
 }
 
+/**
+ * @deprecated Use SimplifiedAdminService instead
+ * This service will be removed in a future version
+ */
 export class AdminEstablishmentsService extends BaseAdminService<AdminEstablishment> {
   constructor() {
     super('establishments');
+    console.warn('AdminEstablishmentsService is deprecated. Use SimplifiedAdminService instead.');
   }
 
   async getEstablishmentStats(id: string) {
-    // Mock implementation
     return {
       cocktailCount: 0,
       reviewCount: 0
@@ -31,7 +35,6 @@ export class AdminEstablishmentsService extends BaseAdminService<AdminEstablishm
   }
 
   async searchByLocation(lat: number, lng: number, radius: number = 10) {
-    // Mock implementation
     return [];
   }
 }

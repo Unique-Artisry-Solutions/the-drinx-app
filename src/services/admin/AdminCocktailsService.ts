@@ -16,13 +16,17 @@ export interface AdminCocktail {
   };
 }
 
+/**
+ * @deprecated Use SimplifiedAdminService instead
+ * This service will be removed in a future version
+ */
 export class AdminCocktailsService extends BaseAdminService<AdminCocktail> {
   constructor() {
     super('cocktails');
+    console.warn('AdminCocktailsService is deprecated. Use SimplifiedAdminService instead.');
   }
 
   async getAllWithEstablishments(params: any = {}) {
-    // Simplified mock implementation for now
     return {
       data: [],
       total: 0,
@@ -33,7 +37,6 @@ export class AdminCocktailsService extends BaseAdminService<AdminCocktail> {
   }
 
   async getPopularCocktails(limit: number = 10) {
-    // Mock implementation
     return [];
   }
 }

@@ -1,5 +1,5 @@
 
-// Simplified admin service without complex generics
+// Primary admin service - simplified implementation without complex inheritance
 export interface SimpleQueryParams {
   page?: number;
   limit?: number;
@@ -15,7 +15,7 @@ export interface SimpleResponse<T> {
   limit: number;
 }
 
-// Direct CRUD operations without inheritance
+// Streamlined CRUD operations for all admin entities
 export class SimplifiedAdminService {
   // Users operations
   static async getUsers(params: SimpleQueryParams = {}): Promise<SimpleResponse<any>> {

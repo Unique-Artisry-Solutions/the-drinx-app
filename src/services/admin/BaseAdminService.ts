@@ -1,4 +1,7 @@
 
+// Legacy base service - marked for deprecation
+// Use SimplifiedAdminService for new implementations
+
 export interface QueryParams {
   page?: number;
   limit?: number;
@@ -38,16 +41,20 @@ export interface FilterParams {
   [key: string]: any;
 }
 
-// Simple base class without complex typing
+/**
+ * @deprecated Use SimplifiedAdminService instead
+ * This class will be removed in a future version
+ */
 export class BaseAdminService<T = any> {
   protected tableName: string;
 
   constructor(tableName: string) {
     this.tableName = tableName;
+    console.warn('BaseAdminService is deprecated. Use SimplifiedAdminService instead.');
   }
 
   async getAll(params: QueryParams = {}): Promise<PaginatedResponse<T>> {
-    // For now, return mock data to avoid type issues
+    // Simplified mock implementation
     return {
       data: [] as T[],
       total: 0,
@@ -58,37 +65,30 @@ export class BaseAdminService<T = any> {
   }
 
   async getById(id: string): Promise<T | null> {
-    // Mock implementation
     return null;
   }
 
   async create(data: CreateDTO): Promise<T | null> {
-    // Mock implementation
     return null;
   }
 
   async update(id: string, data: UpdateDTO): Promise<T | null> {
-    // Mock implementation
     return null;
   }
 
   async delete(id: string): Promise<boolean> {
-    // Mock implementation
     return true;
   }
 
   async bulkDelete(ids: string[]): Promise<boolean> {
-    // Mock implementation
     return true;
   }
 
   async bulkUpdate(data: BulkUpdateDTO): Promise<boolean> {
-    // Mock implementation
     return true;
   }
 
   async search(params: SearchParams): Promise<T[]> {
-    // Mock implementation
     return [];
   }
 }
