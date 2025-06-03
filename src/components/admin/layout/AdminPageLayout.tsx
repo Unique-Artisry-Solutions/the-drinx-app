@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Breadcrumbs } from '@/components/navigation/Breadcrumbs';
+import Breadcrumbs from '@/components/navigation/Breadcrumbs';
 import AdminPageHeader from './AdminPageHeader';
 import AdminPageContent from './AdminPageContent';
 import AdminPageActions from './AdminPageActions';

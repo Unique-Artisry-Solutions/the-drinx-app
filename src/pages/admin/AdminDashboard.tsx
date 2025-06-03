@@ -1,8 +1,6 @@
 
 import React, { useState } from 'react';
-import { useToast } from '@/hooks/use-toast';
 import { useDevAuthBypass } from '@/hooks/useDevAuthBypass';
-import { Plus, Download, RefreshCw } from 'lucide-react';
 
 // Sample data - would be fetched from API in a real application
 import { sampleEstablishments, sampleCocktails } from '@/data/sampleData';
@@ -16,18 +14,47 @@ import {
   AdminPageLayout, 
   AdminTabs, 
   AdminTabContent,
-  type AdminPageConfig,
-  type AdminPageAction,
-  type AdminTabConfig
+  type AdminPageConfig
 } from '@/components/admin/layout';
 
+// New hooks
+import {
+  useAdminDashboard,
+  useEstablishmentsData,
+  useCocktailsData,
+  useAdminNavigation,
+  useAdminActions
+} from '@/hooks/admin';
+
 const AdminDashboard: React.FC = () => {
-  const [establishments, setEstablishments] = useState(sampleEstablishments);
-  const [cocktails, setCocktails] = useState(sampleCocktails);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState('establishments');
-  const { toast } = useToast();
   const { user, isUsingDevBypass } = useDevAuthBypass();
+
+  // Use consolidated hooks
+  const { state: dashboardState, actions: dashboardActions } = useAdminDashboard('establishments');
+  const { state: establishmentsState, actions: establishmentsActions } = useEstablishmentsData(sampleEstablishments);
+  const { state: cocktailsState, actions: cocktailsActions } = useCocktailsData(sampleCocktails);
+  
+  const navigationConfig = useAdminNavigation(
+    establishmentsState.items,
+    cocktailsState.items
+  );
+
+  const pageActions = useAdminActions(
+    {
+      showAdd: true,
+      showExport: true,
+      showRefresh: true
+    },
+    {
+      onAdd: dashboardActions.handleAddNew,
+      onExport: dashboardActions.handleExport,
+      onRefresh: () => {
+        dashboardActions.handleRefresh();
+        establishmentsActions.refreshData();
+        cocktailsActions.refreshData();
+      }
+    }
+  );
 
   console.log('AdminDashboard: Auth state', { 
     user: !!user, 
@@ -36,49 +63,15 @@ const AdminDashboard: React.FC = () => {
   });
 
   const handleDeleteEstablishment = (id: string) => {
-    setEstablishments(establishments.filter(est => est.id !== id));
-    toast({
-      title: 'Establishment deleted',
-      description: 'The establishment has been removed from the database',
-    });
+    establishmentsActions.deleteItem(id);
   };
 
   const handleDeleteCocktail = (id: string) => {
-    setCocktails(cocktails.filter(cocktail => cocktail.id !== id));
-    toast({
-      title: 'Cocktail deleted',
-      description: 'The cocktail has been removed from the database',
-    });
+    cocktailsActions.deleteItem(id);
   };
 
-  const handleRefresh = () => {
-    toast({
-      title: 'Data refreshed',
-      description: 'All data has been updated',
-    });
-  };
-
-  const handleExport = () => {
-    toast({
-      title: 'Export started',
-      description: 'Your data export will be ready shortly',
-    });
-  };
-
-  const handleAddNew = () => {
-    toast({
-      title: 'Add new item',
-      description: 'This would open the creation dialog',
-    });
-  };
-
-  const filteredEstablishments = establishments.filter(
-    est => est.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const filteredCocktails = cocktails.filter(
-    cocktail => cocktail.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredEstablishments = establishmentsActions.filterItems(dashboardState.searchTerm);
+  const filteredCocktails = cocktailsActions.filterItems(dashboardState.searchTerm);
 
   const pageConfig: AdminPageConfig = {
     title: 'Dashboard',
@@ -86,48 +79,6 @@ const AdminDashboard: React.FC = () => {
     showBreadcrumbs: true,
     maxWidth: 'xl'
   };
-
-  const pageActions: AdminPageAction[] = [
-    {
-      label: 'Add New',
-      icon: Plus,
-      onClick: handleAddNew,
-      variant: 'default'
-    },
-    {
-      label: 'Export Data',
-      icon: Download,
-      onClick: handleExport,
-      variant: 'outline'
-    },
-    {
-      label: 'Refresh',
-      icon: RefreshCw,
-      onClick: handleRefresh,
-      variant: 'ghost'
-    }
-  ];
-
-  const tabConfigs: AdminTabConfig[] = [
-    {
-      value: 'establishments',
-      label: 'Establishments',
-      badge: establishments.length
-    },
-    {
-      value: 'cocktails',
-      label: 'Cocktails',
-      badge: cocktails.length
-    },
-    {
-      value: 'promotions',
-      label: 'Promotions'
-    },
-    {
-      value: 'reviews',
-      label: 'Reviews'
-    }
-  ];
 
   return (
     <AdminPageLayout config={pageConfig} actions={pageActions}>
@@ -141,15 +92,15 @@ const AdminDashboard: React.FC = () => {
 
       <div className="mb-6">
         <SearchToolbar 
-          searchTerm={searchTerm} 
-          onSearchChange={setSearchTerm} 
+          searchTerm={dashboardState.searchTerm} 
+          onSearchChange={dashboardActions.setSearchTerm} 
         />
       </div>
 
       <AdminTabs 
-        tabs={tabConfigs}
-        value={activeTab}
-        onValueChange={setActiveTab}
+        tabs={navigationConfig.tabs}
+        value={dashboardState.activeTab}
+        onValueChange={dashboardActions.setActiveTab}
       >
         <AdminTabContent value="establishments">
           <EstablishmentsTable 
