@@ -3,13 +3,14 @@ import { useAuth as useSupabaseAuth } from '@/contexts/auth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import type { AuthState as ContextAuthState, AuthActions as ContextAuthActions } from '@/contexts/auth/types';
+import type { SwitchableUserRole, UserRole } from '@/types/userRole';
 
 // Simplified interface that aligns with the existing auth context
 export interface AuthState {
   user: any;
   isLoading: boolean;
   isAuthenticated: boolean;
-  userType: 'individual' | 'establishment' | 'promoter' | 'admin';
+  userType: UserRole;
   error: string | null;
 }
 
@@ -19,7 +20,7 @@ export interface AuthActions {
   signup: (email: string, password: string, userData?: any) => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   updateProfile: (updates: any) => Promise<void>;
-  switchRole: (role: 'individual' | 'establishment' | 'promoter' | 'admin') => Promise<void>;
+  switchRole: (role: SwitchableUserRole) => Promise<void>;
 }
 
 export function useAuth(): { state: AuthState; actions: AuthActions } {
@@ -29,7 +30,7 @@ export function useAuth(): { state: AuthState; actions: AuthActions } {
   const [error, setError] = useState<string | null>(null);
 
   // Ensure userType is properly typed by providing a fallback
-  const getUserType = (): 'individual' | 'establishment' | 'promoter' | 'admin' => {
+  const getUserType = (): UserRole => {
     if (!auth.userType) return 'individual';
     // Ensure the userType matches our expected union type
     const validTypes = ['individual', 'establishment', 'promoter', 'admin'] as const;
@@ -145,9 +146,15 @@ export function useAuth(): { state: AuthState; actions: AuthActions } {
     }
   }, [auth.updateUserProfile, toast]);
 
-  const switchRole = useCallback(async (role: 'individual' | 'establishment' | 'promoter' | 'admin') => {
+  const switchRole = useCallback(async (role: SwitchableUserRole) => {
     try {
       setError(null);
+      
+      // Check if role is actually switchable
+      if (!['individual', 'establishment', 'promoter'].includes(role)) {
+        throw new Error('Admin role cannot be switched to via role switching');
+      }
+      
       // Use Supabase RPC function for role switching if available
       const { error } = await supabase.rpc('switch_active_role', { 
         role_to_activate: role 

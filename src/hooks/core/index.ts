@@ -28,3 +28,14 @@ export type {
   NotificationState, 
   NotificationActions 
 } from './useNotifications';
+
+// Re-export user role types for convenience
+export type { 
+  UserRole, 
+  SwitchableUserRole 
+} from '@/types/userRole';
+
+export { 
+  isSwitchableRole, 
+  getRoleDisplayName 
+} from '@/types/userRole';
