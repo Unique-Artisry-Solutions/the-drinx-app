@@ -1,18 +1,14 @@
 
 export * from './databaseStatusUpdater';
 export * from './featureAnalyzer';
-export * from './swigCircuitAnalyzer';
 export * from './promoterSystemAnalyzer';
 export * from './rewardSystemAnalyzer';
 export * from './audienceRelationshipAnalyzer';
 
-// Re-export the analyzeDatabaseStatus function from databaseStatusUpdater
+// Re-export specific functions with clear names
 export { updateFeaturesDbStatus as analyzeDatabaseStatus } from './databaseStatusUpdater';
-// Re-export the analyzeSwigCircuitRequirements function
-export { analyzeSwigCircuitRequirements as analyzeSwigCircuitSystem } from './swigCircuitAnalyzer';
-// Re-export the analyzePromoterSystem function
 export { analyzePromoterSystem } from './promoterSystemAnalyzer';
-// Re-export the analyzeRewardSystem function
 export { analyzeRewardSystem } from './rewardSystemAnalyzer';
-// Re-export the analyzeAudienceRelationshipSystem function
 export { analyzeAudienceRelationshipSystem } from './audienceRelationshipAnalyzer';
+
+// Don't re-export analyzeSwigCircuitSystem to avoid conflicts - it's defined locally where needed
