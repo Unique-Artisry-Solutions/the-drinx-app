@@ -24,13 +24,13 @@ const MarketingCampaignModal: React.FC<MarketingCampaignModalProps> = ({
   campaign
 }) => {
   const [formData, setFormData] = useState<Partial<EventMarketingCampaign>>({
-    name: campaign?.name || '',
-    description: campaign?.description || '',
-    campaign_type: campaign?.campaign_type || 'email',
-    status: campaign?.status || 'draft',
-    budget: campaign?.budget || undefined,
-    start_date: campaign?.start_date || undefined,
-    end_date: campaign?.end_date || undefined,
+    name: campaign?.name ?? '',
+    description: campaign?.description ?? '',
+    campaign_type: campaign?.campaign_type ?? 'email',
+    status: campaign?.status ?? 'draft',
+    budget: campaign?.budget ?? undefined,
+    start_date: campaign?.start_date ?? undefined,
+    end_date: campaign?.end_date ?? undefined,
     ...campaign
   });
 
@@ -65,7 +65,7 @@ const MarketingCampaignModal: React.FC<MarketingCampaignModalProps> = ({
             <Label htmlFor="name">Campaign Name</Label>
             <Input
               id="name"
-              value={formData.name || ''}
+              value={formData.name ?? ''}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               placeholder="Enter campaign name"
             />
@@ -75,7 +75,7 @@ const MarketingCampaignModal: React.FC<MarketingCampaignModalProps> = ({
             <Label htmlFor="description">Description</Label>
             <Textarea
               id="description"
-              value={formData.description || ''}
+              value={formData.description ?? ''}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               placeholder="Enter campaign description"
             />
@@ -124,7 +124,7 @@ const MarketingCampaignModal: React.FC<MarketingCampaignModalProps> = ({
             <Input
               id="budget"
               type="number"
-              value={formData.budget || ''}
+              value={formData.budget ?? ''}
               onChange={(e) => setFormData({ 
                 ...formData, 
                 budget: e.target.value ? Number(e.target.value) : undefined 

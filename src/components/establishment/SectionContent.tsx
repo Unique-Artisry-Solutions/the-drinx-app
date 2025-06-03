@@ -32,7 +32,7 @@ const SectionContent: React.FC<SectionContentProps> = ({
     case 'analytics':
       return <AnalyticsSection 
         visitorStats={visitorStats}
-        establishmentId={establishmentId || ''} 
+        establishmentId={establishmentId ?? ''} 
       />;
     case 'settings':
       return <SettingsSection handleTabChange={handleTabChange} />;
