@@ -1,80 +1,79 @@
 
 /**
- * Component Safety Layer
- * Type guards, safe getters, and adapters for reliable component rendering
+ * Component safety utilities for preventing crashes from malformed data
  */
 
-import { User, Establishment, Event, Cocktail, BarCrawl } from '@/types/CoreTypes';
-import { EventAttendee, EventTicketType } from '@/types/EventTypes';
+import { 
+  User, 
+  Establishment, 
+  Event, 
+  Cocktail, 
+  BarCrawl,
+  EstablishmentCard,
+  EventCard,
+  UserProfile
+} from '@/types/CoreTypes';
 
-// =============================================================================
-// TYPE GUARDS
-// =============================================================================
-
+// Type guards for core entities
 export const isValidUser = (user: any): user is User => {
-  return user && typeof user === 'object' && typeof user.id === 'string';
+  return user && 
+    typeof user === 'object' && 
+    typeof user.id === 'string' && 
+    typeof user.name === 'string';
 };
 
 export const isValidEstablishment = (establishment: any): establishment is Establishment => {
   return establishment && 
-         typeof establishment === 'object' && 
-         typeof establishment.id === 'string' &&
-         typeof establishment.name === 'string' &&
-         typeof establishment.address === 'string' &&
-         typeof establishment.latitude === 'number' &&
-         typeof establishment.longitude === 'number';
+    typeof establishment === 'object' && 
+    typeof establishment.id === 'string' && 
+    typeof establishment.name === 'string' && 
+    typeof establishment.address === 'string' &&
+    typeof establishment.latitude === 'number' &&
+    typeof establishment.longitude === 'number';
 };
 
 export const isValidEvent = (event: any): event is Event => {
   return event && 
-         typeof event === 'object' && 
-         typeof event.id === 'string' &&
-         typeof event.name === 'string' &&
-         typeof event.date === 'string' &&
-         typeof event.time === 'string';
+    typeof event === 'object' && 
+    typeof event.id === 'string' && 
+    typeof event.name === 'string' &&
+    typeof event.date === 'string' &&
+    typeof event.time === 'string' &&
+    typeof event.created_by === 'string';
 };
 
 export const isValidCocktail = (cocktail: any): cocktail is Cocktail => {
   return cocktail && 
-         typeof cocktail === 'object' && 
-         typeof cocktail.id === 'string' &&
-         typeof cocktail.name === 'string' &&
-         (typeof cocktail.price === 'number' || typeof cocktail.price === 'string');
+    typeof cocktail === 'object' && 
+    typeof cocktail.id === 'string' && 
+    typeof cocktail.name === 'string' &&
+    (typeof cocktail.price === 'number' || typeof cocktail.price === 'string');
 };
 
 export const isValidBarCrawl = (barCrawl: any): barCrawl is BarCrawl => {
   return barCrawl && 
-         typeof barCrawl === 'object' && 
-         typeof barCrawl.id === 'string' &&
-         typeof barCrawl.name === 'string' &&
-         typeof barCrawl.organizer === 'string' &&
-         typeof barCrawl.startDate === 'string' &&
-         typeof barCrawl.endDate === 'string';
+    typeof barCrawl === 'object' && 
+    typeof barCrawl.id === 'string' && 
+    typeof barCrawl.name === 'string' &&
+    typeof barCrawl.organizer === 'string' &&
+    typeof barCrawl.startDate === 'string' &&
+    typeof barCrawl.endDate === 'string' &&
+    Array.isArray(barCrawl.establishments);
 };
 
-export const isValidEventAttendee = (attendee: any): attendee is EventAttendee => {
-  return attendee && 
-         typeof attendee === 'object' && 
-         typeof attendee.event_id === 'string' &&
-         typeof attendee.status === 'string';
-};
-
-// =============================================================================
-// SAFE GETTERS WITH DEFAULTS
-// =============================================================================
-
+// Safe getters with defaults
 export const safeGetUser = (user: any): User => {
   if (isValidUser(user)) {
     return {
       id: user.id,
-      name: user.name || 'Unknown User',
-      display_name: user.display_name,
-      username: user.username,
-      email: user.email,
-      avatar: user.avatar,
-      avatar_url: user.avatar_url,
-      bio: user.bio,
-      phone: user.phone,
+      name: user.name,
+      email: user.email || '',
+      display_name: user.display_name || user.name,
+      username: user.username || user.name.toLowerCase().replace(/\s+/g, ''),
+      avatar: user.avatar || user.avatar_url || '',
+      avatar_url: user.avatar_url || user.avatar || '',
+      bio: user.bio || '',
+      phone: user.phone || '',
       user_type: user.user_type || 'individual',
       email_notifications: user.email_notifications ?? true,
       push_notifications: user.push_notifications ?? true,
@@ -82,10 +81,11 @@ export const safeGetUser = (user: any): User => {
       updated_at: user.updated_at
     };
   }
-
+  
   return {
-    id: user?.id || 'unknown',
+    id: 'unknown',
     name: 'Unknown User',
+    email: '',
     user_type: 'individual',
     email_notifications: true,
     push_notifications: true
@@ -100,30 +100,31 @@ export const safeGetEstablishment = (establishment: any): Establishment => {
       address: establishment.address,
       latitude: establishment.latitude,
       longitude: establishment.longitude,
-      phone: establishment.phone,
-      website: establishment.website,
-      bio: establishment.bio,
-      description: establishment.description,
-      image: establishment.image,
-      image_url: establishment.image_url,
+      phone: establishment.phone || '',
+      website: establishment.website || '',
+      bio: establishment.bio || '',
+      description: establishment.description || establishment.bio || '',
+      image: establishment.image || establishment.image_url || '',
+      image_url: establishment.image_url || establishment.image || '',
       cocktail_count: establishment.cocktail_count || establishment.cocktailCount || 0,
       cocktailCount: establishment.cocktailCount || establishment.cocktail_count || 0,
-      distance: establishment.distance,
-      distance_in_miles: establishment.distance_in_miles,
-      distanceValue: establishment.distanceValue,
+      distance: establishment.distance || '',
+      distance_in_miles: establishment.distance_in_miles || establishment.distanceValue || 0,
+      distanceValue: establishment.distanceValue || establishment.distance_in_miles || 0,
       created_at: establishment.created_at,
       updated_at: establishment.updated_at
     };
   }
-
+  
   return {
-    id: establishment?.id || 'unknown',
-    name: establishment?.name || 'Unknown Establishment',
-    address: establishment?.address || 'Address not available',
-    latitude: establishment?.latitude || 0,
-    longitude: establishment?.longitude || 0,
+    id: 'unknown',
+    name: 'Unknown Establishment',
+    address: 'Address not available',
+    latitude: 0,
+    longitude: 0,
     cocktail_count: 0,
-    cocktailCount: 0
+    cocktailCount: 0,
+    distance: 'Unknown'
   };
 };
 
@@ -132,38 +133,39 @@ export const safeGetEvent = (event: any): Event => {
     return {
       id: event.id,
       name: event.name,
-      description: event.description,
+      description: event.description || '',
       date: event.date,
       time: event.time,
       created_by: event.created_by,
-      venue_id: event.venue_id,
-      image_url: event.image_url,
+      venue_id: event.venue_id || '',
+      image_url: event.image_url || '',
       promotional_materials: event.promotional_materials || [],
       status: event.status || 'draft',
-      capacity: event.capacity,
-      event_type: event.event_type,
-      event_url: event.event_url,
+      capacity: event.capacity || 0,
+      event_type: event.event_type || '',
+      event_url: event.event_url || '',
       is_public: event.is_public ?? true,
       location_details: event.location_details,
       contact_info: event.contact_info,
       custom_settings: event.custom_settings || {},
       venue: event.venue,
-      distance: event.distance,
-      attendees: event.attendees,
+      distance: event.distance || 0,
+      attendees: event.attendees || { registered: 0 },
       created_at: event.created_at,
       updated_at: event.updated_at
     };
   }
-
+  
   return {
-    id: event?.id || 'unknown',
-    name: event?.name || 'Unknown Event',
-    date: event?.date || new Date().toISOString().split('T')[0],
-    time: event?.time || '00:00',
-    created_by: event?.created_by || 'unknown',
+    id: 'unknown',
+    name: 'Unknown Event',
+    description: '',
+    date: new Date().toISOString().split('T')[0],
+    time: '00:00',
+    created_by: 'unknown',
     status: 'draft',
-    promotional_materials: [],
-    custom_settings: {}
+    is_public: false,
+    attendees: { registered: 0 }
   };
 };
 
@@ -173,20 +175,20 @@ export const safeGetCocktail = (cocktail: any): Cocktail => {
       id: cocktail.id,
       name: cocktail.name,
       price: cocktail.price,
-      description: cocktail.description,
-      image_url: cocktail.image_url,
-      ingredients: cocktail.ingredients,
-      establishment_id: cocktail.establishment_id,
-      establishment: cocktail.establishment,
+      description: cocktail.description || '',
+      image_url: cocktail.image_url || '',
+      ingredients: cocktail.ingredients || {},
+      establishment_id: cocktail.establishment_id || '',
+      establishment: cocktail.establishment || '',
       created_at: cocktail.created_at
     };
   }
-
+  
   return {
-    id: cocktail?.id || 'unknown',
-    name: cocktail?.name || 'Unknown Cocktail',
-    price: cocktail?.price || 0,
-    establishment: cocktail?.establishment || 'Unknown Establishment'
+    id: 'unknown',
+    name: 'Unknown Cocktail',
+    price: 0,
+    establishment: 'Unknown Establishment'
   };
 };
 
@@ -198,169 +200,178 @@ export const safeGetBarCrawl = (barCrawl: any): BarCrawl => {
       organizer: barCrawl.organizer,
       startDate: barCrawl.startDate,
       endDate: barCrawl.endDate,
-      description: barCrawl.description,
-      imageUrl: barCrawl.imageUrl,
+      description: barCrawl.description || '',
+      imageUrl: barCrawl.imageUrl || '',
       establishments: barCrawl.establishments || [],
       invitedUsers: barCrawl.invitedUsers || [],
       status: barCrawl.status || 'planned',
       created_at: barCrawl.created_at
     };
   }
-
+  
   return {
-    id: barCrawl?.id || 'unknown',
-    name: barCrawl?.name || 'Unknown Bar Crawl',
-    organizer: barCrawl?.organizer || 'Unknown Organizer',
-    startDate: barCrawl?.startDate || new Date().toISOString().split('T')[0],
-    endDate: barCrawl?.endDate || new Date().toISOString().split('T')[0],
+    id: 'unknown',
+    name: 'Unknown Bar Crawl',
+    organizer: 'Unknown',
+    startDate: new Date().toISOString().split('T')[0],
+    endDate: new Date().toISOString().split('T')[0],
     establishments: [],
-    invitedUsers: [],
     status: 'planned'
   };
 };
 
-// =============================================================================
-// COMPONENT-SPECIFIC TYPE ADAPTERS
-// =============================================================================
-
-export interface SafeEstablishmentCardProps {
-  establishment: Establishment;
-  distance?: string;
-  cocktailCount?: number;
-  onClick?: () => void;
-}
-
-export const adaptToEstablishmentCard = (establishment: any): SafeEstablishmentCardProps => {
-  const safeEst = safeGetEstablishment(establishment);
-  
+// Component-specific adapters
+export const adaptToEstablishmentCard = (establishment: any): EstablishmentCard => {
+  const safe = safeGetEstablishment(establishment);
   return {
-    establishment: safeEst,
-    distance: safeEst.distance || 
-             (safeEst.distance_in_miles ? `${safeEst.distance_in_miles.toFixed(1)} mi` : undefined),
-    cocktailCount: safeEst.cocktailCount || safeEst.cocktail_count || 0
+    id: safe.id,
+    name: safe.name,
+    address: safe.address,
+    cocktailCount: safe.cocktailCount,
+    image: safe.image,
+    distance: safe.distance
   };
 };
 
-export interface SafeEventCardProps {
-  event: Event;
-  venue?: { id: string; name: string; address?: string };
-  distance?: number;
-  attendees?: { registered: number; checked_in?: number; capacity?: number };
-}
-
-export const adaptToEventCard = (event: any): SafeEventCardProps => {
-  const safeEvent = safeGetEvent(event);
-  
+export const adaptToEventCard = (event: any): EventCard => {
+  const safe = safeGetEvent(event);
   return {
-    event: safeEvent,
-    venue: safeEvent.venue || (safeEvent.venue_id ? { 
-      id: safeEvent.venue_id, 
-      name: 'Unknown Venue' 
-    } : undefined),
-    distance: safeEvent.distance,
-    attendees: safeEvent.attendees
+    id: safe.id,
+    name: safe.name,
+    date: safe.date,
+    image_url: safe.image_url,
+    description: safe.description,
+    venue: safe.venue
   };
 };
 
-export interface SafeUserProfileProps {
-  user: User;
-  isCurrentUser?: boolean;
-  showContactInfo?: boolean;
-}
-
-export const adaptToUserProfile = (user: any, isCurrentUser = false): SafeUserProfileProps => {
+export const adaptToUserProfile = (user: any): UserProfile => {
+  const safe = safeGetUser(user);
   return {
-    user: safeGetUser(user),
-    isCurrentUser,
-    showContactInfo: isCurrentUser
+    id: safe.id,
+    name: safe.name,
+    avatar: safe.avatar,
+    bio: safe.bio,
+    user_type: safe.user_type
   };
 };
 
-// =============================================================================
-// ARRAY SAFETY HELPERS
-// =============================================================================
-
-export const safeArray = <T>(arr: any, validator: (item: any) => item is T): T[] => {
-  if (!Array.isArray(arr)) return [];
-  return arr.filter(validator);
-};
-
+// Array safety utilities
 export const safeEstablishmentArray = (establishments: any[]): Establishment[] => {
-  return safeArray(establishments, isValidEstablishment);
+  if (!Array.isArray(establishments)) return [];
+  return establishments
+    .filter(est => est && typeof est === 'object')
+    .map(est => safeGetEstablishment(est))
+    .filter(est => est.id !== 'unknown');
 };
 
 export const safeEventArray = (events: any[]): Event[] => {
-  return safeArray(events, isValidEvent);
-};
-
-export const safeCocktailArray = (cocktails: any[]): Cocktail[] => {
-  return safeArray(cocktails, isValidCocktail);
+  if (!Array.isArray(events)) return [];
+  return events
+    .filter(event => event && typeof event === 'object')
+    .map(event => safeGetEvent(event))
+    .filter(event => event.id !== 'unknown');
 };
 
 export const safeUserArray = (users: any[]): User[] => {
-  return safeArray(users, isValidUser);
+  if (!Array.isArray(users)) return [];
+  return users
+    .filter(user => user && typeof user === 'object')
+    .map(user => safeGetUser(user))
+    .filter(user => user.id !== 'unknown');
 };
 
-// =============================================================================
-// PROPERTY ACCESS SAFETY
-// =============================================================================
+export const safeCocktailArray = (cocktails: any[]): Cocktail[] => {
+  if (!Array.isArray(cocktails)) return [];
+  return cocktails
+    .filter(cocktail => cocktail && typeof cocktail === 'object')
+    .map(cocktail => safeGetCocktail(cocktail))
+    .filter(cocktail => cocktail.id !== 'unknown');
+};
 
-export const safeAccess = <T>(obj: any, path: string, defaultValue: T): T => {
+export const safeBarCrawlArray = (barCrawls: any[]): BarCrawl[] => {
+  if (!Array.isArray(barCrawls)) return [];
+  return barCrawls
+    .filter(barCrawl => barCrawl && typeof barCrawl === 'object')
+    .map(barCrawl => safeGetBarCrawl(barCrawl))
+    .filter(barCrawl => barCrawl.id !== 'unknown');
+};
+
+// Property access safety
+export const safeGet = <T>(obj: any, path: string, defaultValue: T): T => {
   try {
     const keys = path.split('.');
     let current = obj;
     
     for (const key of keys) {
-      if (current === null || current === undefined || typeof current !== 'object') {
+      if (current == null || typeof current !== 'object') {
         return defaultValue;
       }
       current = current[key];
     }
     
     return current !== undefined ? current : defaultValue;
-  } catch {
+  } catch (error) {
+    console.warn(`safeGet error for path ${path}:`, error);
     return defaultValue;
   }
 };
 
-export const safeString = (value: any, defaultValue = ''): string => {
-  return typeof value === 'string' ? value : defaultValue;
+// String safety
+export const safeString = (value: any, fallback = ''): string => {
+  if (typeof value === 'string') return value;
+  if (value == null) return fallback;
+  try {
+    return String(value);
+  } catch {
+    return fallback;
+  }
 };
 
-export const safeNumber = (value: any, defaultValue = 0): number => {
-  const num = Number(value);
-  return isNaN(num) ? defaultValue : num;
+// Number safety
+export const safeNumber = (value: any, fallback = 0): number => {
+  if (typeof value === 'number' && !isNaN(value)) return value;
+  if (typeof value === 'string') {
+    const parsed = parseFloat(value);
+    return !isNaN(parsed) ? parsed : fallback;
+  }
+  return fallback;
 };
 
-export const safeBoolean = (value: any, defaultValue = false): boolean => {
-  return typeof value === 'boolean' ? value : defaultValue;
+// Boolean safety
+export const safeBoolean = (value: any, fallback = false): boolean => {
+  if (typeof value === 'boolean') return value;
+  if (value === 'true') return true;
+  if (value === 'false') return false;
+  return fallback;
 };
 
-// =============================================================================
-// COMPONENT RENDER GUARDS
-// =============================================================================
-
-export const withSafeProps = <T extends Record<string, any>>(
-  Component: React.ComponentType<T>,
-  propValidators: Partial<Record<keyof T, (value: any) => boolean>>,
-  fallbackComponent?: React.ComponentType<any>
-) => {
-  return (props: T) => {
-    const isValid = Object.entries(propValidators).every(([key, validator]) => {
-      const value = props[key as keyof T];
-      return validator ? validator(value) : true;
-    });
-
-    if (!isValid && fallbackComponent) {
-      const FallbackComponent = fallbackComponent;
-      return <FallbackComponent />;
+// Date safety
+export const safeDate = (value: any, fallback?: Date): Date => {
+  try {
+    if (value instanceof Date) return value;
+    if (typeof value === 'string' || typeof value === 'number') {
+      const date = new Date(value);
+      return isNaN(date.getTime()) ? (fallback || new Date()) : date;
     }
+    return fallback || new Date();
+  } catch {
+    return fallback || new Date();
+  }
+};
 
-    if (!isValid) {
-      console.warn('Component received invalid props:', props);
-      return null;
+// Error boundary helpers
+export const withErrorBoundary = <T>(
+  operation: () => T,
+  fallback: T,
+  errorMessage?: string
+): T => {
+  try {
+    return operation();
+  } catch (error) {
+    if (errorMessage) {
+      console.warn(errorMessage, error);
     }
-
-    return <Component {...props} />;
-  };
+    return fallback;
+  }
 };
