@@ -14,11 +14,11 @@ export interface SimpleAdminState<T> {
 export interface SimpleAdminActions<T> {
   setPage: (page: number) => void;
   setLimit: (limit: number) => void;
-  setSearchTerm: (term: string) => void;
+  setSearch: (term: string) => void;
   refresh: () => void;
   create: (item: Omit<T, 'id'>) => Promise<void>;
   update: (id: string, updates: Partial<T>) => Promise<void>;
-  delete: (id: string) => Promise<void>;
+  deleteItem: (id: string) => Promise<void>;
   bulkDelete: (ids: string[]) => Promise<void>;
 }
 
@@ -33,15 +33,15 @@ export function useSimpleAdmin<T extends { id: string; name?: string }>(
     searchFields: ['name' as keyof T]
   });
 
-  // Map core actions to simple admin interface
+  // Map core actions to simple admin interface with correct method names
   const simpleActions: SimpleAdminActions<T> = {
     setPage: actions.setPage,
     setLimit: actions.setLimit,
-    setSearchTerm: actions.setSearchTerm,
+    setSearch: actions.setSearchTerm,
     refresh: () => actions.refresh(),
     create: actions.create,
     update: actions.update,
-    delete: actions.delete,
+    deleteItem: actions.delete,
     bulkDelete: actions.bulkDelete
   };
 
