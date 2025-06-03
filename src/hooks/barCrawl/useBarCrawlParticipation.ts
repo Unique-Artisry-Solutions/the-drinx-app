@@ -1,41 +1,25 @@
 
-import { useState } from 'react';
 import { useAuth } from '@/contexts/auth';
 import { useBarCrawlStatus } from './useBarCrawlStatus';
 import { useBarCrawlJoin } from './useBarCrawlJoin';
 import { useBarCrawlLeave } from './useBarCrawlLeave';
 import { UseBarCrawlParticipationProps } from './types';
-import { BarCrawlRepositoryFactory } from '@/repositories/RepositoryFactory';
 
 /**
- * Initialize the repository type when the app starts
- */
-// Auto-detect the best repository type
-BarCrawlRepositoryFactory.autoDetectRepositoryType();
-
-/**
- * Hook for managing user participation in a bar crawl (Swig Circuit).
- * Combines status checking, joining, and leaving functionality.
- * Uses repository pattern for database abstraction.
- * 
- * @param props - The hook properties
- * @returns Object containing participation state and functions
+ * Combined hook for managing bar crawl participation.
+ * Provides status checking, joining, and leaving functionality.
  */
 export const useBarCrawlParticipation = ({ barCrawlId }: UseBarCrawlParticipationProps) => {
   const { user } = useAuth();
-  const [operationError, setOperationError] = useState<string | null>(null);
   
-  // Use the status checking hook
+  // Status check
   const { 
     isCheckingStatus, 
     isJoined, 
     error: statusError 
-  } = useBarCrawlStatus({ 
-    barCrawlId, 
-    user 
-  });
+  } = useBarCrawlStatus({ barCrawlId, user });
   
-  // Use the join hook
+  // Join functionality
   const { 
     isLoading: isJoining, 
     error: joinError, 
@@ -43,10 +27,13 @@ export const useBarCrawlParticipation = ({ barCrawlId }: UseBarCrawlParticipatio
   } = useBarCrawlJoin({ 
     barCrawlId, 
     user, 
-    onSuccess: () => { } // Handled by status check
+    onSuccess: () => {
+      // Refresh status by calling the status hook again
+      window.location.reload(); // Simple refresh for now
+    }
   });
   
-  // Use the leave hook
+  // Leave functionality
   const { 
     isLoading: isLeaving, 
     error: leaveError, 
@@ -54,21 +41,21 @@ export const useBarCrawlParticipation = ({ barCrawlId }: UseBarCrawlParticipatio
   } = useBarCrawlLeave({ 
     barCrawlId, 
     user, 
-    onSuccess: () => { } // Handled by status check
+    onSuccess: () => {
+      // Refresh status by calling the status hook again
+      window.location.reload(); // Simple refresh for now
+    }
   });
 
-  // Combine loading states
   const isLoading = isJoining || isLeaving;
-  
-  // Combine error states
-  const error = operationError || statusError || joinError || leaveError;
-  
+  const error = statusError || joinError || leaveError;
+
   return {
-    isLoading,          // Whether a join/leave operation is in progress
-    isCheckingStatus,   // Whether the initial status check is in progress
-    isJoined,           // Whether the user has joined this bar crawl
-    error,              // Any error that occurred during operations
-    handleJoin,         // Function to join the bar crawl
-    handleLeave,        // Function to leave the bar crawl
+    isLoading,
+    isCheckingStatus,
+    isJoined,
+    error,
+    handleJoin,
+    handleLeave
   };
 };

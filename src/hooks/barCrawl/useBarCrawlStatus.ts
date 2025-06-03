@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { User } from '@supabase/supabase-js';
-import { BarCrawlRepositoryFactory } from '@/repositories/RepositoryFactory';
+import { supabase } from '@/integrations/supabase/client';
 
 interface UseBarCrawlStatusProps {
   barCrawlId: string;
@@ -10,7 +10,7 @@ interface UseBarCrawlStatusProps {
 
 /**
  * Hook to check if a user is participating in a bar crawl.
- * Uses the repository pattern for data access.
+ * Uses direct Supabase calls for data access.
  */
 export const useBarCrawlStatus = ({ barCrawlId, user }: UseBarCrawlStatusProps) => {
   const [isCheckingStatus, setIsCheckingStatus] = useState(true);
@@ -28,12 +28,18 @@ export const useBarCrawlStatus = ({ barCrawlId, user }: UseBarCrawlStatusProps) 
       setError(null);
       
       try {
-        // Get the repository
-        const repository = BarCrawlRepositoryFactory.getBarCrawlParticipationRepository();
-        
-        // Check if the user is participating
-        const participating = await repository.isUserParticipating(user.id, barCrawlId);
-        setIsJoined(participating);
+        const { data, error } = await supabase
+          .from('user_bar_crawl_participation')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('bar_crawl_id', barCrawlId)
+          .single();
+
+        if (error && error.code !== 'PGRST116') { // PGRST116 is "not found" error
+          throw error;
+        }
+
+        setIsJoined(!!data);
       } catch (err: any) {
         console.error('Failed to check participation:', err);
         setError(`Failed to check participation: ${err.message}`);

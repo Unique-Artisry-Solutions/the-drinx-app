@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { User } from '@supabase/supabase-js';
 import { useToast } from '@/hooks/use-toast';
-import { BarCrawlRepositoryFactory } from '@/repositories/RepositoryFactory';
+import { supabase } from '@/integrations/supabase/client';
 
 interface UseBarCrawlLeaveProps {
   barCrawlId: string;
@@ -12,7 +12,7 @@ interface UseBarCrawlLeaveProps {
 
 /**
  * Hook for handling leaving a bar crawl.
- * Uses the repository pattern for data access.
+ * Uses direct Supabase calls for data access.
  */
 export const useBarCrawlLeave = ({ 
   barCrawlId, 
@@ -35,11 +35,15 @@ export const useBarCrawlLeave = ({
     try {
       console.log('Attempting to leave bar crawl:', crawlId);
       
-      // Get the repository
-      const repository = BarCrawlRepositoryFactory.getBarCrawlParticipationRepository();
-      
-      // Leave the bar crawl
-      await repository.leaveBarCrawl(user.id, crawlId);
+      const { error } = await supabase
+        .from('user_bar_crawl_participation')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('bar_crawl_id', crawlId);
+
+      if (error) {
+        throw error;
+      }
       
       toast({
         title: 'Left Swig Circuit',

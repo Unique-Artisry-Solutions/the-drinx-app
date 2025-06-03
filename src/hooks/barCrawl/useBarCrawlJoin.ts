@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { User } from '@supabase/supabase-js';
 import { useToast } from '@/hooks/use-toast';
-import { BarCrawlRepositoryFactory } from '@/repositories/RepositoryFactory';
+import { supabase } from '@/integrations/supabase/client';
 
 interface UseBarCrawlJoinProps {
   barCrawlId: string;
@@ -12,7 +12,7 @@ interface UseBarCrawlJoinProps {
 
 /**
  * Hook for handling joining a bar crawl.
- * Uses the repository pattern for data access.
+ * Uses direct Supabase calls for data access.
  */
 export const useBarCrawlJoin = ({ 
   barCrawlId, 
@@ -40,11 +40,17 @@ export const useBarCrawlJoin = ({
     try {
       console.log('Attempting to join bar crawl:', barCrawlId);
       
-      // Get the repository
-      const repository = BarCrawlRepositoryFactory.getBarCrawlParticipationRepository();
-      
-      // Join the bar crawl
-      await repository.joinBarCrawl(user.id, barCrawlId);
+      const { error } = await supabase
+        .from('user_bar_crawl_participation')
+        .insert({
+          user_id: user.id,
+          bar_crawl_id: barCrawlId,
+          joined_at: new Date().toISOString()
+        });
+
+      if (error) {
+        throw error;
+      }
       
       // Show success toast
       toast({
