@@ -3,6 +3,7 @@
 
 import { type ClassValue } from "clsx";
 import { cn } from "@/lib/utils";
+import React from "react";
 
 // Standard className merging utility
 export function mergeClassNames(...classes: ClassValue[]) {
@@ -29,12 +30,12 @@ export const maxWidthClasses = {
 
 // Standard loading component
 export const StandardLoadingSpinner = ({ text = 'Loading...' }: { text?: string }) => (
-  <div className="flex items-center justify-center min-h-96">
-    <div className="text-center">
-      <div className="w-12 h-12 border-4 border-gray-300 border-t-blue-600 rounded-full animate-spin mx-auto"></div>
-      <p className="mt-4 text-gray-600">{text}</p>
-    </div>
-  </div>
+  React.createElement('div', { className: "flex items-center justify-center min-h-96" },
+    React.createElement('div', { className: "text-center" },
+      React.createElement('div', { className: "w-12 h-12 border-4 border-gray-300 border-t-blue-600 rounded-full animate-spin mx-auto" }),
+      React.createElement('p', { className: "mt-4 text-gray-600" }, text)
+    )
+  )
 );
 
 // Standard error component
@@ -45,18 +46,14 @@ export const StandardErrorDisplay = ({
   error: string; 
   onRetry?: () => void;
 }) => (
-  <div className="text-center py-8">
-    <h2 className="text-xl font-semibold text-red-600 mb-2">Error</h2>
-    <p className="text-gray-600 mb-4">{error}</p>
-    {onRetry && (
-      <button 
-        onClick={onRetry}
-        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-      >
-        Try Again
-      </button>
-    )}
-  </div>
+  React.createElement('div', { className: "text-center py-8" },
+    React.createElement('h2', { className: "text-xl font-semibold text-red-600 mb-2" }, "Error"),
+    React.createElement('p', { className: "text-gray-600 mb-4" }, error),
+    onRetry && React.createElement('button', { 
+      onClick: onRetry,
+      className: "px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+    }, "Try Again")
+  )
 );
 
 // Standard prop forwarding utility
