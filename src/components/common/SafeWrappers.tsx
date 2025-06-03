@@ -110,7 +110,20 @@ export function SafeRender<T>({
   }
 }
 
-// Higher-order component for safe property access
+// Define interfaces for props that might contain these properties
+interface PropsWithEstablishment {
+  establishment?: any;
+}
+
+interface PropsWithEvent {
+  event?: any;
+}
+
+interface PropsWithUser {
+  user?: any;
+}
+
+// Higher-order component for safe property access with proper type constraints
 export function withSafeProps<P extends Record<string, any>>(
   WrappedComponent: React.ComponentType<P>
 ) {
@@ -119,19 +132,25 @@ export function withSafeProps<P extends Record<string, any>>(
       // Basic validation - ensure props exist and are not null/undefined
       const safeProps = { ...props };
       
-      // Convert any null establishment to safe establishment
-      if ('establishment' in safeProps && safeProps.establishment) {
-        safeProps.establishment = safeGetEstablishment(safeProps.establishment);
+      // Convert any establishment to safe establishment if the prop exists
+      if ('establishment' in safeProps && (safeProps as PropsWithEstablishment).establishment) {
+        (safeProps as PropsWithEstablishment).establishment = safeGetEstablishment(
+          (safeProps as PropsWithEstablishment).establishment
+        );
       }
       
-      // Convert any null event to safe event
-      if ('event' in safeProps && safeProps.event) {
-        safeProps.event = safeGetEvent(safeProps.event);
+      // Convert any event to safe event if the prop exists
+      if ('event' in safeProps && (safeProps as PropsWithEvent).event) {
+        (safeProps as PropsWithEvent).event = safeGetEvent(
+          (safeProps as PropsWithEvent).event
+        );
       }
       
-      // Convert any null user to safe user
-      if ('user' in safeProps && safeProps.user) {
-        safeProps.user = safeGetUser(safeProps.user);
+      // Convert any user to safe user if the prop exists
+      if ('user' in safeProps && (safeProps as PropsWithUser).user) {
+        (safeProps as PropsWithUser).user = safeGetUser(
+          (safeProps as PropsWithUser).user
+        );
       }
       
       return <WrappedComponent {...safeProps} />;

@@ -69,6 +69,30 @@ export interface BaseEvent {
 // Event status type
 export type EventStatus = 'draft' | 'published' | 'cancelled' | 'completed';
 
+// Event ticket type for core Event interface
+export interface EventTicketType {
+  id?: string;
+  event_id?: string;
+  name: string;
+  description: string;
+  price: number;
+  quantity: number;
+  sold?: number;
+  available?: number;
+  created_at?: string;
+  hasLimitedInventory?: boolean;
+  lowInventoryThreshold?: number;
+  hasDynamicPricing?: boolean;
+  pricingTiers?: Array<{
+    id?: string;
+    name: string;
+    startDate?: string;
+    endDate?: string;
+    priceAdjustment: number;
+    adjustmentType: 'percentage' | 'fixed';
+  }>;
+}
+
 // Extended Event with full details
 export interface Event extends BaseEvent {
   description?: string;
@@ -86,6 +110,8 @@ export interface Event extends BaseEvent {
   location_details?: EventLocation;
   contact_info?: EventContactInfo;
   custom_settings?: Record<string, any>;
+  // Ticket information
+  ticketTypes?: EventTicketType[];
   // For compatibility with EventsSection
   venue?: {
     id: string;
