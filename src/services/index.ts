@@ -2,13 +2,18 @@
 // Unified service exports - Phase 8C consolidation
 // Primary entry point for all application services
 
-// Service management
-export { serviceRegistry, type ServiceDependencies } from './ServiceRegistry';
-export { serviceConfig } from './ServiceConfig';
-export { ServiceUtils, type ServiceResponse, type ServiceOptions } from './ServiceUtils';
+// Import utilities and registry first to avoid circular dependencies
+import { ServiceUtils, type ServiceResponse, type ServiceOptions } from './ServiceUtils';
+import { serviceRegistry, type ServiceDependencies } from './ServiceRegistry';
+import { serviceConfig } from './ServiceConfig';
 
 // Core services - primary exports
 export { supabase } from '@/lib/supabase';
+
+// Service management exports
+export { serviceRegistry, type ServiceDependencies } from './ServiceRegistry';
+export { serviceConfig } from './ServiceConfig';
+export { ServiceUtils, type ServiceResponse, type ServiceOptions } from './ServiceUtils';
 
 // Unified service groups
 export { UnifiedPromotionalService as PromotionalService } from './promotional';
@@ -50,7 +55,7 @@ export {
 } from './admin';
 
 // Service initialization helper
-export const initializeServices = async () => {
+export const initializeServices = async (): Promise<ServiceResponse> => {
   try {
     await serviceRegistry.initialize();
     return ServiceUtils.success({ message: 'All services initialized successfully' });
@@ -61,7 +66,7 @@ export const initializeServices = async () => {
 };
 
 // Service health check
-export const checkServiceHealth = async () => {
+export const checkServiceHealth = async (): Promise<ServiceResponse> => {
   try {
     const health = await serviceRegistry.healthCheck();
     return ServiceUtils.success(health);

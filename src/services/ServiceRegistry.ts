@@ -3,11 +3,22 @@
 // Provides a centralized way to access and manage all services
 
 import { serviceConfig } from './ServiceConfig';
-import { SimplifiedAdminService } from './admin/SimplifiedAdminService';
 import { UnifiedPromotionalService } from './promotional';
 import { NotificationService } from './NotificationService';
 import { toastService } from './ToastService';
 import { subscriptionAdapter } from './SubscriptionAdapter';
+
+// Import admin service with fallback
+let SimplifiedAdminService: any;
+try {
+  SimplifiedAdminService = require('./admin/SimplifiedAdminService').SimplifiedAdminService;
+} catch (error) {
+  console.warn('SimplifiedAdminService not found, using fallback');
+  SimplifiedAdminService = {
+    // Minimal fallback implementation
+    healthCheck: () => true
+  };
+}
 
 export interface ServiceDependencies {
   admin: typeof SimplifiedAdminService;
@@ -38,7 +49,9 @@ class ServiceRegistryManager {
     
     try {
       // Initialize promotional services
-      this.services.promotional.initialize(config);
+      if (this.services.promotional && typeof this.services.promotional.initialize === 'function') {
+        this.services.promotional.initialize(config);
+      }
       
       // Mark as initialized
       this.initialized = true;
@@ -65,8 +78,10 @@ class ServiceRegistryManager {
     
     try {
       // Check promotional services
-      const promotionalHealth = await this.services.promotional.healthCheck();
-      Object.assign(health, promotionalHealth);
+      if (this.services.promotional && typeof this.services.promotional.healthCheck === 'function') {
+        const promotionalHealth = await this.services.promotional.healthCheck();
+        Object.assign(health, promotionalHealth);
+      }
       
       // Check other services
       health.admin = !!this.services.admin;

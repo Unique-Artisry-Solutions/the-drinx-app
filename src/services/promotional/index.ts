@@ -5,23 +5,26 @@ import { ReferralService } from './ReferralService';
 import { PricingService } from './PricingService';
 import { UrgencyService } from './UrgencyService';
 
-// Unified promotional service interface
+// Unified promotional service interface - updated to match class structure
 export interface PromotionalOperations {
   affiliate: typeof AffiliateService;
   referral: typeof ReferralService;
   pricing: typeof PricingService;
   urgency: typeof UrgencyService;
+  healthCheck(): Promise<{ [key: string]: boolean }>;
+  initialize(config?: any): void;
 }
 
 // Primary export - consolidated promotional service
 export class UnifiedPromotionalService implements PromotionalOperations {
-  static affiliate = AffiliateService;
-  static referral = ReferralService;
-  static pricing = PricingService;
-  static urgency = UrgencyService;
+  // Service instances as class properties to match interface
+  affiliate = AffiliateService;
+  referral = ReferralService;
+  pricing = PricingService;
+  urgency = UrgencyService;
 
   // Consolidated health check
-  static async healthCheck(): Promise<{ [key: string]: boolean }> {
+  async healthCheck(): Promise<{ [key: string]: boolean }> {
     return {
       affiliate: true,
       referral: true,
@@ -31,6 +34,27 @@ export class UnifiedPromotionalService implements PromotionalOperations {
   }
 
   // Unified initialization
+  initialize(config?: any): void {
+    console.log('Promotional services initialized with config:', config);
+  }
+
+  // Static methods for backward compatibility
+  static affiliate = AffiliateService;
+  static referral = ReferralService;
+  static pricing = PricingService;
+  static urgency = UrgencyService;
+
+  // Static health check for backward compatibility
+  static async healthCheck(): Promise<{ [key: string]: boolean }> {
+    return {
+      affiliate: true,
+      referral: true,
+      pricing: true,
+      urgency: true
+    };
+  }
+
+  // Static initialization for backward compatibility
   static initialize(config?: any): void {
     console.log('Promotional services initialized with config:', config);
   }
