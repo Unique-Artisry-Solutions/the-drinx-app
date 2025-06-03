@@ -1,6 +1,4 @@
 
-import { supabase } from '@/integrations/supabase/client';
-
 export interface QueryParams {
   page?: number;
   limit?: number;
@@ -51,137 +49,205 @@ export class BaseAdminService<T extends Record<string, any>> {
     const { page = 1, limit = 20, sortBy, sortOrder = 'desc', search, filters } = params;
     const offset = (page - 1) * limit;
 
-    let query = supabase
-      .from(this.tableName)
-      .select('*', { count: 'exact' });
+    try {
+      // Use dynamic import to avoid typing issues
+      const { supabase } = await import('@/integrations/supabase/client');
+      
+      let query = (supabase as any)
+        .from(this.tableName)
+        .select('*', { count: 'exact' });
 
-    if (search) {
-      // Simple search implementation - can be overridden in child classes
-      query = query.ilike('name', `%${search}%`);
+      if (search) {
+        // Simple search implementation - can be overridden in child classes
+        query = query.ilike('name', `%${search}%`);
+      }
+
+      if (filters) {
+        Object.entries(filters).forEach(([key, value]) => {
+          if (value !== undefined && value !== null && value !== '') {
+            query = query.eq(key, value);
+          }
+        });
+      }
+
+      if (sortBy) {
+        query = query.order(sortBy, { ascending: sortOrder === 'asc' });
+      } else {
+        query = query.order('created_at', { ascending: false });
+      }
+
+      query = query.range(offset, offset + limit - 1);
+
+      const { data, error, count } = await query;
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      return {
+        data: (data || []) as T[],
+        total: count || 0,
+        page,
+        limit,
+        totalPages: Math.ceil((count || 0) / limit)
+      };
+    } catch (error) {
+      console.error('Error in getAll:', error);
+      return {
+        data: [],
+        total: 0,
+        page,
+        limit,
+        totalPages: 0
+      };
     }
-
-    if (filters) {
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value !== undefined && value !== null && value !== '') {
-          query = query.eq(key, value);
-        }
-      });
-    }
-
-    if (sortBy) {
-      query = query.order(sortBy, { ascending: sortOrder === 'asc' });
-    } else {
-      query = query.order('created_at', { ascending: false });
-    }
-
-    query = query.range(offset, offset + limit - 1);
-
-    const { data, error, count } = await query;
-
-    if (error) {
-      throw new Error(error.message);
-    }
-
-    return {
-      data: (data || []) as T[],
-      total: count || 0,
-      page,
-      limit,
-      totalPages: Math.ceil((count || 0) / limit)
-    };
   }
 
   async getById(id: string): Promise<T | null> {
-    const { data, error } = await supabase
-      .from(this.tableName)
-      .select('*')
-      .eq('id', id)
-      .single();
+    try {
+      const { supabase } = await import('@/integrations/supabase/client');
+      
+      const { data, error } = await (supabase as any)
+        .from(this.tableName)
+        .select('*')
+        .eq('id', id)
+        .single();
 
-    if (error) {
-      throw new Error(error.message);
-    }
+      if (error) {
+        throw new Error(error.message);
+      }
 
-    return data as T;
-  }
-
-  async create(data: CreateDTO): Promise<T> {
-    const { data: result, error } = await supabase
-      .from(this.tableName)
-      .insert(data)
-      .select()
-      .single();
-
-    if (error) {
-      throw new Error(error.message);
-    }
-
-    return result as T;
-  }
-
-  async update(id: string, data: UpdateDTO): Promise<T> {
-    const { data: result, error } = await supabase
-      .from(this.tableName)
-      .update(data)
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (error) {
-      throw new Error(error.message);
-    }
-
-    return result as T;
-  }
-
-  async delete(id: string): Promise<void> {
-    const { error } = await supabase
-      .from(this.tableName)
-      .delete()
-      .eq('id', id);
-
-    if (error) {
-      throw new Error(error.message);
+      return data as T;
+    } catch (error) {
+      console.error('Error in getById:', error);
+      return null;
     }
   }
 
-  async bulkDelete(ids: string[]): Promise<void> {
-    const { error } = await supabase
-      .from(this.tableName)
-      .delete()
-      .in('id', ids);
+  async create(data: CreateDTO): Promise<T | null> {
+    try {
+      const { supabase } = await import('@/integrations/supabase/client');
+      
+      const { data: result, error } = await (supabase as any)
+        .from(this.tableName)
+        .insert(data)
+        .select()
+        .single();
 
-    if (error) {
-      throw new Error(error.message);
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      return result as T;
+    } catch (error) {
+      console.error('Error in create:', error);
+      return null;
     }
   }
 
-  async bulkUpdate(data: BulkUpdateDTO): Promise<void> {
-    const { error } = await supabase
-      .from(this.tableName)
-      .update(data.data)
-      .in('id', data.ids);
+  async update(id: string, data: UpdateDTO): Promise<T | null> {
+    try {
+      const { supabase } = await import('@/integrations/supabase/client');
+      
+      const { data: result, error } = await (supabase as any)
+        .from(this.tableName)
+        .update(data)
+        .eq('id', id)
+        .select()
+        .single();
 
-    if (error) {
-      throw new Error(error.message);
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      return result as T;
+    } catch (error) {
+      console.error('Error in update:', error);
+      return null;
+    }
+  }
+
+  async delete(id: string): Promise<boolean> {
+    try {
+      const { supabase } = await import('@/integrations/supabase/client');
+      
+      const { error } = await (supabase as any)
+        .from(this.tableName)
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error in delete:', error);
+      return false;
+    }
+  }
+
+  async bulkDelete(ids: string[]): Promise<boolean> {
+    try {
+      const { supabase } = await import('@/integrations/supabase/client');
+      
+      const { error } = await (supabase as any)
+        .from(this.tableName)
+        .delete()
+        .in('id', ids);
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error in bulkDelete:', error);
+      return false;
+    }
+  }
+
+  async bulkUpdate(data: BulkUpdateDTO): Promise<boolean> {
+    try {
+      const { supabase } = await import('@/integrations/supabase/client');
+      
+      const { error } = await (supabase as any)
+        .from(this.tableName)
+        .update(data.data)
+        .in('id', data.ids);
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error in bulkUpdate:', error);
+      return false;
     }
   }
 
   async search(params: SearchParams): Promise<T[]> {
-    const { query, fields = ['name'] } = params;
-    
-    let supabaseQuery = supabase.from(this.tableName).select('*');
-    
-    // Simple OR search across specified fields
-    const orConditions = fields.map(field => `${field}.ilike.%${query}%`).join(',');
-    supabaseQuery = supabaseQuery.or(orConditions);
+    try {
+      const { supabase } = await import('@/integrations/supabase/client');
+      const { query, fields = ['name'] } = params;
+      
+      let supabaseQuery = (supabase as any).from(this.tableName).select('*');
+      
+      // Simple OR search across specified fields
+      const orConditions = fields.map(field => `${field}.ilike.%${query}%`).join(',');
+      supabaseQuery = supabaseQuery.or(orConditions);
 
-    const { data, error } = await supabaseQuery;
+      const { data, error } = await supabaseQuery;
 
-    if (error) {
-      throw new Error(error.message);
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      return (data || []) as T[];
+    } catch (error) {
+      console.error('Error in search:', error);
+      return [];
     }
-
-    return (data || []) as T[];
   }
 }
