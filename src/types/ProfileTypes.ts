@@ -4,13 +4,6 @@
  * Centralized type definitions for profile-related components
  */
 
-// Re-export master types to avoid conflicts
-export type { 
-  UserProfile,
-  Establishment,
-  UserRole
-} from './master/index';
-
 import { 
   UserVisit, 
   VisitNote, 
@@ -19,7 +12,7 @@ import {
   UserNotification 
 } from './VisitTypes';
 
-// Basic establishment type with legacy compatibility
+// Basic establishment type
 export interface Establishment {
   id: string;
   name: string;

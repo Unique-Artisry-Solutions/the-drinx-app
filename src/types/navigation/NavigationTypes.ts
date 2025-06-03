@@ -1,52 +1,77 @@
 
+import { ReactNode } from 'react';
+import { LucideIcon } from 'lucide-react';
+
 /**
- * Navigation types using shared base interfaces with consistent naming conventions
- * 
- * Namespace: Navigation
- * Naming Conventions Applied:
- * - Props: Component interfaces
- * - Data: Data structures  
- * - Config: Configuration objects
+ * Enum for different navigation types in the application
  */
-
-import { EnhancedNavItemData, NavDropdownItemData, BaseNavigationProps } from '../shared/NavigationInterfaces';
-
-// ===== NAVIGATION TYPE DEFINITIONS =====
-// Navigation type enum
 export enum NavigationType {
+  GUEST = 'guest',
   USER = 'user',
-  ADMIN = 'admin',
-  GUEST = 'guest'
+  ADMIN = 'admin'
 }
 
-// User type definition for consistent typing
+/**
+ * Standard unified navigation item interface used across the application
+ */
+export interface UnifiedNavItem {
+  label: string;
+  path: string;
+  icon: LucideIcon; // Required field to match AdminNavItem
+  isActive?: boolean;
+  children?: UnifiedNavItem[];
+  onClick?: (e: React.MouseEvent) => void;
+  showInNav?: boolean;
+  dropdown?: {
+    items: {
+      label: string;
+      path: string;
+    }[];
+  };
+}
+
+// Define NavigationItem as an alias to UnifiedNavItem for NavigationContext
+export type NavigationItem = UnifiedNavItem;
+
+// Define AdminNavItem as an alias to UnifiedNavItem for compatibility
+export type AdminNavItem = UnifiedNavItem;
+
+// Export NavItem for use in ProfileItems
+export type NavItem = UnifiedNavItem;
+
+/**
+ * Interface for grouped navigation sections
+ */
+export interface NavSection {
+  title?: string;
+  items: UnifiedNavItem[];
+}
+
+/**
+ * User types for authentication and access control
+ * Matches the auth context userType definition
+ */
 export type UserType = 'individual' | 'establishment' | 'promoter' | 'admin';
 
-// ===== NAVIGATION CONFIG =====
-// Specific navigation configurations with proper naming
-export interface UserNavigationConfig extends BaseNavigationProps {
-  type: NavigationType.USER;
-  userType: UserType;
+/**
+ * Database role types that match the Supabase enum
+ * Note: 'admin' is handled in auth logic but not part of the database enum
+ */
+export type DatabaseRole = 'individual' | 'establishment' | 'promoter';
+
+/**
+ * Breadcrumb item interface for navigation trails
+ */
+export interface BreadcrumbItem {
+  label: string;
+  href?: string;
 }
 
-export interface AdminNavigationConfig extends BaseNavigationProps {
-  type: NavigationType.ADMIN;
-  userType: 'admin';
+/**
+ * Configuration interface for navigation
+ */
+export interface NavigationConfig {
+  enableBreadcrumbs?: boolean;
+  enableActiveTabDetection?: boolean;
+  customNavItems?: NavigationItem[];
 }
-
-export interface GuestNavigationConfig extends BaseNavigationProps {
-  type: NavigationType.GUEST;
-}
-
-// Union type for all navigation configurations
-export type NavigationConfig = UserNavigationConfig | AdminNavigationConfig | GuestNavigationConfig;
-
-// ===== LEGACY COMPATIBILITY =====
-// Re-export the enhanced types for backward compatibility
-/** @deprecated Use EnhancedNavItemData instead */
-export type UnifiedNavItem = EnhancedNavItemData;
-/** @deprecated Use EnhancedNavItemData instead */
-export type NavigationItemType = EnhancedNavItemData;
-
-// Re-export shared types
-export type { NavDropdownItemData as NavDropdownItem };
