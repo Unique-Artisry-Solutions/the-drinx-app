@@ -1,5 +1,6 @@
+
 import React, { useState } from 'react';
-import Layout from '@/components/Layout';
+import { Layout } from '@/components/Layout';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { useEstablishmentProfile } from '@/hooks/establishment/useEstablishmentProfile';
 import MocktailMenuTab from '@/components/establishment/MocktailMenuTab';

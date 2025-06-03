@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { StandardHeaderProps } from './types';
-import StandardPageActions from './StandardPageActions';
+import { StandardPageActions } from './StandardPageActions';
 
 export const StandardPageHeader: React.FC<StandardHeaderProps> = ({
   title,

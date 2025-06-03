@@ -4,7 +4,7 @@ import { useRoleNotifications } from '@/hooks/notifications/useRoleNotifications
 import NotificationsList from '@/pages/notifications/components/NotificationsList';
 import NotificationsHeader from '@/pages/notifications/components/NotificationsHeader';
 import NotificationsLayout from '@/components/notifications/NotificationsLayout';
-import Layout from '@/components/Layout';
+import { Layout } from '@/components/Layout';
 
 export default function EstablishmentNotificationsPage() {
   const { notifications, unreadCount, isLoading, error, markAllAsRead, refetch } = useRoleNotifications();

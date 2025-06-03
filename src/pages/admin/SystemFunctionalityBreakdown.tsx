@@ -1,6 +1,6 @@
 
 import React from 'react';
-import SystemBreakdownContent from '@/components/admin/systemBreakdown/SystemBreakdownContent';
+import { SystemBreakdownContent } from '@/components/admin/systemBreakdown/SystemBreakdownContent';
 
 const SystemFunctionalityBreakdown: React.FC = () => {
   // Add debugging

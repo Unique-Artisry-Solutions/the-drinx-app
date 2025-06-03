@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/auth';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import QRCodeLightbox from '@/components/qrcode/QRCodeLightbox';
-import Layout from '@/components/Layout';
+import { Layout } from '@/components/Layout';
 import TicketsTabContent from '@/components/tickets/TicketsTabContent';
 import NoTicketsView from '@/components/tickets/NoTicketsView';
 import { EventTicket, SwigCircuitAttendeeRaw, SwigCircuitTicket } from '@/types/TicketTypes';

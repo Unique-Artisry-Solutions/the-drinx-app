@@ -2,9 +2,9 @@
 import React from 'react';
 import { StandardLayoutProps } from './types';
 import { mergeClassNames, maxWidthClasses, paddingClasses } from './utils';
-import StandardPageHeader from './StandardPageHeader';
-import StandardPageContent from './StandardPageContent';
-import StandardPageActions from './StandardPageActions';
+import { StandardPageHeader } from './StandardPageHeader';
+import { StandardPageContent } from './StandardPageContent';
+import { StandardPageActions } from './StandardPageActions';
 
 export const StandardPageLayout: React.FC<StandardLayoutProps> = ({
   config,

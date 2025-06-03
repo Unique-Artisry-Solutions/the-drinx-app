@@ -42,7 +42,7 @@ export {
   EyeOff,
   Copy,
   ExternalLink,
-  Refresh,
+  RefreshCw,
   Save,
-  Cancel
+  X as Cancel
 } from 'lucide-react';
