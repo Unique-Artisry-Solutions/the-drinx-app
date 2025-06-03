@@ -1,88 +1,117 @@
 
 import React, { useState } from 'react';
-import { AdminSimplifiedLayout } from '@/components/admin/layout/AdminSimplifiedLayout';
-import { SimpleAdminTable } from '@/components/admin/tables/SimpleAdminTable';
-import { Building2, MapPin } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Trash2, Search, Plus, RefreshCw, MapPin } from 'lucide-react';
+import { useSimpleAdmin } from '@/hooks/admin/useSimpleAdmin';
 
-const mockEstablishments = [
-  { id: '1', name: 'The Tipsy Tavern', address: '123 Main St', cocktailCount: 12, created_at: '2024-01-01' },
-  { id: '2', name: 'Sunset Lounge', address: '456 Beach Ave', cocktailCount: 8, created_at: '2024-01-02' },
-  { id: '3', name: 'The Beer Garden', address: '789 Park Blvd', cocktailCount: 15, created_at: '2024-01-03' },
+interface Establishment {
+  id: string;
+  name: string;
+  address: string;
+  phone: string;
+  status: string;
+  cocktailCount: number;
+}
+
+const mockEstablishments: Establishment[] = [
+  { id: '1', name: 'The Tipsy Tavern', address: '123 Main St', phone: '555-0101', status: 'active', cocktailCount: 12 },
+  { id: '2', name: 'Sunset Lounge', address: '456 Oak Ave', phone: '555-0102', status: 'active', cocktailCount: 8 },
+  { id: '3', name: 'The Beer Garden', address: '789 Pine Rd', phone: '555-0103', status: 'pending', cocktailCount: 15 }
 ];
 
 const SimplifiedAdminEstablishmentsPage: React.FC = () => {
-  const [establishments, setEstablishments] = useState(mockEstablishments);
-  const [isLoading, setIsLoading] = useState(false);
+  const { state, actions } = useSimpleAdmin<Establishment>('establishments', mockEstablishments);
+  const [searchTerm, setSearchTerm] = useState('');
 
-  const deleteEstablishment = (id: string) => {
-    setEstablishments(prev => prev.filter(est => est.id !== id));
+  const handleSearch = (value: string) => {
+    setSearchTerm(value);
+    actions.setSearchTerm(value);
   };
 
-  const bulkDelete = (ids: string[]) => {
-    setEstablishments(prev => prev.filter(est => !ids.includes(est.id)));
-  };
-
-  const handleSearch = (query: string) => {
-    if (!query.trim()) {
-      setEstablishments(mockEstablishments);
-      return;
+  const handleDelete = async (id: string) => {
+    if (confirm('Are you sure you want to delete this establishment?')) {
+      await actions.delete(id);
     }
-    
-    const filtered = mockEstablishments.filter(est => 
-      est.name.toLowerCase().includes(query.toLowerCase()) ||
-      est.address.toLowerCase().includes(query.toLowerCase())
-    );
-    setEstablishments(filtered);
   };
 
-  const columns = [
-    {
-      key: 'name',
-      label: 'Name',
-      render: (value: string, item: any) => (
-        <div className="flex items-center gap-2">
-          <Building2 className="h-4 w-4 text-muted-foreground" />
-          <span className="font-medium">{value}</span>
-        </div>
+  const filteredEstablishments = searchTerm 
+    ? state.items.filter(establishment => 
+        establishment.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        establishment.address.toLowerCase().includes(searchTerm.toLowerCase())
       )
-    },
-    {
-      key: 'address',
-      label: 'Address',
-      render: (value: string) => (
-        <div className="flex items-center gap-1">
-          <MapPin className="h-3 w-3 text-muted-foreground" />
-          <span className="text-sm">{value}</span>
-        </div>
-      )
-    },
-    {
-      key: 'cocktailCount',
-      label: 'Cocktails',
-      render: (value: number) => value?.toString() || '0'
-    },
-    {
-      key: 'created_at',
-      label: 'Created',
-      render: (value: string) => value ? new Date(value).toLocaleDateString() : '-'
-    }
-  ];
+    : state.items;
 
   return (
-    <AdminSimplifiedLayout 
-      title="Establishments Management" 
-      description="Simplified admin interface for establishment management"
-    >
-      <SimpleAdminTable
-        title="Establishments"
-        items={establishments}
-        columns={columns}
-        isLoading={isLoading}
-        onSearch={handleSearch}
-        onDelete={deleteEstablishment}
-        onBulkDelete={bulkDelete}
-      />
-    </AdminSimplifiedLayout>
+    <div className="p-6 space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold">Establishments Management</h1>
+        <div className="flex gap-2">
+          <Button onClick={actions.refresh} variant="outline">
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Refresh
+          </Button>
+          <Button>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Establishment
+          </Button>
+        </div>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Establishment List ({state.total})</CardTitle>
+          <div className="flex gap-4">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search establishments..."
+                value={searchTerm}
+                onChange={(e) => handleSearch(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {state.isLoading ? (
+            <div>Loading...</div>
+          ) : (
+            <div className="space-y-4">
+              {filteredEstablishments.map((establishment) => (
+                <div key={establishment.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex-1">
+                    <div className="font-medium">{establishment.name}</div>
+                    <div className="flex items-center text-sm text-muted-foreground mt-1">
+                      <MapPin className="h-3 w-3 mr-1" />
+                      {establishment.address}
+                    </div>
+                    <div className="text-sm text-muted-foreground">{establishment.phone}</div>
+                    <div className="flex gap-2 mt-2">
+                      <Badge variant={establishment.status === 'active' ? 'default' : 'secondary'}>
+                        {establishment.status}
+                      </Badge>
+                      <Badge variant="outline">
+                        {establishment.cocktailCount} cocktails
+                      </Badge>
+                    </div>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleDelete(establishment.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 
