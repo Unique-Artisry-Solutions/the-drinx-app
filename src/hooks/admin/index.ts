@@ -1,18 +1,12 @@
+
 import { useData as useAdminData } from '../core/useData';
 import { useAuth as useAdminAuth } from '../core/useAuth';
 import { useAnalytics as useAdminAnalytics } from '../core/useAnalytics';
 
-export { useAdminDashboard } from './useAdminDashboard';
-export { useAdminData, useEstablishmentsData, useCocktailsData } from './useAdminData';
 export { useAdminNavigation } from './useAdminNavigation';
 export { useAdminActions } from './useAdminActions';
 export { useAdminCodeReduction } from './useAdminCodeReduction';
 export { useAdminTabs } from './useAdminTabs';
-
-export type {
-  AdminDashboardState,
-  AdminDashboardActions
-} from './useAdminDashboard';
 
 export type {
   AdminDataState,

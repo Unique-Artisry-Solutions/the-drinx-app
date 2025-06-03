@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { useNotificationSupport } from '../useNotificationSupport';
+import { useNotifications } from '@/hooks/core';
 
 export function useNotificationDiagnostics() {
   const [serviceWorkerStatus, setServiceWorkerStatus] = useState<'checking' | 'active' | 'inactive' | 'error'>('checking');
@@ -8,8 +8,19 @@ export function useNotificationDiagnostics() {
   const [serviceWorkerRegistrations, setServiceWorkerRegistrations] = useState<number>(0);
   const [error, setError] = useState<string | null>(null);
   const [isRunningTests, setIsRunningTests] = useState(false);
+  const [permissionStatus, setPermissionStatus] = useState<'default' | 'granted' | 'denied'>('default');
+  const [isSupported, setIsSupported] = useState(false);
   
-  const { isSupported, permissionStatus: permission, checkPermission } = useNotificationSupport();
+  const { state } = useNotifications();
+
+  const checkPermission = () => {
+    if ('Notification' in window) {
+      setIsSupported(true);
+      setPermissionStatus(Notification.permission);
+    } else {
+      setIsSupported(false);
+    }
+  };
 
   const checkServiceWorker = async () => {
     try {
@@ -71,6 +82,7 @@ export function useNotificationDiagnostics() {
 
   useEffect(() => {
     checkServiceWorker();
+    checkPermission();
     
     const messageHandler = (event: MessageEvent) => {
       if (event.data?.type === 'SW_DIAGNOSTIC_RESULT') {
@@ -86,7 +98,7 @@ export function useNotificationDiagnostics() {
 
   return {
     isSupported,
-    permission,
+    permissionStatus,
     serviceWorkerStatus,
     serviceWorkerController,
     serviceWorkerRegistrations,
