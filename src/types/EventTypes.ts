@@ -1,3 +1,4 @@
+
 export type EventStatus = 'draft' | 'published' | 'cancelled' | 'completed';
 
 export interface EventLocation {
@@ -32,8 +33,8 @@ export interface EventMarketingCampaign {
   event_id: string;
   name: string;
   description?: string;
-  campaign_type: string;
-  status: 'draft' | 'active' | 'completed' | 'cancelled';  // Updated to match the actual status values used
+  campaign_type: 'email' | 'social' | 'paid' | 'influencer' | 'notification' | 'sms' | 'social_media';
+  status: 'draft' | 'active' | 'completed' | 'cancelled';
   start_date?: string;
   end_date?: string;
   budget?: number;
@@ -44,6 +45,7 @@ export interface EventMarketingCampaign {
     emails_sent?: number;
     open_rate?: number;
     notifications_sent?: number;
+    cost?: number;
     segments?: Record<string, Record<string, number>>;
     abTest?: {
       variantA: Record<string, number>;
@@ -105,12 +107,17 @@ export interface EventAttendee {
   name?: string;
   status: 'registered' | 'checked_in' | 'cancelled' | 'no_show';
   ticket_code?: string;
-  purchase_date: string;
+  purchase_date?: string;
   checked_in_at?: string;
   custom_fields?: Record<string, any>;
   notes?: string;
   created_at?: string;
   updated_at?: string;
+  // Add missing properties for compatibility
+  first_name?: string;
+  last_name?: string;
+  phone?: string;
+  registration_data?: Record<string, any>;
 }
 
 export interface EventCustomField {

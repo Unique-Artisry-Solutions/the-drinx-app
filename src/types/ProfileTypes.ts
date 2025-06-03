@@ -27,6 +27,8 @@ export interface Establishment {
   website?: string;
   created_at?: string;
   distance?: string; // Add distance property for compatibility
+  bio?: string; // Add bio property for InfoTabContent
+  description?: string; // Alternative for bio
 }
 
 // Cocktail type used in FavoritesTab
@@ -35,6 +37,29 @@ export interface Cocktail {
   name: string;
   price: number | string;
   establishment: string | { id?: string; name: string };
+}
+
+// Bar Crawl management interface - properly exported
+export interface BarCrawl {
+  id: string;
+  name: string;
+  startDate: string;
+  endDate: string;
+  description?: string;
+  imageUrl?: string;
+  establishments: Establishment[];
+  invitedUsers?: User[];
+  organizer: string;
+  status: 'planned' | 'active' | 'completed';
+  created_at?: string;
+}
+
+// User interface for invitations
+export interface User {
+  id: string;
+  name: string;
+  email?: string;
+  avatar?: string;
 }
 
 // Props for ProfileHeader component
@@ -57,29 +82,6 @@ export interface VisitedTabProps {
 // Props for FavoritesTab component
 export interface FavoritesTabProps {
   favoriteCocktails: Cocktail[];
-}
-
-// Bar Crawl management interface
-export interface BarCrawl {
-  id: string;
-  name: string;
-  startDate: string;
-  endDate: string;
-  description?: string;
-  imageUrl?: string;
-  establishments: Establishment[];
-  invitedUsers?: User[];
-  organizer: string;
-  status: 'planned' | 'active' | 'completed';
-  created_at?: string;
-}
-
-// User interface for invitations
-export interface User {
-  id: string;
-  name: string;
-  email?: string;
-  avatar?: string;
 }
 
 // Export the visit related types for convenience
