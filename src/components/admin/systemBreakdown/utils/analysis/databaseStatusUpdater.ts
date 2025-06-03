@@ -53,32 +53,14 @@ function detectDatabaseStatus(feature: FeatureItem): DatabaseStatus {
     return 'in_progress';
   }
   
-  // For planned features, database might be not started or in progress
-  if (feature.status === 'planned') {
+  // For not started features, database is not started
+  if (feature.status === 'not_started') {
     // Check for signs of database preparation
     if (tags.includes('database-ready') || description.includes('database schema prepared')) {
       return 'in_progress';
     }
     
     return 'not_started';
-  }
-  
-  // For blocked features, database might be in any state
-  if (feature.status === 'blocked') {
-    if (description.includes('database issues') || tags.includes('db-blocked')) {
-      return 'in_progress';
-    }
-    
-    if (tags.includes('db-complete')) {
-      return 'complete';
-    }
-    
-    return 'not_started';
-  }
-  
-  // For partial features (custom status)
-  if (feature.status === 'partial') {
-    return 'in_progress';
   }
   
   // Default
@@ -102,10 +84,6 @@ function generateDatabaseAnalysis(feature: FeatureItem, status: DatabaseStatus):
   
   if (status === 'not_started') {
     return `Database implementation for "${name}" has not been started. Based on the feature description, the following database work will be needed: table creation, relationship mapping, and API integration.`;
-  }
-  
-  if (status === 'implemented') {
-    return `Database implementation for "${name}" has been implemented. All required database components are in place and functioning.`;
   }
   
   return `Database status for "${name}" requires further analysis.`;

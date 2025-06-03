@@ -1,50 +1,72 @@
 
-import { FeatureItem, FeatureCategory } from '../types';
+import React from 'react';
+import { FeatureItem, CoreFeatureCategory } from '../types';
 
-export function generateCSV(
-  adminFeatures: FeatureItem[],
-  establishmentFeatures: FeatureItem[],
-  individualFeatures: FeatureItem[]
-) {
-  const allFeatures = [
-    ...adminFeatures.map(f => ({ ...f, category: 'Admin' as FeatureCategory })),
-    ...establishmentFeatures.map(f => ({ ...f, category: 'Establishment' as FeatureCategory })),
-    ...individualFeatures.map(f => ({ ...f, category: 'Individual' as FeatureCategory }))
-  ];
-  
+export interface ExportData {
+  id: string;
+  name: string;
+  description: string;
+  status: string;
+  category: CoreFeatureCategory;
+  implementationProgress: number;
+  userImpact: string;
+  complexity: string;
+  adminAccess: string;
+  establishmentAccess: string;
+  individualAccess: string;
+  promoterAccess?: string;
+  databaseStatus: string;
+}
+
+export const generateCSV = (features: FeatureItem[]): string => {
   const headers = [
-    'Feature Name',
-    'Category',
+    'ID',
+    'Name',
     'Description',
     'Status',
-    'Database Status',
+    'Category',
+    'Implementation Progress',
+    'User Impact',
+    'Complexity',
     'Admin Access',
     'Establishment Access',
-    'Individual Access'
+    'Individual Access',
+    'Promoter Access',
+    'Database Status'
   ];
-  
-  const rows = allFeatures.map(feature => [
+
+  const rows = features.map(feature => [
+    feature.id,
     feature.name,
-    feature.category,
     feature.description,
     feature.status,
-    feature.databaseStatus,
+    feature.category,
+    feature.implementationProgress?.toString() || '0',
+    feature.userImpact,
+    feature.complexity,
     feature.adminAccess,
     feature.establishmentAccess,
-    feature.individualAccess
+    feature.individualAccess,
+    feature.promoterAccess || 'none',
+    feature.databaseStatus
   ]);
-  
-  const csvContent = [
-    headers.join(','),
-    ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
-  ].join('\n');
-  
+
+  return [headers, ...rows]
+    .map(row => row.map(cell => `"${cell}"`).join(','))
+    .join('\n');
+};
+
+export const downloadCSV = (csvContent: string, filename: string = 'features-export.csv') => {
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
-  link.setAttribute('href', url);
-  link.setAttribute('download', `system-features-${new Date().toISOString().split('T')[0]}.csv`);
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-}
+  
+  if (link.download !== undefined) {
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+};
