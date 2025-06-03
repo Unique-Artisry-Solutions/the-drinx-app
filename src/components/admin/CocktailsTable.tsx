@@ -1,14 +1,7 @@
 
 import React from 'react';
-import { 
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
-} from '@/components/ui/table';
-import { 
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger 
-} from '@/components/ui/dropdown-menu';
-import { Button } from '@/components/ui/button';
-import { Edit, MoreHorizontal, Trash } from 'lucide-react';
-import { useAppNavigation } from '@/hooks/useAppNavigation';
+import { SimpleAdminTable } from './tables/SimpleAdminTable';
+import { Wine, Building2 } from 'lucide-react';
 
 interface Establishment {
   id: string;
@@ -31,81 +24,67 @@ const CocktailsTable: React.FC<CocktailsTableProps> = ({
   cocktails,
   onDeleteCocktail
 }) => {
-  const { navigate } = useAppNavigation();
+  const columns = [
+    {
+      key: 'name',
+      label: 'Name',
+      render: (value: string) => (
+        <div className="flex items-center gap-2">
+          <Wine className="h-4 w-4 text-muted-foreground" />
+          <span className="font-medium">{value}</span>
+        </div>
+      )
+    },
+    {
+      key: 'establishment',
+      label: 'Establishment',
+      render: (value: any) => {
+        let establishmentName: string;
+        if (typeof value === 'object' && value !== null) {
+          establishmentName = value.name;
+        } else if (typeof value === 'string') {
+          establishmentName = value;
+        } else {
+          establishmentName = 'Unknown';
+        }
+        
+        return (
+          <div className="flex items-center gap-1">
+            <Building2 className="h-3 w-3 text-muted-foreground" />
+            <span className="text-sm">{establishmentName}</span>
+          </div>
+        );
+      }
+    },
+    {
+      key: 'price',
+      label: 'Price',
+      render: (value: any) => {
+        let displayPrice: string;
+        if (typeof value === 'number') {
+          displayPrice = value.toFixed(2);
+        } else if (typeof value === 'string') {
+          displayPrice = value.replace('$', '');
+        } else {
+          displayPrice = '0.00';
+        }
+        return `$${displayPrice}`;
+      }
+    }
+  ];
 
-  const handleEditClick = (id: string) => {
-    navigate(`/cocktail/edit/${id}`);
+  const handleBulkDelete = (ids: string[]) => {
+    ids.forEach(id => onDeleteCocktail(id));
   };
 
   return (
-    <div className="bg-white rounded-md shadow-sm overflow-hidden">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead>Establishment</TableHead>
-            <TableHead>Price</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {cocktails.map((cocktail) => {
-            // Fix: Properly handle establishment that could be an object or string
-            let establishmentName: string;
-            if (typeof cocktail.establishment === 'object' && cocktail.establishment !== null) {
-              establishmentName = cocktail.establishment.name;
-            } else if (typeof cocktail.establishment === 'string') {
-              establishmentName = cocktail.establishment;
-            } else {
-              establishmentName = 'Unknown';
-            }
-            
-            // Fix: Properly handle price formatting for both string and number types
-            let displayPrice: string;
-            if (typeof cocktail.price === 'number') {
-              // Type assertion to ensure TypeScript knows this is a number
-              displayPrice = (cocktail.price as number).toFixed(2);
-            } else if (typeof cocktail.price === 'string') {
-              // Remove $ if it exists in the string
-              displayPrice = cocktail.price.replace('$', '');
-            } else {
-              displayPrice = '0.00';
-            }
-            
-            return (
-              <TableRow key={cocktail.id}>
-                <TableCell className="font-medium">{cocktail.name}</TableCell>
-                <TableCell>{establishmentName}</TableCell>
-                <TableCell>${displayPrice}</TableCell>
-                <TableCell className="text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
-                        <MoreHorizontal className="h-4 w-4" />
-                        <span className="sr-only">Actions</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => handleEditClick(cocktail.id)}>
-                        <Edit className="mr-2 h-4 w-4" />
-                        Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuItem 
-                        className="text-red-600"
-                        onClick={() => onDeleteCocktail(cocktail.id)}
-                      >
-                        <Trash className="mr-2 h-4 w-4" />
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            );
-          })}
-        </TableBody>
-      </Table>
-    </div>
+    <SimpleAdminTable
+      title="Cocktails"
+      items={cocktails}
+      columns={columns}
+      onDelete={onDeleteCocktail}
+      onBulkDelete={handleBulkDelete}
+    />
   );
 };
 
