@@ -8,16 +8,13 @@ import { Calendar, Users, BarChart3, Settings, TrendingUp, DollarSign } from 'lu
 import Layout from '@/components/Layout';
 import { useEstablishmentProfile } from '@/hooks/useEstablishmentProfile';
 import { useUserEstablishment } from '@/hooks/establishment/useUserEstablishment';
-import { useAuth } from '@/contexts/auth/AuthProvider';
 
 const EstablishmentDashboard: React.FC = () => {
   const { establishmentId } = useParams<{ establishmentId: string }>();
-  const { user } = useAuth();
-  const establishmentProfileData = useEstablishmentProfile(establishmentId);
+  const establishmentProfileData = useEstablishmentProfile();
   const userEstablishmentData = useUserEstablishment();
   
   const [activeTab, setActiveTab] = useState('overview');
-  const [_dateRange] = useState({ from: new Date(), to: new Date() });
 
   const mockStats = {
     totalVisitors: 1234,
@@ -26,7 +23,7 @@ const EstablishmentDashboard: React.FC = () => {
     averageRating: 4.7
   };
 
-  if (establishmentProfileData.isLoading || userEstablishmentData.isLoading) {
+  if (establishmentProfileData.profileState.isLoading || userEstablishmentData.isLoading) {
     return (
       <Layout>
         <div className="container mx-auto py-8">
@@ -36,9 +33,12 @@ const EstablishmentDashboard: React.FC = () => {
     );
   }
 
-  const displayEstablishment = establishmentProfileData.establishment || userEstablishmentData.establishment;
+  const displayEstablishment = {
+    name: establishmentProfileData.profileState.name || 'Your Establishment',
+    id: userEstablishmentData.establishmentId || establishmentId || ''
+  };
 
-  if (!displayEstablishment) {
+  if (!displayEstablishment.id) {
     return (
       <Layout>
         <div className="container mx-auto py-8">
