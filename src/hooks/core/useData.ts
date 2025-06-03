@@ -22,6 +22,7 @@ export interface DataActions<T> {
   delete: (id: string) => Promise<void>;
   bulkDelete: (ids: string[]) => Promise<void>;
   filter: (searchTerm: string) => T[];
+  clearError: () => void;
 }
 
 export interface UseDataOptions<T> {
@@ -32,6 +33,7 @@ export interface UseDataOptions<T> {
   deleteFn?: (id: string) => Promise<void>;
   searchFields?: (keyof T)[];
   itemType?: string;
+  autoFetch?: boolean;
 }
 
 export function useData<T extends { id: string; name?: string }>(
@@ -44,7 +46,8 @@ export function useData<T extends { id: string; name?: string }>(
     updateFn,
     deleteFn,
     searchFields = ['name' as keyof T],
-    itemType = 'item'
+    itemType = 'item',
+    autoFetch = true
   } = options;
 
   const { toast } = useToast();
@@ -72,100 +75,150 @@ export function useData<T extends { id: string; name?: string }>(
         isLoading: false
       }));
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch data';
       setState(prev => ({
         ...prev,
-        error: error instanceof Error ? error.message : 'Failed to fetch data',
+        error: errorMessage,
         isLoading: false
       }));
+      toast({
+        title: 'Error',
+        description: errorMessage,
+        variant: 'destructive',
+      });
     }
-  }, [fetchFn]);
+  }, [fetchFn, toast]);
 
   const create = useCallback(async (item: Omit<T, 'id'>) => {
-    if (!createFn) return;
+    if (!createFn) {
+      toast({
+        title: 'Error',
+        description: 'Create function not configured',
+        variant: 'destructive',
+      });
+      return;
+    }
     
+    setState(prev => ({ ...prev, isLoading: true, error: null }));
     try {
       const newItem = await createFn(item);
       setState(prev => ({
         ...prev,
         data: [newItem, ...prev.data],
-        total: prev.total + 1
+        total: prev.total + 1,
+        isLoading: false
       }));
       toast({
         title: 'Success',
         description: `${itemType} created successfully`,
       });
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : `Failed to create ${itemType}`;
+      setState(prev => ({ ...prev, error: errorMessage, isLoading: false }));
       toast({
         title: 'Error',
-        description: `Failed to create ${itemType}`,
+        description: errorMessage,
         variant: 'destructive',
       });
     }
   }, [createFn, itemType, toast]);
 
   const update = useCallback(async (id: string, updates: Partial<T>) => {
-    if (!updateFn) return;
+    if (!updateFn) {
+      toast({
+        title: 'Error',
+        description: 'Update function not configured',
+        variant: 'destructive',
+      });
+      return;
+    }
     
+    setState(prev => ({ ...prev, isLoading: true, error: null }));
     try {
       const updatedItem = await updateFn(id, updates);
       setState(prev => ({
         ...prev,
-        data: prev.data.map(item => item.id === id ? updatedItem : item)
+        data: prev.data.map(item => item.id === id ? updatedItem : item),
+        isLoading: false
       }));
       toast({
         title: 'Success',
         description: `${itemType} updated successfully`,
       });
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : `Failed to update ${itemType}`;
+      setState(prev => ({ ...prev, error: errorMessage, isLoading: false }));
       toast({
         title: 'Error',
-        description: `Failed to update ${itemType}`,
+        description: errorMessage,
         variant: 'destructive',
       });
     }
   }, [updateFn, itemType, toast]);
 
   const deleteItem = useCallback(async (id: string) => {
-    if (!deleteFn) return;
+    if (!deleteFn) {
+      toast({
+        title: 'Error',
+        description: 'Delete function not configured',
+        variant: 'destructive',
+      });
+      return;
+    }
     
+    setState(prev => ({ ...prev, isLoading: true, error: null }));
     try {
       await deleteFn(id);
       setState(prev => ({
         ...prev,
         data: prev.data.filter(item => item.id !== id),
-        total: prev.total - 1
+        total: prev.total - 1,
+        isLoading: false
       }));
       toast({
         title: 'Success',
         description: `${itemType} deleted successfully`,
       });
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : `Failed to delete ${itemType}`;
+      setState(prev => ({ ...prev, error: errorMessage, isLoading: false }));
       toast({
         title: 'Error',
-        description: `Failed to delete ${itemType}`,
+        description: errorMessage,
         variant: 'destructive',
       });
     }
   }, [deleteFn, itemType, toast]);
 
   const bulkDelete = useCallback(async (ids: string[]) => {
-    if (!deleteFn) return;
+    if (!deleteFn) {
+      toast({
+        title: 'Error',
+        description: 'Delete function not configured',
+        variant: 'destructive',
+      });
+      return;
+    }
     
+    setState(prev => ({ ...prev, isLoading: true, error: null }));
     try {
       await Promise.all(ids.map(id => deleteFn(id)));
       setState(prev => ({
         ...prev,
         data: prev.data.filter(item => !ids.includes(item.id)),
-        total: prev.total - ids.length
+        total: prev.total - ids.length,
+        isLoading: false
       }));
       toast({
         title: 'Success',
         description: `${ids.length} ${itemType}s deleted successfully`,
       });
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : `Failed to delete ${itemType}s`;
+      setState(prev => ({ ...prev, error: errorMessage, isLoading: false }));
       toast({
         title: 'Error',
-        description: `Failed to delete ${itemType}s`,
+        description: errorMessage,
         variant: 'destructive',
       });
     }
@@ -196,15 +249,18 @@ export function useData<T extends { id: string; name?: string }>(
     update,
     delete: deleteItem,
     bulkDelete,
-    filter
+    filter,
+    clearError: useCallback(() => {
+      setState(prev => ({ ...prev, error: null }));
+    }, [])
   };
 
-  // Auto-fetch on mount if fetchFn provided
+  // Auto-fetch on mount if enabled and fetchFn provided
   useEffect(() => {
-    if (fetchFn) {
+    if (autoFetch && fetchFn) {
       refresh();
     }
-  }, [fetchFn, refresh]);
+  }, [autoFetch, fetchFn, refresh]);
 
   return { state, actions };
 }

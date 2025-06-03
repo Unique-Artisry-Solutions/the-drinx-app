@@ -1,14 +1,9 @@
 
 import { useState, useCallback } from 'react';
-import { useAuth } from './useAuth';
+import { useToast } from '@/hooks/use-toast';
 
 export interface AnalyticsData {
-  views: number;
-  clicks: number;
-  conversions: number;
-  revenue: number;
-  users: number;
-  sessions: number;
+  [key: string]: any;
 }
 
 export interface AnalyticsState {
@@ -19,23 +14,16 @@ export interface AnalyticsState {
 }
 
 export interface AnalyticsActions {
-  fetchData: (dateRange?: { start: Date; end: Date }) => Promise<void>;
-  trackEvent: (event: string, properties?: any) => void;
+  fetchData: (params?: any) => Promise<void>;
+  trackEvent: (event: string, properties?: any) => Promise<void>;
   setDateRange: (range: { start: Date; end: Date }) => void;
+  refresh: () => Promise<void>;
 }
 
 export function useAnalytics(): { state: AnalyticsState; actions: AnalyticsActions } {
-  const { state: authState } = useAuth();
-  
+  const { toast } = useToast();
   const [state, setState] = useState<AnalyticsState>({
-    data: {
-      views: 0,
-      clicks: 0,
-      conversions: 0,
-      revenue: 0,
-      users: 0,
-      sessions: 0
-    },
+    data: {},
     isLoading: false,
     error: null,
     dateRange: {
@@ -44,58 +32,48 @@ export function useAnalytics(): { state: AnalyticsState; actions: AnalyticsActio
     }
   });
 
-  const fetchData = useCallback(async (dateRange?: { start: Date; end: Date }) => {
-    if (!authState.isAuthenticated) return;
-    
-    setState(prev => ({ ...prev, isLoading: true, error: null }));
-    
-    try {
-      // Simulate API call - replace with actual analytics service
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const mockData: AnalyticsData = {
-        views: Math.floor(Math.random() * 10000),
-        clicks: Math.floor(Math.random() * 1000),
-        conversions: Math.floor(Math.random() * 100),
-        revenue: Math.floor(Math.random() * 5000),
-        users: Math.floor(Math.random() * 500),
-        sessions: Math.floor(Math.random() * 1500)
-      };
-      
-      setState(prev => ({
-        ...prev,
-        data: mockData,
-        isLoading: false,
-        dateRange: dateRange || prev.dateRange
-      }));
-    } catch (error) {
-      setState(prev => ({
-        ...prev,
-        error: error instanceof Error ? error.message : 'Failed to fetch analytics',
-        isLoading: false
-      }));
-    }
-  }, [authState.isAuthenticated]);
-
-  const trackEvent = useCallback((event: string, properties?: any) => {
-    if (!authState.isAuthenticated) {
-      console.warn('Cannot track event: No authenticated user');
-      return;
-    }
-    
-    console.log('Tracking event:', event, properties);
-    // Implement actual event tracking here
-  }, [authState.isAuthenticated]);
-
-  const setDateRange = useCallback((range: { start: Date; end: Date }) => {
-    setState(prev => ({ ...prev, dateRange: range }));
-    fetchData(range);
-  }, [fetchData]);
-
   const actions: AnalyticsActions = {
-    fetchData,
-    trackEvent,
-    setDateRange
+    fetchData: useCallback(async (params?: any) => {
+      setState(prev => ({ ...prev, isLoading: true, error: null }));
+      try {
+        // Mock analytics data - replace with actual API call
+        const mockData = {
+          visits: Math.floor(Math.random() * 1000),
+          revenue: Math.floor(Math.random() * 10000),
+          conversions: Math.floor(Math.random() * 100),
+          ...params
+        };
+        
+        await new Promise(resolve => setTimeout(resolve, 500)); // Simulate API delay
+        setState(prev => ({ ...prev, data: mockData, isLoading: false }));
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Failed to fetch analytics';
+        setState(prev => ({ ...prev, error: errorMessage, isLoading: false }));
+        toast({
+          title: 'Error',
+          description: errorMessage,
+          variant: 'destructive',
+        });
+      }
+    }, [toast]),
+
+    trackEvent: useCallback(async (event: string, properties?: any) => {
+      try {
+        // Mock event tracking - replace with actual tracking service
+        console.log('Tracking event:', event, properties);
+        await new Promise(resolve => setTimeout(resolve, 100));
+      } catch (err) {
+        console.error('Failed to track event:', err);
+      }
+    }, []),
+
+    setDateRange: useCallback((range: { start: Date; end: Date }) => {
+      setState(prev => ({ ...prev, dateRange: range }));
+    }, []),
+
+    refresh: useCallback(async () => {
+      await actions.fetchData();
+    }, [])
   };
 
   return { state, actions };
