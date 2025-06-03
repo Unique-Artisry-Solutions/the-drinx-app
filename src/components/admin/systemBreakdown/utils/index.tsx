@@ -8,13 +8,64 @@ import {
 import { generateCSV } from './exportUtils';
 import { analyzeAllFeatures } from './analysis';
 import { analyzeDbRequirements } from './analysisHelpers';
+import { isTaskCompleted, parseTasks } from './taskDetection';
 import { 
-  isFeatureFlagRelated,
-  isMocktailSuggestionFeature,
-  isMocktailTrendsFeature, 
-  isIngredientPairingFeature,
-  isPromotionFeature,
+  mapFeaturesToReleaseFeatures, 
+  mapFeatureStatusToReleaseStatus 
+} from './releaseUtils';
+import { 
+  prepareFeatureShowcaseData,
+  generateFeatureReport
+} from './featureShowcaseUtils';
+
+// Import from the simplified detection system
+import { 
+  featureDetectionEngine,
+  unifiedDetection,
+  type CoreFeatureCategory,
+  // Legacy compatibility exports
+  isUserManagementFeature,
+  isAuthFeature,
+  isProfileFeature,
+  isContentFeature,
+  isContentModerationFeature,
+  isPhotoFeature,
+  isPhotoModerationFeature,
   isAnalyticsFeature,
+  isDashboardFeature,
+  isSystemBreakdownFeature,
+  isSocialFeature,
+  isExplorationFeature,
+  isNotificationFeature,
+  isPromotionFeature,
+  isRewardProgramFeature,
+  isAIFeature,
+  isMocktailSuggestionFeature,
+  isMocktailTrendsFeature,
+  isIngredientPairingFeature,
+  isRecipeFeature,
+  isEstablishmentManagementFeature,
+  isVisitTrackingFeature,
+  isBarCrawlFeature,
+  isSwigCircuitFeature,
+  isMapFeature,
+  isSystemConfigurationFeature,
+  isThemeFeature,
+  isAccessibilityFeature,
+  isSignatureFeature,
+  isFeatureFlagRelated,
+  isAudienceRelationshipFeature,
+  isAudienceInfluencerFeature,
+  isCrossSegmentEngagementFeature,
+  isAudienceVisualizationFeature,
+  isPromoterCommunicationFeature,
+  isBrandConnectionFeature,
+  isPromoterAnalyticsFeature,
+  isEventManagementFeature,
+  isPromoterDashboardFeature,
+  isCustomPromotionFeature,
+  isPromoterNotificationFeature,
+  isTicketManagementFeature,
   isPromotionAnalyticsFeature,
   isPromotionSecurityFeature,
   isPromotionNotificationFeature,
@@ -26,41 +77,8 @@ import {
   isPromotionSchedulingFeature,
   isPromotionIntegrationFeature,
   isPromotionAIFeature,
-  isSystemConfigurationFeature,
-  isUserManagementFeature,
-  isAuthFeature,
-  isProfileFeature,
-  isContentFeature,
-  isContentModerationFeature,
-  isSwigCircuitFeature,
-  isThemeFeature,
-  isNotificationFeature,
-  isSocialFeature,
-  isMapFeature,
-  isRecipeFeature,
-  isRewardProgramFeature,
-  isExplorationFeature,
-  isAIFeature,
-  isDashboardFeature,
-  isSystemBreakdownFeature,
-  isSignatureFeature,
-  isVisitTrackingFeature,
-  isEstablishmentManagementFeature,
-  isBarCrawlFeature,
-  isAudienceRelationshipFeature,
-  isAudienceInfluencerFeature,
-  isCrossSegmentEngagementFeature,
-  isAudienceVisualizationFeature
-} from './featureDetection';
-import { isTaskCompleted, parseTasks } from './taskDetection';
-import { 
-  mapFeaturesToReleaseFeatures, 
-  mapFeatureStatusToReleaseStatus 
-} from './releaseUtils';
-import { 
-  prepareFeatureShowcaseData,
-  generateFeatureReport
-} from './featureShowcaseUtils';
+  isThemeConfigurationFeature
+} from './detection';
 
 // Import directly from featureStatistics.tsx to fix circular dependency issues
 import { 
@@ -79,6 +97,7 @@ export function getDateMonthsFromNow(months: number): string {
 }
 
 export {
+  // Core utilities
   renderStatusBadge,
   renderDatabaseStatusBadge,
   renderAccessIcon,
@@ -88,12 +107,36 @@ export {
   generateCSV,
   analyzeAllFeatures,
   analyzeDbRequirements,
+  isTaskCompleted,
+  parseTasks,
+  mapFeaturesToReleaseFeatures,
+  mapFeatureStatusToReleaseStatus,
+  createProgressSnapshot,
+  validateProgressData,
+  generateHistoricalProgressData,
+  prepareFeatureShowcaseData,
+  generateFeatureReport,
+
+  // New unified detection system
+  featureDetectionEngine,
+  unifiedDetection,
+
+  // Legacy detection functions (for backward compatibility)
   isFeatureFlagRelated,
-  isMocktailSuggestionFeature,
-  isMocktailTrendsFeature, 
-  isIngredientPairingFeature,
-  isPromotionFeature,
+  isUserManagementFeature,
+  isAuthFeature,
+  isProfileFeature,
+  isContentFeature,
+  isContentModerationFeature,
+  isPhotoFeature,
+  isPhotoModerationFeature,
   isAnalyticsFeature,
+  isDashboardFeature,
+  isSystemBreakdownFeature,
+  isSocialFeature,
+  isExplorationFeature,
+  isNotificationFeature,
+  isPromotionFeature,
   isPromotionAnalyticsFeature,
   isPromotionSecurityFeature,
   isPromotionNotificationFeature,
@@ -105,40 +148,34 @@ export {
   isPromotionSchedulingFeature,
   isPromotionIntegrationFeature,
   isPromotionAIFeature,
-  isSystemConfigurationFeature,
-  isUserManagementFeature,
-  isAuthFeature,
-  isProfileFeature,
-  isContentFeature,
-  isContentModerationFeature,
-  isThemeFeature,
-  isNotificationFeature,
-  isSocialFeature,
-  isMapFeature,
-  isRecipeFeature,
   isRewardProgramFeature,
-  isExplorationFeature,
   isAIFeature,
-  isDashboardFeature,
-  isSystemBreakdownFeature,
-  isSignatureFeature,
-  isSwigCircuitFeature,
-  isVisitTrackingFeature,
+  isMocktailSuggestionFeature,
+  isMocktailTrendsFeature,
+  isIngredientPairingFeature,
+  isRecipeFeature,
   isEstablishmentManagementFeature,
+  isVisitTrackingFeature,
   isBarCrawlFeature,
+  isSwigCircuitFeature,
+  isMapFeature,
+  isSystemConfigurationFeature,
+  isThemeFeature,
+  isThemeConfigurationFeature,
+  isAccessibilityFeature,
+  isSignatureFeature,
   isAudienceRelationshipFeature,
   isAudienceInfluencerFeature,
   isCrossSegmentEngagementFeature,
   isAudienceVisualizationFeature,
-  isTaskCompleted,
-  parseTasks,
-  mapFeaturesToReleaseFeatures,
-  mapFeatureStatusToReleaseStatus,
-  createProgressSnapshot,
-  validateProgressData,
-  generateHistoricalProgressData,
-  prepareFeatureShowcaseData,
-  generateFeatureReport
+  isPromoterCommunicationFeature,
+  isBrandConnectionFeature,
+  isPromoterAnalyticsFeature,
+  isEventManagementFeature,
+  isPromoterDashboardFeature,
+  isCustomPromotionFeature,
+  isPromoterNotificationFeature,
+  isTicketManagementFeature
 };
 
 // Use 'export type' for type exports when isolatedModules is enabled
@@ -146,10 +183,10 @@ export type { AnalysisStep } from '../types';
 export type { ReleaseProgress } from '../types/releaseTypes';
 export type { MonthlyProgressData } from '../types';
 export type { FeatureShowcaseData, FeatureShowcaseCategoryType, FeatureBusinessValueType } from '../types';
+export type { CoreFeatureCategory };
 
 export { determineBusinessValue, determineComplexity } from './featureShowcase/featureTransformation';
 export { determineShowcaseCategory } from './featureShowcase/categoryDetection';
 export { generateMarketingPoints } from './featureShowcase/marketingUtils';
 export { determineFeatureIcon } from './featureShowcase/iconSelection';
 export { generateMockImplementationStats } from './featureShowcase/mockStats';
-

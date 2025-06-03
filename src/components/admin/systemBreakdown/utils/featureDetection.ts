@@ -1,28 +1,12 @@
 
+// This file now serves as a bridge to the new unified detection system
+// All detection logic has been moved to the FeatureDetectionEngine
+
 import { FeatureItem } from '../types';
 import { 
-  isIngredientPairingFeature,
-  isMocktailSuggestionFeature,
-  isMocktailTrendsFeature,
-  isRecipeFeature,
-} from './detection/mocktailDetection';
-
-import {
-  isPromotionFeature,
-  isPromotionAnalyticsFeature,
-  isPromotionSecurityFeature,
-  isPromotionNotificationFeature, 
-  isPromotionCreationFeature,
-  isPromotionManagementFeature,
-  isPromotionRedemptionFeature,
-  isPromotionReportingFeature,
-  isPromotionValidationFeature,
-  isPromotionSchedulingFeature,
-  isPromotionIntegrationFeature,
-  isPromotionAIFeature,
-} from './detection/promotionDetection';
-
-import {
+  featureDetectionEngine,
+  unifiedDetection,
+  // Import all legacy compatibility functions
   isUserManagementFeature,
   isAuthFeature,
   isProfileFeature,
@@ -30,52 +14,32 @@ import {
   isContentModerationFeature,
   isPhotoFeature,
   isPhotoModerationFeature,
-} from './detection/userContentDetection';
-
-import {
-  isSystemConfigurationFeature,
-} from './detection/uxDetection';
-
-import {
   isAnalyticsFeature,
   isDashboardFeature,
   isSystemBreakdownFeature,
-} from './detection/analyticsDetection';
-
-import {
-  isMapFeature,
-} from './detection/mapDetection';
-
-import {
-  isAIFeature,
-} from './detection/aiDetection';
-
-import {
+  isSocialFeature,
   isExplorationFeature,
   isNotificationFeature,
-  isSocialFeature,
+  isPromotionFeature,
   isRewardProgramFeature,
-} from './detection/engagementDetection';
-
-import {
-  isThemeFeature,
-} from './detection/themeDetection';
-
-import {
-  isSwigCircuitFeature,
-  isBarCrawlFeature,
-} from './detection/circuitDetection';
-
-import {
-  isSignatureFeature,
-} from './detection/signatureFeatureDetection';
-
-import {
+  isAIFeature,
+  isMocktailSuggestionFeature,
+  isMocktailTrendsFeature,
+  isIngredientPairingFeature,
+  isRecipeFeature,
   isEstablishmentManagementFeature,
   isVisitTrackingFeature,
-} from './detection/establishmentDetection';
-
-import {
+  isBarCrawlFeature,
+  isSwigCircuitFeature,
+  isMapFeature,
+  isSystemConfigurationFeature,
+  isThemeFeature,
+  isAccessibilityFeature,
+  isSignatureFeature,
+  isFeatureFlagRelated,
+  isAudienceInfluencerFeature,
+  isCrossSegmentEngagementFeature,
+  isAudienceVisualizationFeature,
   isPromoterCommunicationFeature,
   isBrandConnectionFeature,
   isPromoterAnalyticsFeature,
@@ -83,30 +47,34 @@ import {
   isPromoterDashboardFeature,
   isCustomPromotionFeature,
   isPromoterNotificationFeature,
-} from './detection/promoterDetection';
-
-import {
-  isFeatureFlagRelated,
-} from './detection/coreDetection';
-
-import {
-  isAudienceRelationshipFeature as importedAudienceRelationshipFeature,
-  isAudienceInfluencerFeature,
-  isCrossSegmentEngagementFeature,
-  isAudienceVisualizationFeature,
-} from './detection/audienceRelationshipDetection';
+  isPromotionAnalyticsFeature,
+  isPromotionSecurityFeature,
+  isPromotionNotificationFeature,
+  isPromotionCreationFeature,
+  isPromotionManagementFeature,
+  isPromotionRedemptionFeature,
+  isPromotionReportingFeature,
+  isPromotionValidationFeature,
+  isPromotionSchedulingFeature,
+  isPromotionIntegrationFeature,
+  isPromotionAIFeature
+} from './detection';
 
 /**
+ * @deprecated Use unifiedDetection.analyzeFeature() instead
  * Detects if a feature is related to audience relationship mapping
- * @deprecated Use imported function from audienceRelationshipDetection.ts instead
  */
-export function isAudienceRelationshipFeature(feature: any): boolean {
-  // Call the imported function to maintain consistent behavior
-  return importedAudienceRelationshipFeature(feature);
+export function isAudienceRelationshipFeature(feature: FeatureItem): boolean {
+  const result = featureDetectionEngine.detectCategory(feature);
+  return result.matchedKeywords.some(keyword => 
+    keyword.includes('audience') || keyword.includes('relationship') || keyword.includes('segment')
+  );
 }
 
-// Export all detection functions
+// Export all detection functions for backward compatibility
 export {
+  featureDetectionEngine,
+  unifiedDetection,
   isFeatureFlagRelated,
   isIngredientPairingFeature,
   isMocktailSuggestionFeature,
@@ -158,4 +126,3 @@ export {
   isCrossSegmentEngagementFeature,
   isAudienceVisualizationFeature
 };
-
