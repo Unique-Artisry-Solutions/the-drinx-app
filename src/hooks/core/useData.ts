@@ -6,13 +6,22 @@ export interface DataState<T> {
   data: T[];
   isLoading: boolean;
   error: string | null;
+  total: number;
+  page: number;
+  limit: number;
 }
 
 export interface DataActions<T> {
   refetch: () => Promise<void>;
+  refresh: () => Promise<void>;
   create: (item: Omit<T, 'id'>) => Promise<void>;
   update: (id: string, updates: Partial<T>) => Promise<void>;
   deleteItem: (id: string) => Promise<void>;
+  delete: (id: string) => Promise<void>;
+  bulkDelete: (ids: string[]) => Promise<void>;
+  setPage: (page: number) => void;
+  setLimit: (limit: number) => void;
+  setSearchTerm: (term: string) => void;
 }
 
 export interface UseDataOptions<T> {
@@ -22,6 +31,7 @@ export interface UseDataOptions<T> {
   updateFn?: (id: string, updates: Partial<T>) => Promise<T>;
   deleteFn?: (id: string) => Promise<void>;
   itemType?: string;
+  searchFields?: (keyof T)[];
 }
 
 export function useData<T extends { id: string }>(
@@ -34,33 +44,47 @@ export function useData<T extends { id: string }>(
     createFn,
     updateFn,
     deleteFn,
-    itemType = 'item'
+    itemType = 'item',
+    searchFields = []
   } = options;
 
   const [state, setState] = useState<DataState<T>>({
     data: initialData,
     isLoading: false,
-    error: null
+    error: null,
+    total: initialData.length,
+    page: 1,
+    limit: 10
   });
 
+  const [searchTerm, setSearchTerm] = useState<string>('');
+
+  const refetchData = useCallback(async () => {
+    if (!fetchFn) return;
+    
+    setState(prev => ({ ...prev, isLoading: true, error: null }));
+    try {
+      const data = await fetchFn();
+      setState(prev => ({ 
+        ...prev, 
+        data, 
+        total: data.length,
+        isLoading: false 
+      }));
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : `Failed to fetch ${itemType}s`;
+      setState(prev => ({ ...prev, error: errorMessage, isLoading: false }));
+      toast({
+        title: 'Error',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+    }
+  }, [fetchFn, itemType, toast]);
+
   const actions: DataActions<T> = {
-    refetch: useCallback(async () => {
-      if (!fetchFn) return;
-      
-      setState(prev => ({ ...prev, isLoading: true, error: null }));
-      try {
-        const data = await fetchFn();
-        setState(prev => ({ ...prev, data, isLoading: false }));
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : `Failed to fetch ${itemType}s`;
-        setState(prev => ({ ...prev, error: errorMessage, isLoading: false }));
-        toast({
-          title: 'Error',
-          description: errorMessage,
-          variant: 'destructive',
-        });
-      }
-    }, [fetchFn, itemType, toast]),
+    refetch: refetchData,
+    refresh: refetchData,
 
     create: useCallback(async (item: Omit<T, 'id'>) => {
       if (!createFn) return;
@@ -69,7 +93,8 @@ export function useData<T extends { id: string }>(
         const newItem = await createFn(item);
         setState(prev => ({
           ...prev,
-          data: [...prev.data, newItem]
+          data: [...prev.data, newItem],
+          total: prev.total + 1
         }));
         toast({
           title: 'Success',
@@ -110,10 +135,10 @@ export function useData<T extends { id: string }>(
 
     deleteItem: useCallback(async (id: string) => {
       if (!deleteFn) {
-        // Fallback to local deletion if no delete function provided
         setState(prev => ({
           ...prev,
-          data: prev.data.filter(item => item.id !== id)
+          data: prev.data.filter(item => item.id !== id),
+          total: prev.total - 1
         }));
         toast({
           title: 'Success',
@@ -126,7 +151,8 @@ export function useData<T extends { id: string }>(
         await deleteFn(id);
         setState(prev => ({
           ...prev,
-          data: prev.data.filter(item => item.id !== id)
+          data: prev.data.filter(item => item.id !== id),
+          total: prev.total - 1
         }));
         toast({
           title: 'Success',
@@ -140,12 +166,65 @@ export function useData<T extends { id: string }>(
           variant: 'destructive',
         });
       }
-    }, [deleteFn, itemType, toast])
+    }, [deleteFn, itemType, toast]),
+
+    delete: useCallback(async (id: string) => {
+      return actions.deleteItem(id);
+    }, []),
+
+    bulkDelete: useCallback(async (ids: string[]) => {
+      try {
+        // If no delete function, just filter locally
+        if (!deleteFn) {
+          setState(prev => ({
+            ...prev,
+            data: prev.data.filter(item => !ids.includes(item.id)),
+            total: prev.total - ids.length
+          }));
+          toast({
+            title: 'Success',
+            description: `${ids.length} ${itemType}s removed`,
+          });
+          return;
+        }
+
+        // Delete each item
+        await Promise.all(ids.map(id => deleteFn(id)));
+        setState(prev => ({
+          ...prev,
+          data: prev.data.filter(item => !ids.includes(item.id)),
+          total: prev.total - ids.length
+        }));
+        toast({
+          title: 'Success',
+          description: `${ids.length} ${itemType}s deleted successfully`,
+        });
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : `Failed to delete ${itemType}s`;
+        toast({
+          title: 'Error',
+          description: errorMessage,
+          variant: 'destructive',
+        });
+      }
+    }, [deleteFn, itemType, toast]),
+
+    setPage: useCallback((page: number) => {
+      setState(prev => ({ ...prev, page }));
+    }, []),
+
+    setLimit: useCallback((limit: number) => {
+      setState(prev => ({ ...prev, limit }));
+    }, []),
+
+    setSearchTerm: useCallback((term: string) => {
+      setSearchTerm(term);
+    }, [])
   };
 
   useEffect(() => {
     if (fetchFn) {
-      actions.refetch();
+      refetchData();
     }
   }, []);
 

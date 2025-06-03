@@ -8,19 +8,8 @@ export function useNotificationDiagnostics() {
   const [serviceWorkerRegistrations, setServiceWorkerRegistrations] = useState<number>(0);
   const [error, setError] = useState<string | null>(null);
   const [isRunningTests, setIsRunningTests] = useState(false);
-  const [permissionStatus, setPermissionStatus] = useState<'default' | 'granted' | 'denied'>('default');
-  const [isSupported, setIsSupported] = useState(false);
   
   const { state } = useNotifications();
-
-  const checkPermission = () => {
-    if ('Notification' in window) {
-      setIsSupported(true);
-      setPermissionStatus(Notification.permission);
-    } else {
-      setIsSupported(false);
-    }
-  };
 
   const checkServiceWorker = async () => {
     try {
@@ -48,7 +37,6 @@ export function useNotificationDiagnostics() {
     setIsRunningTests(true);
     try {
       await checkServiceWorker();
-      checkPermission();
       
       if (navigator.serviceWorker.controller) {
         // Send diagnostic command to service worker
@@ -82,7 +70,6 @@ export function useNotificationDiagnostics() {
 
   useEffect(() => {
     checkServiceWorker();
-    checkPermission();
     
     const messageHandler = (event: MessageEvent) => {
       if (event.data?.type === 'SW_DIAGNOSTIC_RESULT') {
@@ -97,8 +84,9 @@ export function useNotificationDiagnostics() {
   }, []);
 
   return {
-    isSupported,
-    permissionStatus,
+    isSupported: state.isSupported,
+    permission: state.permissionStatus, // Use 'permission' instead of 'permissionStatus' for component compatibility
+    permissionStatus: state.permissionStatus,
     serviceWorkerStatus,
     serviceWorkerController,
     serviceWorkerRegistrations,

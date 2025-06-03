@@ -17,6 +17,8 @@ export interface NotificationState {
   unreadCount: number;
   isLoading: boolean;
   error: string | null;
+  isSupported: boolean;
+  permissionStatus: 'default' | 'granted' | 'denied';
 }
 
 export interface NotificationActions {
@@ -26,6 +28,9 @@ export interface NotificationActions {
   fetchNotifications: () => Promise<void>;
   deleteNotification: (id: string) => Promise<void>;
   createNotification: (notification: Omit<NotificationItem, 'id' | 'createdAt'>) => Promise<void>;
+  requestPermission: () => Promise<void>;
+  checkPermission: () => void;
+  resetPermissionState: () => void;
 }
 
 export function useNotifications(): { state: NotificationState; actions: NotificationActions } {
@@ -34,7 +39,9 @@ export function useNotifications(): { state: NotificationState; actions: Notific
     notifications: [],
     unreadCount: 0,
     isLoading: false,
-    error: null
+    error: null,
+    isSupported: 'Notification' in window,
+    permissionStatus: 'Notification' in window ? Notification.permission : 'denied'
   });
 
   const actions: NotificationActions = {
@@ -170,11 +177,58 @@ export function useNotifications(): { state: NotificationState; actions: Notific
           variant: 'destructive',
         });
       }
-    }, [toast])
+    }, [toast]),
+
+    requestPermission: useCallback(async () => {
+      try {
+        if (!('Notification' in window)) {
+          throw new Error('Notifications not supported');
+        }
+        
+        const permission = await Notification.requestPermission();
+        setState(prev => ({ ...prev, permissionStatus: permission }));
+        
+        toast({
+          title: permission === 'granted' ? 'Permission granted' : 'Permission denied',
+          description: `Notification permission is now ${permission}`,
+        });
+      } catch (err) {
+        toast({
+          title: 'Error',
+          description: 'Failed to request permission',
+          variant: 'destructive',
+        });
+      }
+    }, [toast]),
+
+    checkPermission: useCallback(() => {
+      if ('Notification' in window) {
+        setState(prev => ({ 
+          ...prev, 
+          permissionStatus: Notification.permission,
+          isSupported: true
+        }));
+      } else {
+        setState(prev => ({ 
+          ...prev, 
+          permissionStatus: 'denied',
+          isSupported: false
+        }));
+      }
+    }, []),
+
+    resetPermissionState: useCallback(() => {
+      setState(prev => ({ 
+        ...prev, 
+        permissionStatus: 'Notification' in window ? Notification.permission : 'denied',
+        error: null
+      }));
+    }, [])
   };
 
   useEffect(() => {
     actions.fetchNotifications();
+    actions.checkPermission();
   }, []);
 
   return { state, actions };
