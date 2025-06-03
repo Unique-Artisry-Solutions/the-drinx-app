@@ -1,3 +1,4 @@
+
 import { renderStatusBadge, renderDatabaseStatusBadge, renderAccessIcon } from './statusRenderers';
 import { 
   createProgressSnapshot,
@@ -77,7 +78,7 @@ import {
   isPromotionSchedulingFeature,
   isPromotionIntegrationFeature,
   isPromotionAIFeature
-} from './detection';
+} from './detection/unifiedDetection';
 
 // Import directly from featureStatistics.tsx to fix circular dependency issues
 import { 
