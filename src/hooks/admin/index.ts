@@ -5,6 +5,7 @@ export { useAdminNavigation } from './useAdminNavigation';
 export { useAdminActions } from './useAdminActions';
 export { useAdminMigration } from './useAdminMigration';
 export { useAdminCodeReduction } from './useAdminCodeReduction';
+export { useAdminTabs } from './useAdminTabs';
 
 export type {
   AdminDashboardState,
@@ -29,3 +30,8 @@ export type {
   MigrationState,
   MigrationActions
 } from './useAdminMigration';
+
+export type {
+  UseAdminTabsState,
+  UseAdminTabsActions
+} from '../types/admin/TabTypes';
