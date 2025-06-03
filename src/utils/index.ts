@@ -7,7 +7,7 @@ export {
   formatDate, 
   truncateText, 
   randomString 
-} from '@/lib/utils';
+} from '@/utils/consolidated';
 
 // Toast utilities - Consolidated approach
 export { debouncedToast } from './debouncedToast';
@@ -16,15 +16,11 @@ export { toastDeduplication } from './toastDeduplication';
 // Environment utilities
 export { isPreviewEnvironment } from './environment';
 
-// Deprecated utilities (remove in next phase)
-/** @deprecated Use debouncedToast instead */
-export { showSuccessToast, showErrorToast } from './toastUtils';
+// Location utilities (legacy support)
+export { calculateDistance as getDistance, formatDistance } from './locationUtils';
 
-/** @deprecated Use formatDate from @/lib/utils instead */
-export { formatDateTime } from './dateUtils';
+// Consolidated utilities - Primary exports for new development
+export * from './consolidated';
 
-/** @deprecated Use calculateDistance from @/lib/utils instead */
-export { getDistance } from './locationUtils';
-
-/** @deprecated Use randomString from @/lib/utils instead */
-export { generateId } from './idUtils';
+// Streamlined utilities - Alternative namespace API
+export { utilities } from './streamlined';

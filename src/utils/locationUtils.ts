@@ -36,6 +36,12 @@ export function calculateDistance(lat1: number, lon1: number, lat2: number, lon2
 }
 
 /**
+ * @deprecated Use calculateDistance from @/utils/consolidated instead
+ * Legacy alias for backward compatibility
+ */
+export const getDistance = calculateDistance;
+
+/**
  * Converts a distance in miles to a user-friendly string using the current formatter
  * @param distance - Distance value in miles
  * @returns Formatted distance string
