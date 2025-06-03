@@ -35,7 +35,7 @@ const AdminDashboard: React.FC = () => {
   // Ensure the data matches expected types with proper defaults
   const establishmentData = sampleEstablishments.map(est => ({
     ...est,
-    cocktailCount: est.cocktailCount ?? est.cocktail_count ?? 0
+    cocktailCount: est.cocktailCount ?? 0
   }));
   
   const cocktailData = sampleCocktails.map(cocktail => ({

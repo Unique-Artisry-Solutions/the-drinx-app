@@ -50,11 +50,20 @@ export const useAdminData = <T extends { id: string; name: string }>(
   return { state, actions };
 };
 
-// Specialized hooks for specific data types using CoreTypes
-export const useEstablishmentsData = (initialData: Establishment[]) => {
+// Create compatible types for admin use
+type AdminEstablishment = Establishment & {
+  cocktailCount: number;
+};
+
+type AdminCocktail = Omit<Cocktail, 'establishment'> & {
+  establishment: string;
+};
+
+// Specialized hooks for specific data types
+export const useEstablishmentsData = (initialData: AdminEstablishment[]) => {
   return useAdminData(initialData, 'establishment');
 };
 
-export const useCocktailsData = (initialData: Cocktail[]) => {
+export const useCocktailsData = (initialData: AdminCocktail[]) => {
   return useAdminData(initialData, 'cocktail');
 };
