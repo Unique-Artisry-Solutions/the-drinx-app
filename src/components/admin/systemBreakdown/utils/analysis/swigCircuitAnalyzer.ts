@@ -1,8 +1,6 @@
 
 import { FeatureItem } from '../../types';
-import { isSwigCircuitFeature, isVipFeature } from '../detection/circuitDetection';
-import { isThemeConfigurationFeature } from '../detection/themeDetection';
-import { isPromoterCommunicationFeature, isEventManagementFeature } from '../detection/promoterDetection';
+import { unifiedDetection } from '../detection/unifiedDetection';
 
 /**
  * Analyzes all Swig Circuit related features
@@ -11,10 +9,28 @@ import { isPromoterCommunicationFeature, isEventManagementFeature } from '../det
  */
 export const analyzeSwigCircuitFeatures = (features: FeatureItem[]): FeatureItem[] => {
   return features.map(feature => {
-    if (isSwigCircuitFeature(feature)) {
+    // Check if feature is related to venue operations (includes swig circuits)
+    const isVenueFeature = unifiedDetection.isCategory(feature, 'venue_operations');
+    
+    // Check for VIP-related features
+    const isVipFeature = feature.title?.toLowerCase().includes('vip') || 
+                        feature.description?.toLowerCase().includes('vip package');
+    
+    // Check for theme configuration features
+    const isThemeFeature = feature.title?.toLowerCase().includes('theme') ||
+                          feature.description?.toLowerCase().includes('theme customization');
+    
+    // Check for promoter communication features
+    const isPromoterCommFeature = feature.title?.toLowerCase().includes('communication') ||
+                                 feature.description?.toLowerCase().includes('messaging');
+    
+    // Check for event management features
+    const isEventFeature = feature.title?.toLowerCase().includes('event') ||
+                          feature.description?.toLowerCase().includes('event management');
+    
+    if (isVenueFeature || feature.title?.toLowerCase().includes('swig circuit')) {
       return {
         ...feature,
-        // Create a new object with the Swig Circuit type and priority
         dbStatus: feature.dbStatus || 'not_started',
         databaseStatus: feature.databaseStatus || 'not_started',
         statusUpdated: feature.statusUpdated || false,
@@ -27,7 +43,7 @@ export const analyzeSwigCircuitFeatures = (features: FeatureItem[]): FeatureItem
       };
     }
     
-    if (isVipFeature(feature)) {
+    if (isVipFeature) {
       return {
         ...feature,
         dbStatus: feature.dbStatus || 'complete',
@@ -48,7 +64,7 @@ export const analyzeSwigCircuitFeatures = (features: FeatureItem[]): FeatureItem
       };
     }
     
-    if (isThemeConfigurationFeature(feature)) {
+    if (isThemeFeature) {
       return {
         ...feature,
         dbStatus: feature.dbStatus || 'complete',
@@ -64,8 +80,7 @@ export const analyzeSwigCircuitFeatures = (features: FeatureItem[]): FeatureItem
       };
     }
 
-    // Add promoter communication feature detection
-    if (isPromoterCommunicationFeature(feature)) {
+    if (isPromoterCommFeature) {
       return {
         ...feature,
         status: 'implemented',
@@ -86,8 +101,7 @@ export const analyzeSwigCircuitFeatures = (features: FeatureItem[]): FeatureItem
       };
     }
     
-    // Add event management feature detection
-    if (isEventManagementFeature(feature)) {
+    if (isEventFeature) {
       return {
         ...feature,
         status: 'in_progress',

@@ -27,7 +27,7 @@ export class AdminCocktailsService extends BaseAdminService<AdminCocktail> {
     const offset = (page - 1) * limit;
 
     let query = supabase
-      .from(this.tableName)
+      .from('cocktails')
       .select(`
         *,
         establishment:establishments(name)
@@ -37,6 +37,8 @@ export class AdminCocktailsService extends BaseAdminService<AdminCocktail> {
       Object.entries(filters).forEach(([key, value]) => {
         if (value !== undefined && value !== null && value !== '') {
           if (key === 'establishment_name') {
+            // For establishment name filtering, we need to handle it differently
+            // This is a simplified approach - in production you'd want proper joins
             query = query.ilike('establishments.name', `%${value}%`);
           } else {
             query = query.eq(key, value);
@@ -72,7 +74,7 @@ export class AdminCocktailsService extends BaseAdminService<AdminCocktail> {
     // This would require tracking popularity metrics
     // For now, we'll return recent cocktails
     const { data, error } = await supabase
-      .from(this.tableName)
+      .from('cocktails')
       .select(`
         *,
         establishment:establishments(name)

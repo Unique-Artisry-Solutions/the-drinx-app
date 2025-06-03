@@ -30,11 +30,8 @@ export class AdminEstablishmentsService extends BaseAdminService<AdminEstablishm
       .select('*', { count: 'exact', head: true })
       .eq('establishment_id', id);
 
-    // Get reviews count and average rating
-    const { count: reviewCount } = await supabase
-      .from('reviews')
-      .select('*', { count: 'exact', head: true })
-      .eq('establishment_id', id);
+    // For reviews, we'll return 0 for now since we don't have a reviews table in the schema
+    const reviewCount = 0;
 
     return {
       cocktailCount: cocktailCount || 0,
@@ -49,7 +46,7 @@ export class AdminEstablishmentsService extends BaseAdminService<AdminEstablishm
     const lngDelta = radius / (111 * Math.cos(lat * Math.PI / 180));
 
     const { data, error } = await supabase
-      .from(this.tableName)
+      .from('establishments')
       .select('*')
       .gte('latitude', lat - latDelta)
       .lte('latitude', lat + latDelta)
