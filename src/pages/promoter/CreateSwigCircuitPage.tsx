@@ -1,6 +1,6 @@
+
 import React from 'react';
-import { Button } from '@/components/ui/button';
-import { Layout } from '@/components/Layout';
+import Layout from '@/components/Layout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
 import { useSwigCircuitCreation } from '@/hooks/swigCircuit/useSwigCircuitCreation';

@@ -1,7 +1,7 @@
 
 import { useEffect } from 'react';
 import { useNotifications } from '@/hooks/useNotifications';
-import { Layout } from '@/components/Layout';
+import Layout from '@/components/Layout';
 import NotificationsLayout from '@/components/notifications/NotificationsLayout';
 import NotificationsHeader from './components/NotificationsHeader';
 import UnifiedNotificationsList from '@/components/notifications/UnifiedNotificationsList';

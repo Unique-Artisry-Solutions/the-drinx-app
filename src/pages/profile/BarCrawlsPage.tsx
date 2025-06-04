@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { Layout } from '@/components/Layout';
+import Layout from '@/components/Layout';
 import { useToast } from '@/hooks/use-toast';
 import BarCrawlTab from '@/components/profile/BarCrawlTab';
 import { Establishment } from '@/types/ProfileTypes';

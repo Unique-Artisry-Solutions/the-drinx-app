@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Layout } from '@/components/Layout';
+import Layout from '@/components/Layout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import CircuitRequestsHeader from '@/components/establishment/CircuitRequestsHeader';
 import PendingRequestsTab from '@/components/establishment/PendingRequestsTab';

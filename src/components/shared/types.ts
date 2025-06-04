@@ -73,17 +73,16 @@ export interface StandardFormFieldProps extends BaseComponentProps {
   disabled?: boolean;
 }
 
-// Standard tab option interface
+// Standard navigation props - FIXED: Changed onTabChange to handleTabChange for backward compatibility
+export interface StandardNavigationProps extends BaseComponentProps {
+  activeTab?: string;
+  handleTabChange?: (value: string) => void;
+  tabOptions?: StandardTabOption[];
+}
+
 export interface StandardTabOption {
   value: string;
   label: string;
   icon?: LucideIcon;
   disabled?: boolean;
-}
-
-// Standard navigation props - using handleTabChange for backward compatibility
-export interface StandardNavigationProps extends BaseComponentProps {
-  activeTab?: string;
-  handleTabChange?: (value: string) => void;
-  tabOptions?: StandardTabOption[];
 }

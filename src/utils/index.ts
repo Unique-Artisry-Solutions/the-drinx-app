@@ -1,5 +1,5 @@
 
-// Core utilities - Phase 9A standardized exports
+// Core utilities - Use these for all new development
 export { cn } from '@/lib/utils';
 export { 
   calculateDistance, 

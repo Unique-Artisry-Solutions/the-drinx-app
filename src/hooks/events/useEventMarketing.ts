@@ -1,63 +1,66 @@
-import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
-import { EventMarketingCampaign } from '@/types/EventTypes';
 
-interface CampaignCreateData {
-  event_id: string;
-  name: string;
-  campaign_type: string;
-  status: 'draft' | 'active' | 'paused' | 'completed';
-  description?: string;
-  start_date?: string;
-  end_date?: string;
-  budget?: number;
-  target_audience?: any;
-}
+import { useState, useEffect } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import { EventMarketingCampaign } from '@/types/EventTypes';
+import { 
+  fetchEventCampaigns,
+  createMarketingCampaign,
+  updateMarketingCampaign,
+  deleteMarketingCampaign,
+  trackCampaignMetric,
+  generateCampaignLink
+} from '@/services/eventMarketingService';
 
 export const useEventMarketing = (eventId: string) => {
   const [campaigns, setCampaigns] = useState<EventMarketingCampaign[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
-  const fetchCampaigns = async () => {
+  const loadCampaigns = async () => {
+    if (!eventId) return;
+    
     setIsLoading(true);
     setError(null);
-
+    
     try {
-      const { data, error } = await supabase
-        .from('event_marketing_campaigns')
-        .select('*')
-        .eq('event_id', eventId);
-
-      if (error) throw error;
-
-      setCampaigns(data || []);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch campaigns';
-      setError(errorMessage);
+      const data = await fetchEventCampaigns(eventId);
+      setCampaigns(data);
+    } catch (err: any) {
+      setError(err.message);
+      toast({
+        title: 'Error',
+        description: 'Failed to load marketing campaigns',
+        variant: 'destructive'
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const createCampaign = async (data: CampaignCreateData) => {
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      const { data: campaign, error } = await supabase
-        .from('event_marketing_campaigns')
-        .insert([data])
-        .select()
-        .single();
+  useEffect(() => {
+    loadCampaigns();
+  }, [eventId]);
 
-      if (error) throw error;
-      
-      setCampaigns(prev => [...prev, campaign]);
-      return campaign;
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to create campaign';
-      setError(errorMessage);
+  const createCampaign = async (campaign: Omit<EventMarketingCampaign, 'event_id'>) => {
+    setIsLoading(true);
+    try {
+      const newCampaign = await createMarketingCampaign({
+        ...campaign,
+        event_id: eventId
+      });
+      setCampaigns(prev => [...prev, newCampaign]);
+      toast({
+        title: 'Success',
+        description: 'Marketing campaign created successfully',
+      });
+      return newCampaign;
+    } catch (err: any) {
+      toast({
+        title: 'Error',
+        description: 'Failed to create campaign',
+        variant: 'destructive'
+      });
       throw err;
     } finally {
       setIsLoading(false);
@@ -66,23 +69,22 @@ export const useEventMarketing = (eventId: string) => {
 
   const updateCampaign = async (id: string, updates: Partial<EventMarketingCampaign>) => {
     setIsLoading(true);
-    setError(null);
-
     try {
-      const { data: updatedCampaign, error } = await supabase
-        .from('event_marketing_campaigns')
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      setCampaigns(prev => prev.map(campaign => (campaign.id === id ? updatedCampaign : campaign)));
-      return updatedCampaign;
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to update campaign';
-      setError(errorMessage);
+      const updated = await updateMarketingCampaign(id, updates);
+      setCampaigns(prev => 
+        prev.map(c => c.id === id ? { ...c, ...updated } : c)
+      );
+      toast({
+        title: 'Success',
+        description: 'Campaign updated successfully',
+      });
+      return updated;
+    } catch (err: any) {
+      toast({
+        title: 'Error',
+        description: 'Failed to update campaign',
+        variant: 'destructive'
+      });
       throw err;
     } finally {
       setIsLoading(false);
@@ -91,31 +93,48 @@ export const useEventMarketing = (eventId: string) => {
 
   const deleteCampaign = async (id: string) => {
     setIsLoading(true);
-    setError(null);
-
     try {
-      const { error } = await supabase
-        .from('event_marketing_campaigns')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-
-      setCampaigns(prev => prev.filter(campaign => campaign.id !== id));
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to delete campaign';
-      setError(errorMessage);
+      await deleteMarketingCampaign(id);
+      setCampaigns(prev => prev.filter(c => c.id !== id));
+      toast({
+        title: 'Success',
+        description: 'Campaign deleted successfully',
+      });
+    } catch (err: any) {
+      toast({
+        title: 'Error',
+        description: 'Failed to delete campaign',
+        variant: 'destructive'
+      });
       throw err;
     } finally {
       setIsLoading(false);
     }
   };
 
-  useEffect(() => {
-    if (eventId) {
-      fetchCampaigns();
+  const trackMetric = async (campaignId: string, metricName: string, value: number = 1) => {
+    try {
+      await trackCampaignMetric(campaignId, metricName, value);
+      
+      // Update local state to reflect the new metric value
+      setCampaigns(prev => 
+        prev.map(c => {
+          if (c.id === campaignId) {
+            const metrics = { ...(c.metrics || {}) };
+            metrics[metricName] = (metrics[metricName] || 0) + value;
+            return { ...c, metrics };
+          }
+          return c;
+        })
+      );
+    } catch (err: any) {
+      console.error('Failed to track metric:', err);
     }
-  }, [eventId]);
+  };
+
+  const getCampaignLink = (campaignId: string, medium: string = 'website') => {
+    return generateCampaignLink(eventId, campaignId, medium);
+  };
 
   return {
     campaigns,
@@ -124,6 +143,8 @@ export const useEventMarketing = (eventId: string) => {
     createCampaign,
     updateCampaign,
     deleteCampaign,
-    fetchCampaigns
+    trackMetric,
+    getCampaignLink,
+    refresh: loadCampaigns
   };
 };

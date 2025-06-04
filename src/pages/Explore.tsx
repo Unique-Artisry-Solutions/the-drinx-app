@@ -1,133 +1,152 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { Layout } from '@/components/Layout';
-import { Card } from '@/components/ui/card';
-import LocationSearch from '@/components/LocationSearch';
-import ViewModeToggle from '@/components/ViewModeToggle';
-import SearchFilter from '@/components/SearchFilter';
-import { ExploreMap } from '@/components/explore/ExploreMap';
-import { ExploreList } from '@/components/explore/ExploreList';
-import { useExploreData } from '@/hooks/useExploreData';
-import { ViewMode } from '@/types/ExploreTypes';
-import { Establishment } from '@/types/ProfileTypes';
-import { Cocktail } from '@/types/ProfileTypes';
+import React, { useState } from 'react';
+import Layout from '@/components/Layout';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { MapPin, Grid, List } from 'lucide-react';
+import { usePersonalizedData } from '@/hooks/usePersonalizedData';
+import { useIsMobile } from '@/hooks/use-mobile';
+
+// Import widgets
+import { QuickStatsWidget } from '@/components/explore/personalized/QuickStatsWidget';
+import { RecommendationsWidget } from '@/components/explore/personalized/RecommendationsWidget';
+import { ActivityFeedWidget } from '@/components/explore/personalized/ActivityFeedWidget';
+import { QuickActionCards } from '@/components/explore/personalized/QuickActionCards';
+import { RewardsHighlightWidget } from '@/components/explore/personalized/RewardsHighlightWidget';
+import StreakMotivationWidget from '@/components/explore/personalized/StreakMotivationWidget';
+import { NearbyEstablishmentsWidget } from '@/components/explore/personalized/NearbyEstablishmentsWidget';
+import { UpcomingEventsWidget } from '@/components/explore/personalized/UpcomingEventsWidget';
 
 const Explore: React.FC = () => {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const initialLocation = searchParams.get('location') || '';
-  const initialSearchTerm = searchParams.get('q') || '';
-  const initialViewMode = (searchParams.get('view') as ViewMode) || 'list';
-
-  const [locationQuery, setLocationQuery] = useState(initialLocation);
-  const [searchTerm, setSearchTerm] = useState(initialSearchTerm);
-  const [viewMode, setViewMode] = useState<ViewMode>(initialViewMode);
-  const [filters, setFilters] = useState({});
-  const [establishments, setEstablishments] = useState<Establishment[]>([]);
-  const [cocktails, setCocktails] = useState<Cocktail[]>([]);
-
+  const [viewMode, setViewMode] = useState<'map' | 'list' | 'grid'>('grid');
+  const isMobile = useIsMobile();
   const {
-    filteredEstablishments,
-    filteredCocktails,
-    isLoading,
-    error,
-    searchEstablishments,
-    searchCocktails
-  } = useExploreData(establishments, cocktails, searchTerm, filters);
+    loading,
+    userStats,
+    recentActivity,
+    recommendations,
+    quickActions,
+    nearbyEstablishments,
+    upcomingEvents,
+    isAuthenticated
+  } = usePersonalizedData();
 
-  // Update URL params when location or search term changes
-  useEffect(() => {
-    const params = new URLSearchParams();
-    if (locationQuery) params.set('location', locationQuery);
-    if (searchTerm) params.set('q', searchTerm);
-    if (viewMode && viewMode !== 'list') params.set('view', viewMode);
-    setSearchParams(params);
-  }, [locationQuery, searchTerm, viewMode, setSearchParams]);
+  if (loading) {
+    return (
+      <Layout>
+        <div className="container mx-auto px-4 py-8">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="h-64 bg-muted rounded-lg animate-pulse" />
+            ))}
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
-  const handleLocationSearch = (location: string) => {
-    setLocationQuery(location);
-  };
-
-  const handleSearch = useCallback((term: string) => {
-    setSearchTerm(term);
-  }, []);
-
-  const handleViewModeChange = (mode: ViewMode) => {
-    setViewMode(mode);
-  };
-
-  const handleFilterChange = (newFilters: any) => {
-    setFilters(newFilters);
-  };
-
-  const handleApplyFilters = () => {
-    console.log('Applying filters:', filters);
-  };
-
-  useEffect(() => {
-    // Mock data fetching - replace with actual API calls
-    const fetchMockData = async () => {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      // Mock establishments data with required properties
-      const mockEstablishments: Establishment[] = [
-        { id: '1', name: 'The Mocktail Lounge', address: '123 Main St', latitude: 40.7128, longitude: -74.0060 },
-        { id: '2', name: 'Sober Bar & Kitchen', address: '456 Elm St', latitude: 40.7589, longitude: -73.9851 },
-        { id: '3', name: 'Dry Spirits', address: '789 Oak St', latitude: 40.7505, longitude: -73.9934 },
-      ];
-
-      // Mock cocktails data with required properties
-      const mockCocktails: Cocktail[] = [
-        { id: '101', name: 'Virgin Mojito', ingredients: ['Lime', 'Mint', 'Soda'], price: 8.99, establishment: 'The Mocktail Lounge' },
-        { id: '102', name: 'Shirley Temple', ingredients: ['Ginger Ale', 'Grenadine'], price: 6.99, establishment: 'Sober Bar & Kitchen' },
-        { id: '103', name: 'Cranberry Spritzer', ingredients: ['Cranberry Juice', 'Soda'], price: 7.99, establishment: 'Dry Spirits' },
-      ];
-
-      setEstablishments(mockEstablishments);
-      setCocktails(mockCocktails);
-    };
-
-    fetchMockData();
-  }, []);
+  // Transform Activity[] to RealtimeActivity[] by adding required properties
+  const transformedActivity = recentActivity.map(activity => ({
+    ...activity,
+    user: typeof activity.user === 'string' 
+      ? { id: activity.user, name: activity.user } 
+      : activity.user || { id: 'unknown', name: 'Unknown User' },
+    likes: 0,
+    isLiked: false
+  }));
 
   return (
     <Layout>
-      <div className="container mx-auto p-4">
-        <Card className="mb-4">
-          <Card className="p-4 flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0 md:space-x-4">
-            <div className="flex-1">
-              <LocationSearch onSearch={handleLocationSearch} />
-            </div>
-            <ViewModeToggle viewMode={viewMode} onViewModeChange={handleViewModeChange} />
-          </Card>
-          <SearchFilter
-            onSearch={handleSearch}
-            onFilterChange={handleFilterChange}
-            onApplyFilters={handleApplyFilters}
-            initialSearchTerm={searchTerm}
-            cocktails={cocktails}
-            establishments={establishments}
-          />
-        </Card>
+      <div className="container mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">Explore</h1>
+            <p className="text-muted-foreground">
+              Discover new places, drinks, and experiences
+            </p>
+          </div>
+          
+          <div className="flex items-center gap-2 mt-4 sm:mt-0">
+            <Button
+              variant={viewMode === 'map' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setViewMode('map')}
+            >
+              <MapPin className="h-4 w-4 mr-2" />
+              Map
+            </Button>
+            <Button
+              variant={viewMode === 'list' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setViewMode('list')}
+            >
+              <List className="h-4 w-4 mr-2" />
+              List
+            </Button>
+            <Button
+              variant={viewMode === 'grid' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setViewMode('grid')}
+            >
+              <Grid className="h-4 w-4 mr-2" />
+              Grid
+            </Button>
+          </div>
+        </div>
 
-        {isLoading ? (
-          <div className="text-center py-4">Loading...</div>
-        ) : error ? (
-          <div className="text-center py-4 text-red-500">Error: {error}</div>
-        ) : (
-          <>
-            {viewMode === 'map' ? (
-              <ExploreMap establishments={filteredEstablishments} />
-            ) : (
-              <ExploreList
-                establishments={filteredEstablishments}
-                cocktails={filteredCocktails}
-                searchEstablishments={searchEstablishments}
-                searchCocktails={searchCocktails}
+        {/* Mobile Layout */}
+        {isMobile ? (
+          <div className="space-y-6">
+            {isAuthenticated && userStats && (
+              <QuickStatsWidget 
+                totalMocktailsTried={userStats.totalMocktailsTried || 0}
+                totalPoints={userStats.totalPoints || 0}
+                currentStreak={userStats.currentStreak || 0}
               />
             )}
-          </>
+            <QuickActionCards actions={quickActions} />
+            <RecommendationsWidget recommendations={recommendations} />
+            <ActivityFeedWidget activities={transformedActivity} isLoading={loading} />
+            {isAuthenticated && (
+              <>
+                <RewardsHighlightWidget />
+                <StreakMotivationWidget />
+              </>
+            )}
+            <NearbyEstablishmentsWidget establishments={nearbyEstablishments} />
+            <UpcomingEventsWidget events={upcomingEvents} />
+          </div>
+        ) : (
+          /* Desktop Layout */
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            {/* Left Side - Main Content (3 columns) */}
+            <div className="lg:col-span-3 space-y-6">
+              {isAuthenticated && userStats && (
+                <QuickStatsWidget 
+                  totalMocktailsTried={userStats.totalMocktailsTried || 0}
+                  totalPoints={userStats.totalPoints || 0}
+                  currentStreak={userStats.currentStreak || 0}
+                />
+              )}
+              <QuickActionCards actions={quickActions} />
+              <RecommendationsWidget recommendations={recommendations} />
+              <ActivityFeedWidget activities={transformedActivity} isLoading={loading} />
+            </div>
+
+            {/* Right Side - Sidebar (1 column) */}
+            <div className="space-y-6">
+              {isAuthenticated && (
+                <>
+                  <RewardsHighlightWidget />
+                  <StreakMotivationWidget />
+                </>
+              )}
+              <NearbyEstablishmentsWidget establishments={nearbyEstablishments} />
+              <UpcomingEventsWidget events={upcomingEvents} />
+            </div>
+          </div>
         )}
       </div>
     </Layout>

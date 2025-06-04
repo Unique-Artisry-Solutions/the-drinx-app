@@ -1,6 +1,7 @@
+
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Layout } from '@/components/Layout';
+import Layout from '@/components/Layout';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/auth';
 import { sampleCocktails } from '@/data/sampleData';

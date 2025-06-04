@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Layout } from '@/components/Layout';
+import Layout from '@/components/Layout';
 import VisitedTab from '@/components/profile/VisitedTab';
 import BackButton from '@/components/navigation/BackButton';
 

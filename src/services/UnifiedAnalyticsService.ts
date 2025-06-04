@@ -167,6 +167,3 @@ export class UnifiedAnalyticsService {
     }
   }
 }
-
-// Named export for consistency with Phase 9A standards
-export const AnalyticsService = UnifiedAnalyticsService;

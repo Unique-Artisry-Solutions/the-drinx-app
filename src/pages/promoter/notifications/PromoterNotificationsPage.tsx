@@ -4,7 +4,7 @@ import { useRoleNotifications } from '@/hooks/notifications/useRoleNotifications
 import UnifiedNotificationsList from '@/components/notifications/UnifiedNotificationsList';
 import NotificationsHeader from '@/pages/notifications/components/NotificationsHeader';
 import NotificationsLayout from '@/components/notifications/NotificationsLayout';
-import { Layout } from '@/components/Layout';
+import Layout from '@/components/Layout';
 
 export default function PromoterNotificationsPage() {
   const { notifications, unreadCount, isLoading, error, markAsRead, markAllAsRead, refetch } = useRoleNotifications();

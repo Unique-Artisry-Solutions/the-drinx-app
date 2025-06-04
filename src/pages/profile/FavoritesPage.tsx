@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Layout } from '@/components/Layout';
+import Layout from '@/components/Layout';
 import FavoritesTab from '@/components/profile/FavoritesTab';
 import { Cocktail } from '@/types/ProfileTypes';
 import { sampleCocktails } from '@/data/sampleData';

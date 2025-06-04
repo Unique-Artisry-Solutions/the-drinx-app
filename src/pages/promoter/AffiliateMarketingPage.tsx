@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Layout } from '@/components/Layout';
+import Layout from '@/components/Layout';
 import AffiliateDashboard from '@/components/promoter/affiliate/AffiliateDashboard';
 import { useAuth } from '@/contexts/auth';
 

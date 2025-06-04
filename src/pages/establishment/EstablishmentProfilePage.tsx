@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { Layout } from '@/components/Layout';
+import Layout from '@/components/Layout';
 import { useEstablishmentProfile } from '@/hooks/establishment/useEstablishmentProfile';
 import { useIsMobile } from '@/hooks/use-mobile';
 import QuickNavigation from '@/components/establishment/QuickNavigation';

@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Layout } from '@/components/Layout';
+import Layout from '@/components/Layout';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { useVisitorStats } from '@/hooks/establishment/useVisitorStats'; 
 import VisitorStatsTab from '@/components/establishment/VisitorStatsTab';

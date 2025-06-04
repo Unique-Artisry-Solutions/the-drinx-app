@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Layout } from '@/components/Layout';
+import Layout from '@/components/Layout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import PromoterDashboard from './PromoterDashboard';
 import { FollowersTab } from '@/components/promoter/dashboard/FollowersTab';

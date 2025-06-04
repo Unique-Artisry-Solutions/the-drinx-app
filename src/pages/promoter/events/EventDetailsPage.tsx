@@ -2,7 +2,7 @@
 import React, { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
-import { Layout } from '@/components/Layout';
+import Layout from '@/components/Layout';
 import { useEventDetails } from '@/hooks/events/useEventDetails';
 import { useEventService } from '@/hooks/events/useEventService';
 import { EventStatus } from '@/types/EventTypes';
