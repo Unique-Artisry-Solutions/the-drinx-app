@@ -3,7 +3,16 @@ import { useCallback } from 'react';
 import { trackEvent, AnalyticsEvent } from '@/utils/analytics';
 import { useToast } from '@/hooks/use-toast';
 
-export function useAnalytics() {
+interface AnalyticsActions {
+  track: (eventType: string, eventData?: Record<string, any>) => Promise<boolean>;
+  trackWithFeedback: (eventType: string, eventData?: Record<string, any>, showSuccess?: boolean) => Promise<boolean>;
+  trackPage: (pageName: string) => Promise<boolean>;
+  trackAction: (action: string, details?: Record<string, any>) => Promise<boolean>;
+  trackError: (errorType: string, errorDetails: Record<string, any>) => Promise<boolean>;
+  trackServiceFee: (feeAmount: number, percentage: number, transactionTotal: number) => Promise<boolean>;
+}
+
+export const useAnalytics = (): AnalyticsActions => {
   const { toast } = useToast();
   
   const track = useCallback(async (eventType: string, eventData?: Record<string, any>) => {
@@ -61,7 +70,6 @@ export function useAnalytics() {
     return track('error', { error_type: errorType, ...errorDetails });
   }, [track]);
   
-  // Add service fee tracking
   const trackServiceFee = useCallback((feeAmount: number, percentage: number, transactionTotal: number) => {
     return track('service_fee_collected', { 
       fee_amount: feeAmount,
@@ -79,4 +87,4 @@ export function useAnalytics() {
     trackError,
     trackServiceFee
   };
-}
+};
