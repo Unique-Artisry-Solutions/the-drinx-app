@@ -2,7 +2,7 @@
 import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAnalytics } from '@/hooks/useAnalytics';
-import type { Notification as NotificationType } from '@/types/notifications';
+import type { Notification as NotificationType } from '@/types/notification';
 
 interface NotificationState {
   notifications: NotificationType[];
@@ -17,6 +17,8 @@ interface NotificationActions {
   removeNotification: (id: string) => void;
   addNotification: (notification: Omit<NotificationType, 'id' | 'timestamp'>) => void;
   clearAll: () => void;
+  refetch: () => Promise<void>;
+  sendTestNotification: (type: string) => Promise<void>;
 }
 
 export const useNotifications = (): NotificationState & NotificationActions => {
@@ -79,6 +81,42 @@ export const useNotifications = (): NotificationState & NotificationActions => {
     track('notifications_cleared');
   }, [track]);
 
+  const refetch = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      // Mock refetch - in real app would fetch from API
+      await new Promise(resolve => setTimeout(resolve, 500));
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch notifications');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const sendTestNotification = useCallback(async (type: string) => {
+    setIsLoading(true);
+    try {
+      const testNotification = {
+        title: `Test ${type} Notification`,
+        message: `This is a test notification of type: ${type}`,
+        type: type as 'success' | 'error' | 'warning' | 'info',
+        priority: 'medium' as const
+      };
+      
+      addNotification(testNotification);
+      
+      toast({
+        title: "Test Notification Sent",
+        description: `${type} notification sent successfully`
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to send test notification');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [addNotification, toast]);
+
   const unreadCount = notifications.filter(n => !n.read).length;
 
   return {
@@ -90,6 +128,8 @@ export const useNotifications = (): NotificationState & NotificationActions => {
     markAllAsRead,
     removeNotification,
     addNotification,
-    clearAll
+    clearAll,
+    refetch,
+    sendTestNotification
   };
 };

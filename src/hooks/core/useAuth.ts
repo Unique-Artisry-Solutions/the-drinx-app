@@ -29,11 +29,11 @@ export function useAuth(): { state: AuthState; actions: AuthActions } {
   const [error, setError] = useState<string | null>(null);
 
   const state: AuthState = {
-    user: authContext.user,
-    session: authContext.session,
-    isLoading: authContext.isLoading,
-    isAuthenticated: authContext.isAuthenticated,
-    userType: authContext.userType || 'individual',
+    user: authContext?.user || null,
+    session: authContext?.session || null,
+    isLoading: authContext?.isLoading || false,
+    isAuthenticated: authContext?.isAuthenticated || false,
+    userType: authContext?.userType || 'individual',
     error
   };
 
@@ -41,7 +41,9 @@ export function useAuth(): { state: AuthState; actions: AuthActions } {
     login: useCallback(async (email: string, password: string) => {
       try {
         setError(null);
-        await authContext.signIn(email, password);
+        if (authContext?.signIn) {
+          await authContext.signIn(email, password);
+        }
         toast({
           title: 'Success',
           description: 'Logged in successfully',
@@ -60,7 +62,9 @@ export function useAuth(): { state: AuthState; actions: AuthActions } {
     logout: useCallback(async () => {
       try {
         setError(null);
-        await authContext.signOut();
+        if (authContext?.signOut) {
+          await authContext.signOut();
+        }
         toast({
           title: 'Success',
           description: 'Logged out successfully',
@@ -79,7 +83,9 @@ export function useAuth(): { state: AuthState; actions: AuthActions } {
     signup: useCallback(async (userData: any) => {
       try {
         setError(null);
-        await authContext.signUp(userData);
+        if (authContext?.signUp) {
+          await authContext.signUp(userData);
+        }
         toast({
           title: 'Success',
           description: 'Account created successfully',
@@ -118,7 +124,9 @@ export function useAuth(): { state: AuthState; actions: AuthActions } {
     updateProfile: useCallback(async (updates: any) => {
       try {
         setError(null);
-        await authContext.updateUserProfile(updates);
+        if (authContext?.updateUserProfile) {
+          await authContext.updateUserProfile(updates);
+        }
         toast({
           title: 'Success',
           description: 'Profile updated successfully',

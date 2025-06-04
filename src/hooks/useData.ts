@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
 interface DataState<T> {
-  data: T | null;
+  data: T;
   isLoading: boolean;
   error: string | null;
   isSuccess: boolean;
@@ -13,23 +13,36 @@ interface DataActions<T> {
   refetch: () => Promise<void>;
   mutate: (newData: T) => void;
   reset: () => void;
+  deleteItem: (id: string) => void;
 }
 
-interface UseDataOptions {
+interface UseDataOptions<T> {
   enabled?: boolean;
   refetchInterval?: number;
-  onSuccess?: (data: any) => void;
+  onSuccess?: (data: T) => void;
   onError?: (error: string) => void;
+  initialData: T;
+  fetchFn: () => Promise<T>;
+  itemType?: string;
 }
 
-interface UseDataReturn<T> extends DataState<T>, DataActions<T> {}
+interface UseDataReturn<T> {
+  state: DataState<T>;
+  actions: DataActions<T>;
+}
 
-export const useData = <T>(
-  fetchFn: () => Promise<T>,
-  options: UseDataOptions = {}
-): UseDataReturn<T> => {
-  const { enabled = true, refetchInterval, onSuccess, onError } = options;
-  const [data, setData] = useState<T | null>(null);
+export const useData = <T>(options: UseDataOptions<T>): UseDataReturn<T> => {
+  const { 
+    enabled = true, 
+    refetchInterval, 
+    onSuccess, 
+    onError,
+    initialData,
+    fetchFn,
+    itemType
+  } = options;
+  
+  const [data, setData] = useState<T>(initialData);
   const [isLoading, setIsLoading] = useState(enabled);
   const [error, setError] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -63,11 +76,18 @@ export const useData = <T>(
   }, []);
 
   const reset = useCallback(() => {
-    setData(null);
+    setData(initialData);
     setIsLoading(false);
     setError(null);
     setIsSuccess(false);
-  }, []);
+  }, [initialData]);
+
+  const deleteItem = useCallback((id: string) => {
+    if (Array.isArray(data)) {
+      const filteredData = (data as any[]).filter(item => item.id !== id);
+      setData(filteredData as T);
+    }
+  }, [data]);
 
   useEffect(() => {
     fetchData();
@@ -81,13 +101,18 @@ export const useData = <T>(
   }, [fetchData, refetchInterval, enabled]);
 
   return {
-    data,
-    isLoading,
-    error,
-    isSuccess,
-    refetch: fetchData,
-    mutate,
-    reset
+    state: {
+      data,
+      isLoading,
+      error,
+      isSuccess
+    },
+    actions: {
+      refetch: fetchData,
+      mutate,
+      reset,
+      deleteItem
+    }
   };
 };
 

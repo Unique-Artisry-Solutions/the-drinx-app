@@ -20,6 +20,11 @@ interface AuthActions {
   signOut: () => Promise<void>;
   refreshSession: () => Promise<{ isEmailVerified: boolean }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null; data: any }>;
+  signUp: (formData: any) => Promise<any>;
+  sendVerificationEmail: (email: string) => Promise<void>;
+  updateUserProfile: (data: any) => Promise<void>;
+  updatePassword: (newPassword: string) => Promise<void>;
+  recoverAuthState: () => Promise<boolean>;
 }
 
 interface UseAuthReturn extends AuthState, AuthActions {
@@ -86,12 +91,64 @@ export const useAuth = (): UseAuthReturn => {
     }
   };
 
+  const signUp = async (formData: any) => {
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          data: formData
+        }
+      });
+      return { data, error };
+    } catch (error) {
+      return { data: null, error: error as Error };
+    }
+  };
+
+  const sendVerificationEmail = async (email: string) => {
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email
+    });
+    if (error) throw error;
+  };
+
+  const updateUserProfile = async (data: any) => {
+    const { error } = await supabase.auth.updateUser({
+      data
+    });
+    if (error) throw error;
+  };
+
+  const updatePassword = async (newPassword: string) => {
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword
+    });
+    if (error) throw error;
+  };
+
   const refreshSession = async (): Promise<{ isEmailVerified: boolean }> => {
     const { data, error } = await supabase.auth.refreshSession();
     if (error) throw error;
     
     const isEmailVerified = !!(data.session?.user?.email_confirmed_at);
     return { isEmailVerified };
+  };
+
+  const recoverAuthState = async (): Promise<boolean> => {
+    try {
+      const { data } = await supabase.auth.getSession();
+      if (data.session) {
+        setSession(data.session);
+        setUser(data.session.user);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Auth recovery failed:', error);
+      return false;
+    }
   };
 
   // Get effective auth state with dev bypass
@@ -120,6 +177,11 @@ export const useAuth = (): UseAuthReturn => {
     signOut,
     refreshSession,
     signIn,
+    signUp,
+    sendVerificationEmail,
+    updateUserProfile,
+    updatePassword,
+    recoverAuthState,
 
     // Computed properties
     isReady: authStable && !isLoading,
