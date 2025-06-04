@@ -1,5 +1,6 @@
+
 import React from 'react';
-import { UserNavbar } from './user/UserNavbar';
+import UserNavbar from './user/UserNavbar';
 
 interface TabOption {
   value: string;

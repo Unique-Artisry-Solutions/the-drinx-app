@@ -1,5 +1,6 @@
+
 import React from 'react';
-import { UserNavbar } from './navigation/user/UserNavbar';
+import UserNavbar from './navigation/user/UserNavbar';
 
 export const TopNavigation: React.FC = () => {
   return <UserNavbar />;
