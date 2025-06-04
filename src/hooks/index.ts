@@ -1,24 +1,23 @@
-// Core consolidated hooks - Use these for new development
-export * from './core';
+// Core consolidated hooks - Primary exports for all development
+export { useAuth } from './useAuth';
+export { useAnalytics } from './useAnalytics';
+export { useData, useDataMutation } from './useData';
+export { useNotifications } from './useNotifications';
 
 // Essential utility hooks
 export { useToast } from './use-toast';
-export { useRetry } from './useRetry';
+export { useIsMobile } from './use-mobile';
+
+// Keep only these specific feature hooks that don't have duplicates
 export { useNavigationGuard } from './useNavigationGuard';
 export { useFeatureAccess } from './useFeatureAccess';
+export { useDebouncedToast } from './useDebouncedToast';
 
-// Admin hooks (use core useData instead for new development)
-export { useSimpleAdmin } from './admin/useSimpleAdmin';
-
-// Specific feature hooks (consider migrating to core hooks)
+// Legacy hooks (mark for future removal)
+export { useRetry } from './useRetry';
 export { useUserRecipes } from './useUserRecipes';
 export { useSwigCircuits } from './useSwigCircuits';
 export { useStreakData } from './useStreakData';
-export { useAuthenticatedUser } from './useAuthenticatedUser';
-export { useDevAuthBypass } from './useDevAuthBypass';
 
-// Direct notifications hook
-export { useDirectNotifications } from './useDirectNotifications';
-
-// Keep legacy useNotifications for backward compatibility
-export { useNotifications } from './useNotifications';
+// Types
+export type { NotificationItem } from './useNotifications';
