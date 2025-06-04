@@ -2,7 +2,7 @@
 import { useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/contexts/auth';
 import { useToast } from '@/hooks/use-toast';
-import { NotificationService } from '@/services/NotificationService';
+import { realTimeFollowerNotificationService } from '@/services/RealTimeFollowerNotificationService';
 import { useSubscriptions } from '@/hooks/useSubscriptions';
 
 interface UseRealTimeFollowerNotificationsProps {
@@ -19,6 +19,11 @@ export function useRealTimeFollowerNotifications({
   const { subscriptions, refetch } = useSubscriptions(promoterId);
   const isSubscribed = useRef(false);
 
+  // Set up toast for the service
+  useEffect(() => {
+    realTimeFollowerNotificationService.setToast(toast);
+  }, [toast]);
+
   // Handle incoming notifications
   const handleNotification = useCallback((notification: any) => {
     console.log('Received real-time follower notification:', notification);
@@ -26,7 +31,7 @@ export function useRealTimeFollowerNotifications({
     // Show toast notification
     toast({
       title: notification.title,
-      description: notification.content || notification.message,
+      description: notification.content,
       duration: notification.priority === 'urgent' ? 0 : 5000,
       variant: notification.priority === 'urgent' ? 'destructive' : 'default'
     });
@@ -74,21 +79,46 @@ export function useRealTimeFollowerNotifications({
     }
   }, [toast, refetch]);
 
-  // Subscribe to notifications using NotificationService
+  // Subscribe to promoter notifications (for followers)
+  useEffect(() => {
+    if (!enabled || !user || !promoterId || isSubscribed.current) return;
+
+    // Check if user follows this promoter
+    const isFollowing = subscriptions.some(sub => 
+      sub.promoter_id === promoterId && sub.follow_status === 'active'
+    );
+
+    if (isFollowing) {
+      realTimeFollowerNotificationService.subscribeToPromoterNotifications(
+        promoterId, 
+        handleNotification
+      );
+      isSubscribed.current = true;
+    }
+
+    return () => {
+      if (isSubscribed.current) {
+        realTimeFollowerNotificationService.unsubscribeFromPromoterNotifications(promoterId);
+        isSubscribed.current = false;
+      }
+    };
+  }, [enabled, user, promoterId, subscriptions, handleNotification]);
+
+  // Subscribe to follower updates (for promoters)
   useEffect(() => {
     if (!enabled || !user) return;
 
-    const unsubscribe = NotificationService.subscribe((notifications) => {
-      const relevantNotifications = notifications.filter(n => 
-        !n.read && 
-        n.metadata?.promoter_id === promoterId
-      );
-      
-      relevantNotifications.forEach(handleNotification);
-    });
+    const channel = realTimeFollowerNotificationService.subscribeToFollowerUpdates(
+      user.id, 
+      handleFollowerUpdate
+    );
 
-    return unsubscribe;
-  }, [enabled, user, promoterId, handleNotification]);
+    return () => {
+      if (channel) {
+        realTimeFollowerNotificationService.unsubscribeFromPromoterNotifications(user.id);
+      }
+    };
+  }, [enabled, user, handleFollowerUpdate]);
 
   // Send real-time notification to followers
   const sendRealtimeNotification = useCallback(async (notificationData: {
@@ -102,20 +132,21 @@ export function useRealTimeFollowerNotifications({
       throw new Error('Promoter ID is required to send notifications');
     }
 
-    // Add notification using NotificationService
-    NotificationService.addNotification({
-      title: notificationData.title,
-      message: notificationData.content,
-      type: notificationData.priority === 'urgent' ? 'error' : 'info',
-      metadata: {
-        ...notificationData.metadata,
-        promoter_id: promoterId,
-        notification_type: notificationData.notification_type
+    return await realTimeFollowerNotificationService.sendRealtimeNotificationToFollowers(
+      promoterId,
+      {
+        ...notificationData,
+        priority: notificationData.priority || 'medium'
       }
-    });
-
-    return { success: true };
+    );
   }, [promoterId]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      realTimeFollowerNotificationService.cleanup();
+    };
+  }, []);
 
   return {
     sendRealtimeNotification,

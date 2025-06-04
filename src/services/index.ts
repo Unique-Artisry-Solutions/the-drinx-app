@@ -1,25 +1,19 @@
 
-// Services Index - Phase 3: Standardized Service Layer
-// Primary entry point for all application services
+// Services Index - Updated for Phase 9D Service Migration Completion
 
 // Service Registry (primary export)
-export { serviceRegistry } from './ServiceRegistry';
-export type { ServiceHealthStatus, ServiceMetrics, ServiceDefinition } from './ServiceRegistry';
-
-// Standardized services
-export * from './consolidated';
-
-// Service interfaces and base classes
-export * from './interfaces/StandardService';
-
-// Service configuration and proxy
-export { serviceConfig } from './ServiceConfig';
+export { serviceRegistry, type ServiceHealthStatus, type ServiceMetrics } from './ServiceRegistry';
 export { ServiceProxy } from './ServiceProxy';
 
-// Legacy compatibility - these will be removed in future phases
-export { NotificationService } from './NotificationService';
-export { UnifiedAnalyticsService } from './UnifiedAnalyticsService';
+// Primary exports from consolidated services
+export * from './consolidated';
 
-// Deprecated - use serviceRegistry instead
-/** @deprecated Use serviceRegistry.getService('admin') instead */
+// Service configuration
+export { serviceConfig } from './ServiceConfig';
+
+// Direct service exports (maintained for backward compatibility)
+export { NotificationService } from './NotificationService';
 export * from './admin';
+
+// Legacy compatibility
+export { UnifiedAnalyticsService } from './UnifiedAnalyticsService';

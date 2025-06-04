@@ -24,19 +24,6 @@ export const toUserType = (value: any, fallback: UserType = 'individual'): UserT
 };
 
 /**
- * Safely converts UserType to string (for compatibility)
- */
-export const userTypeToString = (userType: UserType | string | null): string => {
-  if (typeof userType === 'string' && isValidUserType(userType)) {
-    return userType;
-  }
-  if (typeof userType === 'string') {
-    return userType; // Pass through non-UserType strings
-  }
-  return 'individual'; // Default fallback
-};
-
-/**
  * Extracts userType from user metadata safely
  */
 export const getUserTypeFromMetadata = (userMetadata: any): UserType => {
@@ -48,11 +35,4 @@ export const getUserTypeFromMetadata = (userMetadata: any): UserType => {
  */
 export const getUserTypeFromRole = (role: any): UserType => {
   return toUserType(role);
-};
-
-/**
- * Helper to convert string to UserType for navigation components
- */
-export const stringToUserType = (value: string | null): UserType => {
-  return toUserType(value);
 };

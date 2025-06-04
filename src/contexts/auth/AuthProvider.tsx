@@ -1,16 +1,23 @@
 
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { Session, User } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
-import { AuthContextType, AuthState, AuthActions } from './types';
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
+import { Session, User, AuthError } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabase';
+import { AuthState, AuthActions, AuthContextType } from './types';
+import { sessionPersistenceService } from '@/services/SessionPersistenceService';
+import { authCache } from './authCache';
+import { debouncedToast } from '@/utils/debouncedToast';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Type conversion helper
+function convertToUserType(value: string | null): 'individual' | 'establishment' | 'promoter' | 'admin' {
+  if (value === 'establishment' || value === 'promoter' || value === 'admin') {
+    return value;
+  }
+  return 'individual';
+}
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { toast } = useToast();
-  
-  // Core auth state
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -21,50 +28,136 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [userType, setUserType] = useState<'individual' | 'establishment' | 'promoter' | 'admin'>('individual');
   const [navigationReady, setNavigationReady] = useState(false);
   
-  // Recovery state
-  const [isRecovering, setIsRecovering] = useState(false);
-  const [recoveryAttempts, setRecoveryAttempts] = useState(0);
-  
-  // Dev mode state
-  const [isReady, setIsReady] = useState(false);
-  const [isUsingDevBypass, setIsUsingDevBypass] = useState(false);
+  const initializationRef = useRef(false);
 
-  const isAuthenticated = !!session?.user;
+  // Initialize auth state
+  const initializeAuth = useCallback(async () => {
+    if (initializationRef.current) return;
+    initializationRef.current = true;
+
+    console.log('AuthProvider - Starting initialization');
+    setIsLoading(true);
+    setAuthError(null);
+
+    try {
+      // Get current session
+      const { data: { session: currentSession }, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        console.error('AuthProvider - Session fetch error:', error);
+        throw error;
+      }
+
+      if (currentSession?.user) {
+        console.log('AuthProvider - Session found, setting auth state');
+        
+        // Set session and user
+        setSession(currentSession);
+        setUser(currentSession.user);
+        
+        // Determine user type
+        const userTypeFromMetadata = currentSession.user.user_metadata?.user_type;
+        const resolvedUserType = convertToUserType(userTypeFromMetadata);
+        setUserType(resolvedUserType);
+        
+        // Set email verification status
+        setIsEmailVerified(currentSession.user.email_confirmed_at !== null);
+        
+        // Update persistence service
+        sessionPersistenceService.updateSession(currentSession, currentSession.user);
+        
+        console.log('AuthProvider - Auth state set successfully');
+      } else {
+        console.log('AuthProvider - No session found, user not authenticated');
+        
+        // Clear auth state
+        setSession(null);
+        setUser(null);
+        setUserType('individual');
+        setIsEmailVerified(false);
+        
+        // Clear persistence
+        sessionPersistenceService.clearSession();
+      }
+
+    } catch (error: any) {
+      console.error('AuthProvider - Initialization failed:', error);
+      setAuthError(new Error(`Initialization failed: ${error.message}`));
+    } finally {
+      // ALWAYS set these flags to true after initialization attempt
+      setIsLoading(false);
+      setAuthStable(true);
+      setNavigationReady(true);
+      console.log('AuthProvider - Initialization complete, auth stable and navigation ready');
+    }
+  }, []);
+
+  // Handle auth state changes
+  useEffect(() => {
+    console.log('AuthProvider - Setting up auth state listener');
+    
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, newSession) => {
+      console.log('AuthProvider - Auth state changed:', event, !!newSession);
+      
+      if (event === 'SIGNED_IN' && newSession?.user) {
+        setSession(newSession);
+        setUser(newSession.user);
+        
+        const userTypeFromMetadata = newSession.user.user_metadata?.user_type;
+        const resolvedUserType = convertToUserType(userTypeFromMetadata);
+        setUserType(resolvedUserType);
+        
+        setIsEmailVerified(newSession.user.email_confirmed_at !== null);
+        setAuthError(null);
+        
+        sessionPersistenceService.updateSession(newSession, newSession.user);
+        
+      } else if (event === 'SIGNED_OUT') {
+        setSession(null);
+        setUser(null);
+        setUserType('individual');
+        setIsEmailVerified(false);
+        setAuthError(null);
+        
+        sessionPersistenceService.clearSession();
+      }
+    });
+
+    // Initialize auth state
+    initializeAuth();
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [initializeAuth]);
 
   // Auth actions
   const signIn = useCallback(async (email: string, password: string) => {
     try {
       setAuthError(null);
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      
       if (error) throw error;
-      return { error: null, data };
+      
+      return { data, error: null };
     } catch (error: any) {
       setAuthError(error);
-      return { error, data: null };
+      return { data: null, error };
     }
   }, []);
 
   const signUp = useCallback(async (formData: any) => {
     try {
       setAuthError(null);
-      const { data, error } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          data: formData
-        }
-      });
-
+      const { data, error } = await supabase.auth.signUp(formData);
+      
       if (error) throw error;
+      
       setIsVerificationEmailSent(true);
-      return { error: null, data };
+      return { data, error: null };
     } catch (error: any) {
       setAuthError(error);
-      return { error, data: null };
+      throw error;
     }
   }, []);
 
@@ -75,7 +168,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (error) throw error;
     } catch (error: any) {
       setAuthError(error);
-      throw error;
+      console.error('Sign out error:', error);
     }
   }, []);
 
@@ -83,7 +176,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const { data, error } = await supabase.auth.refreshSession();
       if (error) throw error;
-      return { isEmailVerified: !!data.session?.user?.email_confirmed_at };
+      
+      const isVerified = data.session?.user?.email_confirmed_at !== null;
+      setIsEmailVerified(isVerified);
+      
+      return { isEmailVerified: isVerified };
     } catch (error: any) {
       setAuthError(error);
       return { isEmailVerified: false };
@@ -91,40 +188,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const recoverAuthState = useCallback(async () => {
-    try {
-      setIsRecovering(true);
-      setRecoveryAttempts(prev => prev + 1);
-      
-      const { data, error } = await supabase.auth.getSession();
-      if (error) throw error;
-      
-      if (data.session) {
-        setSession(data.session);
-        setUser(data.session.user);
-        setIsEmailVerified(!!data.session.user.email_confirmed_at);
-      }
-      
-      setIsRecovering(false);
-      return true;
-    } catch (error: any) {
-      setAuthError(error);
-      setIsRecovering(false);
-      return false;
-    }
-  }, []);
-
-  const quickRecovery = useCallback(async () => {
-    return await recoverAuthState();
-  }, [recoverAuthState]);
+    console.log('AuthProvider - Manual auth recovery requested');
+    initializationRef.current = false;
+    await initializeAuth();
+    return true;
+  }, [initializeAuth]);
 
   const sendVerificationEmail = useCallback(async (email: string) => {
     try {
-      const { error } = await supabase.auth.resend({
-        type: 'signup',
-        email
+      const { error } = await supabase.auth.resend({ 
+        type: 'signup', 
+        email,
+        options: { emailRedirectTo: `${window.location.origin}/?email_confirmed=true` }
       });
+      
       if (error) throw error;
+      
       setIsVerificationEmailSent(true);
+      debouncedToast.success('Verification email sent', 'Please check your inbox');
     } catch (error: any) {
       setAuthError(error);
       throw error;
@@ -133,9 +214,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const updateUserProfile = useCallback(async (data: any) => {
     try {
-      const { error } = await supabase.auth.updateUser({
-        data
-      });
+      const { error } = await supabase.auth.updateUser(data);
       if (error) throw error;
     } catch (error: any) {
       setAuthError(error);
@@ -145,9 +224,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const updatePassword = useCallback(async (newPassword: string) => {
     try {
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword
-      });
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) throw error;
     } catch (error: any) {
       setAuthError(error);
@@ -155,110 +232,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
-  const getDevUserType = useCallback(() => {
-    return userType;
-  }, [userType]);
-
-  const setDevUserType = useCallback((newUserType: 'individual' | 'establishment' | 'promoter' | 'admin' | null) => {
-    if (newUserType) {
-      setUserType(newUserType);
-    }
-  }, []);
-
-  // Compatibility methods
-  const login = useCallback(async (email: string, password: string) => {
-    const result = await signIn(email, password);
-    if (result.error) {
-      throw result.error;
-    }
-  }, [signIn]);
-
-  const logout = useCallback(async () => {
-    await signOut();
-  }, [signOut]);
-
-  const signup = useCallback(async (formData: any) => {
-    const result = await signUp(formData);
-    if (result.error) {
-      throw result.error;
-    }
-  }, [signUp]);
-
-  const resetPassword = useCallback(async (email: string) => {
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email);
-      if (error) throw error;
-    } catch (error: any) {
-      setAuthError(error);
-      throw error;
-    }
-  }, []);
-
-  const updateProfile = useCallback(async (updates: any) => {
-    await updateUserProfile(updates);
-  }, [updateUserProfile]);
-
-  const switchRole = useCallback(async (role: 'individual' | 'establishment' | 'promoter' | 'admin') => {
-    setUserType(role);
-  }, []);
-
-  // Initialize auth state
-  useEffect(() => {
-    let mounted = true;
-
-    const initializeAuth = async () => {
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        if (mounted) {
-          if (error) {
-            setAuthError(error);
-          } else {
-            setSession(session);
-            setUser(session?.user || null);
-            setIsEmailVerified(!!session?.user?.email_confirmed_at);
-          }
-          setAuthStable(true);
-          setNavigationReady(true);
-          setIsReady(true);
-          setIsLoading(false);
-        }
-      } catch (error: any) {
-        if (mounted) {
-          setAuthError(error);
-          setIsLoading(false);
-        }
-      }
-    };
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (mounted) {
-          setSession(session);
-          setUser(session?.user || null);
-          setIsEmailVerified(!!session?.user?.email_confirmed_at);
-          setAuthError(null);
-          
-          if (event === 'SIGNED_OUT') {
-            setUserType('individual');
-          }
-        }
-      }
-    );
-
-    initializeAuth();
-
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
-  }, []);
-
-  // Create state and actions objects for backward compatibility
-  const state: AuthState = {
+  const value: AuthContextType = {
+    // State
     session,
     user,
-    isAuthenticated,
+    isAuthenticated: !!session && !!user,
     isLoading,
     isEmailVerified,
     isVerificationEmailSent,
@@ -266,13 +244,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     authStable,
     userType,
     navigationReady,
-    isRecovering,
-    recoveryAttempts,
-    isReady,
-    isUsingDevBypass
-  };
-
-  const actions: AuthActions = {
+    
+    // Actions
     signIn,
     signUp,
     signOut,
@@ -281,60 +254,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     sendVerificationEmail,
     updateUserProfile,
     updatePassword,
-    quickRecovery,
-    getDevUserType,
-    setDevUserType,
-    login,
-    logout,
-    signup,
-    resetPassword,
-    updateProfile,
-    switchRole
-  };
-
-  const contextValue: AuthContextType = {
-    // Direct properties
-    session,
-    user,
-    isAuthenticated,
-    isLoading,
-    isEmailVerified,
-    isVerificationEmailSent,
-    authError,
-    authStable,
-    userType,
-    navigationReady,
-    isRecovering,
-    recoveryAttempts,
-    isReady,
-    isUsingDevBypass,
-    
-    // Methods
-    signIn,
-    signUp,
-    signOut,
-    refreshSession,
-    recoverAuthState,
-    sendVerificationEmail,
-    updateUserProfile,
-    updatePassword,
-    quickRecovery,
-    getDevUserType,
-    setDevUserType,
-    login,
-    logout,
-    signup,
-    resetPassword,
-    updateProfile,
-    switchRole,
-    
-    // Backward compatibility
-    state,
-    actions
   };
 
   return (
-    <AuthContext.Provider value={contextValue}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
@@ -347,6 +270,3 @@ export const useAuth = () => {
   }
   return context;
 };
-
-// Export the type for external use
-export type { AuthContextType };

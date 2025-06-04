@@ -1,148 +1,181 @@
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/hooks/useAuth';
-import { useDevelopmentMode } from '@/contexts/DevelopmentModeContext';
-import { toUserType } from '@/utils/userTypeGuards';
-import { cn } from '@/lib/utils';
+
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '@/contexts/auth/AuthProvider';
+import { useDevAuthBypass } from '@/hooks/useDevAuthBypass';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { useAppNavigation } from '@/hooks/useAppNavigation';
+import { supabase } from '@/lib/supabase';
+import UserProfileDropdown from './UserProfileDropdown';
+import UserNavLinks from './UserNavLinks';
+import UserMobileMenu from './UserMobileMenu';
+import { useTheme } from '@/contexts/ThemeContext';
+import NotificationsPopover from '@/components/notifications/NotificationsPopover';
+import { RoleSwitcher } from '../RoleSwitcher';
+import CartButton from '@/components/cart/CartButton';
+
+interface TabOption {
+  value: string;
+  label: string;
+}
 
 interface UserNavbarProps {
   activeTab?: string;
   handleTabChange?: (value: string) => void;
-  tabOptions?: { value: string; label: string }[];
+  tabOptions?: TabOption[];
 }
 
-const UserNavbar: React.FC<UserNavbarProps> = ({ 
+const UserNavbar: React.FC<UserNavbarProps> = ({
   activeTab,
   handleTabChange,
-  tabOptions = []
+  tabOptions
 }) => {
-  const { userType: rawUserType } = useAuth();
-  const { isDevelopment, isDevModeActive } = useDevelopmentMode();
-  
-  // Safely convert userType to UserType
-  const userType = toUserType(rawUserType);
-  
+  const navigate = useNavigate();
   const location = useLocation();
-  const { toast } = useToast();
-  const { signOut, user } = useAuth();
+  const { goToHomePage } = useAppNavigation();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [username, setUsername] = useState<string | null>("Guest");
+  const { theme } = useTheme();
+  const { signOut } = useAuth();
+  const { 
+    user, 
+    userType, 
+    isAuthenticated, 
+    isUsingDevBypass 
+  } = useDevAuthBypass();
+  const isMobile = useIsMobile();
+  
+  // Convert userType to non-admin type for components that don't handle admin
+  const nonAdminUserType = userType === 'admin' ? 'individual' : (userType || 'individual');
+  
+  useEffect(() => {
+    const fetchUsername = async () => {
+      if (user) {
+        try {
+          // In dev mode, use mock profile data
+          if (isUsingDevBypass) {
+            const displayNames = {
+              admin: 'System Administrator',
+              establishment: 'Test Bar & Grill',
+              promoter: 'Test Event Promoter',
+              individual: 'Test Individual'
+            };
+            setUsername(displayNames[userType] || 'Test User');
+            return;
+          }
 
+          // For real users, fetch from database
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('username, display_name')
+            .eq('id', user.id)
+            .single();
+          
+          if (data && !error) {
+            setUsername(data.display_name || data.username || "Guest User");
+          }
+        } catch (error) {
+          console.error('Error fetching user data:', error);
+          setUsername("Guest User");
+        }
+      } else {
+        setUsername('Guest User');
+      }
+    };
+    
+    fetchUsername();
+  }, [user, userType, isUsingDevBypass]);
+  
   const handleLogout = async () => {
     try {
+      console.log('UserNavbar: Initiating logout via Auth context');
+      // Use the Auth context signOut method to ensure consistent behavior
       await signOut();
-      toast({
-        title: 'Logged out',
-        description: 'You have been successfully logged out',
-      });
+      // No need to navigate here as signOut already redirects to landing
     } catch (error) {
-      console.error('Logout error:', error);
-      toast({
-        title: 'Logout failed',
-        description: 'There was a problem logging out',
-        variant: 'destructive',
-      });
+      console.error('Error during logout:', error);
+      // Fallback redirect in case the signOut method fails
+      window.location.href = '/landing';
     }
   };
-
-  const avatarName = user?.user_metadata?.name || 'Spiritless User';
-  const avatarURL = user?.user_metadata?.avatar_url;
-
-  const isTabActive = (tabValue: string) => {
-    return activeTab === tabValue ? 'bg-accent text-accent-foreground' : '';
+  
+  const handleHomeClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault(); // Prevent default navigation
+    goToHomePage(userType || 'individual');
   };
-
-  const getTabColor = (tabValue: string) => {
-    const convertedUserType = toUserType(tabValue);
-    switch (convertedUserType) {
-      case 'establishment':
-        return 'text-spiritless-green';
-      case 'promoter':
-        return 'text-purple-600';
-      default:
-        return 'text-spiritless-pink';
+  
+  const getTabOptions = () => {
+    if (location.pathname === '/establishment/profile' && tabOptions) {
+      return tabOptions;
     }
+    return undefined;
   };
-
-  const getActiveColor = (tabValue: string) => {
-    const convertedUserType = toUserType(tabValue);
-    switch (convertedUserType) {
-      case 'establishment':
-        return 'border-spiritless-green text-spiritless-green bg-spiritless-green/10';
-      case 'promoter':
-        return 'border-purple-600 text-purple-600 bg-purple-100';
-      default:
-        return 'border-spiritless-pink text-spiritless-pink bg-spiritless-pink/10';
-    }
-  };
-
-  const getNavItemColor = (item: any) => {
-    const convertedUserType = toUserType(userType);
-    switch (convertedUserType) {
-      case 'establishment':
-        return location.pathname === item.href ? 'text-spiritless-green' : 'hover:text-spiritless-green';
-      case 'promoter':
-        return location.pathname === item.href ? 'text-purple-600' : 'hover:text-purple-600';
-      default:
-        return location.pathname === item.href ? 'text-spiritless-pink' : 'hover:text-spiritless-pink';
-    }
-  };
-
+  
+  const isDarkTheme = theme === 'dark';
+  let navbarClass = isDarkTheme ? 'bg-gray-900 shadow-md border-b border-gray-800' : 'bg-white shadow-sm';
+  
+  // Add a custom class for promoter navigation
+  if (userType === 'promoter') {
+    navbarClass = isDarkTheme 
+      ? 'bg-gray-900 shadow-md border-b border-gray-800' 
+      : 'bg-white shadow-sm border-b-2 border-purple-200';
+  }
+  
   return (
-    <nav className="bg-white border-b">
-      <div className="container max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-        <div className="flex items-center">
-          <Link to="/" className="text-lg font-semibold">
-            Spirit<span className="text-spiritless-pink">less</span>
-          </Link>
+    <nav className={`user-top-nav fixed top-0 left-0 w-full z-50 ${navbarClass}`}>
+      <div className="user-nav-container max-w-6xl mx-auto px-4 py-3">
+        <div className="user-nav-inner flex items-center justify-between">
+          <div className="user-nav-left flex items-center">
+            <Link to="#" onClick={handleHomeClick} className={`user-nav-logo text-xl font-semibold mr-6 ${userType === 'promoter' ? 'text-purple-600' : ''}`}>
+              {isMobile ? "SL" : "Spirit"}
+              {!isMobile && <span>less</span>}
+              {userType === 'promoter' && !isMobile && <span className="ml-1 text-xs px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded-md">Promoter</span>}
+              {userType === 'establishment' && !isMobile && <span className="ml-1 text-xs px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded-md">Establishment</span>}
+              {isUsingDevBypass && !isMobile && <span className="ml-1 text-xs px-1.5 py-0.5 bg-orange-100 text-orange-700 rounded-md">Dev Mode</span>}
+            </Link>
+            
+            <UserNavLinks userType={nonAdminUserType} />
+          </div>
           
-          {tabOptions.length > 0 && (
-            <div className="hidden md:flex items-center ml-6 space-x-4">
-              {tabOptions.map((tab) => (
-                <Button
-                  key={tab.value}
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleTabChange && handleTabChange(tab.value)}
-                  className={`rounded-full text-sm font-medium ${isTabActive(tab.value)} ${getActiveColor(tab.value)} hover:bg-accent hover:text-accent-foreground`}
-                >
-                  {tab.label}
-                </Button>
-              ))}
+          <div className="user-nav-right flex items-center space-x-4">
+            {username && (
+              <span className="text-sm hidden md:block">
+                Welcome, <span className={`font-medium ${userType === 'promoter' ? 'text-purple-600' : userType === 'establishment' ? 'text-blue-600' : 'text-spiritless-pink'}`}>{username}</span>
+              </span>
+            )}
+            
+            <RoleSwitcher />
+            
+            {/* Apply proper stacking context for notifications and cart */}
+            <div className="relative z-40">
+              <NotificationsPopover />
             </div>
-          )}
+            
+            <div className="relative z-40">
+              <CartButton />
+            </div>
+            
+            <UserProfileDropdown 
+              username={username} 
+              userType={nonAdminUserType} 
+              handleLogout={handleLogout} 
+              activeTab={location.pathname === '/establishment/profile' ? activeTab : undefined} 
+              handleTabChange={location.pathname === '/establishment/profile' ? handleTabChange : undefined} 
+              tabOptions={getTabOptions()} 
+            />
+          </div>
         </div>
-
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <Avatar className="h-8 w-8">
-                {avatarURL ? (
-                  <AvatarImage src={avatarURL} alt={avatarName} />
-                ) : (
-                  <AvatarFallback>{avatarName?.charAt(0)}</AvatarFallback>
-                )}
-              </Avatar>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem>
-              <Link to="/profile" className="w-full">
-                Profile
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout}>Log out</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        
+        <UserMobileMenu 
+          isOpen={isMobileMenuOpen} 
+          username={username} 
+          userType={nonAdminUserType} 
+          onClose={() => setIsMobileMenuOpen(false)} 
+          handleLogout={handleLogout} 
+          activeTab={location.pathname === '/establishment/profile' ? activeTab : undefined} 
+          handleTabChange={location.pathname === '/establishment/profile' ? handleTabChange : undefined} 
+          tabOptions={getTabOptions()} 
+        />
       </div>
     </nav>
   );

@@ -1,16 +1,23 @@
-import React from 'react';
-import { useAuth } from '@/hooks/useAuth';
-import { useDevelopmentMode } from '@/contexts/DevelopmentModeContext';
-import TopNavigation from '@/components/navigation/TopNavigation';
-import { toUserType } from '@/utils/userTypeGuards';
-import { BaseComponentProps, StandardNavigationProps } from '@/components/shared/types';
+
+import React, { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
+import { NavigationType } from '../navigation/NavigationTypes';
+import MobileNavigation from '../navigation/MobileNavigation';
+import UserNavbar from '../navigation/user/UserNavbar';
+import Breadcrumbs from '../navigation/Breadcrumbs';
+import { useDevAuthBypass } from '@/hooks/useDevAuthBypass';
+import GuestTopNavigation from '../navigation/GuestTopNavigation';
+import AdminTopNav from '../navigation/admin/AdminTopNav';
+import AppFooter from '../AppFooter';
+import AdminFooter from '../admin/AdminFooter';
+import { resolveNavigationState, toNonAdminUserType } from '@/utils/navigationResolver';
 
 interface TabOption {
   value: string;
   label: string;
 }
 
-interface MobileLayoutProps extends BaseComponentProps, StandardNavigationProps {
+interface MobileLayoutProps {
   children: React.ReactNode;
   activeTab?: string;
   handleTabChange?: (value: string) => void;
@@ -23,36 +30,89 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
   activeTab,
   handleTabChange,
   tabOptions,
-  forceGuestNavigation = false,
-  className,
-  'data-testid': testId
+  forceGuestNavigation = false
 }) => {
-  const { userType: rawUserType } = useAuth();
-  const { isDevelopment, isDevModeActive } = useDevelopmentMode();
+  const location = useLocation();
+  const { userType, isAuthenticated } = useDevAuthBypass();
   
-  // Safely convert userType to UserType using utility function
-  const userType = toUserType(rawUserType);
+  const [effectiveNavState, setEffectiveNavState] = React.useState(() => 
+    resolveNavigationState(null, false, location.pathname, forceGuestNavigation)
+  );
+
+  // Scroll to top when route changes
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    const navState = resolveNavigationState(
+      userType,
+      isAuthenticated,
+      location.pathname,
+      forceGuestNavigation
+    );
+    setEffectiveNavState(navState);
+  }, [userType, isAuthenticated, location.pathname, forceGuestNavigation]);
+
+  const isLandingPage = location.pathname === '/' || location.pathname === '/landing' || forceGuestNavigation;
+  const isAdminPage = location.pathname.startsWith('/admin');
+
+  const getContentPadding = () => {
+    return isLandingPage ? 'pt-16 pb-0' : 'pt-16 pb-20';
+  };
+
+  const shouldShowBreadcrumbs = () => {
+    const excludedPaths = ['/', '/landing', '/login', '/signup', '/mission', '/map', '/explore'];
+    return !excludedPaths.includes(location.pathname) && !isLandingPage && location.pathname !== '/admin/login';
+  };
+
+  const shouldShowMobileNav = () => {
+    return !isAdminPage;
+  };
+
+  const renderNavigation = () => {
+    switch (effectiveNavState.navigationType) {
+      case NavigationType.ADMIN:
+        return <AdminTopNav />;
+      case NavigationType.USER:
+        return <UserNavbar activeTab={activeTab} handleTabChange={handleTabChange} tabOptions={tabOptions} />;
+      case NavigationType.GUEST:
+      default:
+        return <GuestTopNavigation />;
+    }
+  };
   
-  // Determine effective user type
-  const effectiveUserType = isDevelopment && isDevModeActive ? rawUserType : userType;
+  const renderFooter = () => {
+    if (isAdminPage || effectiveNavState.userType === 'admin') {
+      return <AdminFooter />;
+    }
+    return !shouldShowMobileNav() ? <AppFooter /> : null;
+  };
+
+  const mobileUserType = toNonAdminUserType(effectiveNavState.userType);
 
   return (
-    <div className={`mobile-layout flex flex-col min-h-screen ${className || ''}`} data-testid={testId}>
-      <header className="sticky top-0 z-40 bg-white/95 border-b shadow-sm">
-        <TopNavigation 
-          activeTab={activeTab} 
-          handleTabChange={handleTabChange}
-          tabOptions={tabOptions}
-        />
-      </header>
+    <div className="min-h-screen w-full flex flex-col bg-background transition-colors duration-300">
+      {renderNavigation()}
       
-      <main className="flex-1">
+      <main className={`flex-1 w-full ${getContentPadding()}`}>
+        {shouldShowBreadcrumbs() && (
+          <div className="w-full px-3">
+            <Breadcrumbs />
+          </div>
+        )}
         {children}
       </main>
       
-      <footer className="bg-gray-50 border-t py-4 text-center text-gray-500 text-sm">
-        &copy; {new Date().getFullYear()} Spiritless. All rights reserved.
-      </footer>
+      {renderFooter()}
+      
+      {shouldShowMobileNav() && (
+        <MobileNavigation 
+          type={effectiveNavState.navigationType} 
+          userType={mobileUserType} 
+          forceGuestNavigation={forceGuestNavigation} 
+        />
+      )}
     </div>
   );
 };

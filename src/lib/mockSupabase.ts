@@ -1,6 +1,6 @@
 
 import { supabase as realSupabase } from '@/lib/supabase';
-import { MockDataService } from '@/services/MockDataService';
+import { MockDatabaseService } from '@/services/MockDatabaseService';
 
 /**
  * Smart Supabase client that automatically uses mock data in dev mode
@@ -19,8 +19,12 @@ class SmartSupabaseClient {
   }
 
   private get activeClient() {
-    // Always return real Supabase client for now
-    // Mock functionality can be added at the service layer instead
+    if (this.shouldUseMock) {
+      const mockClient = MockDatabaseService.createMockClient();
+      if (mockClient) {
+        return mockClient;
+      }
+    }
     return realSupabase;
   }
 

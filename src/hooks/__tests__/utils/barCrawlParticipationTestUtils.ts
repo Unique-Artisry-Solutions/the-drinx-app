@@ -1,7 +1,8 @@
 
 import { vi } from 'vitest';
-import { useAuth, AuthContextType } from '@/contexts/auth/AuthProvider';
+import { useAuth } from '@/contexts/auth/AuthProvider';
 import { useToast } from '@/hooks/use-toast';
+import { AuthContextType } from '@/contexts/auth/types';
 
 // Create a proper mockUser that satisfies the User type from Supabase
 export const mockUser = {
@@ -53,86 +54,15 @@ export function setupMocks(authUser = mockUser) {
     authError: null,
     isVerificationEmailSent: false,
     userType: 'individual' as const,
-    navigationReady: true,
-    
-    // Recovery state
-    isRecovering: false,
-    recoveryAttempts: 0,
-    
-    // Dev mode state
-    isReady: true,
-    isUsingDevBypass: false,
-    
-    // Auth actions
+    navigationReady: true, // Add the missing navigationReady property
     signIn: vi.fn().mockResolvedValue({ error: null, data: {} }),
-    signUp: vi.fn().mockResolvedValue({ error: null, data: {} }),
+    signUp: vi.fn().mockResolvedValue({}),
     signOut: vi.fn().mockResolvedValue({}),
     updateUserProfile: vi.fn().mockResolvedValue({}),
     refreshSession: vi.fn().mockResolvedValue({ isEmailVerified: true }),
     updatePassword: vi.fn().mockResolvedValue({}),
     recoverAuthState: vi.fn().mockResolvedValue(true),
-    sendVerificationEmail: vi.fn().mockResolvedValue({}),
-    
-    // Recovery actions
-    quickRecovery: vi.fn().mockResolvedValue(true),
-    
-    // Dev mode actions
-    getDevUserType: vi.fn().mockReturnValue('individual'),
-    setDevUserType: vi.fn(),
-    
-    // Compatibility actions
-    login: vi.fn().mockResolvedValue({}),
-    logout: vi.fn().mockResolvedValue({}),
-    signup: vi.fn().mockResolvedValue({}),
-    resetPassword: vi.fn().mockResolvedValue({}),
-    updateProfile: vi.fn().mockResolvedValue({}),
-    switchRole: vi.fn().mockResolvedValue({}),
-    
-    // Backward compatibility
-    state: {
-      user: authUser,
-      session: authUser ? { 
-        user: authUser,
-        access_token: 'mock-access-token',
-        refresh_token: 'mock-refresh-token',
-        expires_at: Date.now() + 3600,
-        expires_in: 3600,
-        provider_token: null,
-        provider_refresh_token: null,
-        token_type: 'bearer'
-      } : null,
-      isAuthenticated: !!authUser,
-      isLoading: false,
-      isEmailVerified: true,
-      authStable: true,
-      authError: null,
-      isVerificationEmailSent: false,
-      userType: 'individual' as const,
-      navigationReady: true,
-      isRecovering: false,
-      recoveryAttempts: 0,
-      isReady: true,
-      isUsingDevBypass: false
-    },
-    actions: {
-      signIn: vi.fn().mockResolvedValue({ error: null, data: {} }),
-      signUp: vi.fn().mockResolvedValue({ error: null, data: {} }),
-      signOut: vi.fn().mockResolvedValue({}),
-      updateUserProfile: vi.fn().mockResolvedValue({}),
-      refreshSession: vi.fn().mockResolvedValue({ isEmailVerified: true }),
-      updatePassword: vi.fn().mockResolvedValue({}),
-      recoverAuthState: vi.fn().mockResolvedValue(true),
-      sendVerificationEmail: vi.fn().mockResolvedValue({}),
-      quickRecovery: vi.fn().mockResolvedValue(true),
-      getDevUserType: vi.fn().mockReturnValue('individual'),
-      setDevUserType: vi.fn(),
-      login: vi.fn().mockResolvedValue({}),
-      logout: vi.fn().mockResolvedValue({}),
-      signup: vi.fn().mockResolvedValue({}),
-      resetPassword: vi.fn().mockResolvedValue({}),
-      updateProfile: vi.fn().mockResolvedValue({}),
-      switchRole: vi.fn().mockResolvedValue({})
-    }
+    sendVerificationEmail: vi.fn().mockResolvedValue({})
   };
   
   // Setup auth mock with the complete context

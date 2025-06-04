@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { CheckIcon, Crown } from 'lucide-react';
 import { useAppSubscription } from '@/hooks/useAppSubscription';
-import { AppSubscriptionPlan } from '@/services/StandardSubscriptionService';
+import { AppSubscriptionPlan } from '@/services/AppSubscriptionService';
 
 interface AppSubscriptionPlansProps {
   onPlanSelect?: (planId: string) => void;

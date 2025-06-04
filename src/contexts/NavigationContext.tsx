@@ -7,7 +7,6 @@ import { UnifiedNavItem, UserType } from '@/types/navigation/NavigationTypes';
 import { getGuestNavItems } from '@/components/navigation/mobile/GuestNavItems';
 import { getUserNavItems } from '@/components/navigation/mobile/UserNavItems';
 import { getAdminNavItems } from '@/components/navigation/mobile/AdminNavItems';
-import { toUserType } from '@/utils/userTypeGuards';
 
 interface NavigationContextType {
   currentPath: string;
@@ -23,10 +22,7 @@ const NavigationContext = createContext<NavigationContextType | undefined>(undef
 export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
   const { isDevelopment, isInitialized } = useDevelopmentMode();
-  const { userType: rawUserType, isAuthenticated } = useDevAuthBypass();
-  
-  // Convert string userType to UserType safely
-  const userType = toUserType(rawUserType);
+  const { userType, isAuthenticated } = useDevAuthBypass();
   
   const [navigationState, setNavigationState] = useState<NavigationContextType>({
     currentPath: location.pathname,

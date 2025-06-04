@@ -25,14 +25,6 @@ export interface AuthState {
   authStable: boolean;
   userType: 'individual' | 'establishment' | 'promoter' | 'admin';
   navigationReady: boolean;
-  
-  // Recovery state
-  isRecovering: boolean;
-  recoveryAttempts: number;
-  
-  // Dev mode state
-  isReady: boolean;
-  isUsingDevBypass: boolean;
 }
 
 export interface AuthActions {
@@ -44,25 +36,6 @@ export interface AuthActions {
   sendVerificationEmail: (email: string) => Promise<void>;
   updateUserProfile: (data: any) => Promise<void>;
   updatePassword: (newPassword: string) => Promise<void>;
-  
-  // Recovery actions
-  quickRecovery: () => Promise<boolean>;
-  
-  // Dev mode actions
-  getDevUserType: () => 'individual' | 'establishment' | 'promoter' | 'admin' | null;
-  setDevUserType: (userType: 'individual' | 'establishment' | 'promoter' | 'admin' | null) => void;
-  
-  // Core auth actions for compatibility
-  login: (email: string, password: string) => Promise<void>;
-  logout: () => Promise<void>;
-  signup: (formData: any) => Promise<void>;
-  resetPassword: (email: string) => Promise<void>;
-  updateProfile: (updates: any) => Promise<void>;
-  switchRole: (role: 'individual' | 'establishment' | 'promoter' | 'admin') => Promise<void>;
 }
 
-export interface AuthContextType extends AuthState, AuthActions {
-  // Backward compatibility properties
-  state: AuthState;
-  actions: AuthActions;
-}
+export interface AuthContextType extends AuthState, AuthActions {}
