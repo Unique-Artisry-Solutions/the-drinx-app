@@ -7,11 +7,34 @@ import { Badge } from '@/components/ui/badge';
 import NetworkVisualization from './NetworkVisualization';
 import { InfluencerList } from './InfluencerList';
 import RelationshipMatrix from './RelationshipMatrix';
+import { InfluentialUser } from '@/types/AudienceTypes';
 import { Network, Users, BarChart3, Download, RefreshCw } from 'lucide-react';
 
 export const AudienceRelationshipMap: React.FC = () => {
   const [activeView, setActiveView] = useState('network');
   const [isLoading, setIsLoading] = useState(false);
+
+  // Mock influencers data
+  const influencers: InfluentialUser[] = [
+    {
+      user_id: '1',
+      display_name: 'Sarah Chen',
+      influence_score: 95,
+      follower_count: 12500,
+      engagement_rate: 8.5,
+      connected_segments: 4,
+      expertise_areas: ['cocktails', 'events']
+    },
+    {
+      user_id: '2',
+      display_name: 'Mike Rodriguez',
+      influence_score: 87,
+      follower_count: 8900,
+      engagement_rate: 7.2,
+      connected_segments: 3,
+      expertise_areas: ['bar crawls', 'social']
+    }
+  ];
 
   const handleRefresh = () => {
     setIsLoading(true);
@@ -22,6 +45,10 @@ export const AudienceRelationshipMap: React.FC = () => {
   const handleExport = () => {
     // Export functionality
     console.log('Exporting relationship data...');
+  };
+
+  const handleSelectUser = (userId: string) => {
+    console.log('Selected user:', userId);
   };
 
   return (
@@ -83,7 +110,10 @@ export const AudienceRelationshipMap: React.FC = () => {
             </TabsContent>
 
             <TabsContent value="influencers" className="mt-4">
-              <InfluencerList />
+              <InfluencerList 
+                influencers={influencers}
+                onSelectUser={handleSelectUser}
+              />
             </TabsContent>
           </Tabs>
         </CardContent>

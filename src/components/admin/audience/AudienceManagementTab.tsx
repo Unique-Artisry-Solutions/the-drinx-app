@@ -12,10 +12,70 @@ import { SegmentOverlapAnalysis } from './analytics/SegmentOverlapAnalysis';
 import { SegmentTrendsChart } from './analytics/SegmentTrendsChart';
 import { ExportReportDialog } from './analytics/ExportReportDialog';
 import SegmentAnalyticsDashboard from './analytics/SegmentAnalyticsDashboard';
+import { AudienceSegment } from '@/types/AudienceTypes';
 import { Users, Target, TrendingUp, Network } from 'lucide-react';
 
 export const AudienceManagementTab: React.FC = () => {
   const [activeTab, setActiveTab] = useState('segments');
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  
+  // Mock data and state
+  const [segments] = useState<AudienceSegment[]>([
+    {
+      id: '1',
+      name: 'High-Value Customers',
+      description: 'Customers with high engagement and purchase history',
+      created_by: 'admin',
+      is_active: true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      status: 'active',
+      memberCount: 1250
+    },
+    {
+      id: '2',
+      name: 'New Users',
+      description: 'Users who joined in the last 30 days',
+      created_by: 'admin',
+      is_active: true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      status: 'active',
+      memberCount: 890
+    }
+  ]);
+  
+  const [selectedSegments, setSelectedSegments] = useState<string[]>([]);
+  const [isLoading] = useState(false);
+
+  // Event handlers
+  const handleSegmentSubmit = (data: { name: string; description: string }) => {
+    console.log('Creating segment:', data);
+  };
+
+  const handleSegmentCancel = () => {
+    console.log('Segment creation cancelled');
+  };
+
+  const handleAddCriterion = (criterion: { type: string; operator: string; value: string }) => {
+    console.log('Adding criterion:', criterion);
+  };
+
+  const handleEditSegment = (segment: AudienceSegment) => {
+    console.log('Editing segment:', segment);
+  };
+
+  const handleDeleteSegment = (segmentId: string) => {
+    console.log('Deleting segment:', segmentId);
+  };
+
+  const handleSegmentToggle = (segmentId: string) => {
+    setSelectedSegments(prev => 
+      prev.includes(segmentId) 
+        ? prev.filter(id => id !== segmentId)
+        : [...prev, segmentId]
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -57,7 +117,10 @@ export const AudienceManagementTab: React.FC = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <AudienceSegmentForm />
+                  <AudienceSegmentForm 
+                    onSubmit={handleSegmentSubmit}
+                    onCancel={handleSegmentCancel}
+                  />
                 </CardContent>
               </Card>
               
@@ -69,14 +132,19 @@ export const AudienceManagementTab: React.FC = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <CriteriaBuilder />
+                  <CriteriaBuilder onAddCriterion={handleAddCriterion} />
                 </CardContent>
               </Card>
             </div>
             
             <div className="space-y-4">
-              <AudienceSegmentList />
-              <SegmentPerformance />
+              <AudienceSegmentList 
+                segments={segments}
+                isLoading={isLoading}
+                onEdit={handleEditSegment}
+                onDelete={handleDeleteSegment}
+              />
+              <SegmentPerformance segments={segments} />
             </div>
           </div>
         </TabsContent>
@@ -84,8 +152,16 @@ export const AudienceManagementTab: React.FC = () => {
         <TabsContent value="analytics" className="space-y-4">
           <SegmentAnalyticsDashboard />
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <SegmentOverlapAnalysis />
-            <SegmentTrendsChart />
+            <SegmentOverlapAnalysis 
+              segments={segments}
+              selectedSegments={selectedSegments}
+              onSegmentToggle={handleSegmentToggle}
+              isLoading={isLoading}
+            />
+            <SegmentTrendsChart 
+              segments={segments}
+              isLoading={isLoading}
+            />
           </div>
         </TabsContent>
 
@@ -103,7 +179,13 @@ export const AudienceManagementTab: React.FC = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <ExportReportDialog />
+              <ExportReportDialog 
+                open={exportDialogOpen}
+                onOpenChange={setExportDialogOpen}
+                segments={segments}
+                selectedSegments={selectedSegments}
+                onSegmentToggle={handleSegmentToggle}
+              />
             </CardContent>
           </Card>
         </TabsContent>
