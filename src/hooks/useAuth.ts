@@ -35,6 +35,9 @@ interface UseAuthReturn extends AuthState, AuthActions {
   isUsingDevBypass: boolean;
   // Utilities
   canAccess: (requiredUserType: UserType) => boolean;
+  // New properties for compatibility
+  state: AuthState;
+  actions: AuthActions;
 }
 
 export const useAuth = (): UseAuthReturn => {
@@ -163,8 +166,7 @@ export const useAuth = (): UseAuthReturn => {
 
   const shouldBypass = DevAuthService.shouldBypassAuth(isDevelopment, isDevModeActive, devMode);
 
-  return {
-    // Core state
+  const authState: AuthState = {
     user: effectiveAuth.user,
     session: effectiveAuth.session,
     isLoading: isLoading && !shouldBypass,
@@ -172,8 +174,9 @@ export const useAuth = (): UseAuthReturn => {
     userType: effectiveAuth.userType as UserType,
     authStable,
     isEmailVerified: !!(effectiveAuth.user?.email_confirmed_at),
+  };
 
-    // Actions
+  const authActions: AuthActions = {
     signOut,
     refreshSession,
     signIn,
@@ -182,6 +185,18 @@ export const useAuth = (): UseAuthReturn => {
     updateUserProfile,
     updatePassword,
     recoverAuthState,
+  };
+
+  const canAccess = (requiredUserType: UserType) => {
+    return effectiveAuth.userType === requiredUserType;
+  };
+
+  return {
+    // Spread all auth state properties
+    ...authState,
+    
+    // Actions
+    ...authActions,
 
     // Computed properties
     isReady: authStable && !isLoading,
@@ -191,8 +206,10 @@ export const useAuth = (): UseAuthReturn => {
     isUsingDevBypass: shouldBypass,
 
     // Utilities
-    canAccess: (requiredUserType: UserType) => {
-      return effectiveAuth.userType === requiredUserType;
-    }
+    canAccess,
+
+    // Compatibility properties
+    state: authState,
+    actions: authActions
   };
 };

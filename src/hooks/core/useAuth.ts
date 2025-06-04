@@ -23,7 +23,12 @@ export interface AuthActions {
   switchRole: (role: SwitchableUserRole) => Promise<void>;
 }
 
-export function useAuth(): { state: AuthState; actions: AuthActions } {
+export interface UseAuthReturn {
+  state: AuthState;
+  actions: AuthActions;
+}
+
+export function useAuth(): UseAuthReturn {
   const authContext = useAuthContext();
   const { toast } = useToast();
   const [error, setError] = useState<string | null>(null);

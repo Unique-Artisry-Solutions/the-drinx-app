@@ -15,13 +15,18 @@ interface NotificationActions {
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
   removeNotification: (id: string) => void;
-  addNotification: (notification: Omit<NotificationType, 'id' | 'timestamp'>) => void;
+  addNotification: (notification: Omit<NotificationType, 'id' | 'timestamp' | 'created_at' | 'read' | 'is_read'>) => void;
   clearAll: () => void;
   refetch: () => Promise<void>;
   sendTestNotification: (type: string) => Promise<void>;
 }
 
-export const useNotifications = (): NotificationState & NotificationActions => {
+interface UseNotificationsReturn extends NotificationState, NotificationActions {
+  state: NotificationState;
+  actions: NotificationActions;
+}
+
+export const useNotifications = (): UseNotificationsReturn => {
   const [notifications, setNotifications] = useState<NotificationType[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -32,7 +37,7 @@ export const useNotifications = (): NotificationState & NotificationActions => {
     setNotifications(prev => 
       prev.map(notification => 
         notification.id === id 
-          ? { ...notification, read: true }
+          ? { ...notification, read: true, is_read: true }
           : notification
       )
     );
@@ -41,7 +46,7 @@ export const useNotifications = (): NotificationState & NotificationActions => {
 
   const markAllAsRead = useCallback(() => {
     setNotifications(prev => 
-      prev.map(notification => ({ ...notification, read: true }))
+      prev.map(notification => ({ ...notification, read: true, is_read: true }))
     );
     track('notifications_mark_all_read');
   }, [track]);
@@ -51,12 +56,16 @@ export const useNotifications = (): NotificationState & NotificationActions => {
     track('notification_removed', { notification_id: id });
   }, [track]);
 
-  const addNotification = useCallback((notification: Omit<NotificationType, 'id' | 'timestamp'>) => {
+  const addNotification = useCallback((notification: Omit<NotificationType, 'id' | 'timestamp' | 'created_at' | 'read' | 'is_read'>) => {
+    const now = Date.now();
     const newNotification: NotificationType = {
       ...notification,
-      id: Date.now().toString(),
-      timestamp: Date.now(),
-      read: false
+      id: now.toString(),
+      timestamp: now,
+      created_at: new Date(now).toISOString(),
+      read: false,
+      is_read: false,
+      content: notification.message // Ensure content matches message
     };
     
     setNotifications(prev => [newNotification, ...prev]);
@@ -119,11 +128,14 @@ export const useNotifications = (): NotificationState & NotificationActions => {
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
-  return {
+  const state: NotificationState = {
     notifications,
     unreadCount,
     isLoading,
-    error,
+    error
+  };
+
+  const actions: NotificationActions = {
     markAsRead,
     markAllAsRead,
     removeNotification,
@@ -131,5 +143,12 @@ export const useNotifications = (): NotificationState & NotificationActions => {
     clearAll,
     refetch,
     sendTestNotification
+  };
+
+  return {
+    ...state,
+    ...actions,
+    state,
+    actions
   };
 };
