@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
-import { BaseAdminService, type QueryParams, type PaginatedResponse } from '@/services/admin/BaseAdminService';
+import { BaseAdminService, type QueryParams, type PaginatedResponse } from '@/services/admin/AdminServiceAdapter';
 
 export interface AdminEntityState<T> {
   items: T[];
