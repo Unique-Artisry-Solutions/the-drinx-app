@@ -1,5 +1,5 @@
 
-// Main Application Entry Point - Phase 9D Updated
+// Main Application Entry Point - Phase 9E Updated
 // Uses consolidated imports for better organization
 
 // Core React and routing
@@ -21,7 +21,7 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 5 * 60 * 1000, // 5 minutes
-      cacheTime: 10 * 60 * 1000, // 10 minutes
+      gcTime: 10 * 60 * 1000, // 10 minutes (replaces cacheTime)
     },
   },
 });
