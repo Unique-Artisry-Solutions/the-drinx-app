@@ -2,8 +2,8 @@
 import React, { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { NavigationType } from '../navigation/NavigationTypes';
-import AdminTopNavigation from '../navigation/AdminTopNavigation';
-import UserTopNavigation from '../navigation/UserTopNavigation';
+import AdminTopNav from '../navigation/admin/AdminTopNav';
+import UserNavbar from '../navigation/user/UserNavbar';
 import GuestTopNavigation from '../navigation/GuestTopNavigation';
 import Breadcrumbs from '../navigation/Breadcrumbs';
 import AppFooter from '../AppFooter';
@@ -58,9 +58,9 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
   const renderNavigation = () => {
     switch (effectiveNavState.navigationType) {
       case NavigationType.ADMIN:
-        return <AdminTopNavigation />;
+        return <AdminTopNav />;
       case NavigationType.USER:
-        return <UserTopNavigation activeTab={activeTab} handleTabChange={handleTabChange} tabOptions={tabOptions} />;
+        return <UserNavbar activeTab={activeTab} handleTabChange={handleTabChange} tabOptions={tabOptions} />;
       case NavigationType.GUEST:
       default:
         return <GuestTopNavigation />;

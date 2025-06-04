@@ -22,10 +22,10 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
   tabOptions
 }) => {
   const { userType: authUserType } = useAuth();
-  const { devMode, isDevModeActive, isDevelopment, isStateStable } = useDevelopmentMode();
+  const { devMode, isDevModeActive, isDevelopment } = useDevelopmentMode();
 
   // Determine effective user type
-  const effectiveUserType = isDevelopment && isDevModeActive && isStateStable ? devMode : authUserType;
+  const effectiveUserType = isDevelopment && isDevModeActive ? devMode : authUserType;
 
   // Render admin navigation for admin users
   if (effectiveUserType === 'admin') {
