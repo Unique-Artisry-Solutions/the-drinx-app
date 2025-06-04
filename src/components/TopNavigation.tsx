@@ -1,10 +1,3 @@
 
-import React from 'react';
-import UserNavbar from './navigation/user/UserNavbar';
-
-export const TopNavigation: React.FC = () => {
-  return <UserNavbar />;
-};
-
-// Keep default export for backward compatibility during transition
-export default TopNavigation;
+export { default } from './navigation/TopNavigation';
+export { default as TopNavigation } from './navigation/TopNavigation';
