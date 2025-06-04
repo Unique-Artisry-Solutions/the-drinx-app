@@ -15,6 +15,9 @@ export interface UserSubscription {
   status: 'active' | 'inactive' | 'cancelled';
   created_at: string;
   expires_at?: string;
+  // Add missing properties for component compatibility
+  subscription_start: string;
+  subscription_end?: string;
 }
 
 class StandardSubscriptionServiceClass extends BaseStandardService {
@@ -49,8 +52,18 @@ class StandardSubscriptionServiceClass extends BaseStandardService {
 
   async getUserSubscription(): Promise<UserSubscription | null> {
     try {
-      // Mock subscription - can be replaced with real API calls
-      return null;
+      // Mock subscription with all required properties
+      const mockSubscription: UserSubscription = {
+        id: 'mock-sub-1',
+        subscription_type: 'basic',
+        status: 'active',
+        created_at: new Date().toISOString(),
+        expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        subscription_start: new Date().toISOString(),
+        subscription_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+      };
+      
+      return null; // Return null for now, can be replaced with real data
     } catch (error) {
       this.log(`Error getting user subscription: ${error}`, 'error');
       return null;
