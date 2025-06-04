@@ -1,28 +1,57 @@
 
-// Service Configuration - Phase 9D
-// Configuration management for services
+// Service Configuration - Phase 3: Enhanced for Standardized Services
+import type { StandardServiceConfig } from './interfaces/StandardService';
 
-interface ServiceConfigData {
-  enableLogging: boolean;
-  enableMetrics: boolean;
+interface GlobalServiceConfig extends StandardServiceConfig {
+  enableHealthChecks: boolean;
+  healthCheckInterval: number;
+  maxRetryAttempts: number;
   defaultTimeout: number;
-  defaultRetries: number;
+  enableAnalytics: boolean;
 }
 
 class ServiceConfigClass {
-  private config: ServiceConfigData = {
-    enableLogging: process.env.NODE_ENV === 'development',
+  private config: GlobalServiceConfig = {
+    enableLogging: process.env.NODE_ENV !== 'production',
     enableMetrics: true,
-    defaultTimeout: 10000,
-    defaultRetries: 3
+    enableHealthChecks: true,
+    healthCheckInterval: 30000, // 30 seconds
+    retryAttempts: 3,
+    maxRetryAttempts: 5,
+    timeout: 10000,
+    defaultTimeout: 15000,
+    enableAnalytics: true
   };
 
-  getConfig(): ServiceConfigData {
+  getConfig(): GlobalServiceConfig {
     return { ...this.config };
   }
 
-  updateConfig(updates: Partial<ServiceConfigData>): void {
+  updateConfig(updates: Partial<GlobalServiceConfig>): void {
     this.config = { ...this.config, ...updates };
+  }
+
+  getServiceConfig(serviceName: string): StandardServiceConfig {
+    return {
+      enableLogging: this.config.enableLogging,
+      enableMetrics: this.config.enableMetrics,
+      retryAttempts: this.config.retryAttempts,
+      timeout: this.config.timeout
+    };
+  }
+
+  resetToDefaults(): void {
+    this.config = {
+      enableLogging: process.env.NODE_ENV !== 'production',
+      enableMetrics: true,
+      enableHealthChecks: true,
+      healthCheckInterval: 30000,
+      retryAttempts: 3,
+      maxRetryAttempts: 5,
+      timeout: 10000,
+      defaultTimeout: 15000,
+      enableAnalytics: true
+    };
   }
 }
 

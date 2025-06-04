@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from 'react';
-import { serviceRegistry, type ServiceHealthStatus, type ServiceMetrics } from '@/services/ServiceRegistry';
+import { serviceRegistry } from '@/services/ServiceRegistry';
+import type { ServiceHealthStatus, ServiceMetrics } from '@/services/ServiceRegistry';
 
 export interface ServiceRegistryState {
   isInitialized: boolean;
@@ -8,15 +9,31 @@ export interface ServiceRegistryState {
   metrics: Map<string, ServiceMetrics>;
   isLoading: boolean;
   error: string | null;
+  registeredServices: string[];
 }
 
-export function useServiceRegistry() {
+export interface ServiceRegistryActions {
+  getService: <T>(serviceName: string) => T | null;
+  refreshData: () => Promise<void>;
+  reinitialize: () => Promise<void>;
+  registerService: (name: string, service: any) => void;
+  unregisterService: (name: string) => boolean;
+  isServiceRegistered: (name: string) => boolean;
+}
+
+export interface UseServiceRegistryReturn extends ServiceRegistryState, ServiceRegistryActions {
+  state: ServiceRegistryState;
+  actions: ServiceRegistryActions;
+}
+
+export function useServiceRegistry(): UseServiceRegistryReturn {
   const [state, setState] = useState<ServiceRegistryState>({
     isInitialized: false,
     healthStatus: [],
     metrics: new Map(),
     isLoading: true,
-    error: null
+    error: null,
+    registeredServices: []
   });
 
   useEffect(() => {
@@ -29,13 +46,15 @@ export function useServiceRegistry() {
       
       await serviceRegistry.initialize();
       
-      const healthStatus = serviceRegistry.getServiceHealth();
-      const metrics = serviceRegistry.getServiceMetrics() as Map<string, ServiceMetrics>;
+      const healthStatus = await serviceRegistry.getServiceHealth();
+      const metrics = serviceRegistry.getServiceMetrics();
+      const registeredServices = Array.from(serviceRegistry.getAllServices().keys());
       
       setState({
         isInitialized: true,
         healthStatus,
         metrics,
+        registeredServices,
         isLoading: false,
         error: null
       });
@@ -54,13 +73,15 @@ export function useServiceRegistry() {
 
   const refreshData = async () => {
     try {
-      const healthStatus = serviceRegistry.getServiceHealth();
-      const metrics = serviceRegistry.getServiceMetrics() as Map<string, ServiceMetrics>;
+      const healthStatus = await serviceRegistry.getServiceHealth();
+      const metrics = serviceRegistry.getServiceMetrics();
+      const registeredServices = Array.from(serviceRegistry.getAllServices().keys());
       
       setState(prev => ({
         ...prev,
         healthStatus,
-        metrics
+        metrics,
+        registeredServices
       }));
     } catch (error) {
       setState(prev => ({
@@ -70,10 +91,41 @@ export function useServiceRegistry() {
     }
   };
 
-  return {
-    ...state,
+  const reinitialize = async () => {
+    await serviceRegistry.reinitialize();
+    await initializeRegistry();
+  };
+
+  const registerService = (name: string, service: any) => {
+    serviceRegistry.registerService(name, service);
+    refreshData();
+  };
+
+  const unregisterService = (name: string): boolean => {
+    const result = serviceRegistry.unregisterService(name);
+    if (result) {
+      refreshData();
+    }
+    return result;
+  };
+
+  const isServiceRegistered = (name: string): boolean => {
+    return serviceRegistry.isServiceRegistered(name);
+  };
+
+  const actions: ServiceRegistryActions = {
     getService,
     refreshData,
-    reinitialize: initializeRegistry
+    reinitialize,
+    registerService,
+    unregisterService,
+    isServiceRegistered
+  };
+
+  return {
+    ...state,
+    ...actions,
+    state,
+    actions
   };
 }
