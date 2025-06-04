@@ -15,7 +15,7 @@ export { serviceRegistry, type ServiceDependencies } from './ServiceRegistry';
 export { serviceConfig } from './ServiceConfig';
 export { ServiceUtils, type ServiceResponse, type ServiceOptions } from './ServiceUtils';
 
-// Unified service groups - Phase 8C COMPLETED
+// Unified service groups - Phase 9B COMPLETED
 export { UnifiedPromotionalService as PromotionalService } from './promotional';
 export { UnifiedAnalyticsService as AnalyticsService } from './UnifiedAnalyticsService';
 export { UnifiedEventService as EventService } from './UnifiedEventService';
