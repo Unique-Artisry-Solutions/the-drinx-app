@@ -9,6 +9,8 @@ interface NotificationState {
   unreadCount: number;
   isLoading: boolean;
   error: string | null;
+  isSupported: boolean;
+  permissionStatus: NotificationPermission;
 }
 
 interface NotificationActions {
@@ -32,6 +34,10 @@ export const useNotifications = (): UseNotificationsReturn => {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const { track } = useAnalytics();
+
+  // Check browser support and permission
+  const isSupported = 'Notification' in window;
+  const permissionStatus = isSupported ? Notification.permission : 'denied' as NotificationPermission;
 
   const markAsRead = useCallback((id: string) => {
     setNotifications(prev => 
@@ -132,7 +138,9 @@ export const useNotifications = (): UseNotificationsReturn => {
     notifications,
     unreadCount,
     isLoading,
-    error
+    error,
+    isSupported,
+    permissionStatus
   };
 
   const actions: NotificationActions = {

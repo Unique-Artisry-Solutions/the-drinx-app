@@ -17,7 +17,7 @@ export interface AuthState {
 export interface AuthActions {
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
-  signup: (userData: any) => Promise<void>;
+  signup: (formData: any) => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   updateProfile: (updates: any) => Promise<void>;
   switchRole: (role: SwitchableUserRole) => Promise<void>;
@@ -85,11 +85,11 @@ export function useAuth(): UseAuthReturn {
       }
     }, [authContext, toast]),
 
-    signup: useCallback(async (userData: any) => {
+    signup: useCallback(async (formData: any) => {
       try {
         setError(null);
         if (authContext?.signUp) {
-          await authContext.signUp(userData);
+          await authContext.signUp(formData);
         }
         toast({
           title: 'Success',

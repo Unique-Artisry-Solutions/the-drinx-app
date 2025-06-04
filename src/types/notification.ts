@@ -13,6 +13,9 @@ export interface Notification {
   created_at: string; // Add created_at for backward compatibility
   read: boolean;
   is_read: boolean; // Add is_read for backward compatibility
+  location_based?: boolean; // Add location_based property
+  coordinates?: any; // Add coordinates property
+  target_radius?: number; // Add target_radius property
   metadata?: {
     type?: string;
     [key: string]: any;

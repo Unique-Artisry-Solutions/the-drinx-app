@@ -6,14 +6,18 @@ export function safeJsonToNotificationInterface(data: any): Notification {
   return {
     id: data.id || '',
     title: data.title || '',
-    content: data.content || '',
-    created_at: data.created_at || new Date().toISOString(),
-    is_read: data.is_read || false,
+    message: data.content || data.message || '',
+    content: data.content || data.message || '',
+    type: data.type || 'info',
     priority: data.priority || 'medium',
-    metadata: data.metadata || {},
+    timestamp: data.timestamp || Date.now(),
+    created_at: data.created_at || new Date().toISOString(),
+    read: data.read || false,
+    is_read: data.is_read || false,
     location_based: data.location_based || false,
     coordinates: data.coordinates || undefined,
-    target_radius: data.target_radius || undefined
+    target_radius: data.target_radius || undefined,
+    metadata: data.metadata || {}
   };
 }
 
@@ -21,7 +25,7 @@ export function validateNotificationData(data: any): boolean {
   return !!(
     data &&
     data.title &&
-    data.content &&
+    (data.content || data.message) &&
     ['low', 'medium', 'high', 'urgent'].includes(data.priority)
   );
 }

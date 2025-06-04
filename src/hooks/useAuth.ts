@@ -5,6 +5,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useDevelopmentMode } from '@/contexts/DevelopmentModeContext';
 import { DevAuthService } from '@/services/DevAuthService';
 import { UserType } from '@/types/navigation';
+import { SwitchableUserRole } from '@/types/userRole';
+import { useToast } from '@/hooks/use-toast';
 
 interface AuthState {
   user: User | null;
@@ -25,6 +27,7 @@ interface AuthActions {
   updateUserProfile: (data: any) => Promise<void>;
   updatePassword: (newPassword: string) => Promise<void>;
   recoverAuthState: () => Promise<boolean>;
+  switchRole: (role: SwitchableUserRole) => Promise<void>;
 }
 
 interface UseAuthReturn extends AuthState, AuthActions {
@@ -46,6 +49,7 @@ export const useAuth = (): UseAuthReturn => {
   const [isLoading, setIsLoading] = useState(true);
   const [authStable, setAuthStable] = useState(false);
   const { isDevelopment, isDevModeActive, devMode } = useDevelopmentMode();
+  const { toast } = useToast();
 
   useEffect(() => {
     let mounted = true;
@@ -154,6 +158,25 @@ export const useAuth = (): UseAuthReturn => {
     }
   };
 
+  const switchRole = async (role: SwitchableUserRole) => {
+    try {
+      const { error } = await supabase.rpc('switch_active_role', { role_to_activate: role });
+      if (error) throw error;
+      toast({
+        title: 'Success',
+        description: `Switched to ${role} role`,
+      });
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Role switch failed';
+      toast({
+        title: 'Error',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+      throw err;
+    }
+  };
+
   // Get effective auth state with dev bypass
   const effectiveAuth = DevAuthService.getEffectiveAuthState(
     user,
@@ -185,6 +208,7 @@ export const useAuth = (): UseAuthReturn => {
     updateUserProfile,
     updatePassword,
     recoverAuthState,
+    switchRole,
   };
 
   const canAccess = (requiredUserType: UserType) => {
