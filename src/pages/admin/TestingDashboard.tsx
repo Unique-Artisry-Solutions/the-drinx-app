@@ -2,329 +2,289 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Progress } from '@/components/ui/progress';
-import { AdminPageLayout } from '@/components/admin/layout';
-import { Play, Pause, RotateCcw, CheckCircle, XCircle, Clock, AlertTriangle } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { 
+  TestTube, 
+  Activity, 
+  CheckCircle, 
+  XCircle, 
+  Clock,
+  TrendingUp,
+  Users,
+  Database,
+  Zap
+} from 'lucide-react';
+import TestSuite from '@/components/admin/testing/TestSuite';
+import TestProgressMatrix from '@/components/admin/testing/TestProgressMatrix';
+import { TestScenario } from '@/components/admin/testing/TestScenarioTracker';
 
-interface TestScenario {
-  id: string;
-  name: string;
-  category: 'audience-analytics' | 'admin-integration' | 'performance' | 'e2e';
-  status: 'pending' | 'running' | 'passed' | 'failed' | 'skipped';
-  priority: 'low' | 'medium' | 'high' | 'critical';
-  description: string;
-  estimatedDuration: number; // in minutes
-  lastRun?: Date;
-  error?: string;
-}
-
-const mockTestScenarios: TestScenario[] = [
+// Mock data for demonstration
+const PHASE_9B_SCENARIOS: TestScenario[] = [
   {
-    id: 'aa-segment-creation',
+    id: 'audience-segment-creation',
     name: 'Audience Segment Creation',
-    category: 'audience-analytics',
-    status: 'pending',
-    priority: 'critical',
     description: 'Test creation of new audience segments with various criteria',
-    estimatedDuration: 15
-  },
-  {
-    id: 'aa-relationship-mapping',
-    name: 'Relationship Mapping Validation',
-    category: 'audience-analytics', 
-    status: 'pending',
+    category: 'Audience Analytics',
     priority: 'high',
-    description: 'Validate audience relationship mapping functionality',
-    estimatedDuration: 20
-  },
-  {
-    id: 'ai-navigation-flow',
-    name: 'Admin Navigation Integration',
-    category: 'admin-integration',
     status: 'passed',
+    retryCount: 0,
+    maxRetries: 3,
+    duration: 2340,
+    lastRun: new Date(Date.now() - 1000 * 60 * 30), // 30 minutes ago
+    requirements: [],
+    expectedResults: []
+  },
+  {
+    id: 'audience-overlap-analysis',
+    name: 'Audience Overlap Analysis',
+    description: 'Test overlap analysis between different audience segments',
+    category: 'Audience Analytics',
     priority: 'medium',
-    description: 'Test admin navigation flow and routing',
-    estimatedDuration: 10,
-    lastRun: new Date('2024-12-20T10:30:00')
-  },
-  {
-    id: 'perf-dashboard-load',
-    name: 'Dashboard Performance Load Test',
-    category: 'performance',
-    status: 'pending',
-    priority: 'high',
-    description: 'Test dashboard performance under various load conditions',
-    estimatedDuration: 30
-  },
-  {
-    id: 'e2e-full-workflow',
-    name: 'End-to-End Workflow Test',
-    category: 'e2e',
     status: 'running',
-    priority: 'critical',
-    description: 'Complete workflow from audience creation to analytics reporting',
-    estimatedDuration: 45
+    retryCount: 0,
+    maxRetries: 3,
+    requirements: [],
+    expectedResults: []
+  },
+  {
+    id: 'admin-dashboard-integration',
+    name: 'Admin Dashboard Integration',
+    description: 'Test integration of audience features in admin dashboard',
+    category: 'Admin Integration',
+    priority: 'high',
+    status: 'failed',
+    retryCount: 1,
+    maxRetries: 3,
+    duration: 1890,
+    lastRun: new Date(Date.now() - 1000 * 60 * 15), // 15 minutes ago
+    requirements: [],
+    expectedResults: []
+  },
+  {
+    id: 'database-performance-audit',
+    name: 'Database Performance Audit',
+    description: 'Test database performance under audience analytics load',
+    category: 'Database Performance',
+    priority: 'medium',
+    status: 'pending',
+    retryCount: 0,
+    maxRetries: 2,
+    requirements: [],
+    expectedResults: []
   }
 ];
 
 const TestingDashboard: React.FC = () => {
-  const [scenarios, setScenarios] = useState<TestScenario[]>(mockTestScenarios);
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [scenarios] = useState<TestScenario[]>(PHASE_9B_SCENARIOS);
 
-  const pageConfig = {
-    title: 'Phase 9B Testing Dashboard',
-    description: 'Track and manage testing progress for Phase 9B medium-risk components',
-    showBreadcrumbs: true,
-    maxWidth: 'full' as const
-  };
-
-  const getStatusIcon = (status: TestScenario['status']) => {
-    switch (status) {
-      case 'passed':
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case 'failed':
-        return <XCircle className="h-4 w-4 text-red-500" />;
-      case 'running':
-        return <Play className="h-4 w-4 text-blue-500" />;
-      case 'pending':
-        return <Clock className="h-4 w-4 text-gray-500" />;
-      case 'skipped':
-        return <AlertTriangle className="h-4 w-4 text-yellow-500" />;
-      default:
-        return <Clock className="h-4 w-4 text-gray-500" />;
-    }
-  };
-
-  const getStatusBadgeVariant = (status: TestScenario['status']) => {
-    switch (status) {
-      case 'passed':
-        return 'default';
-      case 'failed':
-        return 'destructive';
-      case 'running':
-        return 'secondary';
-      case 'pending':
-        return 'outline';
-      case 'skipped':
-        return 'secondary';
-      default:
-        return 'outline';
-    }
-  };
-
-  const getPriorityColor = (priority: TestScenario['priority']) => {
-    switch (priority) {
-      case 'critical':
-        return 'text-red-600';
-      case 'high':
-        return 'text-orange-600';
-      case 'medium':
-        return 'text-yellow-600';
-      case 'low':
-        return 'text-green-600';
-      default:
-        return 'text-gray-600';
-    }
-  };
-
-  const filteredScenarios = selectedCategory === 'all' 
-    ? scenarios 
-    : scenarios.filter(s => s.category === selectedCategory);
-
+  // Calculate overview statistics
   const totalTests = scenarios.length;
   const passedTests = scenarios.filter(s => s.status === 'passed').length;
   const failedTests = scenarios.filter(s => s.status === 'failed').length;
   const runningTests = scenarios.filter(s => s.status === 'running').length;
   const pendingTests = scenarios.filter(s => s.status === 'pending').length;
+  const overallProgress = Math.round((passedTests / totalTests) * 100);
 
-  const overallProgress = (passedTests / totalTests) * 100;
-
-  const runTest = (id: string) => {
-    setScenarios(prev => prev.map(s => 
-      s.id === id ? { ...s, status: 'running' as const } : s
-    ));
-    
-    // Simulate test execution
-    setTimeout(() => {
-      setScenarios(prev => prev.map(s => 
-        s.id === id ? { 
-          ...s, 
-          status: Math.random() > 0.3 ? 'passed' as const : 'failed' as const,
-          lastRun: new Date(),
-          error: Math.random() > 0.3 ? undefined : 'Simulated test failure'
-        } : s
-      ));
-    }, 3000);
-  };
-
-  const resetTest = (id: string) => {
-    setScenarios(prev => prev.map(s => 
-      s.id === id ? { ...s, status: 'pending' as const, error: undefined } : s
-    ));
+  const handleExportResults = (results: any) => {
+    console.log('Exporting test results:', results);
+    // Additional export logic can be added here
   };
 
   return (
-    <AdminPageLayout config={pageConfig}>
-      {/* Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+    <div className="container mx-auto px-4 py-6 max-w-7xl">
+      {/* Page Header */}
+      <div className="mb-8">
+        <div className="flex items-center gap-3 mb-4">
+          <TestTube className="h-8 w-8 text-blue-600" />
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">
+              Phase 9B Testing Dashboard
+            </h1>
+            <p className="text-lg text-gray-600 mt-1">
+              Medium Risk Testing - Requires Careful Validation
+            </p>
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-4">
+          <Badge variant="outline" className="px-3 py-1">
+            Phase 9B
+          </Badge>
+          <Badge 
+            className={
+              overallProgress >= 80 ? 'bg-green-100 text-green-800' :
+              overallProgress >= 50 ? 'bg-yellow-100 text-yellow-800' :
+              'bg-red-100 text-red-800'
+            }
+          >
+            {overallProgress}% Complete
+          </Badge>
+        </div>
+      </div>
+
+      {/* Overview Statistics */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
         <Card>
-          <CardContent className="p-4">
+          <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Total Tests</p>
+                <p className="text-sm font-medium text-gray-600">Total Tests</p>
                 <p className="text-2xl font-bold">{totalTests}</p>
               </div>
-              <div className="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center">
-                <span className="text-blue-600 text-sm font-medium">{totalTests}</span>
-              </div>
+              <TestTube className="h-8 w-8 text-blue-600" />
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-4">
+          <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Passed</p>
+                <p className="text-sm font-medium text-gray-600">Passed</p>
                 <p className="text-2xl font-bold text-green-600">{passedTests}</p>
               </div>
-              <CheckCircle className="h-8 w-8 text-green-500" />
+              <CheckCircle className="h-8 w-8 text-green-600" />
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-4">
+          <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Failed</p>
+                <p className="text-sm font-medium text-gray-600">Failed</p>
                 <p className="text-2xl font-bold text-red-600">{failedTests}</p>
               </div>
-              <XCircle className="h-8 w-8 text-red-500" />
+              <XCircle className="h-8 w-8 text-red-600" />
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-4">
+          <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Running</p>
+                <p className="text-sm font-medium text-gray-600">Running</p>
                 <p className="text-2xl font-bold text-blue-600">{runningTests}</p>
               </div>
-              <Play className="h-8 w-8 text-blue-500" />
+              <Activity className="h-8 w-8 text-blue-600" />
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-4">
+          <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Pending</p>
+                <p className="text-sm font-medium text-gray-600">Pending</p>
                 <p className="text-2xl font-bold text-gray-600">{pendingTests}</p>
               </div>
-              <Clock className="h-8 w-8 text-gray-500" />
+              <Clock className="h-8 w-8 text-gray-600" />
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Progress Bar */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>Overall Testing Progress</CardTitle>
-          <CardDescription>Phase 9B testing completion status</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span>Progress</span>
-              <span>{Math.round(overallProgress)}% Complete</span>
-            </div>
-            <Progress value={overallProgress} className="h-2" />
+      {/* Main Content Tabs */}
+      <Tabs defaultValue="overview" className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="test-suite">Test Suite</TabsTrigger>
+          <TabsTrigger value="progress-matrix">Progress Matrix</TabsTrigger>
+          <TabsTrigger value="reports">Reports</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="mt-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5" />
+                  Testing Progress
+                </CardTitle>
+                <CardDescription>
+                  Overall progress and category breakdown
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <TestProgressMatrix scenarios={scenarios} compactView={true} />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  Phase 9B Focus Areas
+                </CardTitle>
+                <CardDescription>
+                  Key components being tested in this phase
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
+                    <Users className="h-6 w-6 text-blue-600" />
+                    <div>
+                      <h3 className="font-semibold">Audience Analytics</h3>
+                      <p className="text-sm text-gray-600">Segmentation and overlap analysis</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
+                    <Database className="h-6 w-6 text-green-600" />
+                    <div>
+                      <h3 className="font-semibold">Admin Integration</h3>
+                      <p className="text-sm text-gray-600">Dashboard integration and permissions</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 p-3 bg-yellow-50 rounded-lg">
+                    <Zap className="h-6 w-6 text-yellow-600" />
+                    <div>
+                      <h3 className="font-semibold">Performance Testing</h3>
+                      <p className="text-sm text-gray-600">Database and UI performance validation</p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
-        </CardContent>
-      </Card>
+        </TabsContent>
 
-      {/* Test Scenarios */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Test Scenarios</CardTitle>
-          <CardDescription>Manage and execute Phase 9B test scenarios</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Tabs value={selectedCategory} onValueChange={setSelectedCategory}>
-            <TabsList className="grid w-full grid-cols-5">
-              <TabsTrigger value="all">All Tests</TabsTrigger>
-              <TabsTrigger value="audience-analytics">Audience Analytics</TabsTrigger>
-              <TabsTrigger value="admin-integration">Admin Integration</TabsTrigger>
-              <TabsTrigger value="performance">Performance</TabsTrigger>
-              <TabsTrigger value="e2e">End-to-End</TabsTrigger>
-            </TabsList>
+        <TabsContent value="test-suite" className="mt-6">
+          <TestSuite onExportResults={handleExportResults} />
+        </TabsContent>
 
-            <TabsContent value={selectedCategory} className="mt-6">
-              <div className="space-y-4">
-                {filteredScenarios.map((scenario) => (
-                  <Card key={scenario.id} className="border-l-4 border-l-blue-500">
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            {getStatusIcon(scenario.status)}
-                            <h3 className="font-semibold">{scenario.name}</h3>
-                            <Badge variant={getStatusBadgeVariant(scenario.status)}>
-                              {scenario.status}
-                            </Badge>
-                            <span className={`text-sm font-medium ${getPriorityColor(scenario.priority)}`}>
-                              {scenario.priority}
-                            </span>
-                          </div>
-                          <p className="text-sm text-muted-foreground mb-2">
-                            {scenario.description}
-                          </p>
-                          <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                            <span>Est. Duration: {scenario.estimatedDuration}m</span>
-                            {scenario.lastRun && (
-                              <span>Last Run: {scenario.lastRun.toLocaleString()}</span>
-                            )}
-                          </div>
-                          {scenario.error && (
-                            <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-700">
-                              Error: {scenario.error}
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => runTest(scenario.id)}
-                            disabled={scenario.status === 'running'}
-                          >
-                            <Play className="h-4 w-4 mr-1" />
-                            {scenario.status === 'running' ? 'Running...' : 'Run'}
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => resetTest(scenario.id)}
-                          >
-                            <RotateCcw className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+        <TabsContent value="progress-matrix" className="mt-6">
+          <TestProgressMatrix scenarios={scenarios} showTrends={true} />
+        </TabsContent>
+
+        <TabsContent value="reports" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Test Reports & Documentation</CardTitle>
+              <CardDescription>
+                Detailed reports and documentation for Phase 9B testing
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-12">
+                <Database className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  Reports Coming Soon
+                </h3>
+                <p className="text-gray-600 mb-4">
+                  Detailed test reports and analytics will be available here.
+                </p>
+                <Button variant="outline">
+                  Generate Report
+                </Button>
               </div>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
-    </AdminPageLayout>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 };
 
