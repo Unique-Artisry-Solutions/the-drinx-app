@@ -1,6 +1,6 @@
 
 import React from 'react';
-import Layout from '@/components/Layout';
+import { Layout } from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';

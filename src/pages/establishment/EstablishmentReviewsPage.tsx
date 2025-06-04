@@ -1,9 +1,6 @@
-
 import React from 'react';
-import Layout from '@/components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Star, User, Calendar } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Layout } from '@/components/Layout';
 
 const EstablishmentReviewsPage: React.FC = () => {
   // Sample data - in a real implementation, this would come from Supabase

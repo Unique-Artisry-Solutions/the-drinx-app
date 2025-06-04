@@ -1,6 +1,6 @@
 
 import React from 'react';
-import Layout from '@/components/Layout';
+import { Layout } from '@/components/Layout';
 import { DynamicPricingDashboard } from '@/components/pricing/DynamicPricingDashboard';
 
 const PromoterPricingPage = () => {

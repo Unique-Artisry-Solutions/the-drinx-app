@@ -1,146 +1,70 @@
-
-import React, { useState } from 'react';
-import { Search } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import Layout from '@/components/Layout';
-import { useComponentCatalog } from '@/components/admin/componentCatalog/hooks/useComponentCatalog';
-import AnalyticsService from '@/components/admin/analytics/AnalyticsService';
-import { ComponentCatalogItem } from '@/components/admin/componentCatalog/types';
-import ComponentDetails from '@/components/admin/componentCatalog/ComponentDetails';
-import ComponentGroupSection from '@/components/admin/componentCatalog/ComponentGroupSection';
-import { 
-  DropdownMenu, 
-  DropdownMenuTrigger, 
-  DropdownMenuContent, 
-  DropdownMenuItem 
-} from '@/components/ui/dropdown-menu';
+import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ChevronDown } from 'lucide-react';
+import { Layout } from '@/components/Layout';
 
 const ComponentCatalogPage: React.FC = () => {
-  const { componentsByPage, isLoading, searchComponents } = useComponentCatalog();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedComponent, setSelectedComponent] = useState<ComponentCatalogItem | null>(null);
-  const [activePageKey, setActivePageKey] = useState<string>('all');
-  
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const query = e.target.value;
-    setSearchQuery(query);
-    searchComponents(query);
-  };
-  
+  const components = [
+    {
+      name: "Card",
+      description: "A versatile container for grouping related content.",
+      status: "Stable"
+    },
+    {
+      name: "Button",
+      description: "Interactive element for triggering actions.",
+      status: "Stable"
+    },
+    {
+      name: "Badge",
+      description: "Displays a status or category label.",
+      status: "Stable"
+    },
+    {
+      name: "Input",
+      description: "Text field for user input.",
+      status: "Beta"
+    },
+    {
+      name: "Select",
+      description: "Dropdown menu for selecting options.",
+      status: "Alpha"
+    },
+    {
+      name: "Textarea",
+      description: "Multi-line text field for longer input.",
+      status: "Alpha"
+    }
+  ];
+
   return (
-    <AnalyticsService pageView="component_catalog">
-      <Layout>
-        <div className="p-4 md:p-8 max-w-7xl mx-auto">
-          <div className="flex justify-between items-center mb-8">
-            <div>
-              <h1 className="text-3xl font-bold">Component Catalog</h1>
-              <p className="text-gray-500 mt-1">
-                Browse and search components from across the application
-              </p>
-            </div>
-          </div>
-          
-          {/* Search bar moved to the top */}
-          <div className="mb-6">
-            <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-              <Input
-                placeholder="Search components by name, type, or file path..."
-                className="pl-9"
-                value={searchQuery}
-                onChange={handleSearch}
-              />
-            </div>
-          </div>
-          
-          {/* Floating page selector menu */}
-          <div className="mb-4 flex items-center">
-            <div className="text-sm text-gray-500 mr-2">Viewing:</div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="flex items-center">
-                  {activePageKey === 'all' 
-                    ? 'All Pages' 
-                    : componentsByPage[activePageKey]?.pageName || 'Select Page'}
-                  <ChevronDown className="ml-2 h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56">
-                <DropdownMenuItem 
-                  className={activePageKey === 'all' ? 'bg-gray-100' : ''} 
-                  onClick={() => setActivePageKey('all')}
-                >
-                  All Pages
-                </DropdownMenuItem>
-                {Object.keys(componentsByPage).map((pagePath) => (
-                  <DropdownMenuItem 
-                    key={pagePath} 
-                    className={activePageKey === pagePath ? 'bg-gray-100' : ''}
-                    onClick={() => setActivePageKey(pagePath)}
-                  >
-                    {componentsByPage[pagePath].pageName}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-          
-          <div className="flex flex-col lg:flex-row gap-8">
-            {/* Main content area (left side) */}
-            <div className="w-full lg:w-2/3">
-              {isLoading ? (
-                <div className="flex justify-center items-center h-40">
-                  <div className="text-lg text-gray-500">Loading components...</div>
-                </div>
-              ) : (
-                <div>
-                  {activePageKey === 'all' ? (
-                    // Display all pages when "All Pages" is selected
-                    Object.keys(componentsByPage).map((pagePath) => (
-                      <div key={pagePath} className="mb-12">
-                        <h2 className="text-2xl font-bold mb-4">{componentsByPage[pagePath].pageName}</h2>
-                        <p className="text-gray-500 mb-6">{componentsByPage[pagePath].description}</p>
-                        {componentsByPage[pagePath].components.map((group) => (
-                          <ComponentGroupSection 
-                            key={group.name} 
-                            group={group} 
-                            onSelectComponent={setSelectedComponent} 
-                          />
-                        ))}
-                      </div>
-                    ))
-                  ) : (
-                    // Display only the selected page
-                    componentsByPage[activePageKey] && (
-                      <div>
-                        <h2 className="text-2xl font-bold mb-4">{componentsByPage[activePageKey].pageName}</h2>
-                        <p className="text-gray-500 mb-6">{componentsByPage[activePageKey].description}</p>
-                        {componentsByPage[activePageKey].components.map((group) => (
-                          <ComponentGroupSection 
-                            key={group.name} 
-                            group={group} 
-                            onSelectComponent={setSelectedComponent} 
-                          />
-                        ))}
-                      </div>
-                    )
-                  )}
-                </div>
-              )}
-            </div>
-            
-            {/* Component details sidebar (right side) */}
-            <div className="w-full lg:w-1/3">
-              <div className="lg:sticky lg:top-4">
-                <ComponentDetails component={selectedComponent} />
-              </div>
-            </div>
-          </div>
+    <Layout>
+      <div className="container mx-auto p-6 max-w-5xl">
+        <h1 className="text-2xl font-bold mb-6">Component Catalog</h1>
+        <p className="text-muted-foreground mb-4">
+          A comprehensive list of reusable components available in the design system.
+        </p>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {components.map((component) => (
+            <Card key={component.name} className="hover:shadow-md transition-shadow">
+              <CardHeader>
+                <CardTitle>{component.name}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground mb-3">{component.description}</p>
+                <Badge variant="secondary">{component.status}</Badge>
+              </CardContent>
+            </Card>
+          ))}
         </div>
-      </Layout>
-    </AnalyticsService>
+        
+        <div className="mt-8">
+          <Button>View Component Documentation</Button>
+        </div>
+      </div>
+    </Layout>
   );
 };
 

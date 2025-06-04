@@ -1,6 +1,6 @@
 
 import React from 'react';
-import ResponsiveLayout from '@/components/layout/ResponsiveLayout';
+import { ResponsiveLayout } from '@/components/layout/ResponsiveLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import EstablishmentInbox from '@/components/establishment/communication/EstablishmentInbox';
 import { useUserEstablishment } from '@/hooks/establishment/useUserEstablishment';

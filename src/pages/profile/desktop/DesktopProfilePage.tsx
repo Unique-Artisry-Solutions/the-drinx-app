@@ -1,19 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import Layout from '@/components/Layout';
+import { Layout } from '@/components/Layout';
 import UserAuth from '@/components/UserAuth';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/contexts/auth';
+import { useProfileData } from '@/hooks/useProfileData';
 import ProfileHeader from '@/components/profile/ProfileHeader';
-import OverviewTab from '@/components/profile/OverviewTab';
-import ActivityTab from '@/components/profile/ActivityTab';
-import QuickLinksTab from '@/components/profile/QuickLinksTab';
-import BadgesTab from '@/components/profile/BadgesTab';
-import UserRecipesTab from '@/components/profile/UserRecipesTab';
-import { sampleEstablishments, sampleCocktails } from '@/data/sampleData';
 import ActiveSwigCircuitSection from '@/components/profile/ActiveSwigCircuitSection';
-import { Megaphone } from 'lucide-react';
+import ProfileTabs from '@/components/profile/desktop/ProfileTabs';
 
 interface DesktopProfilePageProps {
   userType?: string;
@@ -200,99 +192,7 @@ const DesktopProfilePage: React.FC<DesktopProfilePageProps> = ({ userType = 'ind
           </div>
         )}
 
-        <div className={tabsContainerClass}>
-          <Tabs defaultValue="overview" className="space-y-4">
-            <TabsList className="w-full flex justify-between sm:justify-start sm:gap-4 bg-white/70 dark:bg-gray-800/50 backdrop-blur-sm p-1 rounded-lg">
-              <TabsTrigger 
-                className={tabTriggerClass}
-                value="overview"
-              >
-                Overview
-              </TabsTrigger>
-              <TabsTrigger 
-                className={tabTriggerClass}
-                value="activity"
-              >
-                Recent Activity
-              </TabsTrigger>
-              
-              {isPromoter ? (
-                <TabsTrigger 
-                  className={tabTriggerClass}
-                  value="promotions"
-                >
-                  Promotions
-                </TabsTrigger>
-              ) : (
-                <TabsTrigger 
-                  className={tabTriggerClass}
-                  value="rewards"
-                >
-                  Rewards & Badges
-                </TabsTrigger>
-              )}
-              
-              <TabsTrigger 
-                className={tabTriggerClass}
-                value="favorites"
-              >
-                My Favorites
-              </TabsTrigger>
-              
-              {!isPromoter && (
-                <TabsTrigger 
-                  className={tabTriggerClass}
-                  value="recipes"
-                >
-                  My Recipes
-                </TabsTrigger>
-              )}
-            </TabsList>
-            
-            <TabsContent value="overview" className="pt-2">
-              <OverviewTab 
-                userName={userName}
-                userEmail={userEmail}
-                userJoinDate={userJoinDate}
-                isPromoter={isPromoter}
-              />
-            </TabsContent>
-            
-            <TabsContent value="activity" className="pt-2">
-              <ActivityTab recentActivity={recentActivity} isPromoter={isPromoter} />
-            </TabsContent>
-            
-            {isPromoter ? (
-              <TabsContent value="promotions" className="pt-2">
-                <div className="bg-white dark:bg-gray-800 p-6 rounded-lg">
-                  <h3 className="text-xl font-semibold text-purple-700 mb-4">My Promotions</h3>
-                  <p className="text-gray-600 dark:text-gray-300">
-                    Manage and track your promotional campaigns here. Create new promotions, view analytics, and boost your venue's visibility.
-                  </p>
-                  <div className="mt-4 p-4 bg-purple-50 dark:bg-gray-700 rounded-lg border border-purple-100 dark:border-gray-600">
-                    <p className="text-sm text-purple-700 dark:text-purple-300">
-                      This feature is coming soon. Check back for updates!
-                    </p>
-                  </div>
-                </div>
-              </TabsContent>
-            ) : (
-              <TabsContent value="rewards" className="pt-2">
-                <BadgesTab />
-              </TabsContent>
-            )}
-            
-            <TabsContent value="favorites" className="pt-2">
-              <QuickLinksTab isPromoter={isPromoter} />
-            </TabsContent>
-            
-            {!isPromoter && (
-              <TabsContent value="recipes" className="pt-2">
-                <UserRecipesTab />
-              </TabsContent>
-            )}
-          </Tabs>
-        </div>
+        <ProfileTabs />
       </div>
     </Layout>
   );

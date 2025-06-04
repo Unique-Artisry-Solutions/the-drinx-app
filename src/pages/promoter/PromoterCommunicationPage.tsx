@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import Layout from '@/components/Layout';
+import { Layout } from '@/components/Layout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import PromoterInbox from '@/components/promoter/communication/PromoterInbox';
 import ContactsList from '@/components/promoter/communication/ContactsList';
