@@ -2,7 +2,7 @@
 import { 
   Home, Users, Building2, LayoutDashboard, FileBarChart2, Image, 
   Palette, Layers, BookOpen, Settings, Bell, Activity, Award, 
-  FileText, Shield
+  FileText, Shield, TestTube
 } from 'lucide-react';
 import { UnifiedNavItem } from '@/types/navigation/NavigationTypes';
 
@@ -54,6 +54,12 @@ export const adminNavItems: UnifiedNavItem[] = [
     label: 'Rewards',
     path: '/admin/rewards',
     icon: Award,
+    showInNav: true,
+  },
+  {
+    label: 'Testing Dashboard',
+    path: '/admin/testing-dashboard',
+    icon: TestTube,
     showInNav: true,
   },
   {

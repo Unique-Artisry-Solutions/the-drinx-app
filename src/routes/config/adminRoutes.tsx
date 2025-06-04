@@ -13,6 +13,7 @@ import AdminNotFound from '@/components/admin/AdminNotFound';
 import RouteProtectionWrapper from '@/hoc/RouteProtectionWrapper';
 import AdminEstablishmentsPage from '@/pages/admin/AdminEstablishmentsPage';
 import PhotoModerationPage from '@/pages/admin/PhotoModerationPage';
+import TestingDashboard from '@/pages/admin/TestingDashboard';
 
 // Lazy loaded components
 const AdminDashboard = lazy(() => import('@/pages/admin/AdminDashboard'));
@@ -68,6 +69,7 @@ export const adminRoutes: RouteObject[] = [
       { path: 'component-catalog', element: <ComponentCatalogPage /> },
       { path: 'theme-customization', element: <ThemeCustomizationPage /> },
       { path: 'testing', element: <TestingInterfacePage /> },
+      { path: 'testing-dashboard', element: <TestingDashboard /> },
       
       // Communication
       { path: 'notifications', element: <AdminNotificationsPage /> },
