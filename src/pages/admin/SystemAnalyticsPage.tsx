@@ -5,7 +5,7 @@ import AnalyticsDashboard from '@/components/admin/analytics/AnalyticsDashboard'
 import { useAnalytics } from '@/hooks/useAnalytics';
 import AdminTopNav from '@/components/navigation/admin/AdminTopNav';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { SegmentAnalyticsDashboard } from '@/components/admin/audience/analytics/SegmentAnalyticsDashboard';
+import SegmentAnalyticsDashboard from '@/components/admin/audience/analytics/SegmentAnalyticsDashboard';
 import { BarChart3, Users } from 'lucide-react';
 
 const SystemAnalyticsPage: React.FC = () => {
