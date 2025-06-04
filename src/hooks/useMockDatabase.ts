@@ -1,6 +1,5 @@
 
 import { useEffect, useState } from 'react';
-import { MockDatabaseService } from '@/services/MockDatabaseService';
 import { MockDataService } from '@/services/MockDataService';
 import { supabase as realSupabase } from '@/lib/supabase';
 
@@ -8,7 +7,6 @@ import { supabase as realSupabase } from '@/lib/supabase';
  * Hook that provides either real or mock Supabase client based on dev mode
  */
 export const useMockDatabase = () => {
-  const [mockClient, setMockClient] = useState<any>(null);
   const [shouldUseMock, setShouldUseMock] = useState(false);
 
   useEffect(() => {
@@ -17,11 +15,8 @@ export const useMockDatabase = () => {
       setShouldUseMock(useMock);
       
       if (useMock) {
-        const client = MockDatabaseService.createMockClient();
-        setMockClient(client);
-        console.log('[MockDB] Using mock database client');
+        console.log('[MockDB] Using mock database mode');
       } else {
-        setMockClient(null);
         console.log('[MockDB] Using real Supabase client');
       }
     };
@@ -42,13 +37,13 @@ export const useMockDatabase = () => {
     };
   }, []);
 
-  // Return either mock or real client
-  const client = shouldUseMock && mockClient ? mockClient : realSupabase;
+  // Return either mock mode flag or real client
+  const client = realSupabase;
   
   return {
     supabase: client,
     isMockMode: shouldUseMock,
-    mockClient,
+    mockClient: null, // No longer providing mock client
     realClient: realSupabase
   };
 };

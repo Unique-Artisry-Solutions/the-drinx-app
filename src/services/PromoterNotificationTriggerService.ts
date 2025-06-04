@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { realTimeFollowerNotificationService } from '@/services/RealTimeFollowerNotificationService';
+import { NotificationService } from '@/services/NotificationService';
 
 interface EventUpdateData {
   id: string;
@@ -42,22 +42,17 @@ class PromoterNotificationTriggerServiceClass {
 
       const followerCount = followers?.length || 0;
 
-      // Send real-time notification
-      const notificationData = {
-        notification_type: 'event_update' as const,
+      // Send notification using NotificationService
+      NotificationService.addNotification({
         title: `Event ${eventData.eventType}: ${eventData.title}`,
-        content: eventData.description || `Event has been ${eventData.eventType}`,
-        priority: eventData.eventType === 'cancelled' ? 'urgent' as const : 'medium' as const,
+        message: eventData.description || `Event has been ${eventData.eventType}`,
+        type: eventData.eventType === 'cancelled' ? 'error' : 'info',
         metadata: {
           event_id: eventData.id,
-          event_type: eventData.eventType
+          event_type: eventData.eventType,
+          promoter_id: promoterId
         }
-      };
-
-      await realTimeFollowerNotificationService.sendRealtimeNotificationToFollowers(
-        promoterId,
-        notificationData
-      );
+      });
 
       return {
         success: true,
@@ -86,24 +81,19 @@ class PromoterNotificationTriggerServiceClass {
 
       const followerCount = followers?.length || 0;
 
-      // Send real-time notification
-      const notificationData = {
-        notification_type: 'promotion' as const,
+      // Send notification using NotificationService
+      NotificationService.addNotification({
         title: `New Promotion: ${promotionData.title}`,
-        content: promotionData.discountCode 
+        message: promotionData.discountCode 
           ? `Use code ${promotionData.discountCode} for special savings!`
           : 'Check out our latest promotion!',
-        priority: 'medium' as const,
+        type: 'success',
         metadata: {
           promotion_id: promotionData.id,
-          discount_code: promotionData.discountCode
+          discount_code: promotionData.discountCode,
+          promoter_id: promoterId
         }
-      };
-
-      await realTimeFollowerNotificationService.sendRealtimeNotificationToFollowers(
-        promoterId,
-        notificationData
-      );
+      });
 
       return {
         success: true,
@@ -132,21 +122,17 @@ class PromoterNotificationTriggerServiceClass {
 
       const followerCount = followers?.length || 0;
 
-      // Send real-time notification
-      const notificationData = {
-        notification_type: 'general_update' as const,
+      // Send notification using NotificationService
+      NotificationService.addNotification({
         title: updateData.title,
-        content: updateData.content,
-        priority: (updateData.priority || 'medium') as 'low' | 'medium' | 'high' | 'urgent',
+        message: updateData.content,
+        type: updateData.priority === 'urgent' ? 'error' : 'info',
         metadata: {
-          update_type: 'general'
+          update_type: 'general',
+          promoter_id: promoterId,
+          priority: updateData.priority
         }
-      };
-
-      await realTimeFollowerNotificationService.sendRealtimeNotificationToFollowers(
-        promoterId,
-        notificationData
-      );
+      });
 
       return {
         success: true,

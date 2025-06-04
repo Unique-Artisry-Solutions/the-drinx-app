@@ -6,6 +6,7 @@
 export { NotificationService } from './NotificationService';
 export { SimplifiedAdminService } from './admin/SimplifiedAdminService';
 export { UnifiedPromotionalService } from './promotional';
+export { standardSubscriptionService } from './StandardSubscriptionService';
 
 // Export service interfaces
 export type { 

@@ -1,6 +1,6 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { appSubscriptionService } from '@/services/AppSubscriptionService';
+import { standardSubscriptionService } from '@/services/StandardSubscriptionService';
 import { useToast } from '@/hooks/use-toast';
 
 export function useAppSubscription() {
@@ -10,13 +10,13 @@ export function useAppSubscription() {
   // Get available plans
   const { data: plans = [], isLoading: plansLoading } = useQuery({
     queryKey: ['app-subscription-plans'],
-    queryFn: () => appSubscriptionService.getAvailablePlans()
+    queryFn: () => standardSubscriptionService.getAvailablePlans()
   });
 
   // Get user's current subscription
   const { data: userSubscription, isLoading: subscriptionLoading, refetch } = useQuery({
     queryKey: ['user-app-subscription'],
-    queryFn: () => appSubscriptionService.getUserSubscription()
+    queryFn: () => standardSubscriptionService.getUserSubscription()
   });
 
   // Check if user has active subscription
@@ -24,10 +24,12 @@ export function useAppSubscription() {
 
   // Create subscription
   const createSubscription = useMutation({
-    mutationFn: (planId: string) => appSubscriptionService.createSubscription(planId),
-    onSuccess: (data) => {
-      // Redirect to Stripe checkout
-      window.open(data.url, '_blank');
+    mutationFn: (planId: string) => standardSubscriptionService.createSubscription(planId),
+    onSuccess: (response) => {
+      if (response.success && response.data?.url) {
+        // Redirect to checkout
+        window.open(response.data.url, '_blank');
+      }
     },
     onError: (error: Error) => {
       toast({
@@ -40,7 +42,7 @@ export function useAppSubscription() {
 
   // Cancel subscription
   const cancelSubscription = useMutation({
-    mutationFn: () => appSubscriptionService.cancelSubscription(),
+    mutationFn: () => standardSubscriptionService.cancelSubscription(),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-app-subscription'] });
       toast({
@@ -59,7 +61,7 @@ export function useAppSubscription() {
 
   // Check subscription status
   const checkStatus = useMutation({
-    mutationFn: () => appSubscriptionService.checkSubscriptionStatus(),
+    mutationFn: () => standardSubscriptionService.checkSubscriptionStatus(),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-app-subscription'] });
     }
