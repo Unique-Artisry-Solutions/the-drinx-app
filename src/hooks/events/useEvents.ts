@@ -1,243 +1,179 @@
-
-import { supabase } from '@/integrations/supabase/client';
-import { EventType, EventFormData } from '@/types/EventTypes';
-import { useToast } from '@/hooks/use-toast';
-import { useState, useCallback, useEffect } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { calculateDistance } from '@/utils/locationUtils';
-
-export interface LocationFilter {
-  latitude: number;
-  longitude: number;
-  radiusMiles: number;
-}
+import { useState, useEffect } from 'react';
+import { Event, EventFormData } from '@/types/EventTypes';
+import { supabase } from '@/lib/supabase';
 
 export const useEvents = () => {
-  const [events, setEvents] = useState<EventType[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [events, setEvents] = useState<Event[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
 
-  const fetchEvents = useCallback(async (locationFilter?: LocationFilter, statusFilter?: 'draft' | 'published' | 'cancelled' | 'completed' | 'all'): Promise<EventType[]> => {
-    setIsLoading(true);
-    setError(null);
-
+  const fetchEvents = async () => {
     try {
-      // Build query for events joined with venues to get location data
-      let query = supabase
+      setLoading(true);
+      const { data, error } = await supabase
         .from('events')
         .select(`
-          id,
-          name,
-          description,
-          date,
-          time,
-          venue_id,
-          image_url,
-          promotional_materials,
-          status,
-          created_at,
-          updated_at,
-          created_by,
-          event_ticket_types (
+          *,
+          venues:venue_id (
             id,
             name,
-            price,
-            description,
-            quantity
-          ),
-          establishments:venue_id (
-            id, 
-            name, 
-            address,
-            latitude,
-            longitude
+            address
           )
-        `);
-      
-      // Apply status filter if provided
-      if (statusFilter && statusFilter !== 'all') {
-        query = query.eq('status', statusFilter);
-      }
-
-      const { data, error } = await query;
+        `)
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
-      if (!data) return [];
 
-      // Map data to our EventType format
-      let formattedEvents = data.map(event => {
-        const venueData = event.establishments;
-        
-        // Calculate distance if location filter is provided and venue data exists
-        let distance = 0;
-        if (locationFilter && venueData && venueData.latitude && venueData.longitude) {
-          distance = calculateDistance(
-            locationFilter.latitude,
-            locationFilter.longitude,
-            venueData.latitude,
-            venueData.longitude
-          );
-        }
+      // Transform the data to match Event interface
+      const transformedEvents: Event[] = data.map(event => ({
+        id: event.id,
+        name: event.name,
+        description: event.description || '',
+        date: event.date,
+        time: event.time,
+        venue: event.venues ? {
+          id: event.venues.id,
+          name: event.venues.name,
+          address: event.venues.address
+        } : undefined,
+        venue_id: event.venue_id,
+        status: event.status,
+        event_type: event.event_type,
+        capacity: event.capacity,
+        image_url: event.image_url,
+        promotional_materials: event.promotional_materials || [],
+        location_details: event.location_details,
+        contact_info: event.contact_info,
+        custom_settings: event.custom_settings,
+        is_public: event.is_public,
+        created_by: event.created_by,
+        created_at: event.created_at,
+        updated_at: event.updated_at
+      }));
 
-        return {
-          id: event.id,
-          name: event.name,
-          description: event.description || '',
-          date: event.date,
-          time: event.time,
-          venue_id: event.venue_id,
-          image_url: event.image_url || '',
-          promotional_materials: event.promotional_materials || [],
-          status: event.status,
-          distance: distance,
-          ticketTypes: event.event_ticket_types.map(ticket => ({
-            id: ticket.id,
-            name: ticket.name,
-            price: ticket.price,
-            description: ticket.description,
-            quantity: ticket.quantity,
-            sold: 0,
-            available: ticket.quantity
-          })),
-          venue: {
-            id: event.venue_id || '',
-            name: venueData?.name || '',
-            address: venueData?.address || ''
-          },
-          attendees: {
-            registered: 0,
-            capacity: event.event_ticket_types.reduce((sum, ticket) => sum + ticket.quantity, 0),
-            checked_in: 0
-          },
-          created_by: event.created_by,
-          created_at: event.created_at,
-          updated_at: event.updated_at
-        };
-      });
-
-      // Filter by distance if location filter is provided
-      if (locationFilter) {
-        formattedEvents = formattedEvents.filter(
-          event => event.distance <= locationFilter.radiusMiles
-        );
-      }
-
-      setEvents(formattedEvents);
-      return formattedEvents;
-
-    } catch (err: any) {
-      setError(err.message);
-      toast({
-        title: "Error fetching events",
-        description: err.message,
-        variant: "destructive",
-      });
-      return [];
+      setEvents(transformedEvents);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch events');
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
-  }, [toast]);
+  };
 
-  // Fetch published events for backward compatibility
-  const fetchPublishedEvents = useCallback(async (locationFilter?: LocationFilter): Promise<EventType[]> => {
-    return fetchEvents(locationFilter, 'published');
-  }, [fetchEvents]);
-
-  // Fetch events on component mount - get all events by default
-  useEffect(() => {
-    fetchEvents();
-  }, [fetchEvents]);
-
-  // Create event mutation
-  const createEvent = useMutation({
-    mutationFn: async (eventData: EventFormData) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
-
-      const { data: eventResponse, error: eventError } = await supabase
+  const createEvent = async (eventData: EventFormData) => {
+    try {
+      setLoading(true);
+      const { data: newEvent, error } = await supabase
         .from('events')
-        .insert({
-          name: eventData.name,
-          description: eventData.description,
-          date: eventData.date,
-          time: eventData.time,
-          venue_id: eventData.venueId || null,
-          image_url: eventData.imageUrl,
-          promotional_materials: eventData.promotionalMaterials,
-          created_by: user.id
-        })
+        .insert([
+          {
+            name: eventData.name,
+            description: eventData.description,
+            date: eventData.date,
+            time: eventData.time,
+            venue_id: eventData.venueId,
+            capacity: eventData.capacity,
+            image_url: eventData.image_url,
+            promotional_materials: eventData.promotional_materials,
+            location_details: eventData.location_details,
+            contact_info: eventData.contact_info,
+            custom_settings: eventData.custom_settings,
+            is_public: eventData.is_public,
+            event_type: eventData.event_type,
+          }
+        ])
         .select()
         .single();
 
-      if (eventError) throw eventError;
+      if (error) throw error;
 
-      if (eventData.ticketTypes.length > 0) {
-        const { error: ticketError } = await supabase
-          .from('event_ticket_types')
-          .insert(
-            eventData.ticketTypes.map(ticket => ({
-              event_id: eventResponse.id,
-              ...ticket
-            }))
-          );
+      setEvents(prevEvents => [...prevEvents, {
+        id: newEvent.id,
+        name: newEvent.name,
+        description: newEvent.description || '',
+        date: newEvent.date,
+        time: newEvent.time,
+        venue: {
+          id: eventData.venueId,
+          name: 'Selected Venue', // You might want to fetch the actual venue name
+          address: 'Venue Address' // You might want to fetch the actual venue address
+        },
+        venue_id: eventData.venueId,
+        status: newEvent.status,
+        event_type: newEvent.event_type,
+        capacity: newEvent.capacity,
+        image_url: newEvent.image_url,
+        promotional_materials: newEvent.promotional_materials || [],
+        location_details: newEvent.location_details,
+        contact_info: newEvent.contact_info,
+        custom_settings: newEvent.custom_settings,
+        is_public: newEvent.is_public,
+        created_by: newEvent.created_by,
+        created_at: newEvent.created_at,
+        updated_at: newEvent.updated_at
+      }]);
+      return newEvent;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create event');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        if (ticketError) throw ticketError;
-      }
+  const updateEvent = async (eventId: string, updates: Partial<EventFormData>) => {
+    try {
+      setLoading(true);
+      const { data: updatedEvent, error } = await supabase
+        .from('events')
+        .update(updates)
+        .eq('id', eventId)
+        .select()
+        .single();
 
-      if (eventData.notificationSchedules && eventData.notificationSchedules.length > 0) {
-        for (const schedule of eventData.notificationSchedules) {
-          // Store all notification data in the notifications table
-          const metadata: any = {
-            event_id: eventResponse.id,
-            scheduled_for: schedule.scheduledFor,
-            location_based: !!schedule.locationBased,
-            coordinates: schedule.coordinates || null,
-            target_radius: schedule.targetRadius || null,
-            notification_type: 'event_schedule'
-          };
-          
-          // Create a notification record
-          const { error: notificationError } = await supabase
-            .from('notifications')
-            .insert({
-              recipient_id: user.id,
-              recipient_type: 'promoter',
-              title: schedule.title || `Reminder: ${eventData.name}`,
-              content: schedule.content || `Don't forget: ${eventData.name} is happening soon!`,
-              priority: schedule.priority || 'medium',
-              metadata: metadata
-            });
+      if (error) throw error;
 
-          if (notificationError) throw notificationError;
-        }
-      }
+      setEvents(prevEvents =>
+        prevEvents.map(event => (event.id === eventId ? { ...event, ...updatedEvent } : event))
+      );
+      return updatedEvent;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update event');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      return eventResponse;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['events'] });
-      toast({
-        title: 'Event created',
-        description: 'Your event has been created successfully.',
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: 'Error creating event',
-        description: error.message,
-        variant: 'destructive',
-      });
-    },
-  });
+  const deleteEvent = async (eventId: string) => {
+    try {
+      setLoading(true);
+      const { error } = await supabase
+        .from('events')
+        .delete()
+        .eq('id', eventId);
+
+      if (error) throw error;
+
+      setEvents(prevEvents => prevEvents.filter(event => event.id !== eventId));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete event');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchEvents();
+  }, []);
 
   return {
     events,
-    fetchEvents,
-    fetchPublishedEvents,
-    isLoading,
+    loading,
     error,
+    fetchEvents,
     createEvent,
+    updateEvent,
+    deleteEvent,
   };
 };
