@@ -37,7 +37,7 @@ export interface AuthState {
 
 export interface AuthActions {
   signIn: (email: string, password: string) => Promise<{ error: Error | null; data: any }>;
-  signUp: (email: string, password: string, metadata?: Record<string, any>) => Promise<any>;
+  signUp: (formData: any) => Promise<any>;
   signOut: () => Promise<void>;
   refreshSession: () => Promise<{ isEmailVerified: boolean }>;
   recoverAuthState: () => Promise<boolean>;
@@ -51,6 +51,18 @@ export interface AuthActions {
   // Dev mode actions
   getDevUserType: () => 'individual' | 'establishment' | 'promoter' | 'admin' | null;
   setDevUserType: (userType: 'individual' | 'establishment' | 'promoter' | 'admin' | null) => void;
+  
+  // Core auth actions for compatibility
+  login: (email: string, password: string) => Promise<void>;
+  logout: () => Promise<void>;
+  signup: (formData: any) => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
+  updateProfile: (updates: any) => Promise<void>;
+  switchRole: (role: 'individual' | 'establishment' | 'promoter' | 'admin') => Promise<void>;
 }
 
-export interface AuthContextType extends AuthState, AuthActions {}
+export interface AuthContextType extends AuthState, AuthActions {
+  // Backward compatibility properties
+  state: AuthState;
+  actions: AuthActions;
+}

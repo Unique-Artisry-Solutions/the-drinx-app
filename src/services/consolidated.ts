@@ -21,6 +21,9 @@ export { BaseStandardService } from './interfaces/StandardService';
 export { serviceRegistry } from './ServiceRegistry';
 export type { ServiceMetrics, ServiceHealthStatus } from './ServiceRegistry';
 
+// Import for utility functions
+import { serviceRegistry } from './ServiceRegistry';
+
 // Utility function to get all registered services
 export const getAllServices = () => {
   return serviceRegistry.getAllServices();
