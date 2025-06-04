@@ -29,3 +29,6 @@ export type {
 // Simplified admin hook - primary export for new development
 export { useSimpleAdmin } from './useSimpleAdmin';
 export type { SimpleAdminState, SimpleAdminActions } from './useSimpleAdmin';
+
+// Re-export core hooks with admin prefix for backward compatibility
+export { useAdminData, useAdminAuth, useAdminAnalytics };

@@ -53,12 +53,30 @@ class NotificationServiceClass {
     }
   }
 
-  private notifySubscribers() {
-    this.subscribers.forEach(callback => callback([...this.notifications]));
+  markAllAsRead() {
+    this.notifications.forEach(n => n.read = true);
+    this.notifySubscribers();
+  }
+
+  getAll() {
+    return [...this.notifications];
+  }
+
+  getUnread() {
+    return this.notifications.filter(n => !n.read);
   }
 
   getUnreadCount() {
     return this.notifications.filter(n => !n.read).length;
+  }
+
+  clear() {
+    this.notifications = [];
+    this.notifySubscribers();
+  }
+
+  private notifySubscribers() {
+    this.subscribers.forEach(callback => callback([...this.notifications]));
   }
 }
 

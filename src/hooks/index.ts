@@ -17,7 +17,7 @@ export { useStreakData } from './useStreakData';
 export { useAuthenticatedUser } from './useAuthenticatedUser';
 export { useDevAuthBypass } from './useDevAuthBypass';
 
-// Direct notifications hook for backward compatibility
+// Direct notifications hook
 export { useDirectNotifications } from './useDirectNotifications';
 
 // Keep legacy useNotifications for backward compatibility
