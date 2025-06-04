@@ -1,5 +1,5 @@
 
-// Unified service exports - Phase 8C consolidation COMPLETED
+// Unified service exports - Phase 9B: Legacy removal completed
 // Primary entry point for all application services
 
 // Import utilities and registry first to avoid circular dependencies
@@ -28,39 +28,6 @@ export { NotificationService } from './NotificationService';
 export { DevAuthService } from './DevAuthService';
 export { toastService } from './ToastService';
 export { subscriptionAdapter } from './SubscriptionAdapter';
-
-// Legacy exports for backward compatibility - marked as deprecated
-/** @deprecated Use serviceRegistry.getService('admin') or AdminService instead */
-export { 
-  BaseAdminService,
-  AdminEstablishmentsService, 
-  establishmentsService,
-  AdminCocktailsService, 
-  cocktailsService,
-  AdminUsersService, 
-  usersService,
-  type QueryParams,
-  type PaginatedResponse,
-  type CreateDTO,
-  type UpdateDTO,
-  type BulkUpdateDTO,
-  type SearchParams,
-  type FilterParams,
-  type AdminEstablishment,
-  type AdminCocktail,
-  type AdminUser
-} from './admin';
-
-/** @deprecated Use EventService.updateEventStatus instead */
-export { updateEventStatus } from './eventService';
-/** @deprecated Use EventService.adaptToABTestingData instead */
-export { adaptToABTestingData } from './eventAdapterService';
-/** @deprecated Use EventService access token methods instead */
-export { 
-  generateEventAccessToken, 
-  verifyEventAccessToken, 
-  getCurrentEventToken 
-} from './eventAccessService';
 
 // Service initialization helper
 export const initializeServices = async (): Promise<ServiceResponse> => {

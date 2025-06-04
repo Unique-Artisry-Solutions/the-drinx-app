@@ -26,10 +26,6 @@ export type {
   UseAdminTabsActions
 } from '@/types/admin/TabTypes';
 
-// Add simplified admin hook
+// Simplified admin hook - primary export for new development
 export { useSimpleAdmin } from './useSimpleAdmin';
 export type { SimpleAdminState, SimpleAdminActions } from './useSimpleAdmin';
-
-// Add simplified admin hook
-export { useSimplifiedAdminData } from './useSimplifiedAdminData';
-export type { SimplifiedAdminState, SimplifiedAdminActions } from './useSimplifiedAdminData';
