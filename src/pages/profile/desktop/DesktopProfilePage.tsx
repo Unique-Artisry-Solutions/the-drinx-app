@@ -1,11 +1,13 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
-import UserAuth from '@/components/UserAuth';
-import { useProfileData } from '@/hooks/useProfileData';
-import ProfileHeader from '@/components/profile/ProfileHeader';
-import ActiveSwigCircuitSection from '@/components/profile/ActiveSwigCircuitSection';
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/auth';
+import { Megaphone } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 import ProfileTabs from '@/components/profile/desktop/ProfileTabs';
+import { Establishment, Cocktail } from '@/types/ProfileTypes';
+import { sampleEstablishments, sampleCocktails } from '@/data/sampleData';
 
 interface DesktopProfilePageProps {
   userType?: string;

@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import Layout from '@/components/Layout';
+import { Layout } from '@/components/Layout';
 import EmailVerificationContainer from '@/components/auth/EmailVerificationContainer';
 import TestVerificationLink from '@/components/auth/TestVerificationLink';
 import { Button } from '@/components/ui/button';

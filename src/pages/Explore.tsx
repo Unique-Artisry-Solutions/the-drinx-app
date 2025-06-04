@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
@@ -69,18 +70,18 @@ const Explore: React.FC = () => {
       // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 500));
 
-      // Mock establishments data
+      // Mock establishments data with required properties
       const mockEstablishments: Establishment[] = [
-        { id: '1', name: 'The Mocktail Lounge', address: '123 Main St' },
-        { id: '2', name: 'Sober Bar & Kitchen', address: '456 Elm St' },
-        { id: '3', name: 'Dry Spirits', address: '789 Oak St' },
+        { id: '1', name: 'The Mocktail Lounge', address: '123 Main St', latitude: 40.7128, longitude: -74.0060 },
+        { id: '2', name: 'Sober Bar & Kitchen', address: '456 Elm St', latitude: 40.7589, longitude: -73.9851 },
+        { id: '3', name: 'Dry Spirits', address: '789 Oak St', latitude: 40.7505, longitude: -73.9934 },
       ];
 
-      // Mock cocktails data
+      // Mock cocktails data with required properties
       const mockCocktails: Cocktail[] = [
-        { id: '101', name: 'Virgin Mojito', ingredients: ['Lime', 'Mint', 'Soda'] },
-        { id: '102', name: 'Shirley Temple', ingredients: ['Ginger Ale', 'Grenadine'] },
-        { id: '103', name: 'Cranberry Spritzer', ingredients: ['Cranberry Juice', 'Soda'] },
+        { id: '101', name: 'Virgin Mojito', ingredients: ['Lime', 'Mint', 'Soda'], price: 8.99, establishment: 'The Mocktail Lounge' },
+        { id: '102', name: 'Shirley Temple', ingredients: ['Ginger Ale', 'Grenadine'], price: 6.99, establishment: 'Sober Bar & Kitchen' },
+        { id: '103', name: 'Cranberry Spritzer', ingredients: ['Cranberry Juice', 'Soda'], price: 7.99, establishment: 'Dry Spirits' },
       ];
 
       setEstablishments(mockEstablishments);

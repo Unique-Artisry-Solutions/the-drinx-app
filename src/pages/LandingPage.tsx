@@ -1,6 +1,6 @@
 
 import React, { useEffect } from 'react';
-import Layout from '@/components/Layout';
+import { Layout } from '@/components/Layout';
 import Hero from '@/components/landing/Hero';
 import Features from '@/components/landing/Features';
 import Benefits from '@/components/landing/Benefits';
