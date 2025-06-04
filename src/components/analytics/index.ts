@@ -10,4 +10,4 @@ export { default as ContentAnalyticsPanel } from './engagement/ContentAnalyticsP
 export { default as FeedbackAnalyticsPanel } from './engagement/FeedbackAnalyticsPanel';
 
 // Types - re-export from centralized location
-export type { ChartDataPoint, ChartSeriesConfig, BaseChartProps } from '../../types';
+export type { ChartDataPoint, ChartSeriesConfig, BaseChartProps } from '../../types/charts';

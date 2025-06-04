@@ -1,54 +1,28 @@
 
-/**
- * Format a number as currency
- */
-export const formatCurrency = (amount: number): string => {
+// Formatter utility functions
+export function formatCurrency(amount: number, currency = 'USD'): string {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 2
+    currency
   }).format(amount);
-};
+}
 
-/**
- * Format date to a user-friendly string
- */
-export const formatDate = (dateStr: string): string => {
-  const date = new Date(dateStr);
+export function formatDate(date: string | Date): string {
   return new Intl.DateTimeFormat('en-US', {
     year: 'numeric',
     month: 'long',
-    day: 'numeric',
-  }).format(date);
-};
+    day: 'numeric'
+  }).format(new Date(date));
+}
 
-/**
- * Format time to a user-friendly string
- */
-export const formatTime = (timeStr: string): string => {
-  // Handle 24-hour format like "19:30:00"
-  if (timeStr.includes(':')) {
-    const [hours, minutes] = timeStr.split(':');
-    const date = new Date();
-    date.setHours(parseInt(hours, 10));
-    date.setMinutes(parseInt(minutes, 10));
-    
-    return new Intl.DateTimeFormat('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    }).format(date);
-  }
-  
-  return timeStr;
-};
+export function formatNumber(value: number): string {
+  return new Intl.NumberFormat().format(value);
+}
 
-/**
- * Format cart item count to ensure it displays properly even for large numbers
- */
-export const formatCartCount = (count: number): string => {
-  if (count <= 99) {
-    return count.toString();
-  }
-  return '99+';
-};
+export function formatPercentage(value: number): string {
+  return new Intl.NumberFormat('en-US', {
+    style: 'percent',
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1
+  }).format(value / 100);
+}

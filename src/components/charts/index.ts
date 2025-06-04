@@ -1,7 +1,7 @@
 
-// Charts Module - Updated for Phase 9C
+// Charts Module - Updated for Phase 9E
 // Import types from centralized location
-export type { ChartDataPoint, ChartSeriesConfig, BaseChartProps } from '../../types';
+export type { ChartDataPoint, ChartSeriesConfig, BaseChartProps, EnhancedChartProps } from '../../types/charts';
 
 // Chart component exports
 export { default as AnalyticsLineChart } from './AnalyticsLineChart';
@@ -11,8 +11,3 @@ export { default as AnalyticsMetricCard } from './AnalyticsMetricCard';
 
 // Wrapper components
 export { LegacyLineChart, LegacyBarChart, SmartChart } from './ChartWrapper';
-
-// Enhanced chart props interface extending base props
-export interface EnhancedChartProps extends BaseChartProps {
-  series?: ChartSeriesConfig[];
-}

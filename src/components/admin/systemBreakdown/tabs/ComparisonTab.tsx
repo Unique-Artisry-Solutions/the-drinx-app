@@ -127,4 +127,6 @@ const ComparisonTab: React.FC<ComparisonTabProps> = ({
   );
 };
 
+// Export as both named and default for compatibility
+export { ComparisonTab };
 export default ComparisonTab;
