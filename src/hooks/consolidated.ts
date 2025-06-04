@@ -1,5 +1,5 @@
 
-// Consolidated Hooks Index - Phase 9C
+// Consolidated Hooks Index - Phase 9D Updated
 // Provides a single entry point for commonly used hooks
 
 // Core hooks (primary exports)
@@ -9,6 +9,9 @@ export {
   useAnalytics, 
   useNotifications 
 } from './core';
+
+// Service registry (Phase 9D addition)
+export { useServiceRegistry } from './useServiceRegistry';
 
 // Essential utility hooks
 export { useToast } from './use-toast';
@@ -35,3 +38,5 @@ export type {
   NotificationState, 
   NotificationActions 
 } from './core';
+
+export type { ServiceRegistryState } from './useServiceRegistry';

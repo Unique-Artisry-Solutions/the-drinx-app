@@ -1,192 +1,217 @@
 
-// Service registry for dependency management and service discovery
-// Provides a centralized way to access and manage all services
+// Service Registry - Phase 9D
+// Centralized service management and monitoring
 
 import { serviceConfig } from './ServiceConfig';
-import { UnifiedPromotionalService } from './promotional';
-import { NotificationService } from './NotificationService';
-import { toastService } from './ToastService';
-import { subscriptionAdapter } from './SubscriptionAdapter';
 import { UnifiedAnalyticsService } from './UnifiedAnalyticsService';
-import { UnifiedEventService } from './UnifiedEventService';
-import { UnifiedPaymentService } from './UnifiedPaymentService';
-import { UnifiedMobileService } from './UnifiedMobileService';
+import { NotificationService } from './NotificationService';
+import { SimplifiedAdminService } from './admin/SimplifiedAdminService';
 
-// Import admin service with fallback
-let SimplifiedAdminService: any;
-try {
-  SimplifiedAdminService = require('./admin/SimplifiedAdminService').SimplifiedAdminService;
-} catch (error) {
-  console.warn('SimplifiedAdminService not found, using fallback');
-  SimplifiedAdminService = {
-    healthCheck: () => true
-  };
+interface ServiceHealthStatus {
+  name: string;
+  status: 'healthy' | 'degraded' | 'error';
+  lastCheck: Date;
+  responseTime?: number;
+  errorMessage?: string;
 }
 
-export interface ServiceDependencies {
-  admin: typeof SimplifiedAdminService;
-  promotional: typeof UnifiedPromotionalService;
-  analytics: typeof UnifiedAnalyticsService;
-  events: typeof UnifiedEventService;
-  payments: typeof UnifiedPaymentService;
-  mobile: typeof UnifiedMobileService;
-  notification: typeof NotificationService;
-  toast: typeof toastService;
-  subscription: typeof subscriptionAdapter;
+interface ServiceMetrics {
+  totalRequests: number;
+  successfulRequests: number;
+  failedRequests: number;
+  averageResponseTime: number;
+  uptime: number;
 }
 
-class ServiceRegistryManager {
-  private services: ServiceDependencies;
+class ServiceRegistry {
+  private services: Map<string, any> = new Map();
+  private healthStatus: Map<string, ServiceHealthStatus> = new Map();
+  private metrics: Map<string, ServiceMetrics> = new Map();
   private initialized = false;
-
-  constructor() {
-    this.services = {
-      admin: SimplifiedAdminService,
-      promotional: UnifiedPromotionalService,
-      analytics: UnifiedAnalyticsService,
-      events: UnifiedEventService,
-      payments: UnifiedPaymentService,
-      mobile: UnifiedMobileService,
-      notification: NotificationService,
-      toast: toastService,
-      subscription: subscriptionAdapter
-    };
-  }
 
   async initialize(): Promise<void> {
     if (this.initialized) return;
 
     const config = serviceConfig.getConfig();
-    
-    try {
-      // Initialize all unified services
-      await Promise.all([
-        this.services.analytics.initialize(),
-        this.services.events.initialize(),
-        this.services.payments.initialize(),
-        this.services.mobile.initialize()
-      ]);
-
-      // Initialize promotional services
-      if (this.services.promotional && typeof this.services.promotional.initialize === 'function') {
-        this.services.promotional.initialize(config);
-      }
-      
-      // Mark as initialized
-      this.initialized = true;
-      
-      if (config.enableLogging) {
-        console.log('ServiceRegistry: All services initialized successfully');
-      }
-    } catch (error) {
-      console.error('ServiceRegistry: Failed to initialize services:', error);
-      throw error;
+    if (config.enableLogging) {
+      console.log('ServiceRegistry: Initializing...');
     }
+
+    // Register core services
+    this.registerService('analytics', UnifiedAnalyticsService);
+    this.registerService('notifications', NotificationService);
+    this.registerService('admin', SimplifiedAdminService);
+
+    // Initialize all services
+    await this.initializeAllServices();
+    
+    // Start health monitoring
+    this.startHealthMonitoring();
+    
+    this.initialized = true;
   }
 
-  getService<K extends keyof ServiceDependencies>(serviceName: K): ServiceDependencies[K] {
-    if (!this.initialized) {
-      console.warn(`ServiceRegistry: Accessing ${serviceName} before initialization`);
-    }
-    
-    return this.services[serviceName];
+  registerService(name: string, service: any): void {
+    this.services.set(name, service);
+    this.initializeServiceMetrics(name);
   }
 
-  // Service discovery - get all services of a category
-  getServicesByCategory(category: 'core' | 'analytics' | 'promotional' | 'mobile'): Partial<ServiceDependencies> {
-    const categories = {
-      core: ['admin', 'notification', 'toast', 'subscription'],
-      analytics: ['analytics'],
-      promotional: ['promotional'],
-      mobile: ['mobile']
-    };
+  getService<T>(name: string): T | null {
+    return this.services.get(name) || null;
+  }
 
-    const serviceNames = categories[category] || [];
-    const services: Partial<ServiceDependencies> = {};
-    
-    serviceNames.forEach(name => {
-      if (name in this.services) {
-        services[name as keyof ServiceDependencies] = this.services[name as keyof ServiceDependencies];
+  private async initializeAllServices(): Promise<void> {
+    const initPromises = Array.from(this.services.entries()).map(async ([name, service]) => {
+      try {
+        if (service.initialize && typeof service.initialize === 'function') {
+          await service.initialize();
+        }
+        this.updateHealthStatus(name, 'healthy');
+      } catch (error) {
+        console.error(`Failed to initialize service ${name}:`, error);
+        this.updateHealthStatus(name, 'error', error instanceof Error ? error.message : 'Unknown error');
       }
     });
 
-    return services;
+    await Promise.allSettled(initPromises);
   }
 
-  async healthCheck(): Promise<{ [key: string]: boolean }> {
-    const health: { [key: string]: boolean } = {};
+  private initializeServiceMetrics(serviceName: string): void {
+    this.metrics.set(serviceName, {
+      totalRequests: 0,
+      successfulRequests: 0,
+      failedRequests: 0,
+      averageResponseTime: 0,
+      uptime: 100
+    });
+  }
+
+  private updateHealthStatus(
+    serviceName: string, 
+    status: 'healthy' | 'degraded' | 'error',
+    errorMessage?: string,
+    responseTime?: number
+  ): void {
+    this.healthStatus.set(serviceName, {
+      name: serviceName,
+      status,
+      lastCheck: new Date(),
+      responseTime,
+      errorMessage
+    });
+  }
+
+  private startHealthMonitoring(): void {
+    // Run health checks every 30 seconds
+    setInterval(async () => {
+      await this.performHealthChecks();
+    }, 30000);
+  }
+
+  private async performHealthChecks(): Promise<void> {
+    const config = serviceConfig.getConfig();
     
-    try {
-      // Check unified services
-      const healthChecks = await Promise.allSettled([
-        this.services.analytics.healthCheck().then(result => ({ analytics: result })),
-        this.services.events.healthCheck().then(result => ({ events: result })),
-        this.services.payments.healthCheck().then(result => ({ payments: result })),
-        this.services.mobile.healthCheck().then(result => ({ mobile: result }))
-      ]);
-
-      healthChecks.forEach(result => {
-        if (result.status === 'fulfilled') {
-          Object.assign(health, result.value);
+    for (const [name, service] of this.services.entries()) {
+      try {
+        const startTime = Date.now();
+        
+        // Check if service has a health check method
+        if (service.healthCheck && typeof service.healthCheck === 'function') {
+          const isHealthy = await service.healthCheck();
+          const responseTime = Date.now() - startTime;
+          
+          this.updateHealthStatus(
+            name, 
+            isHealthy ? 'healthy' : 'degraded',
+            undefined,
+            responseTime
+          );
         } else {
-          console.error('Health check failed:', result.reason);
+          // Default health check - just verify service exists
+          this.updateHealthStatus(name, 'healthy');
         }
-      });
-
-      // Check promotional services
-      if (this.services.promotional && typeof this.services.promotional.healthCheck === 'function') {
-        const promotionalHealth = await this.services.promotional.healthCheck();
-        Object.assign(health, promotionalHealth);
+      } catch (error) {
+        if (config.enableLogging) {
+          console.error(`Health check failed for service ${name}:`, error);
+        }
+        this.updateHealthStatus(
+          name, 
+          'error', 
+          error instanceof Error ? error.message : 'Health check failed'
+        );
       }
-      
-      // Check other services
-      health.admin = !!this.services.admin;
-      health.notification = !!this.services.notification;
-      health.toast = !!this.services.toast;
-      health.subscription = !!this.services.subscription;
-      
-      return health;
-    } catch (error) {
-      console.error('ServiceRegistry: Health check failed:', error);
-      return { error: false };
     }
   }
 
-  // Runtime service switching
-  switchService<K extends keyof ServiceDependencies>(
-    serviceName: K, 
-    newService: ServiceDependencies[K]
-  ): void {
+  // Public methods for monitoring
+  getServiceHealth(): ServiceHealthStatus[] {
+    return Array.from(this.healthStatus.values());
+  }
+
+  getServiceMetrics(serviceName?: string): ServiceMetrics | Map<string, ServiceMetrics> {
+    if (serviceName) {
+      return this.metrics.get(serviceName) || this.getDefaultMetrics();
+    }
+    return this.metrics;
+  }
+
+  private getDefaultMetrics(): ServiceMetrics {
+    return {
+      totalRequests: 0,
+      successfulRequests: 0,
+      failedRequests: 0,
+      averageResponseTime: 0,
+      uptime: 0
+    };
+  }
+
+  // Method to track service usage
+  trackServiceUsage(serviceName: string, success: boolean, responseTime?: number): void {
+    const metrics = this.metrics.get(serviceName);
+    if (!metrics) return;
+
+    metrics.totalRequests++;
+    if (success) {
+      metrics.successfulRequests++;
+    } else {
+      metrics.failedRequests++;
+    }
+
+    if (responseTime !== undefined) {
+      // Update average response time
+      const totalTime = metrics.averageResponseTime * (metrics.totalRequests - 1) + responseTime;
+      metrics.averageResponseTime = totalTime / metrics.totalRequests;
+    }
+
+    // Update uptime percentage
+    metrics.uptime = (metrics.successfulRequests / metrics.totalRequests) * 100;
+  }
+
+  // Graceful shutdown
+  async shutdown(): Promise<void> {
     const config = serviceConfig.getConfig();
     if (config.enableLogging) {
-      console.log(`ServiceRegistry: Switching service ${serviceName}`);
+      console.log('ServiceRegistry: Shutting down...');
     }
-    
-    this.services[serviceName] = newService;
-  }
 
-  // Get service metadata
-  getServiceMetadata(): { [K in keyof ServiceDependencies]: { initialized: boolean; available: boolean } } {
-    const metadata = {} as any;
-    
-    Object.keys(this.services).forEach(serviceName => {
-      metadata[serviceName] = {
-        initialized: this.initialized,
-        available: !!this.services[serviceName as keyof ServiceDependencies]
-      };
+    // Give services a chance to clean up
+    const shutdownPromises = Array.from(this.services.entries()).map(async ([name, service]) => {
+      try {
+        if (service.shutdown && typeof service.shutdown === 'function') {
+          await service.shutdown();
+        }
+      } catch (error) {
+        console.error(`Error shutting down service ${name}:`, error);
+      }
     });
-    
-    return metadata;
-  }
 
-  isInitialized(): boolean {
-    return this.initialized;
+    await Promise.allSettled(shutdownPromises);
+    this.initialized = false;
   }
 }
 
-export const serviceRegistry = new ServiceRegistryManager();
+// Export singleton instance
+export const serviceRegistry = new ServiceRegistry();
 
-// Auto-initialize in development mode
-if (import.meta.env.DEV) {
-  serviceRegistry.initialize().catch(console.error);
-}
+// Export types
+export type { ServiceHealthStatus, ServiceMetrics };
