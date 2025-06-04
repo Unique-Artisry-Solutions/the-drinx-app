@@ -2,7 +2,7 @@
 import { vi } from 'vitest';
 import { useAuth } from '@/contexts/auth/AuthProvider';
 import { useToast } from '@/hooks/use-toast';
-import { AuthContextType } from '@/contexts/auth/types';
+import { AuthContextType } from '@/contexts/auth/AuthProvider';
 
 // Create a proper mockUser that satisfies the User type from Supabase
 export const mockUser = {
@@ -54,7 +54,17 @@ export function setupMocks(authUser = mockUser) {
     authError: null,
     isVerificationEmailSent: false,
     userType: 'individual' as const,
-    navigationReady: true, // Add the missing navigationReady property
+    navigationReady: true,
+    
+    // Recovery state
+    isRecovering: false,
+    recoveryAttempts: 0,
+    
+    // Dev mode state
+    isReady: true,
+    isUsingDevBypass: false,
+    
+    // Auth actions
     signIn: vi.fn().mockResolvedValue({ error: null, data: {} }),
     signUp: vi.fn().mockResolvedValue({}),
     signOut: vi.fn().mockResolvedValue({}),
@@ -62,7 +72,14 @@ export function setupMocks(authUser = mockUser) {
     refreshSession: vi.fn().mockResolvedValue({ isEmailVerified: true }),
     updatePassword: vi.fn().mockResolvedValue({}),
     recoverAuthState: vi.fn().mockResolvedValue(true),
-    sendVerificationEmail: vi.fn().mockResolvedValue({})
+    sendVerificationEmail: vi.fn().mockResolvedValue({}),
+    
+    // Recovery actions
+    quickRecovery: vi.fn().mockResolvedValue(true),
+    
+    // Dev mode actions
+    getDevUserType: vi.fn().mockReturnValue('individual'),
+    setDevUserType: vi.fn()
   };
   
   // Setup auth mock with the complete context

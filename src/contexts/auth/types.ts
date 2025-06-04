@@ -25,17 +25,32 @@ export interface AuthState {
   authStable: boolean;
   userType: 'individual' | 'establishment' | 'promoter' | 'admin';
   navigationReady: boolean;
+  
+  // Recovery state
+  isRecovering: boolean;
+  recoveryAttempts: number;
+  
+  // Dev mode state
+  isReady: boolean;
+  isUsingDevBypass: boolean;
 }
 
 export interface AuthActions {
   signIn: (email: string, password: string) => Promise<{ error: Error | null; data: any }>;
-  signUp: (formData: any) => Promise<any>;
+  signUp: (email: string, password: string, metadata?: Record<string, any>) => Promise<any>;
   signOut: () => Promise<void>;
   refreshSession: () => Promise<{ isEmailVerified: boolean }>;
   recoverAuthState: () => Promise<boolean>;
   sendVerificationEmail: (email: string) => Promise<void>;
   updateUserProfile: (data: any) => Promise<void>;
   updatePassword: (newPassword: string) => Promise<void>;
+  
+  // Recovery actions
+  quickRecovery: () => Promise<boolean>;
+  
+  // Dev mode actions
+  getDevUserType: () => 'individual' | 'establishment' | 'promoter' | 'admin' | null;
+  setDevUserType: (userType: 'individual' | 'establishment' | 'promoter' | 'admin' | null) => void;
 }
 
 export interface AuthContextType extends AuthState, AuthActions {}

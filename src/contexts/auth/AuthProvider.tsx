@@ -1,229 +1,391 @@
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import { SessionStorageManager } from '@/utils/sessionStorage';
-import { useAuthActions } from './useAuthActions';
-import { useAuthRecovery } from '@/hooks/useAuthRecovery';
-import { toUserType, UserType } from '@/utils/userTypeGuards';
+import { getUserTypeFromMetadata, toUserType, type UserType } from '@/utils/userTypeGuards';
+import { AuthContextType } from './types';
 
-export interface AuthContextType {
-  user: User | null;
-  session: Session | null;
-  isLoading: boolean;
-  isAuthenticated: boolean;
-  userType: UserType | null;
-  isReady: boolean;
-  authStable: boolean;
-  isEmailVerified: boolean;
-  isUsingDevBypass: boolean;
-  // Actions
-  signIn: (email: string, password: string) => Promise<{ data: any; error: any }>;
-  signUp: (email: string, password: string) => Promise<{ data: any; error: any }>;
-  signOut: () => Promise<void>;
-  refreshSession: () => Promise<{ isEmailVerified: boolean }>;
-  recoverAuthState: () => Promise<boolean>;
-  // Dev bypass functions
-  getDevUserType: () => string | null;
-  setDevUserType: (userType: string | null) => void;
-  // State and actions for compatibility
-  state: {
-    user: User | null;
-    session: Session | null;
-    isLoading: boolean;
-    isAuthenticated: boolean;
-    userType: UserType | null;
-    error: string | null;
-  };
-  actions: {
-    login: (email: string, password: string) => Promise<void>;
-    logout: () => Promise<void>;
-    signup: (formData: any) => Promise<void>;
-    switchRole: (role: any) => Promise<void>;
-  };
-}
+const AuthContext = createContext<AuthContextType | null>(null);
 
-export const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-interface AuthProviderProps {
-  children: React.ReactNode;
-}
-
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { toast } = useToast();
+  
+  // Core auth state
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isReady, setIsReady] = useState(false);
+  const [isEmailVerified, setIsEmailVerified] = useState(false);
+  const [isVerificationEmailSent, setIsVerificationEmailSent] = useState(false);
   const [authStable, setAuthStable] = useState(false);
+  const [authError, setAuthError] = useState<any | null>(null);
+  const [navigationReady, setNavigationReady] = useState(false);
+  
+  // Auth recovery state
+  const [isRecovering, setIsRecovering] = useState(false);
+  const [recoveryAttempts, setRecoveryAttempts] = useState(0);
+  
+  // Dev mode state
+  const [isUsingDevBypass, setIsUsingDevBypass] = useState(false);
+  const [devUserType, setDevUserType] = useState<UserType | null>(null);
 
-  // Get auth actions
-  const { signIn, signUp, signOut } = useAuthActions();
-  const { 
-    requestPasswordReset, 
-    updatePassword, 
-    clearRecoveryData,
-    isLoading: recoveryLoading 
-  } = useAuthRecovery();
+  // Computed properties
+  const isAuthenticated = !!user && !!session && isEmailVerified;
+  const userType = getUserTypeFromMetadata(user?.user_metadata) || devUserType || 'individual';
+  const isReady = authStable && navigationReady;
 
-  useEffect(() => {
-    // Get initial session
-    const getInitialSession = async () => {
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error('Error getting session:', error);
-        } else {
-          setSession(session);
-          setUser(session?.user || null);
-          
-          if (session) {
-            SessionStorageManager.persistAuthSession(session);
-          }
-        }
-      } catch (error) {
-        console.error('Error in getInitialSession:', error);
-      } finally {
-        setIsLoading(false);
-        setIsReady(true);
-        setAuthStable(true);
-      }
-    };
-
-    getInitialSession();
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('Auth state change:', event, session?.user?.id);
-        
-        setSession(session);
-        setUser(session?.user || null);
-        
-        if (session) {
-          SessionStorageManager.persistAuthSession(session);
-        } else {
-          SessionStorageManager.clearAuthSession();
-        }
-        
-        setIsLoading(false);
-        setIsReady(true);
-        setAuthStable(true);
-      }
-    );
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
-
-  // Dev auth bypass functionality
-  const getDevUserType = () => {
-    return SessionStorageManager.getItem<string>('dev_user_type');
-  };
-
-  const setDevUserType = (userType: string | null) => {
-    if (userType) {
-      SessionStorageManager.setItem('dev_user_type', userType);
-    } else {
-      SessionStorageManager.removeItem('dev_user_type');
-    }
-  };
-
-  const isUsingDevBypass = !!getDevUserType();
-
-  // Determine user type from dev mode or session
-  const userType = toUserType(getDevUserType() || user?.user_metadata?.user_type);
-
-  const isAuthenticated = !!user || isUsingDevBypass;
-  const isEmailVerified = user?.email_confirmed_at != null;
-
-  // Recovery functions
-  const recoverAuthState = async (): Promise<boolean> => {
+  // Auth actions
+  const signIn = useCallback(async (email: string, password: string) => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      setSession(session);
-      setUser(session?.user || null);
-      return !!session;
-    } catch (error) {
-      console.error('Auth recovery failed:', error);
-      return false;
-    }
-  };
+      setAuthError(null);
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-  const refreshSession = async (): Promise<{ isEmailVerified: boolean }> => {
+      if (error) throw error;
+
+      if (data.session) {
+        SessionStorageManager.persistAuthSession(data.session);
+        toast({
+          title: "Success",
+          description: "Successfully signed in!",
+        });
+      }
+
+      return { data, error: null };
+    } catch (error: any) {
+      setAuthError(error);
+      console.error('Sign in error:', error);
+      return { data: null, error };
+    }
+  }, [toast]);
+
+  const signUp = useCallback(async (email: string, password: string, metadata?: Record<string, any>) => {
     try {
-      const { data: { session } } = await supabase.auth.refreshSession();
-      setSession(session);
-      setUser(session?.user || null);
-      return { isEmailVerified: session?.user?.email_confirmed_at != null };
-    } catch (error) {
-      console.error('Session refresh failed:', error);
+      setAuthError(null);
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: metadata,
+          emailRedirectTo: `${window.location.origin}/`
+        }
+      });
+
+      if (error) throw error;
+
+      setIsVerificationEmailSent(true);
+      toast({
+        title: "Check your email",
+        description: "We've sent you a confirmation link.",
+      });
+
+      return { data, error: null };
+    } catch (error: any) {
+      setAuthError(error);
+      console.error('Sign up error:', error);
+      return { data: null, error };
+    }
+  }, [toast]);
+
+  const signOut = useCallback(async () => {
+    try {
+      setAuthError(null);
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) throw error;
+
+      SessionStorageManager.clearAuthSession();
+      setUser(null);
+      setSession(null);
+      setIsEmailVerified(false);
+      setIsVerificationEmailSent(false);
+      
+      toast({
+        title: "Signed out",
+        description: "You have been successfully signed out.",
+      });
+    } catch (error: any) {
+      setAuthError(error);
+      console.error('Sign out error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to sign out.",
+        variant: "destructive",
+      });
+    }
+  }, [toast]);
+
+  const refreshSession = useCallback(async () => {
+    try {
+      const { data, error } = await supabase.auth.refreshSession();
+      if (error) throw error;
+      
+      const emailVerified = data.user?.email_confirmed_at != null;
+      setIsEmailVerified(emailVerified);
+      
+      return { isEmailVerified: emailVerified };
+    } catch (error: any) {
+      setAuthError(error);
+      console.error('Refresh session error:', error);
       return { isEmailVerified: false };
     }
-  };
+  }, []);
 
-  // Compatibility state and actions
-  const state = {
-    user,
-    session,
-    isLoading,
-    isAuthenticated,
-    userType,
-    error: null
-  };
+  const sendVerificationEmail = useCallback(async (email: string) => {
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`
+        }
+      });
+      
+      if (error) throw error;
 
-  const actions = {
-    login: async (email: string, password: string) => {
-      const result = await signIn(email, password);
-      if (result.error) throw result.error;
-    },
-    logout: signOut,
-    signup: async (formData: any) => {
-      const result = await signUp(formData.email, formData.password);
-      if (result.error) throw result.error;
-    },
-    switchRole: async (role: any) => {
-      // Mock implementation for role switching
-      console.log('Role switch requested:', role);
+      setIsVerificationEmailSent(true);
+      toast({
+        title: "Verification email sent",
+        description: "Check your email for the verification link.",
+      });
+    } catch (error: any) {
+      setAuthError(error);
+      console.error('Send verification email error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to send verification email.",
+        variant: "destructive",
+      });
     }
-  };
+  }, [toast]);
 
-  const value: AuthContextType = {
+  const updateUserProfile = useCallback(async (data: any) => {
+    try {
+      const { error } = await supabase.auth.updateUser({
+        data: data
+      });
+      
+      if (error) throw error;
+
+      toast({
+        title: "Profile updated",
+        description: "Your profile has been successfully updated.",
+      });
+    } catch (error: any) {
+      setAuthError(error);
+      console.error('Update profile error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update profile.",
+        variant: "destructive",
+      });
+    }
+  }, [toast]);
+
+  const updatePassword = useCallback(async (newPassword: string) => {
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+      
+      if (error) throw error;
+
+      toast({
+        title: "Password updated",
+        description: "Your password has been successfully updated.",
+      });
+    } catch (error: any) {
+      setAuthError(error);
+      console.error('Update password error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update password.",
+        variant: "destructive",
+      });
+    }
+  }, [toast]);
+
+  // Auth recovery methods
+  const recoverAuthState = useCallback(async (): Promise<boolean> => {
+    try {
+      setIsRecovering(true);
+      setRecoveryAttempts(prev => prev + 1);
+      
+      const { data, error } = await supabase.auth.getSession();
+      if (error) throw error;
+
+      if (data.session) {
+        setSession(data.session);
+        setUser(data.session.user);
+        setIsEmailVerified(data.session.user.email_confirmed_at != null);
+        SessionStorageManager.persistAuthSession(data.session);
+        return true;
+      }
+
+      return false;
+    } catch (error: any) {
+      setAuthError(error);
+      console.error('Auth recovery error:', error);
+      return false;
+    } finally {
+      setIsRecovering(false);
+    }
+  }, []);
+
+  const quickRecovery = useCallback(async (): Promise<boolean> => {
+    try {
+      setIsRecovering(true);
+      
+      // Clear any existing errors
+      setAuthError(null);
+      
+      // Try to get current session
+      const { data } = await supabase.auth.getSession();
+      if (data.session) {
+        setSession(data.session);
+        setUser(data.session.user);
+        setIsEmailVerified(data.session.user.email_confirmed_at != null);
+        return true;
+      }
+
+      return false;
+    } catch (error) {
+      console.error('Quick recovery error:', error);
+      return false;
+    } finally {
+      setIsRecovering(false);
+    }
+  }, []);
+
+  // Dev mode methods
+  const getDevUserType = useCallback(() => {
+    const stored = localStorage.getItem('dev_user_type');
+    return stored ? toUserType(stored) : null;
+  }, []);
+
+  const setDevUserTypeLocal = useCallback((userType: UserType | null) => {
+    if (userType) {
+      localStorage.setItem('dev_user_type', userType);
+      setDevUserType(userType);
+      setIsUsingDevBypass(true);
+    } else {
+      localStorage.removeItem('dev_user_type');
+      setDevUserType(null);
+      setIsUsingDevBypass(false);
+    }
+  }, []);
+
+  // Initialize auth state
+  useEffect(() => {
+    let mounted = true;
+
+    const initializeAuth = async () => {
+      try {
+        // Check for dev mode
+        const devType = getDevUserType();
+        if (devType) {
+          setDevUserType(devType);
+          setIsUsingDevBypass(true);
+        }
+
+        // Set up auth state listener
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+          (event, session) => {
+            if (!mounted) return;
+
+            console.log('Auth state change:', event, !!session);
+            setSession(session);
+            setUser(session?.user ?? null);
+            setIsEmailVerified(session?.user?.email_confirmed_at != null);
+            
+            if (session) {
+              SessionStorageManager.persistAuthSession(session);
+            } else {
+              SessionStorageManager.clearAuthSession();
+            }
+          }
+        );
+
+        // Get initial session
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (mounted) {
+          setSession(session);
+          setUser(session?.user ?? null);
+          setIsEmailVerified(session?.user?.email_confirmed_at != null);
+          setAuthStable(true);
+          setNavigationReady(true);
+          setIsLoading(false);
+        }
+
+        return () => subscription.unsubscribe();
+      } catch (error) {
+        console.error('Auth initialization error:', error);
+        if (mounted) {
+          setAuthError(error);
+          setAuthStable(true);
+          setNavigationReady(true);
+          setIsLoading(false);
+        }
+      }
+    };
+
+    initializeAuth();
+
+    return () => {
+      mounted = false;
+    };
+  }, [getDevUserType]);
+
+  const contextValue: AuthContextType = {
+    // Core state
     user,
     session,
     isLoading,
     isAuthenticated,
-    userType,
-    isReady,
-    authStable,
     isEmailVerified,
-    isUsingDevBypass,
+    isVerificationEmailSent,
+    authStable,
+    authError,
+    userType,
+    navigationReady,
+    
+    // Auth actions
     signIn,
     signUp,
     signOut,
     refreshSession,
     recoverAuthState,
+    sendVerificationEmail,
+    updateUserProfile,
+    updatePassword,
+    
+    // Recovery state and actions
+    isRecovering,
+    recoveryAttempts,
+    quickRecovery,
+    
+    // Dev mode
+    isReady,
+    isUsingDevBypass,
     getDevUserType,
-    setDevUserType,
-    state,
-    actions,
+    setDevUserType: setDevUserTypeLocal
   };
 
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-// Export useAuth hook directly from this file
-export const useAuth = () => {
+export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
-  
   if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
-
   return context;
 };
