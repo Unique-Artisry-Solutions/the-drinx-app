@@ -1,11 +1,14 @@
 
-// Types Index - Phase 9C Consolidation
-// Centralized type definitions and exports
+// Types Index - Phase 9E Enhanced
+// Centralized type definitions with strict validation support
 
 // Core types
 export * from './userRole';
 export * from './ProfileTypes';
 export * from './notification';
+
+// Enhanced standard types (Phase 9E)
+export * from './shared/StandardTypes';
 
 // Admin types
 export * from './admin/TabTypes';
@@ -33,3 +36,17 @@ export interface BaseChartProps {
   description?: string;
   formatter?: (value: any) => any;
 }
+
+// Type validation exports
+export { 
+  TypeValidationError,
+  type ValidationResult,
+  type TypeValidator,
+  StringValidator,
+  NumberValidator,
+  ArrayValidator,
+  validateString,
+  validateNumber,
+  validateArray,
+  devValidate
+} from '../utils/typeValidation';
