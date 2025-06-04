@@ -1,148 +1,174 @@
 
-import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { TestTube, Play, RotateCcw, Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { 
-  TestControls, 
-  TestReportSection, 
-  TestResultsVisualization,
-  TestScenarioTracker,
-  TestSuite,
-  TestProgressMatrix,
-  AudienceAnalyticsTestSuite,
-  PerformanceTestRunner,
-  SegmentationTestValidator
-} from '@/components/admin/testing';
-import type { TestScenario, AudienceTestScenario } from '@/components/admin/testing';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { Play, RotateCcw, CheckCircle, XCircle, Clock, AlertCircle } from 'lucide-react';
 
-const TestingDashboard = () => {
-  const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState('overview');
+// Simple internal types for the testing dashboard
+interface SimpleTestResult {
+  id: string;
+  name: string;
+  status: 'pending' | 'running' | 'passed' | 'failed';
+  duration?: number;
+  error?: string;
+}
 
-  // Mock test scenarios with correct interface compliance
-  const mockTestScenarios: TestScenario[] = [
+interface TestSuite {
+  id: string;
+  name: string;
+  description: string;
+  tests: SimpleTestResult[];
+}
+
+const TestingDashboard: React.FC = () => {
+  const [isRunning, setIsRunning] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [currentTest, setCurrentTest] = useState<string>('');
+
+  // Mock test suites data
+  const [testSuites, setTestSuites] = useState<TestSuite[]>([
     {
-      id: 'scenario-1',
-      name: 'User Authentication Flow',
-      description: 'Test complete user login and signup process',
-      status: 'completed',
-      priority: 'high',
-      lastRun: new Date('2024-01-15T10:30:00Z'),
-      duration: 1250,
-      retryCount: 0,
-      maxRetries: 3,
-      requirements: ['Valid user credentials', 'Database connectivity', 'Email service'],
-      expectedResults: ['Successful login', 'User session created', 'Dashboard redirect']
+      id: 'notifications',
+      name: 'Notification System',
+      description: 'Tests for push notifications and alerts',
+      tests: [
+        { id: 'notif-1', name: 'Send Push Notification', status: 'passed', duration: 150 },
+        { id: 'notif-2', name: 'Email Notification', status: 'passed', duration: 200 },
+        { id: 'notif-3', name: 'SMS Notification', status: 'failed', error: 'Connection timeout' },
+        { id: 'notif-4', name: 'In-App Notification', status: 'pending' }
+      ]
     },
     {
-      id: 'scenario-2',
-      name: 'API Performance Testing',
-      description: 'Load testing for core API endpoints',
-      status: 'running',
-      priority: 'medium',
-      lastRun: new Date('2024-01-15T11:00:00Z'),
-      duration: 3200,
-      retryCount: 1,
-      maxRetries: 3,
-      requirements: ['API endpoints available', 'Load testing tools', 'Performance baseline'],
-      expectedResults: ['Response time < 500ms', 'No memory leaks', 'Error rate < 1%']
+      id: 'auth',
+      name: 'Authentication',
+      description: 'User authentication and authorization tests',
+      tests: [
+        { id: 'auth-1', name: 'User Login', status: 'passed', duration: 100 },
+        { id: 'auth-2', name: 'Token Validation', status: 'passed', duration: 75 },
+        { id: 'auth-3', name: 'Password Reset', status: 'running' },
+        { id: 'auth-4', name: 'Role Permissions', status: 'pending' }
+      ]
     },
     {
-      id: 'scenario-3',
-      name: 'Database Relationship Validation',
-      description: 'Verify all foreign key constraints and data integrity',
-      status: 'failed',
-      priority: 'high',
-      lastRun: new Date('2024-01-15T09:45:00Z'),
-      duration: 890,
-      retryCount: 2,
-      maxRetries: 3,
-      requirements: ['Database access', 'Test data set', 'Constraint validation'],
-      expectedResults: ['All constraints valid', 'No orphaned records', 'Referential integrity maintained']
-    }
-  ];
-
-  // Mock audience test scenarios
-  const mockAudienceScenarios: AudienceTestScenario[] = [
-    {
-      id: 'audience-1',
-      name: 'Segment Performance Analysis',
-      description: 'Test audience segmentation accuracy',
-      status: 'completed',
-      priority: 'high',
-      lastRun: new Date('2024-01-15T10:00:00Z'),
-      duration: 2100,
-      segmentId: 'segment-001',
-      expectedMetrics: { accuracy: 95, recall: 90, precision: 92 },
-      actualMetrics: { accuracy: 94, recall: 89, precision: 91 }
-    }
-  ];
-
-  // Mock comprehensive test results
-  const mockResults = {
-    totalTests: 156,
-    passed: 142,
-    failed: 8,
-    skipped: 6,
-    performance: {
-      avgResponseTime: 245,
-      p95ResponseTime: 450,
-      maxResponseTime: 680
-    },
-    relationships: {
-      validConstraints: 48,
-      invalidConstraints: 2,
-      cacheHitRate: 87,
-      validationDetails: [
-        'Foreign key constraint validation: 46/48 passed',
-        'Referential integrity check: Complete',
-        'Orphaned record detection: 2 issues found',
-        'Index optimization: 95% coverage'
+      id: 'database',
+      name: 'Database Operations',
+      description: 'Database connectivity and query tests',
+      tests: [
+        { id: 'db-1', name: 'Connection Test', status: 'passed', duration: 50 },
+        { id: 'db-2', name: 'Read Operations', status: 'passed', duration: 125 },
+        { id: 'db-3', name: 'Write Operations', status: 'passed', duration: 180 },
+        { id: 'db-4', name: 'Transaction Rollback', status: 'pending' }
       ]
     }
+  ]);
+
+  // Calculate overall statistics
+  const totalTests = testSuites.reduce((sum, suite) => sum + suite.tests.length, 0);
+  const passedTests = testSuites.reduce((sum, suite) => 
+    sum + suite.tests.filter(test => test.status === 'passed').length, 0);
+  const failedTests = testSuites.reduce((sum, suite) => 
+    sum + suite.tests.filter(test => test.status === 'failed').length, 0);
+  const runningTests = testSuites.reduce((sum, suite) => 
+    sum + suite.tests.filter(test => test.status === 'running').length, 0);
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'passed':
+        return <CheckCircle className="h-4 w-4 text-green-500" />;
+      case 'failed':
+        return <XCircle className="h-4 w-4 text-red-500" />;
+      case 'running':
+        return <Clock className="h-4 w-4 text-blue-500 animate-spin" />;
+      default:
+        return <AlertCircle className="h-4 w-4 text-gray-400" />;
+    }
   };
 
-  // Handler functions with correct signatures
-  const handleStatusChange = (id: string, status: TestScenario['status']) => {
-    console.log(`Test scenario ${id} status changed to ${status}`);
-    toast({
-      title: "Test Status Updated",
-      description: `Scenario ${id} is now ${status}`,
-    });
+  const getStatusBadge = (status: string) => {
+    const variants = {
+      passed: 'bg-green-100 text-green-800',
+      failed: 'bg-red-100 text-red-800',
+      running: 'bg-blue-100 text-blue-800',
+      pending: 'bg-gray-100 text-gray-800'
+    };
+    
+    return (
+      <Badge className={variants[status as keyof typeof variants] || variants.pending}>
+        {status}
+      </Badge>
+    );
   };
 
-  const handleRetry = async (id: string): Promise<void> => {
-    console.log(`Retrying test scenario ${id}`);
-    toast({
-      title: "Test Retry",
-      description: `Retrying scenario ${id}`,
-    });
+  const runAllTests = async () => {
+    setIsRunning(true);
+    setProgress(0);
+    
+    // Simulate test execution
+    const updatedSuites = [...testSuites];
+    let completedTests = 0;
+    
+    for (let suiteIndex = 0; suiteIndex < updatedSuites.length; suiteIndex++) {
+      const suite = updatedSuites[suiteIndex];
+      
+      for (let testIndex = 0; testIndex < suite.tests.length; testIndex++) {
+        const test = suite.tests[testIndex];
+        if (test.status === 'pending') {
+          setCurrentTest(`${suite.name}: ${test.name}`);
+          
+          // Set test to running
+          test.status = 'running';
+          setTestSuites([...updatedSuites]);
+          
+          // Simulate test execution time
+          await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
+          
+          // Randomly pass or fail the test (90% pass rate)
+          test.status = Math.random() > 0.1 ? 'passed' : 'failed';
+          test.duration = Math.floor(50 + Math.random() * 200);
+          
+          if (test.status === 'failed') {
+            test.error = 'Simulated test failure';
+          }
+          
+          completedTests++;
+          setProgress((completedTests / totalTests) * 100);
+          setTestSuites([...updatedSuites]);
+        }
+      }
+    }
+    
+    setIsRunning(false);
+    setCurrentTest('');
   };
 
-  const handleRun = async (id: string): Promise<void> => {
-    console.log(`Running test scenario ${id}`);
-    toast({
-      title: "Test Started",
-      description: `Running scenario ${id}`,
-    });
+  const retryFailedTests = async () => {
+    const updatedSuites = testSuites.map(suite => ({
+      ...suite,
+      tests: suite.tests.map(test => 
+        test.status === 'failed' ? { ...test, status: 'pending' as const, error: undefined } : test
+      )
+    }));
+    
+    setTestSuites(updatedSuites);
+    await runAllTests();
   };
 
-  const handleRunAllTests = () => {
-    toast({
-      title: "Running All Tests",
-      description: "Starting comprehensive test suite execution",
-    });
-  };
-
-  const handleExportReport = () => {
-    toast({
-      title: "Exporting Report",
-      description: "Test report is being generated",
-    });
+  const clearResults = () => {
+    const clearedSuites = testSuites.map(suite => ({
+      ...suite,
+      tests: suite.tests.map(test => ({
+        ...test,
+        status: 'pending' as const,
+        duration: undefined,
+        error: undefined
+      }))
+    }));
+    
+    setTestSuites(clearedSuites);
+    setProgress(0);
+    setCurrentTest('');
   };
 
   return (
@@ -150,120 +176,126 @@ const TestingDashboard = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Testing Dashboard</h1>
-          <p className="text-muted-foreground">
-            Comprehensive testing suite for Phase 9B system validation
-          </p>
+          <p className="text-gray-600 mt-2">Monitor and execute system tests</p>
         </div>
+        
         <div className="flex gap-2">
-          <Button onClick={handleRunAllTests} className="flex items-center gap-2">
+          <Button 
+            onClick={runAllTests} 
+            disabled={isRunning}
+            className="gap-2"
+          >
             <Play className="h-4 w-4" />
-            Run All Tests
+            {isRunning ? 'Running...' : 'Run All Tests'}
           </Button>
-          <Button onClick={handleExportReport} variant="outline" className="flex items-center gap-2">
-            <TestTube className="h-4 w-4" />
-            Export Report
+          
+          <Button 
+            onClick={retryFailedTests} 
+            disabled={isRunning || failedTests === 0}
+            variant="outline"
+            className="gap-2"
+          >
+            <RotateCcw className="h-4 w-4" />
+            Retry Failed
+          </Button>
+          
+          <Button 
+            onClick={clearResults} 
+            disabled={isRunning}
+            variant="outline"
+          >
+            Clear Results
           </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      {/* Overall Statistics */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-green-500" />
-              <div>
-                <p className="text-sm text-muted-foreground">Passed</p>
-                <p className="text-2xl font-bold">{mockResults.passed}</p>
-              </div>
-            </div>
+          <CardContent className="pt-6">
+            <div className="text-2xl font-bold">{totalTests}</div>
+            <p className="text-gray-600">Total Tests</p>
           </CardContent>
         </Card>
+        
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <XCircle className="h-5 w-5 text-red-500" />
-              <div>
-                <p className="text-sm text-muted-foreground">Failed</p>
-                <p className="text-2xl font-bold">{mockResults.failed}</p>
-              </div>
-            </div>
+          <CardContent className="pt-6">
+            <div className="text-2xl font-bold text-green-600">{passedTests}</div>
+            <p className="text-gray-600">Passed</p>
           </CardContent>
         </Card>
+        
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <AlertCircle className="h-5 w-5 text-yellow-500" />
-              <div>
-                <p className="text-sm text-muted-foreground">Skipped</p>
-                <p className="text-2xl font-bold">{mockResults.skipped}</p>
-              </div>
-            </div>
+          <CardContent className="pt-6">
+            <div className="text-2xl font-bold text-red-600">{failedTests}</div>
+            <p className="text-gray-600">Failed</p>
           </CardContent>
         </Card>
+        
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <Clock className="h-5 w-5 text-blue-500" />
-              <div>
-                <p className="text-sm text-muted-foreground">Avg Response</p>
-                <p className="text-2xl font-bold">{mockResults.performance.avgResponseTime}ms</p>
-              </div>
-            </div>
+          <CardContent className="pt-6">
+            <div className="text-2xl font-bold text-blue-600">{runningTests}</div>
+            <p className="text-gray-600">Running</p>
           </CardContent>
         </Card>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-6">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="scenarios">Scenarios</TabsTrigger>
-          <TabsTrigger value="performance">Performance</TabsTrigger>
-          <TabsTrigger value="audience">Audience</TabsTrigger>
-          <TabsTrigger value="reports">Reports</TabsTrigger>
-          <TabsTrigger value="controls">Controls</TabsTrigger>
-        </TabsList>
+      {/* Progress Section */}
+      {isRunning && (
+        <Card>
+          <CardContent className="pt-6">
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span>Test Progress</span>
+                <span>{Math.round(progress)}%</span>
+              </div>
+              <Progress value={progress} className="w-full" />
+              {currentTest && (
+                <p className="text-sm text-gray-600">Currently running: {currentTest}</p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
-        <TabsContent value="overview" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <TestResultsVisualization results={mockResults} />
-            <TestProgressMatrix />
-          </div>
-        </TabsContent>
-
-        <TabsContent value="scenarios" className="space-y-4">
-          <div className="space-y-4">
-            {mockTestScenarios.map((scenario) => (
-              <TestScenarioTracker
-                key={scenario.id}
-                scenario={scenario}
-                onStatusChange={handleStatusChange}
-                onRetry={handleRetry}
-                onRun={handleRun}
-              />
-            ))}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="performance" className="space-y-4">
-          <PerformanceTestRunner />
-        </TabsContent>
-
-        <TabsContent value="audience" className="space-y-4">
-          <div className="space-y-4">
-            <AudienceAnalyticsTestSuite scenarios={mockAudienceScenarios} />
-            <SegmentationTestValidator />
-          </div>
-        </TabsContent>
-
-        <TabsContent value="reports" className="space-y-4">
-          <TestReportSection results={mockResults} />
-        </TabsContent>
-
-        <TabsContent value="controls" className="space-y-4">
-          <TestControls />
-          <TestSuite />
-        </TabsContent>
-      </Tabs>
+      {/* Test Suites */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+        {testSuites.map((suite) => (
+          <Card key={suite.id}>
+            <CardHeader>
+              <CardTitle className="text-lg">{suite.name}</CardTitle>
+              <CardDescription>{suite.description}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {suite.tests.map((test) => (
+                  <div key={test.id} className="flex items-center justify-between p-2 rounded-lg border">
+                    <div className="flex items-center gap-2">
+                      {getStatusIcon(test.status)}
+                      <span className="text-sm font-medium">{test.name}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {test.duration && (
+                        <span className="text-xs text-gray-500">{test.duration}ms</span>
+                      )}
+                      {getStatusBadge(test.status)}
+                    </div>
+                  </div>
+                ))}
+                
+                {/* Suite Summary */}
+                <div className="pt-2 border-t">
+                  <div className="flex justify-between text-sm">
+                    <span>Passed: {suite.tests.filter(t => t.status === 'passed').length}</span>
+                    <span>Failed: {suite.tests.filter(t => t.status === 'failed').length}</span>
+                    <span>Pending: {suite.tests.filter(t => t.status === 'pending').length}</span>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 };
