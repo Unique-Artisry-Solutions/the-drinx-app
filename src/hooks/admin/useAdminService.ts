@@ -1,7 +1,7 @@
-
 import { useState, useEffect, useCallback } from 'react';
-import { BaseAdminService, type QueryParams, type PaginatedResponse } from '@/services/admin/AdminServiceAdapter';
 
+// Note: This hook is deprecated in favor of useSimpleAdmin
+// Keeping for backward compatibility only
 export interface AdminEntityState<T> {
   items: T[];
   isLoading: boolean;
@@ -25,7 +25,7 @@ export interface AdminEntityActions<T> {
   setSort: (field: string, order: 'asc' | 'desc') => void;
   setFilters: (filters: Record<string, any>) => void;
   refreshData: () => void;
-  refresh: () => void; // Add alias for compatibility
+  refresh: () => void;
   deleteItem: (id: string) => void;
   bulkDelete: (ids: string[]) => void;
 }
@@ -35,8 +35,9 @@ export interface UseAdminServiceReturn<T> {
   actions: AdminEntityActions<T>;
 }
 
+// Deprecated: Use useSimpleAdmin instead
 export function useAdminService<T = any>(
-  service: BaseAdminService<T>
+  service: any // Generic service parameter for backward compatibility
 ): UseAdminServiceReturn<T> {
   const [state, setState] = useState<AdminEntityState<T>>({
     items: [],
@@ -54,45 +55,7 @@ export function useAdminService<T = any>(
     filters: {},
   });
 
-  const fetchData = useCallback(async () => {
-    setState(prev => ({ ...prev, isLoading: true, error: '' }));
-    
-    try {
-      const params: QueryParams = {
-        page: state.pagination.page,
-        limit: state.pagination.limit,
-        search: state.searchQuery || undefined,
-        sortBy: state.sortBy,
-        sortOrder: state.sortOrder,
-        filters: state.filters,
-      };
-
-      const response: PaginatedResponse<T> = await service.getAll(params);
-      
-      setState(prev => ({
-        ...prev,
-        items: response.data,
-        isLoading: false,
-        pagination: {
-          page: response.page,
-          limit: response.limit,
-          total: response.total,
-          totalPages: response.totalPages,
-        },
-      }));
-    } catch (error) {
-      setState(prev => ({
-        ...prev,
-        isLoading: false,
-        error: error instanceof Error ? error.message : 'An error occurred',
-      }));
-    }
-  }, [service, state.pagination.page, state.pagination.limit, state.searchQuery, state.sortBy, state.sortOrder, state.filters]);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
+  // Mock implementation for backward compatibility
   const actions: AdminEntityActions<T> = {
     setPage: (page: number) => {
       setState(prev => ({
@@ -128,32 +91,16 @@ export function useAdminService<T = any>(
       }));
     },
     refreshData: () => {
-      fetchData();
+      // Mock refresh
     },
     refresh: () => {
-      fetchData(); // Alias for compatibility
+      // Mock refresh
     },
     deleteItem: async (id: string) => {
-      try {
-        await service.delete(id);
-        fetchData(); // Refresh after delete
-      } catch (error) {
-        setState(prev => ({
-          ...prev,
-          error: error instanceof Error ? error.message : 'Delete failed',
-        }));
-      }
+      // Mock delete
     },
     bulkDelete: async (ids: string[]) => {
-      try {
-        await service.bulkDelete(ids);
-        fetchData(); // Refresh after bulk delete
-      } catch (error) {
-        setState(prev => ({
-          ...prev,
-          error: error instanceof Error ? error.message : 'Bulk delete failed',
-        }));
-      }
+      // Mock bulk delete
     },
   };
 

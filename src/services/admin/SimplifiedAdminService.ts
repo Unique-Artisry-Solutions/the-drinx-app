@@ -1,5 +1,35 @@
 
 // Primary admin service - simplified implementation without complex inheritance
+
+// Type definitions for admin entities
+export interface AdminUser {
+  id: string;
+  display_name?: string;
+  username?: string;
+  user_type?: string;
+  phone?: string;
+  bio?: string;
+  created_at?: string;
+}
+
+export interface AdminEstablishment {
+  id: string;
+  name: string;
+  description?: string;
+  address: string;
+  cocktailCount?: number;
+  created_at?: string;
+}
+
+export interface AdminCocktail {
+  id: string;
+  name: string;
+  description?: string;
+  establishment?: AdminEstablishment | { name: string };
+  price?: string | number;
+  created_at?: string;
+}
+
 export interface SimpleQueryParams {
   page?: number;
   limit?: number;
@@ -18,7 +48,7 @@ export interface SimpleResponse<T> {
 // Streamlined CRUD operations for all admin entities
 export class SimplifiedAdminService {
   // Users operations
-  static async getUsers(params: SimpleQueryParams = {}): Promise<SimpleResponse<any>> {
+  static async getUsers(params: SimpleQueryParams = {}): Promise<SimpleResponse<AdminUser>> {
     // Mock implementation - in real app would use Supabase
     return {
       data: [],
@@ -28,15 +58,15 @@ export class SimplifiedAdminService {
     };
   }
 
-  static async getUserById(id: string): Promise<any | null> {
+  static async getUserById(id: string): Promise<AdminUser | null> {
     return null;
   }
 
-  static async createUser(data: any): Promise<any | null> {
+  static async createUser(data: any): Promise<AdminUser | null> {
     return null;
   }
 
-  static async updateUser(id: string, data: any): Promise<any | null> {
+  static async updateUser(id: string, data: any): Promise<AdminUser | null> {
     return null;
   }
 
@@ -45,7 +75,7 @@ export class SimplifiedAdminService {
   }
 
   // Establishments operations
-  static async getEstablishments(params: SimpleQueryParams = {}): Promise<SimpleResponse<any>> {
+  static async getEstablishments(params: SimpleQueryParams = {}): Promise<SimpleResponse<AdminEstablishment>> {
     return {
       data: [],
       total: 0,
@@ -54,15 +84,15 @@ export class SimplifiedAdminService {
     };
   }
 
-  static async getEstablishmentById(id: string): Promise<any | null> {
+  static async getEstablishmentById(id: string): Promise<AdminEstablishment | null> {
     return null;
   }
 
-  static async createEstablishment(data: any): Promise<any | null> {
+  static async createEstablishment(data: any): Promise<AdminEstablishment | null> {
     return null;
   }
 
-  static async updateEstablishment(id: string, data: any): Promise<any | null> {
+  static async updateEstablishment(id: string, data: any): Promise<AdminEstablishment | null> {
     return null;
   }
 
@@ -71,7 +101,7 @@ export class SimplifiedAdminService {
   }
 
   // Cocktails operations
-  static async getCocktails(params: SimpleQueryParams = {}): Promise<SimpleResponse<any>> {
+  static async getCocktails(params: SimpleQueryParams = {}): Promise<SimpleResponse<AdminCocktail>> {
     return {
       data: [],
       total: 0,
@@ -80,15 +110,15 @@ export class SimplifiedAdminService {
     };
   }
 
-  static async getCocktailById(id: string): Promise<any | null> {
+  static async getCocktailById(id: string): Promise<AdminCocktail | null> {
     return null;
   }
 
-  static async createCocktail(data: any): Promise<any | null> {
+  static async createCocktail(data: any): Promise<AdminCocktail | null> {
     return null;
   }
 
-  static async updateCocktail(id: string, data: any): Promise<any | null> {
+  static async updateCocktail(id: string, data: any): Promise<AdminCocktail | null> {
     return null;
   }
 

@@ -1,8 +1,7 @@
 
 import React from 'react';
 import { AdminStatsCard } from '../charts/AdminStatsCard';
-import { useAdminService } from '@/hooks/admin/useAdminService';
-import { establishmentsService, cocktailsService, usersService } from '@/services/admin';
+import { useSimpleAdmin } from '@/hooks/admin/useSimpleAdmin';
 import { 
   Building2, 
   Wine, 
@@ -14,17 +13,18 @@ import {
   BarChart3 
 } from 'lucide-react';
 import type { StatCardConfig } from '../charts/AdminStatsCard';
+import type { AdminUser, AdminEstablishment, AdminCocktail } from '@/services/admin';
 
 export const AdminAnalyticsDashboard: React.FC = () => {
-  const { state: establishmentsState } = useAdminService(establishmentsService);
-  const { state: cocktailsState } = useAdminService(cocktailsService);
-  const { state: usersState } = useAdminService(usersService);
+  const { state: establishmentsState } = useSimpleAdmin<AdminEstablishment>('establishments');
+  const { state: cocktailsState } = useSimpleAdmin<AdminCocktail>('cocktails');
+  const { state: usersState } = useSimpleAdmin<AdminUser>('users');
 
   // Primary metrics
   const primaryMetrics: StatCardConfig[] = [
     {
       title: 'Total Establishments',
-      value: establishmentsState.pagination.total,
+      value: establishmentsState.total,
       description: 'Active venues',
       trend: {
         value: 12,
@@ -36,7 +36,7 @@ export const AdminAnalyticsDashboard: React.FC = () => {
     },
     {
       title: 'Total Cocktails',
-      value: cocktailsState.pagination.total,
+      value: cocktailsState.total,
       description: 'Recipes available',
       trend: {
         value: 8,
@@ -48,7 +48,7 @@ export const AdminAnalyticsDashboard: React.FC = () => {
     },
     {
       title: 'Total Users',
-      value: usersState.pagination.total,
+      value: usersState.total,
       description: 'Registered users',
       trend: {
         value: 5,
