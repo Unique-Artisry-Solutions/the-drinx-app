@@ -1,21 +1,10 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
-import { 
-  TestTube, 
-  Users, 
-  BarChart3, 
-  Activity, 
-  CheckCircle, 
-  AlertCircle, 
-  Clock,
-  PlayCircle,
-  PauseCircle
-} from 'lucide-react';
+import { CheckCircle, XCircle, Clock, AlertTriangle, Play, Pause, RotateCcw } from 'lucide-react';
 import {
   TestControls,
   TestReportSection,
@@ -25,261 +14,278 @@ import {
   TestProgressMatrix,
   AudienceAnalyticsTestSuite,
   PerformanceTestRunner,
-  SegmentationTestValidator,
-  type TestScenario
+  SegmentationTestValidator
 } from '@/components/admin/testing';
+import type { TestScenario } from '@/components/admin/testing';
 
 const TestingDashboard: React.FC = () => {
-  const [isRunning, setIsRunning] = useState(false);
-  const [activeTests, setActiveTests] = useState<string[]>([]);
+  const [activeTest, setActiveTest] = useState<string | null>(null);
+  const [testProgress, setTestProgress] = useState(0);
 
-  // Mock test scenarios for TestProgressMatrix
+  // Mock test scenarios data with correct interface structure
   const mockTestScenarios: TestScenario[] = [
     {
-      id: 'audience-segmentation',
-      name: 'Audience Segmentation Tests',
+      id: 'test-1',
+      name: 'User Authentication Flow',
+      description: 'Tests the complete user authentication process',
       status: 'passed',
-      progress: 100,
-      description: 'Testing audience segmentation functionality',
-      category: 'audience',
-      lastRun: new Date().toISOString(),
-      duration: 2500
+      category: 'authentication',
+      priority: 'high',
+      estimatedDuration: 120,
+      actualDuration: 98,
+      lastRun: new Date('2024-01-15T10:30:00Z'),
+      retryCount: 0,
+      maxRetries: 3,
+      requirements: ['Valid user credentials', 'Database connectivity'],
+      expectedResults: ['Successful login', 'Session creation', 'Redirect to dashboard'],
+      environment: 'staging'
     },
     {
-      id: 'performance-load',
-      name: 'Performance Load Tests',
-      status: 'running',
-      progress: 65,
-      description: 'Load testing system performance',
-      category: 'performance',
-      lastRun: new Date().toISOString(),
-      duration: 5000
-    },
-    {
-      id: 'analytics-validation',
-      name: 'Analytics Validation Tests',
+      id: 'test-2',
+      name: 'Database Connectivity',
+      description: 'Validates database connection and query performance',
       status: 'failed',
-      progress: 30,
-      description: 'Validating analytics data accuracy',
-      category: 'analytics',
-      lastRun: new Date().toISOString(),
-      duration: 1800,
-      error: 'Data validation failed for segment overlap metrics'
+      category: 'database',
+      priority: 'critical',
+      estimatedDuration: 60,
+      actualDuration: 45,
+      lastRun: new Date('2024-01-15T11:15:00Z'),
+      retryCount: 2,
+      maxRetries: 3,
+      requirements: ['Database server availability', 'Network connectivity'],
+      expectedResults: ['Connection established', 'Query response < 500ms'],
+      environment: 'production'
     },
     {
-      id: 'relationship-mapping',
-      name: 'Relationship Mapping Tests',
-      status: 'pending',
-      progress: 0,
-      description: 'Testing audience relationship mapping',
-      category: 'audience',
-      lastRun: null,
-      duration: 0
+      id: 'test-3',
+      name: 'API Endpoint Validation',
+      description: 'Tests all critical API endpoints for proper responses',
+      status: 'running',
+      category: 'api',
+      priority: 'medium',
+      estimatedDuration: 180,
+      lastRun: new Date('2024-01-15T12:00:00Z'),
+      retryCount: 0,
+      maxRetries: 2,
+      requirements: ['API server running', 'Valid authentication tokens'],
+      expectedResults: ['All endpoints return 200', 'Response time < 1s'],
+      environment: 'staging'
     }
   ];
 
-  const testSuites = [
-    {
-      id: 'core-functionality',
-      name: 'Core Functionality',
-      description: 'Basic system functionality tests',
-      testsCount: 12,
-      status: 'passed' as const,
-      icon: TestTube
+  // Mock results data for TestResultsVisualization
+  const mockTestResults = {
+    performance: {
+      avgResponseTime: 245,
+      p95ResponseTime: 480,
+      maxResponseTime: 850
     },
-    {
-      id: 'audience-analytics',
-      name: 'Audience Analytics',
-      description: 'Audience segmentation and analytics tests',
-      testsCount: 8,
-      status: 'running' as const,
-      icon: Users
-    },
-    {
-      id: 'performance',
-      name: 'Performance',
-      description: 'Load and performance testing',
-      testsCount: 6,
-      status: 'failed' as const,
-      icon: BarChart3
-    },
-    {
-      id: 'integration',
-      name: 'Integration',
-      description: 'Third-party integration tests',
-      testsCount: 4,
-      status: 'pending' as const,
-      icon: Activity
-    }
-  ];
-
-  const handleRunAllTests = () => {
-    setIsRunning(true);
-    // Simulate test execution
-    setTimeout(() => {
-      setIsRunning(false);
-    }, 3000);
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'passed':
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case 'failed':
-        return <AlertCircle className="h-4 w-4 text-red-500" />;
-      case 'running':
-        return <Activity className="h-4 w-4 text-blue-500 animate-spin" />;
-      default:
-        return <Clock className="h-4 w-4 text-gray-400" />;
+    relationships: {
+      validConstraints: 28,
+      totalConstraints: 32,
+      cacheHitRate: 87
     }
   };
 
-  const getStatusBadgeVariant = (status: string) => {
-    switch (status) {
-      case 'passed':
-        return 'secondary' as const;
-      case 'failed':
-        return 'destructive' as const;
-      case 'running':
-        return 'default' as const;
-      default:
-        return 'outline' as const;
+  // Mock results data for TestReportSection
+  const mockReportResults = {
+    totalTests: 45,
+    passed: 38,
+    failed: 5,
+    skipped: 2,
+    performance: {
+      avgResponseTime: 245,
+      p95ResponseTime: 480,
+      maxResponseTime: 850
+    },
+    relationships: {
+      validConstraints: 28,
+      invalidConstraints: 4,
+      cacheHitRate: 87,
+      validationDetails: [
+        'Foreign key constraints validated successfully',
+        'Index optimization recommendations available',
+        'Cache performance within acceptable range'
+      ]
     }
   };
+
+  // Handler functions for test scenario interactions
+  const handleStatusChange = (scenarioId: string, newStatus: 'pending' | 'running' | 'passed' | 'failed') => {
+    console.log(`Test scenario ${scenarioId} status changed to ${newStatus}`);
+  };
+
+  const handleRetry = (scenarioId: string) => {
+    console.log(`Retrying test scenario ${scenarioId}`);
+    setActiveTest(scenarioId);
+  };
+
+  const handleRun = (scenarioId: string) => {
+    console.log(`Running test scenario ${scenarioId}`);
+    setActiveTest(scenarioId);
+  };
+
+  const testStats = {
+    total: 45,
+    passed: 38,
+    failed: 5,
+    running: 2,
+    pending: 0
+  };
+
+  const successRate = Math.round((testStats.passed / testStats.total) * 100);
 
   return (
-    <div className="container mx-auto px-4 py-8 space-y-6">
-      {/* Header */}
+    <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Testing Dashboard</h1>
-          <p className="text-muted-foreground">
-            Comprehensive testing suite for Phase 9B features
+          <h1 className="text-3xl font-bold">Phase 9B Testing Dashboard</h1>
+          <p className="text-muted-foreground mt-2">
+            Comprehensive testing suite for all system components and integrations
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button
-            onClick={handleRunAllTests}
-            disabled={isRunning}
-            className="flex items-center gap-2"
-          >
-            {isRunning ? (
-              <>
-                <PauseCircle className="h-4 w-4" />
-                Running Tests...
-              </>
-            ) : (
-              <>
-                <PlayCircle className="h-4 w-4" />
-                Run All Tests
-              </>
-            )}
+        <div className="flex items-center gap-4">
+          <Badge variant="secondary" className="bg-green-100 text-green-800">
+            System Operational
+          </Badge>
+          <Button variant="outline">
+            <RotateCcw className="h-4 w-4 mr-2" />
+            Run All Tests
           </Button>
         </div>
       </div>
 
       {/* Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {testSuites.map((suite) => {
-          const Icon = suite.icon;
-          return (
-            <Card key={suite.id} className="relative">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  {suite.name}
-                </CardTitle>
-                <Icon className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between">
-                  <div className="text-2xl font-bold">{suite.testsCount}</div>
-                  <div className="flex items-center gap-1">
-                    {getStatusIcon(suite.status)}
-                    <Badge 
-                      variant={getStatusBadgeVariant(suite.status)}
-                      className={suite.status === 'passed' ? 'bg-green-100 text-green-800' : ''}
-                    >
-                      {suite.status}
-                    </Badge>
-                  </div>
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {suite.description}
-                </p>
-              </CardContent>
-            </Card>
-          );
-        })}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Tests</CardTitle>
+            <CheckCircle className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{testStats.total}</div>
+            <p className="text-xs text-muted-foreground">
+              Across all modules
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Success Rate</CardTitle>
+            <CheckCircle className="h-4 w-4 text-green-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">{successRate}%</div>
+            <p className="text-xs text-muted-foreground">
+              {testStats.passed} passed tests
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Active Tests</CardTitle>
+            <Clock className="h-4 w-4 text-blue-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-600">{testStats.running}</div>
+            <p className="text-xs text-muted-foreground">
+              Currently running
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Failed Tests</CardTitle>
+            <XCircle className="h-4 w-4 text-red-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-red-600">{testStats.failed}</div>
+            <p className="text-xs text-muted-foreground">
+              Need attention
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Main Testing Interface */}
       <Tabs defaultValue="overview" className="space-y-4">
         <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="scenarios">Scenarios</TabsTrigger>
-          <TabsTrigger value="progress">Progress</TabsTrigger>
-          <TabsTrigger value="audience">Audience</TabsTrigger>
+          <TabsTrigger value="scenarios">Test Scenarios</TabsTrigger>
+          <TabsTrigger value="audience">Audience Tests</TabsTrigger>
           <TabsTrigger value="performance">Performance</TabsTrigger>
+          <TabsTrigger value="validation">Validation</TabsTrigger>
           <TabsTrigger value="reports">Reports</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <TestControls />
-            <TestResultsVisualization />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Test Progress Matrix</CardTitle>
+                <CardDescription>
+                  Visual overview of all test scenarios and their current status
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <TestProgressMatrix scenarios={mockTestScenarios} />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Test Scenario Tracker</CardTitle>
+                <CardDescription>
+                  Real-time tracking of individual test execution
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <TestScenarioTracker
+                  scenario={mockTestScenarios[0]}
+                  onStatusChange={handleStatusChange}
+                  onRetry={handleRetry}
+                  onRun={handleRun}
+                />
+              </CardContent>
+            </Card>
           </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Test Results Visualization</CardTitle>
+              <CardDescription>
+                Performance metrics and relationship validation results
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <TestResultsVisualization results={mockTestResults} />
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="scenarios" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <TestScenarioTracker />
-            <TestSuite />
-          </div>
-        </TabsContent>
-
-        <TabsContent value="progress" className="space-y-4">
-          <TestProgressMatrix scenarios={mockTestScenarios} />
+          <TestSuite />
         </TabsContent>
 
         <TabsContent value="audience" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <AudienceAnalyticsTestSuite />
-            <SegmentationTestValidator />
-          </div>
+          <AudienceAnalyticsTestSuite />
         </TabsContent>
 
         <TabsContent value="performance" className="space-y-4">
           <PerformanceTestRunner />
         </TabsContent>
 
+        <TabsContent value="validation" className="space-y-4">
+          <SegmentationTestValidator />
+        </TabsContent>
+
         <TabsContent value="reports" className="space-y-4">
-          <TestReportSection />
+          <TestReportSection results={mockReportResults} />
         </TabsContent>
       </Tabs>
-
-      {/* Real-time Test Status */}
-      {isRunning && (
-        <Card className="border-blue-200 bg-blue-50">
-          <CardHeader>
-            <CardTitle className="text-blue-800 flex items-center gap-2">
-              <Activity className="h-5 w-5 animate-spin" />
-              Test Execution in Progress
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>Overall Progress</span>
-                <span>67%</span>
-              </div>
-              <Progress value={67} className="h-2" />
-              <p className="text-xs text-blue-600">
-                Running audience analytics test suite... (2 of 4 suites completed)
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 };
