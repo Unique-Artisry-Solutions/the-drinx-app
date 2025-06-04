@@ -3,25 +3,7 @@ import { useCallback } from 'react';
 import { trackEvent, AnalyticsEvent } from '@/utils/analytics';
 import { useToast } from '@/hooks/use-toast';
 
-interface AnalyticsHook {
-  // Basic tracking
-  track: (eventType: string, eventData?: Record<string, any>) => Promise<boolean>;
-  trackWithFeedback: (eventType: string, eventData?: Record<string, any>, showSuccess?: boolean) => Promise<boolean>;
-  
-  // Specific event types
-  trackPage: (pageName: string) => Promise<boolean>;
-  trackAction: (action: string, details?: Record<string, any>) => Promise<boolean>;
-  trackError: (errorType: string, errorDetails: Record<string, any>) => Promise<boolean>;
-  trackServiceFee: (feeAmount: number, percentage: number, transactionTotal: number) => Promise<boolean>;
-  
-  // Content analytics
-  trackContent: (contentType: string, contentId: string, action: string) => Promise<boolean>;
-  
-  // Reward analytics
-  trackReward: (eventType: string, userId: string, eventData?: Record<string, any>) => Promise<boolean>;
-}
-
-export function useAnalytics(): AnalyticsHook {
+export function useAnalytics() {
   const { toast } = useToast();
   
   const track = useCallback(async (eventType: string, eventData?: Record<string, any>) => {
@@ -79,27 +61,13 @@ export function useAnalytics(): AnalyticsHook {
     return track('error', { error_type: errorType, ...errorDetails });
   }, [track]);
   
+  // Add service fee tracking
   const trackServiceFee = useCallback((feeAmount: number, percentage: number, transactionTotal: number) => {
     return track('service_fee_collected', { 
       fee_amount: feeAmount,
       fee_percentage: percentage,
       transaction_total: transactionTotal,
       timestamp: new Date().toISOString()
-    });
-  }, [track]);
-
-  const trackContent = useCallback((contentType: string, contentId: string, action: string) => {
-    return track('content_interaction', {
-      content_type: contentType,
-      content_id: contentId,
-      action
-    });
-  }, [track]);
-
-  const trackReward = useCallback((eventType: string, userId: string, eventData?: Record<string, any>) => {
-    return track(eventType, {
-      user_id: userId,
-      ...eventData
     });
   }, [track]);
   
@@ -109,8 +77,6 @@ export function useAnalytics(): AnalyticsHook {
     trackPage,
     trackAction,
     trackError,
-    trackServiceFee,
-    trackContent,
-    trackReward
+    trackServiceFee
   };
 }
