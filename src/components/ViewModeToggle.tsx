@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Map, List } from 'lucide-react';
@@ -9,7 +8,7 @@ export interface ViewModeToggleProps {
   onViewModeChange: (mode: ViewMode) => void;
 }
 
-const ViewModeToggle: React.FC<ViewModeToggleProps> = ({ viewMode, onViewModeChange }) => {
+export const ViewModeToggle: React.FC<ViewModeToggleProps> = ({ viewMode, onViewModeChange }) => {
   return (
     <div className="flex gap-2">
       <Button 
@@ -32,4 +31,5 @@ const ViewModeToggle: React.FC<ViewModeToggleProps> = ({ viewMode, onViewModeCha
   );
 };
 
+// Keep default export for backward compatibility during transition
 export default ViewModeToggle;

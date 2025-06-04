@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -12,7 +11,7 @@ interface CommentFormProps {
   isLoading?: boolean;
 }
 
-const CommentForm: React.FC<CommentFormProps> = ({ onSubmit, isLoading = false }) => {
+export const CommentForm: React.FC<CommentFormProps> = ({ onSubmit, isLoading = false }) => {
   const [rating, setRating] = useState(0);
   const { toast } = useToast();
   
@@ -71,4 +70,5 @@ const CommentForm: React.FC<CommentFormProps> = ({ onSubmit, isLoading = false }
   );
 };
 
+// Keep default export for backward compatibility during transition
 export default CommentForm;

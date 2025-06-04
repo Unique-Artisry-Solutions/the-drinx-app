@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Star } from 'lucide-react';
 
@@ -54,3 +53,6 @@ export const StarRating: React.FC<StarRatingProps> = ({
     </div>
   );
 };
+
+// Keep default export for backward compatibility during transition
+export default StarRating;

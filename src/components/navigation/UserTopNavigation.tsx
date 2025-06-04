@@ -1,6 +1,5 @@
-
 import React from 'react';
-import UserNavbar from './user/UserNavbar';
+import { UserNavbar } from './user/UserNavbar';
 
 interface TabOption {
   value: string;
@@ -13,7 +12,7 @@ interface UserTopNavigationProps {
   tabOptions?: TabOption[];
 }
 
-const UserTopNavigation: React.FC<UserTopNavigationProps> = ({
+export const UserTopNavigation: React.FC<UserTopNavigationProps> = ({
   activeTab,
   handleTabChange,
   tabOptions
@@ -21,4 +20,5 @@ const UserTopNavigation: React.FC<UserTopNavigationProps> = ({
   return <UserNavbar activeTab={activeTab} handleTabChange={handleTabChange} tabOptions={tabOptions} />;
 };
 
+// Keep default export for backward compatibility during transition
 export default UserTopNavigation;

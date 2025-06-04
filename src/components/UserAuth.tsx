@@ -1,15 +1,14 @@
-
 import React from 'react';
 import { Card } from '@/components/ui/card';
-import UserAuthHeader from './auth/UserAuthHeader';
-import UserAuthTabs from './auth/UserAuthTabs';
+import { UserAuthHeader } from './auth/UserAuthHeader';
+import { UserAuthTabs } from './auth/UserAuthTabs';
 import { UserAuthProps } from './auth/types';
 import { BaseComponentProps } from '@/components/shared/types';
 
 // Extend with standard props
 interface StandardUserAuthProps extends UserAuthProps, BaseComponentProps {}
 
-const UserAuth: React.FC<StandardUserAuthProps> = ({ 
+export const UserAuth: React.FC<StandardUserAuthProps> = ({ 
   onSuccess,
   onClose,
   defaultTab = 'login',
@@ -33,4 +32,5 @@ const UserAuth: React.FC<StandardUserAuthProps> = ({
   );
 };
 
+// Keep default export for backward compatibility during transition
 export default UserAuth;

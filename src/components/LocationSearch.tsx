@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Search, MapPin, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -8,7 +7,7 @@ interface LocationSearchProps {
   onSearch: (query: string) => void;
 }
 
-const LocationSearch: React.FC<LocationSearchProps> = ({ onSearch }) => {
+export const LocationSearch: React.FC<LocationSearchProps> = ({ onSearch }) => {
   const [searchQuery, setSearchQuery] = useState('');
 
   const handleSearch = (e: React.FormEvent) => {
@@ -54,4 +53,5 @@ const LocationSearch: React.FC<LocationSearchProps> = ({ onSearch }) => {
   );
 };
 
+// Keep default export for backward compatibility during transition
 export default LocationSearch;
