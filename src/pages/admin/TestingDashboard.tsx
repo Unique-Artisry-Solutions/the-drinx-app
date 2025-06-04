@@ -1,13 +1,14 @@
+
 import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Progress } from '@/components/ui/progress';
-import { CheckCircle, XCircle, Clock, AlertTriangle, Play, Pause, RotateCcw } from 'lucide-react';
-import {
-  TestControls,
-  TestReportSection,
+import { TestTube, Play, RotateCcw, Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { 
+  TestControls, 
+  TestReportSection, 
   TestResultsVisualization,
   TestScenarioTracker,
   TestSuite,
@@ -16,274 +17,251 @@ import {
   PerformanceTestRunner,
   SegmentationTestValidator
 } from '@/components/admin/testing';
-import type { TestScenario } from '@/components/admin/testing';
+import type { TestScenario, AudienceTestScenario } from '@/components/admin/testing';
 
-const TestingDashboard: React.FC = () => {
-  const [activeTest, setActiveTest] = useState<string | null>(null);
-  const [testProgress, setTestProgress] = useState(0);
+const TestingDashboard = () => {
+  const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState('overview');
 
-  // Mock test scenarios data with correct interface structure
+  // Mock test scenarios with correct interface compliance
   const mockTestScenarios: TestScenario[] = [
     {
-      id: 'test-1',
+      id: 'scenario-1',
       name: 'User Authentication Flow',
-      description: 'Tests the complete user authentication process',
-      status: 'passed',
-      category: 'authentication',
+      description: 'Test complete user login and signup process',
+      status: 'completed',
       priority: 'high',
-      estimatedDuration: 120,
-      actualDuration: 98,
       lastRun: new Date('2024-01-15T10:30:00Z'),
+      duration: 1250,
       retryCount: 0,
       maxRetries: 3,
-      requirements: ['Valid user credentials', 'Database connectivity'],
-      expectedResults: ['Successful login', 'Session creation', 'Redirect to dashboard'],
-      environment: 'staging'
+      requirements: ['Valid user credentials', 'Database connectivity', 'Email service'],
+      expectedResults: ['Successful login', 'User session created', 'Dashboard redirect']
     },
     {
-      id: 'test-2',
-      name: 'Database Connectivity',
-      description: 'Validates database connection and query performance',
+      id: 'scenario-2',
+      name: 'API Performance Testing',
+      description: 'Load testing for core API endpoints',
+      status: 'running',
+      priority: 'medium',
+      lastRun: new Date('2024-01-15T11:00:00Z'),
+      duration: 3200,
+      retryCount: 1,
+      maxRetries: 3,
+      requirements: ['API endpoints available', 'Load testing tools', 'Performance baseline'],
+      expectedResults: ['Response time < 500ms', 'No memory leaks', 'Error rate < 1%']
+    },
+    {
+      id: 'scenario-3',
+      name: 'Database Relationship Validation',
+      description: 'Verify all foreign key constraints and data integrity',
       status: 'failed',
-      category: 'database',
-      priority: 'critical',
-      estimatedDuration: 60,
-      actualDuration: 45,
-      lastRun: new Date('2024-01-15T11:15:00Z'),
+      priority: 'high',
+      lastRun: new Date('2024-01-15T09:45:00Z'),
+      duration: 890,
       retryCount: 2,
       maxRetries: 3,
-      requirements: ['Database server availability', 'Network connectivity'],
-      expectedResults: ['Connection established', 'Query response < 500ms'],
-      environment: 'production'
-    },
-    {
-      id: 'test-3',
-      name: 'API Endpoint Validation',
-      description: 'Tests all critical API endpoints for proper responses',
-      status: 'running',
-      category: 'api',
-      priority: 'medium',
-      estimatedDuration: 180,
-      lastRun: new Date('2024-01-15T12:00:00Z'),
-      retryCount: 0,
-      maxRetries: 2,
-      requirements: ['API server running', 'Valid authentication tokens'],
-      expectedResults: ['All endpoints return 200', 'Response time < 1s'],
-      environment: 'staging'
+      requirements: ['Database access', 'Test data set', 'Constraint validation'],
+      expectedResults: ['All constraints valid', 'No orphaned records', 'Referential integrity maintained']
     }
   ];
 
-  // Mock results data for TestResultsVisualization
-  const mockTestResults = {
-    performance: {
-      avgResponseTime: 245,
-      p95ResponseTime: 480,
-      maxResponseTime: 850
-    },
-    relationships: {
-      validConstraints: 28,
-      totalConstraints: 32,
-      cacheHitRate: 87
+  // Mock audience test scenarios
+  const mockAudienceScenarios: AudienceTestScenario[] = [
+    {
+      id: 'audience-1',
+      name: 'Segment Performance Analysis',
+      description: 'Test audience segmentation accuracy',
+      status: 'completed',
+      priority: 'high',
+      lastRun: new Date('2024-01-15T10:00:00Z'),
+      duration: 2100,
+      segmentId: 'segment-001',
+      expectedMetrics: { accuracy: 95, recall: 90, precision: 92 },
+      actualMetrics: { accuracy: 94, recall: 89, precision: 91 }
     }
-  };
+  ];
 
-  // Mock results data for TestReportSection
-  const mockReportResults = {
-    totalTests: 45,
-    passed: 38,
-    failed: 5,
-    skipped: 2,
+  // Mock comprehensive test results
+  const mockResults = {
+    totalTests: 156,
+    passed: 142,
+    failed: 8,
+    skipped: 6,
     performance: {
       avgResponseTime: 245,
-      p95ResponseTime: 480,
-      maxResponseTime: 850
+      p95ResponseTime: 450,
+      maxResponseTime: 680
     },
     relationships: {
-      validConstraints: 28,
-      invalidConstraints: 4,
+      validConstraints: 48,
+      invalidConstraints: 2,
       cacheHitRate: 87,
       validationDetails: [
-        'Foreign key constraints validated successfully',
-        'Index optimization recommendations available',
-        'Cache performance within acceptable range'
+        'Foreign key constraint validation: 46/48 passed',
+        'Referential integrity check: Complete',
+        'Orphaned record detection: 2 issues found',
+        'Index optimization: 95% coverage'
       ]
     }
   };
 
-  // Handler functions for test scenario interactions
-  const handleStatusChange = (scenarioId: string, newStatus: 'pending' | 'running' | 'passed' | 'failed') => {
-    console.log(`Test scenario ${scenarioId} status changed to ${newStatus}`);
+  // Handler functions with correct signatures
+  const handleStatusChange = (id: string, status: TestScenario['status']) => {
+    console.log(`Test scenario ${id} status changed to ${status}`);
+    toast({
+      title: "Test Status Updated",
+      description: `Scenario ${id} is now ${status}`,
+    });
   };
 
-  const handleRetry = (scenarioId: string) => {
-    console.log(`Retrying test scenario ${scenarioId}`);
-    setActiveTest(scenarioId);
+  const handleRetry = async (id: string): Promise<void> => {
+    console.log(`Retrying test scenario ${id}`);
+    toast({
+      title: "Test Retry",
+      description: `Retrying scenario ${id}`,
+    });
   };
 
-  const handleRun = (scenarioId: string) => {
-    console.log(`Running test scenario ${scenarioId}`);
-    setActiveTest(scenarioId);
+  const handleRun = async (id: string): Promise<void> => {
+    console.log(`Running test scenario ${id}`);
+    toast({
+      title: "Test Started",
+      description: `Running scenario ${id}`,
+    });
   };
 
-  const testStats = {
-    total: 45,
-    passed: 38,
-    failed: 5,
-    running: 2,
-    pending: 0
+  const handleRunAllTests = () => {
+    toast({
+      title: "Running All Tests",
+      description: "Starting comprehensive test suite execution",
+    });
   };
 
-  const successRate = Math.round((testStats.passed / testStats.total) * 100);
+  const handleExportReport = () => {
+    toast({
+      title: "Exporting Report",
+      description: "Test report is being generated",
+    });
+  };
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Phase 9B Testing Dashboard</h1>
-          <p className="text-muted-foreground mt-2">
-            Comprehensive testing suite for all system components and integrations
+          <h1 className="text-3xl font-bold">Testing Dashboard</h1>
+          <p className="text-muted-foreground">
+            Comprehensive testing suite for Phase 9B system validation
           </p>
         </div>
-        <div className="flex items-center gap-4">
-          <Badge variant="secondary" className="bg-green-100 text-green-800">
-            System Operational
-          </Badge>
-          <Button variant="outline">
-            <RotateCcw className="h-4 w-4 mr-2" />
+        <div className="flex gap-2">
+          <Button onClick={handleRunAllTests} className="flex items-center gap-2">
+            <Play className="h-4 w-4" />
             Run All Tests
+          </Button>
+          <Button onClick={handleExportReport} variant="outline" className="flex items-center gap-2">
+            <TestTube className="h-4 w-4" />
+            Export Report
           </Button>
         </div>
       </div>
 
-      {/* Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Tests</CardTitle>
-            <CheckCircle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{testStats.total}</div>
-            <p className="text-xs text-muted-foreground">
-              Across all modules
-            </p>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 text-green-500" />
+              <div>
+                <p className="text-sm text-muted-foreground">Passed</p>
+                <p className="text-2xl font-bold">{mockResults.passed}</p>
+              </div>
+            </div>
           </CardContent>
         </Card>
-
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Success Rate</CardTitle>
-            <CheckCircle className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{successRate}%</div>
-            <p className="text-xs text-muted-foreground">
-              {testStats.passed} passed tests
-            </p>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <XCircle className="h-5 w-5 text-red-500" />
+              <div>
+                <p className="text-sm text-muted-foreground">Failed</p>
+                <p className="text-2xl font-bold">{mockResults.failed}</p>
+              </div>
+            </div>
           </CardContent>
         </Card>
-
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Tests</CardTitle>
-            <Clock className="h-4 w-4 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{testStats.running}</div>
-            <p className="text-xs text-muted-foreground">
-              Currently running
-            </p>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-yellow-500" />
+              <div>
+                <p className="text-sm text-muted-foreground">Skipped</p>
+                <p className="text-2xl font-bold">{mockResults.skipped}</p>
+              </div>
+            </div>
           </CardContent>
         </Card>
-
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Failed Tests</CardTitle>
-            <XCircle className="h-4 w-4 text-red-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">{testStats.failed}</div>
-            <p className="text-xs text-muted-foreground">
-              Need attention
-            </p>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <Clock className="h-5 w-5 text-blue-500" />
+              <div>
+                <p className="text-sm text-muted-foreground">Avg Response</p>
+                <p className="text-2xl font-bold">{mockResults.performance.avgResponseTime}ms</p>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Main Testing Interface */}
-      <Tabs defaultValue="overview" className="space-y-4">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="scenarios">Test Scenarios</TabsTrigger>
-          <TabsTrigger value="audience">Audience Tests</TabsTrigger>
+          <TabsTrigger value="scenarios">Scenarios</TabsTrigger>
           <TabsTrigger value="performance">Performance</TabsTrigger>
-          <TabsTrigger value="validation">Validation</TabsTrigger>
+          <TabsTrigger value="audience">Audience</TabsTrigger>
           <TabsTrigger value="reports">Reports</TabsTrigger>
+          <TabsTrigger value="controls">Controls</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Test Progress Matrix</CardTitle>
-                <CardDescription>
-                  Visual overview of all test scenarios and their current status
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <TestProgressMatrix scenarios={mockTestScenarios} />
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Test Scenario Tracker</CardTitle>
-                <CardDescription>
-                  Real-time tracking of individual test execution
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <TestScenarioTracker
-                  scenario={mockTestScenarios[0]}
-                  onStatusChange={handleStatusChange}
-                  onRetry={handleRetry}
-                  onRun={handleRun}
-                />
-              </CardContent>
-            </Card>
+            <TestResultsVisualization results={mockResults} />
+            <TestProgressMatrix />
           </div>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Test Results Visualization</CardTitle>
-              <CardDescription>
-                Performance metrics and relationship validation results
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <TestResultsVisualization results={mockTestResults} />
-            </CardContent>
-          </Card>
         </TabsContent>
 
         <TabsContent value="scenarios" className="space-y-4">
-          <TestSuite />
-        </TabsContent>
-
-        <TabsContent value="audience" className="space-y-4">
-          <AudienceAnalyticsTestSuite />
+          <div className="space-y-4">
+            {mockTestScenarios.map((scenario) => (
+              <TestScenarioTracker
+                key={scenario.id}
+                scenario={scenario}
+                onStatusChange={handleStatusChange}
+                onRetry={handleRetry}
+                onRun={handleRun}
+              />
+            ))}
+          </div>
         </TabsContent>
 
         <TabsContent value="performance" className="space-y-4">
           <PerformanceTestRunner />
         </TabsContent>
 
-        <TabsContent value="validation" className="space-y-4">
-          <SegmentationTestValidator />
+        <TabsContent value="audience" className="space-y-4">
+          <div className="space-y-4">
+            <AudienceAnalyticsTestSuite scenarios={mockAudienceScenarios} />
+            <SegmentationTestValidator />
+          </div>
         </TabsContent>
 
         <TabsContent value="reports" className="space-y-4">
-          <TestReportSection results={mockReportResults} />
+          <TestReportSection results={mockResults} />
+        </TabsContent>
+
+        <TabsContent value="controls" className="space-y-4">
+          <TestControls />
+          <TestSuite />
         </TabsContent>
       </Tabs>
     </div>
