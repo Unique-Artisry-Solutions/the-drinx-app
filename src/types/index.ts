@@ -7,27 +7,19 @@ export * from './auth';
 // Navigation types
 export * from './navigation';
 
-// Database types - explicit exports to avoid conflicts
+// Core types - import from CoreTypes instead of DatabaseTypes for base entities
 export type { 
   User, 
   UserProfile, 
-  UserPreferences,
-  SwigCircuit,
-  SwigCircuitEstablishment,
-  TicketTier,
-  Ticket,
+  Establishment,
   Event,
-  EventAttendee,
-  Review,
-  Photo,
-  Comment,
-  Notification,
-  FollowerNotification,
-  PushNotification,
-  MocktailSuggestion as DatabaseMocktailSuggestion,
-  BarCrawl as DatabaseBarCrawl,
-  Cocktail as DatabaseCocktail,
-  Establishment as DatabaseEstablishment
+  Cocktail,
+  BarCrawl
+} from './CoreTypes';
+
+// Database types - only export types that actually exist in DatabaseTypes
+export type { 
+  MocktailSuggestion as DatabaseMocktailSuggestion
 } from './DatabaseTypes';
 
 // Promotional types
@@ -44,10 +36,8 @@ export * from './PricingTypes';
 
 // Event types - explicit exports to avoid conflicts
 export type {
-  EventVisibility,
   EventStatus,
-  EventType,
-  EventCategory
+  EventType
 } from './EventTypes';
 
 // Notification types
