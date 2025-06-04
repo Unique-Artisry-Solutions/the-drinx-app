@@ -2,7 +2,7 @@
 // Notifications Feature Module - Consolidated exports
 export { default as NotificationTester } from './NotificationTester';
 export { default as UnifiedNotificationsList } from './UnifiedNotificationsList';
-export { default as NotificationSubscriptionManager } from './NotificationSubscriptionManager';
+export { NotificationSubscriptionManager } from './NotificationSubscriptionManager';
 
 // Direct notifications
 export { NotificationStatusAlert } from './direct/NotificationStatusAlert';

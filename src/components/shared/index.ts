@@ -22,7 +22,6 @@ export {
 
 // Types
 export * from './types';
-export * from '../types/shared/StandardTypes';
 
 // Utilities
 export * from './utils';

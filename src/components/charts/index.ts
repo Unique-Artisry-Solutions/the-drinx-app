@@ -12,7 +12,7 @@ export { default as AnalyticsMetricCard } from './AnalyticsMetricCard';
 // Wrapper components
 export { LegacyLineChart, LegacyBarChart, SmartChart } from './ChartWrapper';
 
-// Enhanced chart props interface
+// Enhanced chart props interface extending base props
 export interface EnhancedChartProps extends BaseChartProps {
   series?: ChartSeriesConfig[];
 }

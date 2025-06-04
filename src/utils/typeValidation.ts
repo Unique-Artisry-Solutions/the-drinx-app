@@ -1,241 +1,261 @@
 
-// Runtime Type Validation - Phase 9E
-// Strict runtime validation for component props
+// Type Validation System - Phase 9E
+// Runtime validation for component props and data structures
 
 export class TypeValidationError extends Error {
   constructor(
-    public readonly field: string,
+    public readonly validationType: string,
     public readonly expected: string,
     public readonly received: string
   ) {
-    super(`Type validation failed for '${field}': expected ${expected}, received ${received}`);
+    super(`Type validation failed: expected ${expected}, received ${received}`);
     this.name = 'TypeValidationError';
   }
 }
 
-// Validation result type
-export interface ValidationResult<T = any> {
+export interface ValidationResult<T> {
   readonly isValid: boolean;
   readonly data?: T;
-  readonly errors: readonly TypeValidationError[];
+  readonly errors: string[];
 }
 
-// Base validator interface
-export interface TypeValidator<T> {
-  validate(value: unknown): ValidationResult<T>;
+export abstract class TypeValidator<T> {
+  abstract validate(value: unknown): ValidationResult<T>;
+  
+  protected createError(message: string): ValidationResult<T> {
+    return {
+      isValid: false,
+      errors: [message]
+    };
+  }
+  
+  protected createSuccess(data: T): ValidationResult<T> {
+    return {
+      isValid: true,
+      data,
+      errors: []
+    };
+  }
 }
 
-// String validator
-export class StringValidator implements TypeValidator<string> {
-  constructor(
-    private readonly options: {
-      readonly required?: boolean;
-      readonly minLength?: number;
-      readonly maxLength?: number;
-      readonly pattern?: RegExp;
-    } = {}
-  ) {}
+export interface StringValidationOptions {
+  readonly required?: boolean;
+  readonly minLength?: number;
+  readonly maxLength?: number;
+  readonly pattern?: RegExp;
+}
+
+export class StringValidator extends TypeValidator<string> {
+  constructor(private options: StringValidationOptions = {}) {
+    super();
+  }
 
   validate(value: unknown): ValidationResult<string> {
-    const errors: TypeValidationError[] = [];
-
-    if (this.options.required && (value === null || value === undefined || value === '')) {
-      errors.push(new TypeValidationError('value', 'required string', typeof value));
-      return { isValid: false, errors };
+    if (value === null || value === undefined) {
+      if (this.options.required) {
+        return this.createError('String is required');
+      }
+      return this.createSuccess('');
     }
 
-    if (value !== null && value !== undefined && typeof value !== 'string') {
-      errors.push(new TypeValidationError('value', 'string', typeof value));
-      return { isValid: false, errors };
+    if (typeof value !== 'string') {
+      return this.createError(`Expected string, got ${typeof value}`);
     }
 
-    const stringValue = value as string;
-
-    if (this.options.minLength && stringValue.length < this.options.minLength) {
-      errors.push(new TypeValidationError(
-        'value.length',
-        `>= ${this.options.minLength}`,
-        stringValue.length.toString()
-      ));
+    if (this.options.minLength && value.length < this.options.minLength) {
+      return this.createError(`String must be at least ${this.options.minLength} characters`);
     }
 
-    if (this.options.maxLength && stringValue.length > this.options.maxLength) {
-      errors.push(new TypeValidationError(
-        'value.length',
-        `<= ${this.options.maxLength}`,
-        stringValue.length.toString()
-      ));
+    if (this.options.maxLength && value.length > this.options.maxLength) {
+      return this.createError(`String must be at most ${this.options.maxLength} characters`);
     }
 
-    if (this.options.pattern && !this.options.pattern.test(stringValue)) {
-      errors.push(new TypeValidationError(
-        'value.pattern',
-        this.options.pattern.toString(),
-        'pattern mismatch'
-      ));
+    if (this.options.pattern && !this.options.pattern.test(value)) {
+      return this.createError('String does not match required pattern');
     }
 
-    return {
-      isValid: errors.length === 0,
-      data: errors.length === 0 ? stringValue : undefined,
-      errors
-    };
+    return this.createSuccess(value);
   }
 }
 
-// Number validator
-export class NumberValidator implements TypeValidator<number> {
-  constructor(
-    private readonly options: {
-      readonly required?: boolean;
-      readonly min?: number;
-      readonly max?: number;
-      readonly integer?: boolean;
-    } = {}
-  ) {}
+export interface NumberValidationOptions {
+  readonly required?: boolean;
+  readonly min?: number;
+  readonly max?: number;
+  readonly integer?: boolean;
+}
+
+export class NumberValidator extends TypeValidator<number> {
+  constructor(private options: NumberValidationOptions = {}) {
+    super();
+  }
 
   validate(value: unknown): ValidationResult<number> {
-    const errors: TypeValidationError[] = [];
-
-    if (this.options.required && (value === null || value === undefined)) {
-      errors.push(new TypeValidationError('value', 'required number', typeof value));
-      return { isValid: false, errors };
+    if (value === null || value === undefined) {
+      if (this.options.required) {
+        return this.createError('Number is required');
+      }
+      return this.createSuccess(0);
     }
 
-    if (value !== null && value !== undefined && typeof value !== 'number') {
-      errors.push(new TypeValidationError('value', 'number', typeof value));
-      return { isValid: false, errors };
+    const num = Number(value);
+    if (isNaN(num)) {
+      return this.createError(`Expected number, got ${typeof value}`);
     }
 
-    const numberValue = value as number;
-
-    if (isNaN(numberValue)) {
-      errors.push(new TypeValidationError('value', 'valid number', 'NaN'));
+    if (this.options.integer && !Number.isInteger(num)) {
+      return this.createError('Number must be an integer');
     }
 
-    if (this.options.min !== undefined && numberValue < this.options.min) {
-      errors.push(new TypeValidationError(
-        'value',
-        `>= ${this.options.min}`,
-        numberValue.toString()
-      ));
+    if (this.options.min !== undefined && num < this.options.min) {
+      return this.createError(`Number must be at least ${this.options.min}`);
     }
 
-    if (this.options.max !== undefined && numberValue > this.options.max) {
-      errors.push(new TypeValidationError(
-        'value',
-        `<= ${this.options.max}`,
-        numberValue.toString()
-      ));
+    if (this.options.max !== undefined && num > this.options.max) {
+      return this.createError(`Number must be at most ${this.options.max}`);
     }
 
-    if (this.options.integer && !Number.isInteger(numberValue)) {
-      errors.push(new TypeValidationError('value', 'integer', 'float'));
-    }
-
-    return {
-      isValid: errors.length === 0,
-      data: errors.length === 0 ? numberValue : undefined,
-      errors
-    };
+    return this.createSuccess(num);
   }
 }
 
-// Array validator
-export class ArrayValidator<T> implements TypeValidator<T[]> {
-  constructor(
-    private readonly itemValidator: TypeValidator<T>,
-    private readonly options: {
-      readonly required?: boolean;
-      readonly minLength?: number;
-      readonly maxLength?: number;
-    } = {}
-  ) {}
+export interface ArrayValidationOptions<T> {
+  readonly required?: boolean;
+  readonly minLength?: number;
+  readonly maxLength?: number;
+  readonly itemValidator?: TypeValidator<T>;
+}
+
+export class ArrayValidator<T> extends TypeValidator<T[]> {
+  constructor(private options: ArrayValidationOptions<T> = {}) {
+    super();
+  }
 
   validate(value: unknown): ValidationResult<T[]> {
-    const errors: TypeValidationError[] = [];
-
-    if (this.options.required && (value === null || value === undefined)) {
-      errors.push(new TypeValidationError('value', 'required array', typeof value));
-      return { isValid: false, errors };
-    }
-
-    if (value !== null && value !== undefined && !Array.isArray(value)) {
-      errors.push(new TypeValidationError('value', 'array', typeof value));
-      return { isValid: false, errors };
-    }
-
-    const arrayValue = value as unknown[];
-
-    if (this.options.minLength && arrayValue.length < this.options.minLength) {
-      errors.push(new TypeValidationError(
-        'value.length',
-        `>= ${this.options.minLength}`,
-        arrayValue.length.toString()
-      ));
-    }
-
-    if (this.options.maxLength && arrayValue.length > this.options.maxLength) {
-      errors.push(new TypeValidationError(
-        'value.length',
-        `<= ${this.options.maxLength}`,
-        arrayValue.length.toString()
-      ));
-    }
-
-    // Validate each item
-    const validatedItems: T[] = [];
-    arrayValue.forEach((item, index) => {
-      const itemResult = this.itemValidator.validate(item);
-      if (!itemResult.isValid) {
-        itemResult.errors.forEach(error => {
-          errors.push(new TypeValidationError(
-            `value[${index}].${error.field}`,
-            error.expected,
-            error.received
-          ));
-        });
-      } else if (itemResult.data !== undefined) {
-        validatedItems.push(itemResult.data);
+    if (value === null || value === undefined) {
+      if (this.options.required) {
+        return this.createError('Array is required');
       }
-    });
+      return this.createSuccess([]);
+    }
 
-    return {
-      isValid: errors.length === 0,
-      data: errors.length === 0 ? validatedItems : undefined,
-      errors
-    };
+    if (!Array.isArray(value)) {
+      return this.createError(`Expected array, got ${typeof value}`);
+    }
+
+    if (this.options.minLength && value.length < this.options.minLength) {
+      return this.createError(`Array must have at least ${this.options.minLength} items`);
+    }
+
+    if (this.options.maxLength && value.length > this.options.maxLength) {
+      return this.createError(`Array must have at most ${this.options.maxLength} items`);
+    }
+
+    if (this.options.itemValidator) {
+      const errors: string[] = [];
+      const validatedItems: T[] = [];
+
+      for (let i = 0; i < value.length; i++) {
+        const result = this.options.itemValidator.validate(value[i]);
+        if (!result.isValid) {
+          errors.push(`Item ${i}: ${result.errors.join(', ')}`);
+        } else if (result.data !== undefined) {
+          validatedItems.push(result.data);
+        }
+      }
+
+      if (errors.length > 0) {
+        return {
+          isValid: false,
+          errors
+        };
+      }
+
+      return this.createSuccess(validatedItems);
+    }
+
+    return this.createSuccess(value as T[]);
   }
 }
 
 // Convenience validation functions
-export const validateString = (value: unknown, options?: Parameters<typeof StringValidator.prototype.constructor>[0]) => {
+export function validateString(
+  value: unknown,
+  options?: StringValidationOptions
+): ValidationResult<string> {
   return new StringValidator(options).validate(value);
-};
+}
 
-export const validateNumber = (value: unknown, options?: Parameters<typeof NumberValidator.prototype.constructor>[0]) => {
+export function validateNumber(
+  value: unknown,
+  options?: NumberValidationOptions
+): ValidationResult<number> {
   return new NumberValidator(options).validate(value);
-};
+}
 
-export const validateArray = <T>(
-  value: unknown, 
-  itemValidator: TypeValidator<T>, 
-  options?: Parameters<typeof ArrayValidator.prototype.constructor>[1]
-) => {
-  return new ArrayValidator(itemValidator, options).validate(value);
-};
+export function validateArray<T>(
+  value: unknown,
+  options?: ArrayValidationOptions<T>
+): ValidationResult<T[]> {
+  return new ArrayValidator(options).validate(value);
+}
 
-// Development mode validation (only runs in dev)
-export const devValidate = <T>(validator: TypeValidator<T>, value: unknown, context?: string): T | null => {
+// Development-only validation helper
+export function devValidate<T>(
+  validator: TypeValidator<T>,
+  value: unknown,
+  context?: string
+): T | null {
   if (process.env.NODE_ENV !== 'development') {
     return value as T;
   }
 
   const result = validator.validate(value);
+  
   if (!result.isValid) {
-    console.warn(`Type validation failed${context ? ` in ${context}` : ''}:`, result.errors);
+    console.warn(`Validation failed${context ? ` in ${context}` : ''}:`, result.errors);
     return null;
   }
 
   return result.data || null;
-};
+}
+
+// Enhanced function validation with proper constraints
+export function validateFunction<T extends (...args: any[]) => any>(
+  value: unknown,
+  context?: string
+): T | null {
+  if (typeof value !== 'function') {
+    if (process.env.NODE_ENV === 'development') {
+      console.warn(`Function validation failed${context ? ` in ${context}` : ''}: expected function, got ${typeof value}`);
+    }
+    return null;
+  }
+  return value as T;
+}
+
+export function validateFunctionOptional<T extends (...args: any[]) => any>(
+  value: unknown,
+  context?: string
+): T | undefined {
+  if (value === undefined || value === null) {
+    return undefined;
+  }
+  return validateFunction<T>(value, context) || undefined;
+}
+
+// Generic validation with proper function constraint
+export function validateGeneric<T extends (...args: any[]) => any>(
+  value: unknown,
+  validatorFn: T,
+  context?: string
+): ReturnType<T> | null {
+  try {
+    return validatorFn(value);
+  } catch (error) {
+    if (process.env.NODE_ENV === 'development') {
+      console.warn(`Generic validation failed${context ? ` in ${context}` : ''}:`, error);
+    }
+    return null;
+  }
+}

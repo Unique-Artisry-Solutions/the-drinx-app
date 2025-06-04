@@ -11,6 +11,11 @@ interface ServiceCallOptions {
   trackMetrics?: boolean;
 }
 
+interface ServiceWithHealthCheck {
+  healthCheck?: () => Promise<boolean> | boolean;
+  [key: string]: any;
+}
+
 export class ServiceProxy {
   static async call<T>(
     serviceName: string,
@@ -103,7 +108,7 @@ export class ServiceProxy {
   // Health check for a specific service
   static async healthCheck(serviceName: string): Promise<boolean> {
     try {
-      const service = serviceRegistry.getService(serviceName);
+      const service = serviceRegistry.getService(serviceName) as ServiceWithHealthCheck;
       if (!service) return false;
 
       if (typeof service.healthCheck === 'function') {

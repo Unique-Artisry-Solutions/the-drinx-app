@@ -1,60 +1,29 @@
 
-// Service configuration and dependency management
-// Centralizes service initialization and configuration
+// Service Configuration - Phase 9D
+// Configuration management for services
 
-interface ServiceConfig {
-  isDevelopment: boolean;
+interface ServiceConfigData {
   enableLogging: boolean;
-  enableCaching: boolean;
-  retryAttempts: number;
-  timeoutMs: number;
+  enableMetrics: boolean;
+  defaultTimeout: number;
+  defaultRetries: number;
 }
 
-class ServiceConfigManager {
-  private config: ServiceConfig;
+class ServiceConfigClass {
+  private config: ServiceConfigData = {
+    enableLogging: process.env.NODE_ENV === 'development',
+    enableMetrics: true,
+    defaultTimeout: 10000,
+    defaultRetries: 3
+  };
 
-  constructor() {
-    this.config = {
-      isDevelopment: import.meta.env.DEV || false,
-      enableLogging: import.meta.env.DEV || false,
-      enableCaching: true,
-      retryAttempts: 3,
-      timeoutMs: 10000
-    };
-  }
-
-  getConfig(): ServiceConfig {
+  getConfig(): ServiceConfigData {
     return { ...this.config };
   }
 
-  updateConfig(updates: Partial<ServiceConfig>): void {
+  updateConfig(updates: Partial<ServiceConfigData>): void {
     this.config = { ...this.config, ...updates };
-  }
-
-  // Service-specific configurations
-  getAdminServiceConfig() {
-    return {
-      enableLogging: this.config.enableLogging,
-      retryAttempts: this.config.retryAttempts,
-      timeout: this.config.timeoutMs
-    };
-  }
-
-  getNotificationServiceConfig() {
-    return {
-      enableToast: true,
-      enablePush: !this.config.isDevelopment,
-      enableEmail: !this.config.isDevelopment
-    };
-  }
-
-  getEventServiceConfig() {
-    return {
-      enableAccessTokens: true,
-      tokenExpiryDays: 30,
-      enableAnalytics: true
-    };
   }
 }
 
-export const serviceConfig = new ServiceConfigManager();
+export const serviceConfig = new ServiceConfigClass();
