@@ -17,7 +17,7 @@ interface NotificationActions {
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
   removeNotification: (id: string) => void;
-  addNotification: (notification: Omit<NotificationType, 'id' | 'timestamp' | 'created_at' | 'read' | 'is_read'>) => void;
+  addNotification: (notification: Omit<NotificationType, 'id' | 'timestamp' | 'created_at' | 'read' | 'is_read' | 'content'>) => void;
   clearAll: () => void;
   refetch: () => Promise<void>;
   sendTestNotification: (type: string) => Promise<void>;
@@ -62,7 +62,7 @@ export const useNotifications = (): UseNotificationsReturn => {
     track('notification_removed', { notification_id: id });
   }, [track]);
 
-  const addNotification = useCallback((notification: Omit<NotificationType, 'id' | 'timestamp' | 'created_at' | 'read' | 'is_read'>) => {
+  const addNotification = useCallback((notification: Omit<NotificationType, 'id' | 'timestamp' | 'created_at' | 'read' | 'is_read' | 'content'>) => {
     const now = Date.now();
     const newNotification: NotificationType = {
       ...notification,
@@ -71,7 +71,7 @@ export const useNotifications = (): UseNotificationsReturn => {
       created_at: new Date(now).toISOString(),
       read: false,
       is_read: false,
-      content: notification.message // Ensure content matches message
+      content: notification.message // Automatically set content from message
     };
     
     setNotifications(prev => [newNotification, ...prev]);

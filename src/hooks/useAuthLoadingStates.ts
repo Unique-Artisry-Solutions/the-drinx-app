@@ -2,7 +2,7 @@
 import { useAuth } from './useAuth';
 
 // Enhanced compatibility bridge for useAuthLoadingStates
-export const useAuthLoadingStates = () => {
+export const useAuthLoadingStates = (userType?: string) => {
   const auth = useAuth();
   
   return {
