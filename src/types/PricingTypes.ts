@@ -11,3 +11,11 @@ export interface PricingPlan {
   monthly: PricingTier[];
   annual: PricingTier[];
 }
+
+export interface PricingFeature {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  included_in_tiers: string[];
+}
