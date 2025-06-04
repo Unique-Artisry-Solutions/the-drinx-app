@@ -1,8 +1,15 @@
+
 // Primary hooks - Use these for new development
 export { useAuth } from './useAuth';
 export { useData, useDataMutation } from './useData';
 export { useAnalytics } from './useAnalytics';
 export { useNotifications } from './useNotifications';
+
+// Compatibility bridges for legacy imports
+export { useDevAuthBypass } from './useDevAuthBypass';
+export { useAuthenticatedUser } from './useAuthenticatedUser';
+export { useAuthLoadingStates } from './useAuthLoadingStates';
+export { useDirectNotifications } from './useDirectNotifications';
 
 // Essential utility hooks
 export { useToast } from './use-toast';

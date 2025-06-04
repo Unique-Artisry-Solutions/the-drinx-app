@@ -13,11 +13,13 @@ interface AuthState {
   isAuthenticated: boolean;
   userType: UserType | null;
   authStable: boolean;
+  isEmailVerified: boolean;
 }
 
 interface AuthActions {
   signOut: () => Promise<void>;
-  refreshSession: () => Promise<void>;
+  refreshSession: () => Promise<{ isEmailVerified: boolean }>;
+  signIn: (email: string, password: string) => Promise<{ error: Error | null; data: any }>;
 }
 
 interface UseAuthReturn extends AuthState, AuthActions {
@@ -72,10 +74,24 @@ export const useAuth = (): UseAuthReturn => {
     await supabase.auth.signOut();
   };
 
-  const refreshSession = async () => {
+  const signIn = async (email: string, password: string) => {
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+      return { data, error };
+    } catch (error) {
+      return { data: null, error: error as Error };
+    }
+  };
+
+  const refreshSession = async (): Promise<{ isEmailVerified: boolean }> => {
     const { data, error } = await supabase.auth.refreshSession();
     if (error) throw error;
-    return data;
+    
+    const isEmailVerified = !!(data.session?.user?.email_confirmed_at);
+    return { isEmailVerified };
   };
 
   // Get effective auth state with dev bypass
@@ -98,10 +114,12 @@ export const useAuth = (): UseAuthReturn => {
     isAuthenticated: effectiveAuth.isAuthenticated,
     userType: effectiveAuth.userType as UserType,
     authStable,
+    isEmailVerified: !!(effectiveAuth.user?.email_confirmed_at),
 
     // Actions
     signOut,
     refreshSession,
+    signIn,
 
     // Computed properties
     isReady: authStable && !isLoading,
