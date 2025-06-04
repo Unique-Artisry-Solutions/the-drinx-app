@@ -17,6 +17,8 @@ export interface NotificationState {
   unreadCount: number;
   isLoading: boolean;
   error: string | null;
+  isSupported: boolean;
+  permissionStatus: NotificationPermission;
 }
 
 export interface NotificationActions {
@@ -25,6 +27,8 @@ export interface NotificationActions {
   removeNotification: (id: string) => void;
   addNotification: (notification: Omit<NotificationItem, 'id' | 'timestamp' | 'read'>) => void;
   refresh: () => void;
+  sendTestNotification: (category?: string) => Promise<void>;
+  requestPermission: () => Promise<NotificationPermission>;
 }
 
 export function useNotifications(): { state: NotificationState; actions: NotificationActions } {
@@ -32,8 +36,49 @@ export function useNotifications(): { state: NotificationState; actions: Notific
     notifications: [],
     unreadCount: 0,
     isLoading: false,
-    error: null
+    error: null,
+    isSupported: 'Notification' in window,
+    permissionStatus: 'Notification' in window ? Notification.permission : 'denied'
   });
+
+  const requestPermission = useCallback(async (): Promise<NotificationPermission> => {
+    if (!('Notification' in window)) {
+      return 'denied';
+    }
+
+    try {
+      const permission = await Notification.requestPermission();
+      setState(prev => ({ ...prev, permissionStatus: permission }));
+      return permission;
+    } catch (error) {
+      console.error('Failed to request notification permission:', error);
+      return 'denied';
+    }
+  }, []);
+
+  const sendTestNotification = useCallback(async (category: string = 'test'): Promise<void> => {
+    if (!('Notification' in window)) {
+      throw new Error('Notifications not supported');
+    }
+
+    if (Notification.permission !== 'granted') {
+      const permission = await requestPermission();
+      if (permission !== 'granted') {
+        throw new Error('Notification permission not granted');
+      }
+    }
+
+    try {
+      new Notification(`Test Notification - ${category}`, {
+        body: 'This is a test notification from the core notification system',
+        icon: '/favicon.ico',
+        tag: `test-${category}-${Date.now()}`
+      });
+    } catch (error) {
+      console.error('Failed to send test notification:', error);
+      throw error;
+    }
+  }, [requestPermission]);
 
   const actions: NotificationActions = {
     markAsRead: (id: string) => {
@@ -82,8 +127,26 @@ export function useNotifications(): { state: NotificationState; actions: Notific
       setTimeout(() => {
         setState(prev => ({ ...prev, isLoading: false }));
       }, 500);
-    }
+    },
+    sendTestNotification,
+    requestPermission
   };
+
+  // Update permission status on mount and when visibility changes
+  useEffect(() => {
+    const updatePermissionStatus = () => {
+      if ('Notification' in window) {
+        setState(prev => ({ ...prev, permissionStatus: Notification.permission }));
+      }
+    };
+
+    updatePermissionStatus();
+    document.addEventListener('visibilitychange', updatePermissionStatus);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', updatePermissionStatus);
+    };
+  }, []);
 
   return { state, actions };
 }
