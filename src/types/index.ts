@@ -7,8 +7,28 @@ export * from './auth';
 // Navigation types
 export * from './navigation';
 
-// Database types
-export * from './DatabaseTypes';
+// Database types - explicit exports to avoid conflicts
+export type { 
+  User, 
+  UserProfile, 
+  UserPreferences,
+  SwigCircuit,
+  SwigCircuitEstablishment,
+  TicketTier,
+  Ticket,
+  Event,
+  EventAttendee,
+  Review,
+  Photo,
+  Comment,
+  Notification,
+  FollowerNotification,
+  PushNotification,
+  MocktailSuggestion as DatabaseMocktailSuggestion,
+  BarCrawl as DatabaseBarCrawl,
+  Cocktail as DatabaseCocktail,
+  Establishment as DatabaseEstablishment
+} from './DatabaseTypes';
 
 // Promotional types
 export * from './promotional';
@@ -22,8 +42,13 @@ export * from './establishment.d';
 // Pricing types
 export * from './PricingTypes';
 
-// Event types
-export * from './EventTypes';
+// Event types - explicit exports to avoid conflicts
+export type {
+  EventVisibility,
+  EventStatus,
+  EventType,
+  EventCategory
+} from './EventTypes';
 
 // Notification types
 export * from './NotificationTypes';

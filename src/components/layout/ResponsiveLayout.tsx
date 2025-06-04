@@ -1,6 +1,9 @@
 
 import React from 'react';
 import { BaseComponentProps, StandardNavigationProps } from '@/components/shared/types';
+import { useIsMobile } from '@/hooks/use-mobile';
+import DesktopLayout from './DesktopLayout';
+import MobileLayout from './MobileLayout';
 
 interface ResponsiveLayoutProps extends BaseComponentProps, StandardNavigationProps {
   children: React.ReactNode;
@@ -15,12 +18,30 @@ export const ResponsiveLayout: React.FC<ResponsiveLayoutProps> = ({
   tabOptions,
   className = ''
 }) => {
-  return (
-    <div className={`min-h-screen bg-gray-50 ${className}`}>
-      {/* Navigation would go here */}
-      <main className="container mx-auto px-4 py-8">
+  const isMobile = useIsMobile();
+
+  // Use the appropriate layout based on device type
+  if (isMobile) {
+    return (
+      <MobileLayout
+        activeTab={activeTab}
+        handleTabChange={handleTabChange}
+        tabOptions={tabOptions}
+        forceGuestNavigation={forceGuestNavigation}
+      >
         {children}
-      </main>
-    </div>
+      </MobileLayout>
+    );
+  }
+
+  return (
+    <DesktopLayout
+      activeTab={activeTab}
+      handleTabChange={handleTabChange}
+      tabOptions={tabOptions}
+      forceGuestNavigation={forceGuestNavigation}
+    >
+      {children}
+    </DesktopLayout>
   );
 };
