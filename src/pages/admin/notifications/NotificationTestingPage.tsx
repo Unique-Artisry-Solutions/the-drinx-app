@@ -7,8 +7,8 @@ import { Bell, Users, Building2, AlertTriangle } from 'lucide-react';
 import NotificationTester from '@/components/notifications/NotificationTester';
 import DirectNotificationTester from '@/components/notifications/DirectNotificationTester';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import RoleBasedNotificationTester from '@/components/notifications/RoleBasedNotificationTester';
-import EnhancedTestControls from '@/components/notifications/testing/EnhancedTestControls';
+import { RoleBasedNotificationTester } from '@/components/notifications/RoleBasedNotificationTester';
+import { EnhancedTestControls } from '@/components/notifications/testing/EnhancedTestControls';
 
 const NotificationTestingPage = () => {
   const [activeTab, setActiveTab] = useState('direct');

@@ -7,7 +7,7 @@ import { useDevAuthBypass } from '@/hooks/useDevAuthBypass';
 import { useNavigate } from 'react-router-dom';
 import { useDevelopmentMode } from '@/contexts/DevelopmentModeContext';
 
-const LoginPrompt = () => {
+export const LoginPrompt = () => {
   const { isAuthenticated, isUsingDevBypass } = useDevAuthBypass();
   const { isDevelopment } = useDevelopmentMode();
   const navigate = useNavigate();
@@ -55,5 +55,3 @@ const LoginPrompt = () => {
     </Alert>
   );
 };
-
-export default LoginPrompt;

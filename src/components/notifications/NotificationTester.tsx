@@ -5,12 +5,12 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Info, AlertCircle, Bell, Settings } from "lucide-react";
 import { useEnhancedNotificationTesting } from '@/hooks/notifications/testing/useEnhancedNotificationTesting';
-import NotificationStatusAlert from './direct/NotificationStatusAlert';
-import SystemStatusPanel from './direct/SystemStatusPanel';
-import ResetSystemSection from './direct/ResetSystemSection';
-import EnhancedTestControls from './testing/EnhancedTestControls';
+import { NotificationStatusAlert } from './direct/NotificationStatusAlert';
+import { SystemStatusPanel } from './direct/SystemStatusPanel';
+import { ResetSystemSection } from './direct/ResetSystemSection';
+import { EnhancedTestControls } from './testing/EnhancedTestControls';
 import { NotificationSystemDiagnostics } from './diagnostics/NotificationSystemDiagnostics';
-import NotificationSubscriptionManager from './NotificationSubscriptionManager';
+import { NotificationSubscriptionManager } from './NotificationSubscriptionManager';
 
 const NotificationTester = () => {
   const {

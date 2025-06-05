@@ -1,64 +1,42 @@
 
 import React from 'react';
+import { useSearchParams } from 'react-router-dom';
 import Layout from '@/components/Layout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Megaphone, Calendar, Users, TrendingUp } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import PromoterDashboard from './PromoterDashboard';
+import { FollowersTab } from '@/components/promoter/dashboard/FollowersTab';
 
-const PromoterDashboardPage: React.FC = () => {
+const PromoterDashboardPage = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get('tab') || 'overview';
+
+  console.log('PromoterDashboardPage - Current tab:', activeTab);
+
+  const handleTabChange = (value: string) => {
+    if (value === 'overview') {
+      setSearchParams({});
+    } else {
+      setSearchParams({ tab: value });
+    }
+  };
+
   return (
     <Layout>
-      <div className="container mx-auto p-4 max-w-6xl">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2 flex items-center gap-2">
-            <Megaphone className="h-8 w-8 text-primary" />
-            Promoter Dashboard
-          </h1>
-          <p className="text-muted-foreground">Manage your events and track promotional campaigns</p>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="h-5 w-5" />
-                Event Management
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                Create and manage bar crawls and tasting events
-              </p>
-            </CardContent>
-          </Card>
+      <div className="container mx-auto px-4 py-6">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="overview">Dashboard Overview</TabsTrigger>
+            <TabsTrigger value="followers">Followers</TabsTrigger>
+          </TabsList>
           
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                Audience Insights
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                Track attendance and engagement across your events
-              </p>
-            </CardContent>
-          </Card>
+          <TabsContent value="overview" className="mt-6">
+            <PromoterDashboard />
+          </TabsContent>
           
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5" />
-                Performance Analytics
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                Monitor campaign performance and ROI metrics
-              </p>
-            </CardContent>
-          </Card>
-        </div>
+          <TabsContent value="followers" className="mt-6">
+            <FollowersTab />
+          </TabsContent>
+        </Tabs>
       </div>
     </Layout>
   );

@@ -11,7 +11,7 @@ interface NotificationActionButtonsProps {
   onRefreshPermission: () => void;
 }
 
-const NotificationActionButtons: React.FC<NotificationActionButtonsProps> = ({
+export const NotificationActionButtons: React.FC<NotificationActionButtonsProps> = ({
   permissionStatus,
   isLoading,
   onSendTest,
@@ -54,5 +54,3 @@ const NotificationActionButtons: React.FC<NotificationActionButtonsProps> = ({
     </div>
   );
 };
-
-export default NotificationActionButtons;

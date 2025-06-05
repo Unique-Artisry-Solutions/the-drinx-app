@@ -9,7 +9,7 @@ interface ResetSystemSectionProps {
   onReset: () => void;
 }
 
-const ResetSystemSection: React.FC<ResetSystemSectionProps> = ({
+export const ResetSystemSection: React.FC<ResetSystemSectionProps> = ({
   isLoading,
   onReset,
 }) => {
@@ -49,5 +49,3 @@ const ResetSystemSection: React.FC<ResetSystemSectionProps> = ({
     </div>
   );
 };
-
-export default ResetSystemSection;

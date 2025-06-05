@@ -2,7 +2,7 @@
 import { RefreshCw } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
-const NotificationLoading = () => {
+export const NotificationLoading = () => {
   return (
     <Card>
       <CardHeader>
@@ -17,5 +17,3 @@ const NotificationLoading = () => {
     </Card>
   );
 };
-
-export default NotificationLoading;

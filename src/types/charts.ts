@@ -1,38 +1,26 @@
 
-// Charts types - Standalone to avoid circular dependencies
+// Centralized Chart Types - Phase 9E
+// Single source of truth for all chart-related types
+
 export interface ChartDataPoint {
   name: string;
-  value: number;
   [key: string]: any;
 }
 
 export interface ChartSeriesConfig {
-  dataKey: string;
-  name?: string;
-  color?: string;
-  type?: 'line' | 'bar' | 'area';
+  key: string;
+  name: string;
+  color: string;
 }
 
 export interface BaseChartProps {
   data: ChartDataPoint[];
-  series?: ChartSeriesConfig[];
-  width?: number;
   height?: number;
   title?: string;
-  showLegend?: boolean;
-  showTooltip?: boolean;
-  className?: string;
+  description?: string;
+  formatter?: (value: any) => any;
 }
 
-export interface AnalyticsChartData extends ChartDataPoint {
-  timestamp?: string;
-  category?: string;
-}
-
-export interface MetricCardData {
-  title: string;
-  value: string | number;
-  change?: number;
-  trend?: 'up' | 'down' | 'neutral';
-  icon?: any;
+export interface EnhancedChartProps extends BaseChartProps {
+  series?: ChartSeriesConfig[];
 }

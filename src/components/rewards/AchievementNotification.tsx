@@ -10,7 +10,7 @@ interface AchievementNotificationProps {
   showToast?: boolean;
 }
 
-const AchievementNotification: React.FC<AchievementNotificationProps> = ({ achievement, showToast = true }) => {
+export function AchievementNotification({ achievement, showToast = true }: AchievementNotificationProps) {
   const { toast } = useToast();
 
   const getIcon = () => {
@@ -48,6 +48,4 @@ const AchievementNotification: React.FC<AchievementNotificationProps> = ({ achie
   }, [achievement, showToast, toast]);
 
   return null;
-};
-
-export default AchievementNotification;
+}

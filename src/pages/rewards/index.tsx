@@ -1,6 +1,6 @@
 
 import React from 'react';
-import UserRewardDashboard from '@/components/rewards/UserRewardDashboard';
+import { UserRewardDashboard } from '@/components/rewards/UserRewardDashboard';
 import { RewardRedemptionFlow } from '@/components/rewards/RewardRedemptionFlow';
 import { TabsList, TabsTrigger, Tabs, TabsContent } from '@/components/ui/tabs';
 import Layout from '@/components/Layout';

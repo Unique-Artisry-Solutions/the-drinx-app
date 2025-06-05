@@ -1,10 +1,11 @@
 
-// Rewards Feature Module - Specific exports only
-export { default as AchievementNotification } from './AchievementNotification';
-export { default as AchievementsList } from './AchievementsList';
-export { default as RewardHistory } from './RewardHistory';
-export { default as RewardMilestoneCard } from './RewardMilestoneCard';
-export { default as RewardsHighlightWidget } from './RewardsHighlightWidget';
+// Main reward components
+export { UserRewardDashboard } from './UserRewardDashboard';
+export { RewardRedemptionFlow } from './RewardRedemptionFlow';
+export { AchievementNotification } from './AchievementNotification';
 
 // Referral components
-export { default as ReferralDashboard } from './referral/ReferralDashboard';
+export { ReferralDashboard } from './referral';
+export { ReferralProgramManager } from './referral';
+export { ReferralTracker } from './referral';
+export { SocialShareWidget } from './referral';

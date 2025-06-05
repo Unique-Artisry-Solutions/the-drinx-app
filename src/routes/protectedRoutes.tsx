@@ -1,57 +1,43 @@
 
 import React from 'react';
-import { Navigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/auth/AuthProvider';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useDevelopmentMode } from '@/contexts/DevelopmentModeContext';
+import { useDevAuthBypass } from '@/hooks/useDevAuthBypass';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  requiredUserType?: 'admin' | 'establishment' | 'promoter' | 'individual';
+  requiredUserType?: 'individual' | 'establishment' | 'promoter' | 'admin';
+  fallbackPath?: string;
 }
 
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ 
-  children, 
-  requiredUserType 
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
+  children,
+  requiredUserType,
+  fallbackPath = '/landing'
 }) => {
-  const { isAuthenticated, userType, isLoading } = useAuth();
-  const { isDevelopment, devMode } = useDevelopmentMode();
+  const location = useLocation();
+  const { isDevelopment, isInitialized } = useDevelopmentMode();
+  const { userType, isAuthenticated, isLoading } = useDevAuthBypass();
 
-  // Show loading while checking auth - but don't block too long
-  if (isLoading) {
+  // Show loading while auth is being determined
+  if (isLoading || !isInitialized) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-sm text-muted-foreground">Checking access...</p>
-        </div>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
 
-  // In development mode, allow dev bypass
-  if (isDevelopment && devMode) {
-    // If a specific user type is required, check dev mode matches
-    if (requiredUserType && devMode !== requiredUserType) {
-      console.log('🚫 Dev mode mismatch:', { required: requiredUserType, current: devMode });
-      return <Navigate to="/debug" replace />;
-    }
-    console.log('✅ Dev bypass active for:', devMode);
-    return <>{children}</>;
-  }
-
-  // Check if user is authenticated
+  // Check authentication
   if (!isAuthenticated) {
-    console.log('🚫 Not authenticated, redirecting to login');
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // Check if user has required user type
+  // Check user type if specified
   if (requiredUserType && userType !== requiredUserType) {
-    console.log('🚫 User type mismatch:', { required: requiredUserType, current: userType });
-    return <Navigate to="/explore" replace />;
+    return <Navigate to={fallbackPath} replace />;
   }
 
-  console.log('✅ Access granted');
   return <>{children}</>;
 };
 

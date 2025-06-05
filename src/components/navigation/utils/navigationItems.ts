@@ -1,4 +1,3 @@
-
 import { UserType, NavigationItem, NavigationConfig, BreadcrumbItem } from '@/types/navigation';
 import { 
   guestNavItems, 
@@ -50,39 +49,19 @@ export const generateNavigationItems = (
   }
   
   if (!effectiveState.isAuthenticated) {
-    return guestNavItems.map(item => ({
-      label: item.label,
-      path: item.path,
-      icon: typeof item.icon === 'string' ? item.icon : item.icon?.name || 'default'
-    }));
+    return guestNavItems;
   }
   
   switch (effectiveState.userType) {
     case 'establishment':
-      return establishmentNavItems.map(item => ({
-        label: item.label,
-        path: item.path,
-        icon: typeof item.icon === 'string' ? item.icon : item.icon?.name || 'default'
-      }));
+      return establishmentNavItems;
     case 'promoter':
-      return promoterNavItems.map(item => ({
-        label: item.label,
-        path: item.path,
-        icon: typeof item.icon === 'string' ? item.icon : item.icon?.name || 'default'
-      }));
+      return promoterNavItems;
     case 'admin':
-      return adminNavItems.map(item => ({
-        label: item.label,
-        path: item.path,
-        icon: typeof item.icon === 'string' ? item.icon : item.icon?.name || 'default'
-      }));
+      return adminNavItems;
     case 'individual':
     default:
-      return individualNavItems.map(item => ({
-        label: item.label,
-        path: item.path,
-        icon: typeof item.icon === 'string' ? item.icon : item.icon?.name || 'default'
-      }));
+      return individualNavItems;
   }
 };
 

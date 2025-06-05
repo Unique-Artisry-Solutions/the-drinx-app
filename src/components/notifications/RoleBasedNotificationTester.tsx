@@ -35,7 +35,7 @@ const categoryOptions = [
   { value: 'system', label: 'System' },
 ];
 
-const RoleBasedNotificationTester = () => {
+export const RoleBasedNotificationTester = () => {
   const {
     config,
     setConfig,
@@ -162,5 +162,3 @@ const RoleBasedNotificationTester = () => {
     </Card>
   );
 };
-
-export default RoleBasedNotificationTester;

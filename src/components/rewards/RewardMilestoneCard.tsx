@@ -14,7 +14,7 @@ interface RewardMilestoneCardProps {
   pointsRequired?: number;
 }
 
-const RewardMilestoneCard: React.FC<RewardMilestoneCardProps> = ({
+export const RewardMilestoneCard: React.FC<RewardMilestoneCardProps> = ({
   type,
   tier,
   achievement,
@@ -122,5 +122,3 @@ const RewardMilestoneCard: React.FC<RewardMilestoneCardProps> = ({
     </Card>
   );
 };
-
-export default RewardMilestoneCard;

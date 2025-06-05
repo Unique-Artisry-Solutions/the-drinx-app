@@ -7,7 +7,7 @@ interface SystemStatusPanelProps {
   lastCheck: Date;
 }
 
-const SystemStatusPanel: React.FC<SystemStatusPanelProps> = ({
+export const SystemStatusPanel: React.FC<SystemStatusPanelProps> = ({
   isSupported,
   permissionStatus,
   lastCheck,
@@ -32,5 +32,3 @@ const SystemStatusPanel: React.FC<SystemStatusPanelProps> = ({
     </div>
   );
 };
-
-export default SystemStatusPanel;

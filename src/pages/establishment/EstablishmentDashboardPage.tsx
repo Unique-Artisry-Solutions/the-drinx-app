@@ -1,65 +1,20 @@
 
 import React from 'react';
 import Layout from '@/components/Layout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Building2, BarChart3, Users, Settings } from 'lucide-react';
+import EstablishmentDashboard from '@/components/establishment/EstablishmentDashboard';
+import { useAuth } from '@/contexts/auth';
 
-const EstablishmentDashboardPage: React.FC = () => {
+const EstablishmentDashboardPage = () => {
+  const { user } = useAuth();
+  const establishmentName = localStorage.getItem('establishment_name') || 'Your Establishment';
+  const establishmentId = user?.id || '';
+
   return (
     <Layout>
-      <div className="container mx-auto p-4 max-w-6xl">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2 flex items-center gap-2">
-            <Building2 className="h-8 w-8 text-primary" />
-            Establishment Dashboard
-          </h1>
-          <p className="text-muted-foreground">Manage your establishment and track performance</p>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BarChart3 className="h-5 w-5" />
-                Analytics
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                View visitor analytics and engagement metrics
-              </p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                Customer Management
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                Track customer visits and loyalty program members
-              </p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Settings className="h-5 w-5" />
-                Settings
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                Manage your establishment profile and preferences
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+      <EstablishmentDashboard 
+        establishmentName={establishmentName}
+        establishmentId={establishmentId}
+      />
     </Layout>
   );
 };
