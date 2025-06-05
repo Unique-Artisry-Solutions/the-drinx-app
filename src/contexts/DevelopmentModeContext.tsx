@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 
 export type DevUserType = 'individual' | 'establishment' | 'promoter' | 'admin' | null;
 
@@ -17,7 +17,6 @@ const DevelopmentModeContext = createContext<DevelopmentModeContextType | undefi
 
 export const DevelopmentModeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
-  const navigate = useNavigate();
   
   const [devMode, setDevMode] = useState<DevUserType>(null);
   const [isDevelopment, setIsDevelopment] = useState(false);
@@ -46,7 +45,7 @@ export const DevelopmentModeProvider: React.FC<{ children: React.ReactNode }> = 
     setIsInitialized(true);
   }, []);
 
-  // Handle URL dev mode parameters
+  // Handle URL dev mode parameters WITHOUT automatic navigation
   useEffect(() => {
     if (!isInitialized || !isDevelopment) return;
     
@@ -56,40 +55,16 @@ export const DevelopmentModeProvider: React.FC<{ children: React.ReactNode }> = 
     if (devModeParam) {
       const validTypes: DevUserType[] = ['individual', 'establishment', 'promoter', 'admin'];
       if (validTypes.includes(devModeParam as DevUserType)) {
-        switchToUserType(devModeParam as DevUserType);
+        setDevMode(devModeParam as DevUserType);
+        localStorage.setItem('dev_user_type', devModeParam);
+        
+        // Clean URL parameters without navigation
+        const newUrl = new URL(window.location.href);
+        newUrl.searchParams.delete('dev_mode');
+        window.history.replaceState({}, '', newUrl.toString());
       }
     }
   }, [location.search, isInitialized, isDevelopment]);
-
-  const navigateToUserDashboard = useCallback((userType: DevUserType) => {
-    // Clean URL parameters
-    const newUrl = new URL(window.location.href);
-    newUrl.searchParams.delete('dev_mode');
-    window.history.replaceState({}, '', newUrl.toString());
-
-    // Navigate to appropriate dashboard
-    let targetPath = '';
-    switch (userType) {
-      case 'establishment':
-        targetPath = '/establishment/dashboard';
-        break;
-      case 'promoter':
-        targetPath = '/promoter/dashboard';
-        break;
-      case 'admin':
-        targetPath = '/admin/system-breakdown';
-        break;
-      case 'individual':
-        targetPath = '/explore';
-        break;
-      default:
-        targetPath = '/landing';
-    }
-    
-    if (location.pathname !== targetPath) {
-      navigate(targetPath, { replace: true });
-    }
-  }, [navigate, location.pathname]);
 
   const switchToUserType = useCallback((userType: DevUserType) => {
     if (!isDevelopment || devMode === userType) return;
@@ -98,18 +73,18 @@ export const DevelopmentModeProvider: React.FC<{ children: React.ReactNode }> = 
     
     if (userType) {
       localStorage.setItem('dev_user_type', userType);
-      navigateToUserDashboard(userType);
     } else {
       localStorage.removeItem('dev_user_type');
-      navigate('/landing', { replace: true });
     }
-  }, [isDevelopment, devMode, navigateToUserDashboard, navigate]);
+    
+    // NOTE: Removed automatic navigation - components handle their own navigation
+  }, [isDevelopment, devMode]);
 
   const exitDevMode = useCallback(() => {
     setDevMode(null);
     localStorage.removeItem('dev_user_type');
-    navigate('/landing', { replace: true });
-  }, [navigate]);
+    // NOTE: Removed automatic navigation - components handle their own navigation
+  }, []);
 
   const value: DevelopmentModeContextType = {
     isDevelopment,

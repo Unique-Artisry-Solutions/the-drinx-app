@@ -1,149 +1,53 @@
-import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { ChevronDown, ChevronUp, Settings, User, Store, Megaphone, Shield, Move } from 'lucide-react';
-import { useDevelopmentMode } from '@/contexts/DevelopmentModeContext';
 
-type Position = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Store, Megaphone, Shield, User } from 'lucide-react';
+import { useDevelopmentMode, DevUserType } from '@/contexts/DevelopmentModeContext';
 
 const DevRoleSwitcher: React.FC = () => {
-  const { isDevelopment, devMode, switchToUserType, exitDevMode, isDevModeActive } = useDevelopmentMode();
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [position, setPosition] = useState<Position>('top-right');
+  const { isDevelopment, switchToUserType, devMode } = useDevelopmentMode();
+  const navigate = useNavigate();
 
   if (!isDevelopment) return null;
 
-  const roleOptions = [
-    { type: 'individual' as const, label: 'Individual', icon: User, color: 'bg-blue-500' },
-    { type: 'establishment' as const, label: 'Establishment', icon: Store, color: 'bg-green-500' },
-    { type: 'promoter' as const, label: 'Promoter', icon: Megaphone, color: 'bg-purple-500' },
-    { type: 'admin' as const, label: 'Admin', icon: Shield, color: 'bg-red-500' }
+  const roles = [
+    { type: 'individual' as DevUserType, label: 'Individual', icon: User, path: '/explore' },
+    { type: 'establishment' as DevUserType, label: 'Business', icon: Store, path: '/establishment/dashboard' },
+    { type: 'promoter' as DevUserType, label: 'Promoter', icon: Megaphone, path: '/promoter/dashboard' },
+    { type: 'admin' as DevUserType, label: 'Admin', icon: Shield, path: '/admin/system-breakdown' }
   ];
 
-  const currentRole = roleOptions.find(role => role.type === devMode);
-
-  const toggleExpanded = () => {
-    if (!isExpanded && !isDevModeActive) {
-      // If expanding and not in dev mode, automatically switch to first role
-      setIsExpanded(true);
-      switchToUserType('individual');
-    } else {
-      setIsExpanded(!isExpanded);
-    }
-  };
-
-  const getPositionClasses = () => {
-    switch (position) {
-      case 'top-left':
-        return 'top-4 left-4';
-      case 'top-right':
-        return 'top-4 right-4';
-      case 'bottom-left':
-        return 'bottom-4 left-4';
-      case 'bottom-right':
-        return 'bottom-4 right-4';
-      default:
-        return 'top-4 right-4';
-    }
-  };
-
-  const cyclePosition = () => {
-    const positions: Position[] = ['top-right', 'top-left', 'bottom-left', 'bottom-right'];
-    const currentIndex = positions.indexOf(position);
-    const nextIndex = (currentIndex + 1) % positions.length;
-    setPosition(positions[nextIndex]);
+  const handleRoleSwitch = (userType: DevUserType, path: string) => {
+    switchToUserType(userType);
+    // Manual navigation after dev mode switch
+    setTimeout(() => navigate(path), 100);
   };
 
   return (
-    <div className={`fixed ${getPositionClasses()} z-[9999] max-w-sm`}>
-      {/* Collapsed Header */}
-      <div 
-        className="shadow-lg border-2 border-orange-400 bg-orange-50 p-2 rounded-lg cursor-pointer hover:bg-orange-100 transition-colors"
-        onClick={toggleExpanded}
-      >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Settings className="h-4 w-4 text-orange-600" />
-            <span className="text-sm font-medium text-orange-800">Dev Tools</span>
-            {isDevModeActive && currentRole && (
-              <Badge variant="secondary" className="text-xs">
-                {React.createElement(currentRole.icon, { className: "h-3 w-3 mr-1" })}
-                {currentRole.label}
-              </Badge>
-            )}
-          </div>
-          <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                cyclePosition();
-              }}
-              className="p-1 h-auto hover:bg-orange-200"
-              title="Change position"
-            >
-              <Move className="h-3 w-3 text-orange-600" />
-            </Button>
-            {isExpanded ? (
-              <ChevronUp className="h-4 w-4 text-orange-600" />
-            ) : (
-              <ChevronDown className="h-4 w-4 text-orange-600" />
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Expanded Content */}
-      {isExpanded && (
-        <Card className="mt-2 border-2 border-orange-300 bg-orange-50">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base text-orange-800 flex items-center gap-2">
-              🛠️ Development Mode
-            </CardTitle>
-            <div className="text-sm text-orange-700">
-              <div>Mode: {isDevModeActive ? 'Active' : 'Inactive'}</div>
-              {devMode && <div>Role: {devMode}</div>}
-              <div className="text-xs text-orange-600 mt-1">Position: {position}</div>
-            </div>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <div className="space-y-2">
-              <div className="text-sm font-medium text-orange-800 mb-2">Switch User Type:</div>
-              <div className="grid grid-cols-2 gap-2">
-                {roleOptions.map((option) => (
-                  <Button
-                    key={option.type}
-                    variant={devMode === option.type ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => switchToUserType(option.type)}
-                    className={`justify-start text-xs ${
-                      devMode === option.type 
-                        ? `${option.color} text-white hover:${option.color}/90` 
-                        : 'hover:bg-orange-100'
-                    }`}
-                  >
-                    {React.createElement(option.icon, { className: "h-3 w-3 mr-1" })}
-                    {option.label}
-                  </Button>
-                ))}
-              </div>
-              {isDevModeActive && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={exitDevMode}
-                  className="w-full mt-2 text-xs border-orange-300 text-orange-700 hover:bg-orange-100"
-                >
-                  Exit Dev Mode
-                </Button>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-    </div>
+    <Card className="w-64 border-orange-300 bg-orange-50">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-sm text-orange-800">Dev Mode</CardTitle>
+        <CardDescription className="text-xs text-orange-700">
+          Current: {devMode || 'None'}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        {roles.map((role) => (
+          <Button
+            key={role.type}
+            variant={devMode === role.type ? "default" : "outline"}
+            size="sm"
+            onClick={() => handleRoleSwitch(role.type, role.path)}
+            className="w-full justify-start text-xs"
+          >
+            <role.icon className="w-3 h-3 mr-2" />
+            {role.label}
+          </Button>
+        ))}
+      </CardContent>
+    </Card>
   );
 };
 
