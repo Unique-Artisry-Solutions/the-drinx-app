@@ -1,11 +1,10 @@
-
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { adminRoutes } from './config/adminRoutes';
 import { establishmentRoutes } from './config/establishmentRoutes';
 import { promoterRoutes } from './config/promoterRoutes';
 import { profileRoutes } from './config/profileRoutes';
-import { publicRoutes } from './config/publicRoutes';
+import { simplifiedPublicRoutes } from './config/simplifiedPublicRoutes';
 import { individualRoutes } from './config/individualRoutes';
 import PageSuspense from '@/components/loading/PageSuspense';
 import { useNavigationTracking } from '@/utils/lazyRouteLoader';
@@ -13,12 +12,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
 
-// Lazy loaded special pages
-const EventScannerPage = React.lazy(() => import('@/pages/events/EventScannerPage'));
+// Only lazy load complex pages that actually benefit from it
 const EventDetailPage = React.lazy(() => import('@/pages/EventDetailPage'));
 const BarCrawlDetail = React.lazy(() => import('@/pages/BarCrawlDetail'));
 const CheckoutPage = React.lazy(() => import('@/pages/CheckoutPage'));
 const PurchaseSuccessPage = React.lazy(() => import('@/pages/PurchaseSuccessPage'));
+const EventScannerPage = React.lazy(() => import('@/pages/events/EventScannerPage'));
 
 const AppRoutes = () => {
   useNavigationTracking();
@@ -28,17 +27,17 @@ const AppRoutes = () => {
     <PageSuspense>
       <AnimatePresence mode="wait">
         <Routes location={location} key={location.pathname}>
-          {/* Public Routes */}
-          {publicRoutes.map((route) => (
+          {/* Simplified Public Routes - No lazy loading */}
+          {simplifiedPublicRoutes.map((route) => (
             <Route key={route.path} path={route.path} element={route.element} />
           ))}
 
-          {/* Individual User Routes (includes /explore) */}
+          {/* Individual User Routes */}
           {individualRoutes.map((route) => (
             <Route key={route.path} path={route.path} element={route.element} />
           ))}
 
-          {/* Checkout Routes */}
+          {/* Commerce Routes - Keep lazy loading for heavy pages */}
           <Route 
             path="/checkout" 
             element={
@@ -57,7 +56,7 @@ const AppRoutes = () => {
             } 
           />
 
-          {/* Special Routes */}
+          {/* Event Routes - Keep lazy loading for complex functionality */}
           <Route 
             path="/event/:id" 
             element={
@@ -85,7 +84,7 @@ const AppRoutes = () => {
             }
           />
 
-          {/* Admin Routes */}
+          {/* Admin Routes - Keep complex structure */}
           {adminRoutes.map((route, index) => (
             <Route key={route.path} path={route.path} element={route.element}>
               {route.children && route.children.map((childRoute, childIndex) => (
@@ -99,22 +98,20 @@ const AppRoutes = () => {
             </Route>
           ))}
 
-          {/* Establishment Routes */}
+          {/* Other Protected Routes - Keep existing structure */}
           {establishmentRoutes.map((route) => (
             <Route key={route.path} path={route.path} element={route.element} />
           ))}
 
-          {/* Promoter Routes */}
           {promoterRoutes.map((route) => (
             <Route key={route.path} path={route.path} element={route.element} />
           ))}
 
-          {/* Profile Routes */}
           {profileRoutes.map((route) => (
             <Route key={route.path} path={route.path} element={route.element} />
           ))}
 
-          {/* Fallback for unmatched routes */}
+          {/* Fallback */}
           <Route path="*" element={<Navigate to="/404" replace />} />
         </Routes>
       </AnimatePresence>
