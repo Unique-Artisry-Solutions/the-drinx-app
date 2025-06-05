@@ -2,31 +2,31 @@
 import React from 'react';
 import Layout from '@/components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Building2, BarChart3, Users, Settings } from 'lucide-react';
+import { Search, MapPin, Star } from 'lucide-react';
 
-const EstablishmentDashboardPage: React.FC = () => {
+const ExplorePage: React.FC = () => {
   return (
     <Layout>
       <div className="container mx-auto p-4 max-w-6xl">
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2 flex items-center gap-2">
-            <Building2 className="h-8 w-8 text-primary" />
-            Establishment Dashboard
+            <Search className="h-8 w-8 text-primary" />
+            Explore
           </h1>
-          <p className="text-muted-foreground">Manage your establishment and track performance</p>
+          <p className="text-muted-foreground">Discover amazing non-alcoholic cocktails and venues near you</p>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <BarChart3 className="h-5 w-5" />
-                Analytics
+                <MapPin className="h-5 w-5" />
+                Find Venues
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground">
-                View visitor analytics and engagement metrics
+                Discover establishments serving craft mocktails in your area
               </p>
             </CardContent>
           </Card>
@@ -34,27 +34,24 @@ const EstablishmentDashboardPage: React.FC = () => {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                Customer Management
+                <Star className="h-5 w-5" />
+                Top Rated
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground">
-                Track customer visits and loyalty program members
+                Browse the highest rated mocktails and cocktails
               </p>
             </CardContent>
           </Card>
           
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Settings className="h-5 w-5" />
-                Settings
-              </CardTitle>
+              <CardTitle>Events</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground">
-                Manage your establishment profile and preferences
+                Join bar crawls and mocktail tasting events
               </p>
             </CardContent>
           </Card>
@@ -64,4 +61,4 @@ const EstablishmentDashboardPage: React.FC = () => {
   );
 };
 
-export default EstablishmentDashboardPage;
+export default ExplorePage;

@@ -1,41 +1,50 @@
 
 import React from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/auth/AuthProvider';
 import { useDevelopmentMode } from '@/contexts/DevelopmentModeContext';
-import { useDevAuthBypass } from '@/hooks/useDevAuthBypass';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  requiredUserType?: 'individual' | 'establishment' | 'promoter' | 'admin';
-  fallbackPath?: string;
+  requiredUserType?: 'admin' | 'establishment' | 'promoter' | 'individual';
 }
 
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
-  children,
-  requiredUserType,
-  fallbackPath = '/landing'
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ 
+  children, 
+  requiredUserType 
 }) => {
-  const location = useLocation();
-  const { isDevelopment, isInitialized } = useDevelopmentMode();
-  const { userType, isAuthenticated, isLoading } = useDevAuthBypass();
+  const { isAuthenticated, userType, isLoading } = useAuth();
+  const { isDevelopment, devMode } = useDevelopmentMode();
 
-  // Show loading while auth is being determined
-  if (isLoading || !isInitialized) {
+  // Show loading while checking auth
+  if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+          <p className="mt-4 text-muted-foreground">Loading...</p>
+        </div>
       </div>
     );
   }
 
-  // Check authentication
-  if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+  // In development mode, allow dev bypass
+  if (isDevelopment && devMode) {
+    // If a specific user type is required, check dev mode matches
+    if (requiredUserType && devMode !== requiredUserType) {
+      return <Navigate to="/debug" replace />;
+    }
+    return <>{children}</>;
   }
 
-  // Check user type if specified
+  // Check if user is authenticated
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // Check if user has required user type
   if (requiredUserType && userType !== requiredUserType) {
-    return <Navigate to={fallbackPath} replace />;
+    return <Navigate to="/explore" replace />;
   }
 
   return <>{children}</>;

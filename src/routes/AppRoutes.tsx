@@ -6,18 +6,18 @@ import { useDevelopmentMode } from '@/contexts/DevelopmentModeContext';
 import ProtectedRoute from './protectedRoutes';
 import PageSuspense from '@/components/loading/PageSuspense';
 
-// Lazy load pages
-const LandingPage = React.lazy(() => import('@/pages/landing/LandingPage'));
-const ExplorePage = React.lazy(() => import('@/pages/explore/ExplorePage'));
-const ProfilePage = React.lazy(() => import('@/pages/profile/ProfilePage'));
+// Lazy load pages - using correct paths from the codebase
+const LandingPage = React.lazy(() => import('@/pages/LandingPage'));
+const ExplorePage = React.lazy(() => import('@/pages/ExplorePage'));
+const ProfilePage = React.lazy(() => import('@/pages/ProfilePage'));
 const NotFoundPage = React.lazy(() => import('@/pages/NotFound'));
-const LoginPage = React.lazy(() => import('@/pages/auth/LoginPage'));
+const LoginPage = React.lazy(() => import('@/pages/LoginPage'));
 const RewardsPage = React.lazy(() => import('@/pages/rewards/index'));
 const NotificationsPage = React.lazy(() => import('@/pages/notifications/NotificationsPage'));
 const DebugPage = React.lazy(() => import('@/components/debug/DebugPage'));
 
-// Admin pages
-const AdminSystemBreakdownPage = React.lazy(() => import('@/pages/admin/AdminSystemBreakdownPage'));
+// Admin pages - using correct path
+const AdminSystemBreakdownPage = React.lazy(() => import('@/pages/admin/SystemBreakdownPage'));
 
 // Establishment pages
 const EstablishmentDashboardPage = React.lazy(() => import('@/pages/establishment/EstablishmentDashboardPage'));
@@ -31,11 +31,15 @@ const AppRoutes: React.FC = () => {
 
   // Show loading while initializing
   if (authLoading || !isInitialized) {
-    return <PageSuspense />;
+    return (
+      <PageSuspense>
+        <div>Loading...</div>
+      </PageSuspense>
+    );
   }
 
   return (
-    <Suspense fallback={<PageSuspense />}>
+    <PageSuspense>
       <Routes>
         {/* Public routes */}
         <Route path="/" element={<LandingPage />} />
@@ -107,7 +111,7 @@ const AppRoutes: React.FC = () => {
         {/* 404 route */}
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
-    </Suspense>
+    </PageSuspense>
   );
 };
 
