@@ -31,27 +31,42 @@ export const isPathActive = (currentPath: string, menuPath: string, exact = fals
  * Creates a breadcrumb trail from dynamic routes
  * @param pathname The current pathname
  * @param routeConfigs The array of route configurations
+ * @param userType The current user type to determine their home path
+ * @param isAuthenticated Whether the user is authenticated
  */
 export const createBreadcrumbsFromPath = (
   pathname: string,
-  routeConfigs: Array<{ path: string; metadata?: { breadcrumb?: string } }>
+  routeConfigs: Array<{ path: string; metadata?: { breadcrumb?: string } }>,
+  userType?: string | null,
+  isAuthenticated?: boolean
 ) => {
   const segments = pathname.split('/').filter(Boolean);
   const breadcrumbs = [];
   
+  // Get the user's home path
+  const userHomePath = getHomePathByUserType(userType);
+  
+  // Don't add home breadcrumb if user is already on their home dashboard
+  const isOnHomeDashboard = pathname === userHomePath && isAuthenticated;
+  
   let currentPath = '';
   
-  // Always include home if not on home page - but use dynamic home path
-  if (pathname !== '/' && pathname !== '/landing') {
+  // Only add home breadcrumb if not on home dashboard and not on landing page
+  if (!isOnHomeDashboard && pathname !== '/' && pathname !== '/landing') {
     breadcrumbs.push({ 
-      path: '/', // This will be replaced by the component with the correct home path
-      label: 'Home' // This will be replaced by the component with the correct label
+      path: userHomePath,
+      label: getUserHomeLabel(userType, isAuthenticated)
     });
   }
   
   // Build up breadcrumbs from path segments
   segments.forEach((segment, index) => {
     currentPath += `/${segment}`;
+    
+    // Skip adding breadcrumb for the current page if it's the user's home dashboard
+    if (currentPath === userHomePath && isAuthenticated) {
+      return;
+    }
     
     // Try to find a matching route config
     const matchingConfig = routeConfigs.find(config => {
@@ -74,6 +89,26 @@ export const createBreadcrumbsFromPath = (
   });
   
   return breadcrumbs;
+};
+
+/**
+ * Get the home label based on user type
+ */
+const getUserHomeLabel = (userType?: string | null, isAuthenticated?: boolean): string => {
+  if (!isAuthenticated || !userType) {
+    return 'Home';
+  }
+  
+  switch (userType) {
+    case 'establishment':
+    case 'promoter':
+    case 'admin':
+      return 'Dashboard';
+    case 'individual':
+      return 'Explore';
+    default:
+      return 'Home';
+  }
 };
 
 /**

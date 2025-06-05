@@ -5,19 +5,13 @@ import { ChevronRight } from 'lucide-react';
 import LinkComponent from './LinkComponent';
 import { createBreadcrumbsFromPath } from '@/utils/navigation';
 import { useAuth } from '@/contexts/auth/AuthProvider';
-import { getHomePathByUserType, getHomeLabelByUserType } from '@/utils/breadcrumbUtils';
 
 const Breadcrumbs: React.FC = () => {
   const location = useLocation();
   const { userType, isAuthenticated } = useAuth();
   
-  // Get dynamic home path and label based on user type
-  const homePath = getHomePathByUserType(userType, isAuthenticated);
-  const homeLabel = getHomeLabelByUserType(userType, isAuthenticated);
-  
   // Simple route configurations for breadcrumb generation
   const routeConfigs = [
-    { path: homePath, metadata: { breadcrumb: homeLabel } },
     { path: '/explore', metadata: { breadcrumb: 'Explore' } },
     { path: '/events', metadata: { breadcrumb: 'Events' } },
     { path: '/swig-circuits', metadata: { breadcrumb: 'Swig Circuits' } },
@@ -25,20 +19,16 @@ const Breadcrumbs: React.FC = () => {
     { path: '/profile', metadata: { breadcrumb: 'Profile' } },
     { path: '/admin', metadata: { breadcrumb: 'Admin' } },
     { path: '/establishment', metadata: { breadcrumb: 'Establishment' } },
-    { path: '/promoter', metadata: { breadcrumb: 'Promoter' } }
+    { path: '/promoter', metadata: { breadcrumb: 'Dashboard' } },
+    { path: '/promoter/settings', metadata: { breadcrumb: 'Settings' } },
+    { path: '/promoter/profile', metadata: { breadcrumb: 'Profile' } },
+    { path: '/promoter/events', metadata: { breadcrumb: 'Events' } },
+    { path: '/promoter/analytics', metadata: { breadcrumb: 'Analytics' } }
   ];
 
-  const breadcrumbs = createBreadcrumbsFromPath(location.pathname, routeConfigs);
+  const breadcrumbs = createBreadcrumbsFromPath(location.pathname, routeConfigs, userType, isAuthenticated);
 
-  // Replace the first breadcrumb (if it's pointing to '/') with the dynamic home path
-  if (breadcrumbs.length > 0 && breadcrumbs[0].path === '/') {
-    breadcrumbs[0] = {
-      path: homePath,
-      label: homeLabel
-    };
-  }
-
-  if (breadcrumbs.length <= 1) {
+  if (breadcrumbs.length <= 0) {
     return null;
   }
 
