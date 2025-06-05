@@ -6,7 +6,6 @@ import { promoterRoutes } from './config/promoterRoutes';
 import { profileRoutes } from './config/profileRoutes';
 import { simplifiedPublicRoutes } from './config/simplifiedPublicRoutes';
 import { individualRoutes } from './config/individualRoutes';
-import { SmartRouteWrapper } from '@/components/routing/SmartRouteWrapper';
 import PageSuspense from '@/components/loading/PageSuspense';
 import { useNavigationTracking } from '@/utils/lazyRouteLoader';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -27,70 +26,69 @@ const AppRoutes = () => {
   const location = useLocation();
 
   return (
-    <SmartRouteWrapper>
-      <PageSuspense>
-        <AnimatePresence mode="wait">
-          <Routes location={location} key={location.pathname}>
-            {/* Simplified Public Routes - No complex context needed */}
-            {simplifiedPublicRoutes.map((route) => (
-              <Route key={route.path} path={route.path} element={route.element} />
-            ))}
+    <PageSuspense>
+      <AnimatePresence mode="wait">
+        <Routes location={location} key={location.pathname}>
+          {/* Simplified Public Routes - No lazy loading */}
+          {simplifiedPublicRoutes.map((route) => (
+            <Route key={route.path} path={route.path} element={route.element} />
+          ))}
 
-            {/* Simplified Individual User Routes - Basic auth only */}
-            {individualRoutes.map((route) => (
-              <Route key={route.path} path={route.path} element={route.element} />
-            ))}
+          {/* Simplified Individual User Routes - Direct rendering */}
+          {individualRoutes.map((route) => (
+            <Route key={route.path} path={route.path} element={route.element} />
+          ))}
 
-            {/* Simplified Commerce Routes - Direct rendering */}
-            <Route path="/checkout" element={<CheckoutPage />} />
-            <Route path="/purchase-success" element={<PurchaseSuccessPage />} />
+          {/* Simplified Commerce Routes - Direct rendering */}
+          <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/purchase-success" element={<PurchaseSuccessPage />} />
 
-            {/* Simplified Event Routes - Direct rendering */}
-            <Route path="/event/:id" element={<EventDetailPage />} />
-            <Route path="/bar-crawl/:id" element={<BarCrawlDetail />} />
+          {/* Simplified Event Routes - Direct rendering */}
+          <Route path="/event/:id" element={<EventDetailPage />} />
+          <Route path="/bar-crawl/:id" element={<BarCrawlDetail />} />
 
-            {/* Scanner route - Keep lazy loading for camera permissions */}
-            <Route 
-              path="/events/scan/:eventId/:token" 
-              element={
-                <PageSuspense fallback={<Skeleton className="h-screen w-full" />}>
-                  <EventScannerPage />
-                </PageSuspense>
-              }
-            />
+          {/* Scanner route - Keep lazy loading for camera permissions */}
+          <Route 
+            path="/events/scan/:eventId/:token" 
+            element={
+              <PageSuspense fallback={<Skeleton className="h-screen w-full" />}>
+                <EventScannerPage />
+              </PageSuspense>
+            }
+          />
 
-            {/* Protected Routes - These get complex auth context automatically */}
-            {adminRoutes.map((route, index) => (
-              <Route key={route.path} path={route.path} element={route.element}>
-                {route.children && route.children.map((childRoute, childIndex) => (
-                  <Route 
-                    key={childRoute.path || 'index'} 
-                    path={childRoute.path} 
-                    index={childRoute.index}
-                    element={childRoute.element} 
-                  />
-                ))}
-              </Route>
-            ))}
+          {/* Admin Routes - Keep complex structure */}
+          {adminRoutes.map((route, index) => (
+            <Route key={route.path} path={route.path} element={route.element}>
+              {route.children && route.children.map((childRoute, childIndex) => (
+                <Route 
+                  key={childRoute.path || 'index'} 
+                  path={childRoute.path} 
+                  index={childRoute.index}
+                  element={childRoute.element} 
+                />
+              ))}
+            </Route>
+          ))}
 
-            {establishmentRoutes.map((route) => (
-              <Route key={route.path} path={route.path} element={route.element} />
-            ))}
+          {/* Other Protected Routes - Keep existing structure */}
+          {establishmentRoutes.map((route) => (
+            <Route key={route.path} path={route.path} element={route.element} />
+          ))}
 
-            {promoterRoutes.map((route) => (
-              <Route key={route.path} path={route.path} element={route.element} />
-            ))}
+          {promoterRoutes.map((route) => (
+            <Route key={route.path} path={route.path} element={route.element} />
+          ))}
 
-            {profileRoutes.map((route) => (
-              <Route key={route.path} path={route.path} element={route.element} />
-            ))}
+          {profileRoutes.map((route) => (
+            <Route key={route.path} path={route.path} element={route.element} />
+          ))}
 
-            {/* Fallback */}
-            <Route path="*" element={<Navigate to="/404" replace />} />
-          </Routes>
-        </AnimatePresence>
-      </PageSuspense>
-    </SmartRouteWrapper>
+          {/* Fallback */}
+          <Route path="*" element={<Navigate to="/404" replace />} />
+        </Routes>
+      </AnimatePresence>
+    </PageSuspense>
   );
 };
 
