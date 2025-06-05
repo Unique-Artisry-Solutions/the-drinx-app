@@ -1,5 +1,5 @@
 
-// Bar Crawl Feature Module - Consolidated exports
+// Bar Crawl Feature Module - Specific exports to avoid circular dependencies
 export { default as BarCrawlHeader } from './BarCrawlHeader';
 export { default as BarCrawlDetails } from './BarCrawlDetails';
 export { default as CrawlRouteCard } from './CrawlRouteCard';
@@ -11,18 +11,18 @@ export { default as VenueDiversity } from './VenueDiversity';
 export { default as FeedbackMechanism } from './FeedbackMechanism';
 export { default as JoinBarCrawlButton } from './JoinBarCrawlButton';
 
-// Profile sub-module
+// Profile components
 export { default as BarCrawlProfileHeader } from './profile/BarCrawlProfileHeader';
 export { default as MapTabContent } from './profile/MapTabContent';
 
-// Selection sub-module
+// Selection components
 export { default as EstablishmentItem } from './selection/EstablishmentItem';
 export { default as SelectedEstablishmentsList } from './selection/SelectedEstablishmentsList';
 
-// Management sub-module
+// Management components
 export { default as LoadingState } from './management/LoadingState';
 export { default as NotFoundState } from './management/NotFoundState';
 export { default as InvitationsTab } from './management/InvitationsTab';
 
-// Type exports
+// Types - specific exports only
 export type { DrinkHighlight, DrinkHighlightsProps } from './DrinkHighlights';
