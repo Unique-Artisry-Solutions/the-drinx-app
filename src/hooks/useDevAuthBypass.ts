@@ -1,3 +1,4 @@
+
 import { useDevelopmentMode } from '@/contexts/DevelopmentModeContext';
 import { useAuthenticatedUser } from './useAuthenticatedUser';
 import { UserType } from '@/types/navigation/NavigationTypes';
@@ -8,7 +9,7 @@ import { UserType } from '@/types/navigation/NavigationTypes';
  */
 export const useDevAuthBypass = () => {
   const { isDevelopment, isDevModeActive, devMode } = useDevelopmentMode();
-  const { userType: authUserType, isAuthenticated: authIsAuthenticated } = useAuthenticatedUser();
+  const { userType: authUserType, isAuthenticated: authIsAuthenticated, user, isLoading } = useAuthenticatedUser();
 
   // In development mode with dev mode active, use dev settings
   if (isDevelopment && isDevModeActive && devMode) {
@@ -16,7 +17,10 @@ export const useDevAuthBypass = () => {
       userType: devMode as UserType,
       isAuthenticated: true,
       isDevelopment,
-      isDevModeActive
+      isDevModeActive,
+      user: user || null, // Pass through the actual user if available
+      isUsingDevBypass: true,
+      isLoading: false // When using dev bypass, we're not loading
     };
   }
 
@@ -25,7 +29,10 @@ export const useDevAuthBypass = () => {
     userType: authUserType,
     isAuthenticated: authIsAuthenticated,
     isDevelopment,
-    isDevModeActive
+    isDevModeActive,
+    user: user || null,
+    isUsingDevBypass: false,
+    isLoading: isLoading || false
   };
 };
 
