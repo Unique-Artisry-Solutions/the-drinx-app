@@ -1,7 +1,5 @@
 
-// Core hooks - Phase 5 Cleaned
-// Essential core hooks only
-
+// Core hooks - compatibility export
 export { useAuth } from '../useAuth';
 export { useData, useDataMutation } from '../useData';
 export { useAnalytics } from '../useAnalytics';

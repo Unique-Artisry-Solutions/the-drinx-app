@@ -1,25 +1,49 @@
 
-// Admin Components Module - Phase 5 Cleaned
-// Focused exports without redundancy
+// Admin Components Module - Phase 9D Updated
+// Comprehensive admin interface components
 
 // Layout and structure
 export * from './layout';
 
-// Core admin functionality
+// Data management
 export * from './tables';
+export * from './examples';
+
+// System management
 export * from './systemBreakdown';
 export * from './systemConfiguration';
 
-// Specialized modules
+// Content management
 export * from './contentFlags';
 export * from './photoModeration';
-export * from './rewards';
-export * from './monitoring';
 
-// Analytics and charts
+// Analytics and reporting
 export { default as AnalyticsService } from './analytics/AnalyticsService';
+export { default as OptimizedRealTimeMonitoringComponent } from './analytics/OptimizedRealTimeMonitoringComponent';
+
+// Rewards system
+export * from './rewards';
+
+// Database tools
+export { default as DatabaseHealthDashboard } from './database/DatabaseHealthDashboard';
+
+// Testing utilities
+export * from './testing';
+
+// Theme management
+export * from './theme';
+
+// Audience management
+export * from './audience';
+
+// Component catalog
+export * from './componentCatalog';
+
+// Documentation
+export * from './documentation';
+
+// Charts
 export * from './charts';
 
-// Database and testing
-export { default as DatabaseHealthDashboard } from './database/DatabaseHealthDashboard';
-export * from './testing';
+// Monitoring (Phase 9D addition)
+export * from './monitoring';

@@ -1,27 +1,42 @@
 
-// Main Components Index - Phase 5 Cleaned
-// Simplified and focused exports only
+// Main Components Index - Phase 2 Consolidated
+// This file provides organized access to all component modules
 
-// Core UI components
+// Core layout and navigation
+export * from './navigation';
+export * from './layout';
+export * from './cards';
+
+// Feature Modules (Barrel Exports)
+export * from './barCrawl';
+export * from './auth';
+export * from './notifications';
+export * from './analytics';
+export * from './forms';
+export * from './common';
+export * from './development';
+export * from './map';
+export * from './pages';
+
+// Admin modules
+export * from './admin';
+export * from './shared';
+
+// Charts (legacy compatibility)
+export * from './charts';
+
+// UI components (from shadcn)
 export * from './ui';
 
-// Essential layout and navigation
-export { default as Layout } from './Layout';
-export { default as TopNavigation } from './TopNavigation';
+// Specialized modules
+export * from './animations';
+export * from './rewards';
+export * from './promoter';
+export * from './pricing';
 
-// Primary feature components (direct exports only)
+// Direct exports for commonly used components
+export { default as Layout } from './Layout';
+export { default as TopNavigation } from './navigation/TopNavigation';
 export { default as EstablishmentCard } from './EstablishmentCard';
 export { default as CocktailCard } from './CocktailCard';
 export { default as EstablishmentList } from './EstablishmentList';
-export { default as UserAuth } from './UserAuth';
-
-// Feature modules (barrel exports maintained where needed)
-export * from './navigation';
-export * from './admin';
-export * from './shared';
-export * from './notifications';
-export * from './auth';
-export * from './barCrawl';
-export * from './analytics';
-export * from './charts';
-export * from './rewards';
