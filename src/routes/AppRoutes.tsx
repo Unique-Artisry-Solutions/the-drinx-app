@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { adminRoutes } from './config/adminRoutes';
@@ -32,7 +33,7 @@ const AppRoutes = () => {
             <Route key={route.path} path={route.path} element={route.element} />
           ))}
 
-          {/* Individual User Routes */}
+          {/* Simplified Individual User Routes - Direct rendering */}
           {individualRoutes.map((route) => (
             <Route key={route.path} path={route.path} element={route.element} />
           ))}
