@@ -46,13 +46,32 @@ export const createBreadcrumbsFromPath = (
   // Get the user's home path
   const userHomePath = getHomePathByUserType(userType);
   
-  // Don't add home breadcrumb if user is already on their home dashboard
-  const isOnHomeDashboard = pathname === userHomePath && isAuthenticated;
+  // Console log for debugging
+  console.log('Breadcrumb Debug:', {
+    pathname,
+    userType,
+    isAuthenticated,
+    userHomePath,
+    isOnHomeDashboard: pathname === userHomePath
+  });
+  
+  // Don't show any breadcrumbs if user is on their dashboard root
+  // This includes /promoter, /establishment/dashboard, /admin/system-breakdown, /explore
+  const isDashboardRoot = pathname === userHomePath || 
+                          pathname === '/promoter' ||
+                          pathname === '/establishment/dashboard' ||
+                          pathname === '/admin/system-breakdown' ||
+                          pathname === '/explore';
+  
+  if (isDashboardRoot) {
+    console.log('On dashboard root, returning empty breadcrumbs');
+    return [];
+  }
   
   let currentPath = '';
   
-  // Only add home breadcrumb if not on home dashboard and not on landing page
-  if (!isOnHomeDashboard && pathname !== '/' && pathname !== '/landing') {
+  // Only add home breadcrumb if not on a dashboard root and not on landing page
+  if (pathname !== '/' && pathname !== '/landing') {
     breadcrumbs.push({ 
       path: userHomePath,
       label: getUserHomeLabel(userType, isAuthenticated)
@@ -63,8 +82,11 @@ export const createBreadcrumbsFromPath = (
   segments.forEach((segment, index) => {
     currentPath += `/${segment}`;
     
-    // Skip adding breadcrumb for the current page if it's the user's home dashboard
-    if (currentPath === userHomePath && isAuthenticated) {
+    // Skip adding breadcrumb for the dashboard root paths
+    if (currentPath === '/promoter' || 
+        currentPath === '/establishment/dashboard' || 
+        currentPath === '/admin/system-breakdown' || 
+        currentPath === '/explore') {
       return;
     }
     

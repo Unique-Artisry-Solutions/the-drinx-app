@@ -4,11 +4,11 @@ import { useLocation } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
 import LinkComponent from './LinkComponent';
 import { createBreadcrumbsFromPath } from '@/utils/navigation';
-import { useAuth } from '@/contexts/auth/AuthProvider';
+import { useDevAuthBypass } from '@/hooks/useDevAuthBypass';
 
 const Breadcrumbs: React.FC = () => {
   const location = useLocation();
-  const { userType, isAuthenticated } = useAuth();
+  const { userType, isAuthenticated } = useDevAuthBypass();
   
   // Simple route configurations for breadcrumb generation
   const routeConfigs = [
