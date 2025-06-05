@@ -76,7 +76,6 @@ export const useRewards = () => {
     fetchRewards();
   }, []);
 
-  // Add the redeemReward method to fix the build error
   const redeemReward = async (rewardId: string) => {
     try {
       setIsLoading(true);
@@ -110,10 +109,23 @@ export const useRewards = () => {
     }
   };
 
+  // Calculate derived properties for backward compatibility
+  const userTier = rewardProfile?.currentTier || null;
+  const userPoints = rewardProfile?.points || 0;
+  const nextTier = null; // Would be calculated based on available tiers
+  const pointsToNextTier = nextTier ? Math.max(0, nextTier.points_required - userPoints) : 0;
+  const rewardHistory = rewardProfile?.transactionHistory || [];
+
   return {
     rewardProfile,
     isLoading,
     error,
-    redeemReward
+    redeemReward,
+    // Add the expected properties for backward compatibility
+    userTier,
+    userPoints,
+    nextTier,
+    pointsToNextTier,
+    rewardHistory
   };
 };

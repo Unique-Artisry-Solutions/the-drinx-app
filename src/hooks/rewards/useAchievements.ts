@@ -65,10 +65,15 @@ export const useAchievements = () => {
     }
   };
 
+  // Calculate next achievement for backward compatibility
+  const incompleteAchievements = achievements.filter(a => !a.isCompleted);
+  const nextAchievement = incompleteAchievements.length > 0 ? incompleteAchievements[0] : null;
+
   return {
     achievements,
     achievementsByCategory,
     isLoading,
-    recordActivity
+    recordActivity,
+    nextAchievement
   };
 };
