@@ -82,18 +82,24 @@ class IsolatedServiceRegistryClass {
 
   // Get registry metrics
   getRegistryMetrics(): RegistryMetrics {
-    const healthChecks = Array.from(this.services.values()).map(wrapper => {
+    const healthStatuses: ('healthy' | 'degraded' | 'error')[] = [];
+    
+    for (const wrapper of this.services.values()) {
       if (wrapper.standardInterface?.healthCheck) {
-        return 'healthy'; // Simplified for now
+        // For now, assume all services with health checks are healthy
+        // In a real implementation, this would call the actual health check
+        healthStatuses.push('healthy');
+      } else {
+        // Services without health checks are considered degraded
+        healthStatuses.push('degraded');
       }
-      return 'unknown';
-    });
+    }
     
     return {
       totalServices: this.services.size,
-      healthyServices: healthChecks.filter(status => status === 'healthy').length,
-      degradedServices: healthChecks.filter(status => status === 'degraded').length,
-      errorServices: healthChecks.filter(status => status === 'error').length,
+      healthyServices: healthStatuses.filter(status => status === 'healthy').length,
+      degradedServices: healthStatuses.filter(status => status === 'degraded').length,
+      errorServices: healthStatuses.filter(status => status === 'error').length,
       lastHealthCheck: new Date()
     };
   }

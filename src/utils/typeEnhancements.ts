@@ -13,7 +13,7 @@ export const safeTypeGuards = {
   },
   
   // Safe object property checking
-  hasProperty: <T extends object, K extends string>(
+  hasProperty: <T extends object, K extends keyof any>(
     obj: T, 
     key: K
   ): obj is T & Record<K, unknown> => {
