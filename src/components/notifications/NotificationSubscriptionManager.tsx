@@ -11,7 +11,7 @@ interface NotificationSubscriptionManagerProps {
   onRequestPermission: () => Promise<void>;
 }
 
-export const NotificationSubscriptionManager: React.FC<NotificationSubscriptionManagerProps> = ({
+const NotificationSubscriptionManager: React.FC<NotificationSubscriptionManagerProps> = ({
   permissionStatus,
   isSending,
   onSendTest,
@@ -67,3 +67,5 @@ export const NotificationSubscriptionManager: React.FC<NotificationSubscriptionM
     </div>
   );
 };
+
+export default NotificationSubscriptionManager;

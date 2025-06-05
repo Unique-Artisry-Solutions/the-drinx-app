@@ -7,7 +7,7 @@ interface NotificationErrorProps {
   error: string;
 }
 
-export const NotificationError: React.FC<NotificationErrorProps> = ({ error }) => {
+const NotificationError: React.FC<NotificationErrorProps> = ({ error }) => {
   return (
     <Alert variant="destructive" className="mb-4">
       <AlertCircle className="h-4 w-4" />
@@ -16,3 +16,5 @@ export const NotificationError: React.FC<NotificationErrorProps> = ({ error }) =
     </Alert>
   );
 };
+
+export default NotificationError;

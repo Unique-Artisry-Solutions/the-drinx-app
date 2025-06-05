@@ -11,7 +11,7 @@ interface SubscriptionStatusProps {
   refreshPermissions?: () => void;
 }
 
-export const SubscriptionStatus = ({
+const SubscriptionStatus = ({
   isLoading,
   hasServiceWorker,
   permissionStatus,
@@ -90,3 +90,5 @@ export const SubscriptionStatus = ({
     </>
   );
 };
+
+export default SubscriptionStatus;

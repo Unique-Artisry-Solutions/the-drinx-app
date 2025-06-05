@@ -14,7 +14,7 @@ interface AchievementsListProps {
   isLoading?: boolean;
 }
 
-export const AchievementsList: React.FC<AchievementsListProps> = ({ 
+const AchievementsList: React.FC<AchievementsListProps> = ({ 
   achievements, 
   achievementsByCategory, 
   isLoading = false 
@@ -133,3 +133,5 @@ export const AchievementsList: React.FC<AchievementsListProps> = ({
     </Card>
   );
 };
+
+export default AchievementsList;

@@ -8,7 +8,7 @@ interface NotificationControlsProps {
   onDiagnose: () => Promise<void>;
 }
 
-export const NotificationControls: React.FC<NotificationControlsProps> = ({
+const NotificationControls: React.FC<NotificationControlsProps> = ({
   onRefresh,
   onDiagnose
 }) => {
@@ -37,3 +37,5 @@ export const NotificationControls: React.FC<NotificationControlsProps> = ({
     </div>
   );
 };
+
+export default NotificationControls;

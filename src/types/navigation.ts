@@ -10,10 +10,16 @@ export interface NavigationItem {
   exact?: boolean;
 }
 
+export interface BreadcrumbItem {
+  label: string;
+  href?: string;
+}
+
 export interface NavigationConfig {
   items: NavigationItem[];
   userType: UserType | null;
   isAuthenticated: boolean;
+  customNavItems?: NavigationItem[];
 }
 
 export interface TabOption {
