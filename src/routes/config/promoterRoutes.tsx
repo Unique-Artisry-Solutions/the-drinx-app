@@ -1,6 +1,6 @@
 
 import { lazy } from 'react';
-import { RouteObject } from 'react-router-dom';
+import { RouteObject, Navigate } from 'react-router-dom';
 
 // Lazy loaded components
 const PromoterDashboardPage = lazy(() => import('@/pages/promoter/PromoterDashboardPage'));
@@ -20,7 +20,8 @@ const PromoterNotificationsPage = lazy(() => import('@/pages/promoter/notificati
 const NotificationTestingPage = lazy(() => import('@/pages/promoter/notifications/NotificationTestingPage'));
 
 export const promoterRoutes: RouteObject[] = [
-  { path: '/promoter/dashboard', element: <PromoterDashboardPage /> },
+  { path: '/promoter', element: <PromoterDashboardPage /> }, // Dashboard is now the root
+  { path: '/promoter/dashboard', element: <Navigate to="/promoter" replace /> }, // Redirect for backward compatibility
   { path: '/promoter/profile', element: <PromoterProfile /> },
   { path: '/promoter/profile/edit', element: <PromoterProfileEdit /> },
   { path: '/promoter/settings', element: <PromoterSettingsPage /> },

@@ -74,7 +74,7 @@ export const DevelopmentModeProvider: React.FC<{ children: React.ReactNode }> = 
         targetPath = '/establishment/dashboard';
         break;
       case 'promoter':
-        targetPath = '/promoter/dashboard';
+        targetPath = '/promoter'; // Changed from '/promoter/dashboard' to '/promoter'
         break;
       case 'admin':
         targetPath = '/admin/system-breakdown';

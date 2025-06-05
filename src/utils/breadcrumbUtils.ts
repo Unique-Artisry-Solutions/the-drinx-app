@@ -13,7 +13,7 @@ export const getHomePathByUserType = (userType: UserType | null, isAuthenticated
     case 'establishment':
       return '/establishment/dashboard';
     case 'promoter':
-      return '/promoter/dashboard';
+      return '/promoter'; // Changed from '/promoter/dashboard' to '/promoter'
     case 'admin':
       return '/admin/system-breakdown';
     case 'individual':
