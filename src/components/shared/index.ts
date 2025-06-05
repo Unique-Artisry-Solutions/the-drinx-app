@@ -1,14 +1,14 @@
 
-// Shared Components - Phase 9E Enhanced
-// Export both legacy and enhanced components
+// Shared Components - Phase 5 Cleaned
+// Essential shared components and utilities
 
-// Legacy components (maintained for backward compatibility)
+// Standard layout components
 export { default as StandardPageActions } from './StandardPageActions';
 export { default as StandardPageContent } from './StandardPageContent';
 export { default as StandardPageHeader } from './StandardPageHeader';
 export { default as StandardPageLayout } from './StandardPageLayout';
 
-// Enhanced components (Phase 9E)
+// Enhanced components
 export {
   EnhancedLoadingSpinner,
   EnhancedErrorDisplay,
@@ -20,11 +20,7 @@ export {
   type EnhancedContainerProps
 } from './EnhancedStandardComponents';
 
-// Types
+// Types and utilities
 export * from './types';
-
-// Utilities
 export * from './utils';
-
-// Hooks
 export { useStrictValidation } from '../../hooks/useStrictValidation';

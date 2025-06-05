@@ -1,9 +1,11 @@
 
-// Charts Module - Updated for Phase 9E
-// Import types from centralized location
-export type { ChartDataPoint, ChartSeriesConfig, BaseChartProps, EnhancedChartProps } from '../../types/charts';
+// Charts Module - Phase 5 Cleaned
+// Simplified chart exports
 
-// Chart component exports
+// Types from centralized location
+export type { ChartDataPoint, ChartSeriesConfig, BaseChartProps } from '../../types/charts';
+
+// Chart components
 export { default as AnalyticsLineChart } from './AnalyticsLineChart';
 export { default as AnalyticsBarChart } from './AnalyticsBarChart';
 export { default as AnalyticsPieChart } from './AnalyticsPieChart';
