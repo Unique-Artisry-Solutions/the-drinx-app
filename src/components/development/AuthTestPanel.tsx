@@ -1,128 +1,95 @@
 
-import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import React from 'react';
+import { useAuth } from '@/contexts/auth/AuthProvider';
+import { useDevAuthBypass } from '@/hooks/useDevAuthBypass';
+import { useDevelopmentMode } from '@/contexts/DevelopmentModeContext';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { useCompatibleAuth } from '@/services/compatibility/AuthCompatibilityWrapper';
-import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { RefreshCw, CheckCircle, AlertCircle } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useLocation, useNavigate } from 'react-router-dom';
 
-const AuthTestPanel: React.FC = () => {
-  const [testMode, setTestMode] = useState<'compatible' | 'enhanced'>('compatible');
-  const compatibleAuth = useCompatibleAuth();
-  const enhancedAuth = useEnhancedAuth({ enableLogging: true, enableTypeValidation: true });
+const AuthTestPanel = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { isDevelopment, isDevModeActive } = useDevelopmentMode();
+  const { 
+    user, 
+    session, 
+    isLoading, 
+    authStable, 
+    userType: authUserType 
+  } = useAuth();
+  
+  const { 
+    isAuthenticated: devIsAuthenticated, 
+    userType: devUserType,
+    isUsingDevBypass 
+  } = useDevAuthBypass();
 
-  const currentAuth = testMode === 'compatible' ? compatibleAuth : enhancedAuth;
+  if (!isDevelopment) {
+    return null;
+  }
 
-  const getStatusColor = (isAuthenticated: boolean) => {
-    return isAuthenticated ? 'text-green-600' : 'text-red-600';
-  };
-
-  const getStatusIcon = (isAuthenticated: boolean) => {
-    return isAuthenticated ? <CheckCircle className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />;
-  };
+  const testRoutes = [
+    { path: '/', label: 'Index' },
+    { path: '/landing', label: 'Landing' },
+    { path: '/explore', label: 'Explore' },
+    { path: '/login', label: 'Login' },
+    { path: '/admin/system-breakdown', label: 'Admin Dashboard' }
+  ];
 
   return (
-    <Card className="w-full max-w-2xl">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <RefreshCw className="h-5 w-5" />
-          Auth Test Panel (Pilot Migration)
-        </CardTitle>
+    <Card className="fixed bottom-4 left-4 w-80 z-50 bg-white shadow-lg">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm">Auth & Route Test Panel</CardTitle>
       </CardHeader>
-      <CardContent>
-        <Tabs value={testMode} onValueChange={(value) => setTestMode(value as 'compatible' | 'enhanced')}>
-          <TabsList className="grid w-full grid-cols-2 mb-4">
-            <TabsTrigger value="compatible">Compatible Auth</TabsTrigger>
-            <TabsTrigger value="enhanced">Enhanced Auth</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="compatible" className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <h3 className="font-medium">Authentication Status</h3>
-                <div className="flex items-center gap-2">
-                  {getStatusIcon(compatibleAuth.isAuthenticated)}
-                  <span className={getStatusColor(compatibleAuth.isAuthenticated)}>
-                    {compatibleAuth.isAuthenticated ? 'Authenticated' : 'Not Authenticated'}
-                  </span>
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <h3 className="font-medium">User Type</h3>
-                <Badge variant="outline">{compatibleAuth.userType}</Badge>
-              </div>
-              
-              <div className="space-y-2">
-                <h3 className="font-medium">Loading State</h3>
-                <Badge variant={compatibleAuth.isLoading ? "destructive" : "secondary"}>
-                  {compatibleAuth.isLoading ? 'Loading' : 'Ready'}
-                </Badge>
-              </div>
-              
-              <div className="space-y-2">
-                <h3 className="font-medium">Auth Stable</h3>
-                <Badge variant={compatibleAuth.authStable ? "default" : "destructive"}>
-                  {compatibleAuth.authStable ? 'Stable' : 'Unstable'}
-                </Badge>
-              </div>
-            </div>
-            
-            <div className="mt-4 p-3 bg-blue-50 rounded-md">
-              <p className="text-sm text-blue-700">
-                Using useCompatibleAuth() - provides backward compatibility with existing auth patterns
-              </p>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="enhanced" className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <h3 className="font-medium">Safe Authentication</h3>
-                <div className="flex items-center gap-2">
-                  {getStatusIcon(enhancedAuth.safeIsAuthenticated)}
-                  <span className={getStatusColor(enhancedAuth.safeIsAuthenticated)}>
-                    {enhancedAuth.safeIsAuthenticated ? 'Authenticated' : 'Not Authenticated'}
-                  </span>
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <h3 className="font-medium">Safe User Type</h3>
-                <Badge variant="outline">{enhancedAuth.safeUserType}</Badge>
-              </div>
-              
-              <div className="space-y-2">
-                <h3 className="font-medium">Safe Loading</h3>
-                <Badge variant={enhancedAuth.safeIsLoading ? "destructive" : "secondary"}>
-                  {enhancedAuth.safeIsLoading ? 'Loading' : 'Ready'}
-                </Badge>
-              </div>
-              
-              <div className="space-y-2">
-                <h3 className="font-medium">Permissions</h3>
-                <Badge variant={enhancedAuth.hasPermission('admin') ? "default" : "secondary"}>
-                  {enhancedAuth.hasPermission('admin') ? 'Admin Access' : 'No Admin Access'}
-                </Badge>
-              </div>
-            </div>
-            
-            <div className="mt-4 p-3 bg-green-50 rounded-md">
-              <p className="text-sm text-green-700">
-                Using useEnhancedAuth() - provides type-safe auth with validation and enhanced features
-              </p>
-            </div>
-          </TabsContent>
-        </Tabs>
-
-        <div className="mt-6 p-3 bg-gray-50 rounded-md">
-          <h4 className="font-medium mb-2">Migration Status</h4>
-          <p className="text-sm text-gray-600">
-            This component has been migrated to test both compatible and enhanced auth patterns. 
-            Both approaches work seamlessly with the existing auth infrastructure.
-          </p>
+      <CardContent className="space-y-2 text-xs">
+        <div className="grid grid-cols-2 gap-1 text-xs">
+          <div>Current Path:</div>
+          <div className="font-mono">{location.pathname}</div>
+          
+          <div>Is Loading:</div>
+          <div>{isLoading ? '✅' : '❌'}</div>
+          
+          <div>Auth Stable:</div>
+          <div>{authStable ? '✅' : '❌'}</div>
+          
+          <div>Has User:</div>
+          <div>{user ? '✅' : '❌'}</div>
+          
+          <div>Has Session:</div>
+          <div>{session ? '✅' : '❌'}</div>
+          
+          <div>Auth User Type:</div>
+          <div>{authUserType || 'none'}</div>
+          
+          <div>Dev Mode Active:</div>
+          <div>{isDevModeActive ? '✅' : '❌'}</div>
+          
+          <div>Dev User Type:</div>
+          <div>{devUserType || 'none'}</div>
+          
+          <div>Using Dev Bypass:</div>
+          <div>{isUsingDevBypass ? '✅' : '❌'}</div>
+          
+          <div>Dev Authenticated:</div>
+          <div>{devIsAuthenticated ? '✅' : '❌'}</div>
+        </div>
+        
+        <div className="border-t pt-2">
+          <div className="text-xs font-medium mb-1">Test Routes:</div>
+          <div className="grid grid-cols-2 gap-1">
+            {testRoutes.map(route => (
+              <Button
+                key={route.path}
+                size="sm"
+                variant="outline"
+                className="text-xs h-6"
+                onClick={() => navigate(route.path)}
+              >
+                {route.label}
+              </Button>
+            ))}
+          </div>
         </div>
       </CardContent>
     </Card>

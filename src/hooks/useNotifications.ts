@@ -1,162 +1,149 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { useAuth } from '@/contexts/auth';
 import { useToast } from '@/hooks/use-toast';
-import { useAnalytics } from '@/hooks/useAnalytics';
-import type { Notification as NotificationType } from '@/types/notification';
+import { Notification } from '@/types/notification';
+import { useUserLocation } from '@/hooks/useUserLocation';
 
-interface NotificationState {
-  notifications: NotificationType[];
-  unreadCount: number;
-  isLoading: boolean;
-  error: string | null;
-  isSupported: boolean;
-  permissionStatus: NotificationPermission;
-}
+import { useNotificationFetcher } from './notifications/useNotificationFetcher';
+import { useNotificationMarking } from './notifications/useNotificationMarking';
+import { usePermissionActions } from './notifications/usePermissionActions';
+import { usePushNotificationHandler } from './notifications/usePushNotificationHandler';
 
-interface NotificationActions {
-  markAsRead: (id: string) => void;
-  markAllAsRead: () => void;
-  removeNotification: (id: string) => void;
-  addNotification: (notification: Omit<NotificationType, 'id' | 'timestamp' | 'created_at' | 'read' | 'is_read' | 'content'>) => void;
-  clearAll: () => void;
-  refetch: () => Promise<void>;
-  sendTestNotification: (type: string) => Promise<void>;
-}
-
-interface UseNotificationsReturn extends NotificationState, NotificationActions {
-  state: NotificationState;
-  actions: NotificationActions;
-}
-
-export const useNotifications = (): UseNotificationsReturn => {
-  const [notifications, setNotifications] = useState<NotificationType[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+export const useNotifications = () => {
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { user, session } = useAuth();
   const { toast } = useToast();
-  const { track } = useAnalytics();
+  const isInitialFetch = useRef(true);
+  const { userLocation } = useUserLocation();
 
-  // Check browser support and permission
-  const isSupported = 'Notification' in window;
-  const permissionStatus = isSupported ? Notification.permission : 'denied' as NotificationPermission;
+  const { fetchNotifications } = useNotificationFetcher({
+    userId: user?.id,
+    accessToken: session?.access_token,
+    setNotifications,
+    setUnreadCount,
+    setIsLoading,
+    setError
+  });
 
-  const markAsRead = useCallback((id: string) => {
-    setNotifications(prev => 
-      prev.map(notification => 
-        notification.id === id 
-          ? { ...notification, read: true, is_read: true }
-          : notification
-      )
-    );
-    track('notification_read', { notification_id: id });
-  }, [track]);
+  const { markAsRead, markAllAsRead } = useNotificationMarking({
+    userId: user?.id,
+    accessToken: session?.access_token,
+    notifications,
+    setNotifications,
+    setUnreadCount,
+    toast
+  });
 
-  const markAllAsRead = useCallback(() => {
-    setNotifications(prev => 
-      prev.map(notification => ({ ...notification, read: true, is_read: true }))
-    );
-    track('notifications_mark_all_read');
-  }, [track]);
+  const { handleRefreshPermissions } = usePermissionActions();
 
-  const removeNotification = useCallback((id: string) => {
-    setNotifications(prev => prev.filter(n => n.id !== id));
-    track('notification_removed', { notification_id: id });
-  }, [track]);
+  const { addPushNotification } = usePushNotificationHandler({
+    setNotifications,
+    setUnreadCount,
+    toast
+  });
 
-  const addNotification = useCallback((notification: Omit<NotificationType, 'id' | 'timestamp' | 'created_at' | 'read' | 'is_read' | 'content'>) => {
-    const now = Date.now();
-    const newNotification: NotificationType = {
-      ...notification,
-      id: now.toString(),
-      timestamp: now,
-      created_at: new Date(now).toISOString(),
-      read: false,
-      is_read: false,
-      content: notification.message // Automatically set content from message
-    };
-    
-    setNotifications(prev => [newNotification, ...prev]);
-    
-    // Show toast for high priority notifications
-    if (notification.priority === 'high') {
-      toast({
-        title: notification.title,
-        description: notification.message,
-        variant: notification.type === 'error' ? 'destructive' : 'default'
-      });
+  // Filter notifications based on location
+  const filterNotificationsByLocation = useCallback((radius?: number) => {
+    if (!userLocation || !notifications || notifications.length === 0) {
+      return notifications;
     }
-    
-    track('notification_added', { 
-      type: notification.type,
-      priority: notification.priority 
+
+    return notifications.filter(notification => {
+      // If the notification is not location-based, include it
+      if (!notification.location_based || !notification.coordinates) {
+        return true;
+      }
+
+      // Calculate distance between user and notification target
+      const distance = calculateDistance(
+        userLocation.latitude,
+        userLocation.longitude,
+        notification.coordinates.latitude,
+        notification.coordinates.longitude
+      );
+
+      // Check if user is within the notification's target radius
+      // If target_radius is not set, use the provided radius parameter or default to 10 miles
+      const targetRadius = notification.target_radius || radius || 10;
+      return distance <= targetRadius;
     });
-  }, [toast, track]);
+  }, [userLocation, notifications]);
 
-  const clearAll = useCallback(() => {
-    setNotifications([]);
-    track('notifications_cleared');
-  }, [track]);
+  // Helper function to calculate distance between two points using the Haversine formula
+  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+    const R = 3958.8; // Earth radius in miles
+    const dLat = toRadians(lat2 - lat1);
+    const dLon = toRadians(lon2 - lon1);
+    const a = 
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) * 
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const distance = R * c;
+    
+    return distance;
+  };
 
-  const refetch = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      // Mock refetch - in real app would fetch from API
-      await new Promise(resolve => setTimeout(resolve, 500));
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch notifications');
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const toRadians = (degrees: number): number => {
+    return degrees * (Math.PI / 180);
+  };
 
-  const sendTestNotification = useCallback(async (type: string) => {
-    setIsLoading(true);
-    try {
-      const testNotification = {
-        title: `Test ${type} Notification`,
-        message: `This is a test notification of type: ${type}`,
-        type: type as 'success' | 'error' | 'warning' | 'info',
-        priority: 'medium' as const
-      };
-      
-      addNotification(testNotification);
-      
-      toast({
-        title: "Test Notification Sent",
-        description: `${type} notification sent successfully`
-      });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to send test notification');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [addNotification, toast]);
+  useEffect(() => {
+    let isMounted = true;
+    const autoRefreshInterval = 30000;
+    let refreshTimer: number | undefined;
+    let swMessageHandler: ((event: MessageEvent) => void) | null = null;
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+    const setupNotificationFetch = () => {
+      if (user && session) {
+        if (isInitialFetch.current) {
+          isInitialFetch.current = false;
+          fetchNotifications();
+        }
+        refreshTimer = window.setInterval(() => {
+          if (isMounted) fetchNotifications();
+        }, autoRefreshInterval);
 
-  const state: NotificationState = {
+        swMessageHandler = (event: MessageEvent) => {
+          if (
+            event.data && 
+            event.data.type === 'PUSH_NOTIFICATION_RECEIVED' &&
+            event.data.notification
+          ) {
+            addPushNotification(event.data.notification);
+          }
+        };
+        navigator.serviceWorker.addEventListener('message', swMessageHandler);
+      } else {
+        setNotifications([]);
+        setUnreadCount(0);
+        setIsLoading(false);
+        isInitialFetch.current = true;
+      }
+    };
+
+    setupNotificationFetch();
+    return () => {
+      isMounted = false;
+      if (refreshTimer) clearInterval(refreshTimer);
+      if (swMessageHandler) {
+        navigator.serviceWorker.removeEventListener('message', swMessageHandler);
+      }
+    };
+  }, [user, session, addPushNotification, fetchNotifications]);
+
+  return {
     notifications,
     unreadCount,
     isLoading,
     error,
-    isSupported,
-    permissionStatus
-  };
-
-  const actions: NotificationActions = {
     markAsRead,
     markAllAsRead,
-    removeNotification,
-    addNotification,
-    clearAll,
-    refetch,
-    sendTestNotification
-  };
-
-  return {
-    ...state,
-    ...actions,
-    state,
-    actions
+    refetch: fetchNotifications,
+    filterNotificationsByLocation,
   };
 };

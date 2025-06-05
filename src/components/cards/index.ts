@@ -1,8 +1,4 @@
 
-// Cards Feature Module - Consolidated card components
-export { default as BaseCard } from './BaseCard';
-export { default as EstablishmentCard } from '../EstablishmentCard';
+// Cards Feature Module - Consolidated exports
 export { default as CocktailCard } from '../CocktailCard';
-
-// Legacy exports for backward compatibility
-export { default as EstablishmentList } from '../EstablishmentList';
+export { default as EstablishmentCard } from '../EstablishmentCard';

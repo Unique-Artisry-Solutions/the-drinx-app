@@ -7,7 +7,7 @@ import UserNavbar from '../navigation/user/UserNavbar';
 import Breadcrumbs from '../navigation/Breadcrumbs';
 import { useDevAuthBypass } from '@/hooks/useDevAuthBypass';
 import GuestTopNavigation from '../navigation/GuestTopNavigation';
-import AdminTopNav from '../navigation/admin/AdminTopNav';
+import AdminTopNavigation from '../navigation/AdminTopNavigation';
 import AppFooter from '../AppFooter';
 import AdminFooter from '../admin/AdminFooter';
 import { resolveNavigationState, toNonAdminUserType } from '@/utils/navigationResolver';
@@ -73,7 +73,7 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
   const renderNavigation = () => {
     switch (effectiveNavState.navigationType) {
       case NavigationType.ADMIN:
-        return <AdminTopNav />;
+        return <AdminTopNavigation />;
       case NavigationType.USER:
         return <UserNavbar activeTab={activeTab} handleTabChange={handleTabChange} tabOptions={tabOptions} />;
       case NavigationType.GUEST:

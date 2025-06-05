@@ -17,28 +17,23 @@ export interface AuthState {
 export interface AuthActions {
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
-  signup: (formData: any) => Promise<void>;
+  signup: (userData: any) => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   updateProfile: (updates: any) => Promise<void>;
   switchRole: (role: SwitchableUserRole) => Promise<void>;
 }
 
-export interface UseAuthReturn {
-  state: AuthState;
-  actions: AuthActions;
-}
-
-export function useAuth(): UseAuthReturn {
+export function useAuth(): { state: AuthState; actions: AuthActions } {
   const authContext = useAuthContext();
   const { toast } = useToast();
   const [error, setError] = useState<string | null>(null);
 
   const state: AuthState = {
-    user: authContext?.user || null,
-    session: authContext?.session || null,
-    isLoading: authContext?.isLoading || false,
-    isAuthenticated: authContext?.isAuthenticated || false,
-    userType: authContext?.userType || 'individual',
+    user: authContext.user,
+    session: authContext.session,
+    isLoading: authContext.isLoading,
+    isAuthenticated: authContext.isAuthenticated,
+    userType: authContext.userType || 'individual',
     error
   };
 
@@ -46,9 +41,7 @@ export function useAuth(): UseAuthReturn {
     login: useCallback(async (email: string, password: string) => {
       try {
         setError(null);
-        if (authContext?.signIn) {
-          await authContext.signIn(email, password);
-        }
+        await authContext.signIn(email, password);
         toast({
           title: 'Success',
           description: 'Logged in successfully',
@@ -67,9 +60,7 @@ export function useAuth(): UseAuthReturn {
     logout: useCallback(async () => {
       try {
         setError(null);
-        if (authContext?.signOut) {
-          await authContext.signOut();
-        }
+        await authContext.signOut();
         toast({
           title: 'Success',
           description: 'Logged out successfully',
@@ -85,12 +76,10 @@ export function useAuth(): UseAuthReturn {
       }
     }, [authContext, toast]),
 
-    signup: useCallback(async (formData: any) => {
+    signup: useCallback(async (userData: any) => {
       try {
         setError(null);
-        if (authContext?.signUp) {
-          await authContext.signUp(formData);
-        }
+        await authContext.signUp(userData);
         toast({
           title: 'Success',
           description: 'Account created successfully',
@@ -129,9 +118,7 @@ export function useAuth(): UseAuthReturn {
     updateProfile: useCallback(async (updates: any) => {
       try {
         setError(null);
-        if (authContext?.updateUserProfile) {
-          await authContext.updateUserProfile(updates);
-        }
+        await authContext.updateUserProfile(updates);
         toast({
           title: 'Success',
           description: 'Profile updated successfully',

@@ -1,43 +1,105 @@
 
-import { useNotifications } from './useNotifications';
-import { useState, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
-// Enhanced compatibility bridge for useDirectNotifications
-export const useDirectNotifications = () => {
-  const notifications = useNotifications();
-  const [lastCheck] = useState(new Date());
-  
+export interface UseDirectNotificationsReturn {
+  isSupported: boolean;
+  permissionStatus: NotificationPermission;
+  lastCheck: Date;
+  isLoading: boolean;
+  error: string | null;
+  requestPermission: () => Promise<NotificationPermission>;
+  checkPermission: () => Promise<NotificationPermission>;
+  sendTestNotification: () => Promise<void>;
+  resetPermissionState: () => void;
+}
+
+export const useDirectNotifications = (): UseDirectNotificationsReturn => {
+  const [permissionStatus, setPermissionStatus] = useState<NotificationPermission>('default');
+  const [lastCheck, setLastCheck] = useState(new Date());
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   const isSupported = 'Notification' in window;
-  const permissionStatus = isSupported ? Notification.permission : 'denied';
 
-  const requestPermission = useCallback(async () => {
-    if (!isSupported) return 'denied';
-    return await Notification.requestPermission();
+  const checkPermission = useCallback(async (): Promise<NotificationPermission> => {
+    if (!isSupported) {
+      return 'denied';
+    }
+
+    setLastCheck(new Date());
+    const permission = Notification.permission;
+    setPermissionStatus(permission);
+    return permission;
   }, [isSupported]);
 
-  const checkPermission = useCallback(async () => {
-    return permissionStatus;
-  }, [permissionStatus]);
+  const requestPermission = useCallback(async (): Promise<NotificationPermission> => {
+    if (!isSupported) {
+      setError('Notifications not supported');
+      return 'denied';
+    }
 
-  const sendTestNotification = useCallback(async () => {
-    await notifications.sendTestNotification('test');
-  }, [notifications]);
+    setIsLoading(true);
+    setError(null);
 
-  const resetPermissionState = useCallback(async () => {
-    // Mock reset functionality
-    console.log('Permission state reset');
-  }, []);
-  
+    try {
+      const permission = await Notification.requestPermission();
+      setPermissionStatus(permission);
+      setLastCheck(new Date());
+      return permission;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to request permission';
+      setError(errorMessage);
+      return 'denied';
+    } finally {
+      setIsLoading(false);
+    }
+  }, [isSupported]);
+
+  const sendTestNotification = useCallback(async (): Promise<void> => {
+    if (!isSupported) {
+      throw new Error('Notifications not supported');
+    }
+
+    if (Notification.permission !== 'granted') {
+      throw new Error('Notification permission not granted');
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      new Notification('Test Notification', {
+        body: 'This is a test notification from the Swig app',
+        icon: '/favicon.ico',
+        tag: 'test-notification'
+      });
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to send notification';
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [isSupported]);
+
+  const resetPermissionState = useCallback(() => {
+    setError(null);
+    setLastCheck(new Date());
+    if (isSupported) {
+      setPermissionStatus(Notification.permission);
+    }
+  }, [isSupported]);
+
+  useEffect(() => {
+    checkPermission();
+  }, [checkPermission]);
+
   return {
-    sendNotification: notifications.addNotification,
-    notifications: notifications.notifications,
-    clearNotifications: notifications.clearAll,
-    // Additional properties for DirectNotificationTester
     isSupported,
     permissionStatus,
     lastCheck,
-    isLoading: notifications.isLoading,
-    error: notifications.error,
+    isLoading,
+    error,
     requestPermission,
     checkPermission,
     sendTestNotification,
