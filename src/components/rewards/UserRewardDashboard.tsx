@@ -1,166 +1,185 @@
 
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Star, Trophy, Gift, TrendingUp } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
+import { Trophy, TrendingUp, Gift, Star } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import AchievementsList from './AchievementsList';
+import { RewardHistory } from './RewardHistory';
+import RewardMilestoneCard from './RewardMilestoneCard';
 import { useRewards } from '@/hooks/rewards/useRewards';
 import { useAchievements } from '@/hooks/rewards/useAchievements';
-import { AchievementsList } from './AchievementsList';
-import RewardHistory from './RewardHistory';
-import { RewardMilestoneCard } from './RewardMilestoneCard';
-import { transformRewardTransaction, transformUserRewardProfile } from '@/types/rewards';
 
-export const UserRewardDashboard: React.FC = () => {
-  const { rewardProfile, isLoading: rewardsLoading } = useRewards();
-  const { achievements, achievementsByCategory, isLoading: achievementsLoading } = useAchievements();
+const UserRewardDashboard: React.FC = () => {
+  const { 
+    userTier, 
+    userPoints, 
+    nextTier, 
+    pointsToNextTier, 
+    rewardHistory, 
+    isLoading: rewardsLoading 
+  } = useRewards();
+
+  const { 
+    achievements, 
+    achievementsByCategory, 
+    nextAchievement, 
+    isLoading: achievementsLoading 
+  } = useAchievements();
 
   if (rewardsLoading || achievementsLoading) {
     return (
-      <div className="space-y-6">
-        <div className="h-8 bg-muted animate-pulse rounded" />
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="h-32 bg-muted animate-pulse rounded-lg" />
-          ))}
+      <div className="container mx-auto p-6 max-w-7xl">
+        <div className="space-y-6">
+          <div className="h-8 bg-muted animate-pulse rounded-md" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-32 bg-muted animate-pulse rounded-md" />
+            ))}
+          </div>
         </div>
-        <div className="h-64 bg-muted animate-pulse rounded-lg" />
       </div>
     );
   }
 
-  // Transform the reward profile to ensure type consistency
-  const profile = rewardProfile ? transformUserRewardProfile(rewardProfile) : null;
-
-  // Ensure transaction history has all required fields
-  const mockTransactionHistory = [
-    {
-      id: 'trans-1',
-      user_id: profile?.id || 'user-1',
-      userId: profile?.id || 'user-1',
-      transaction_type: 'earn' as const,
-      points: 50,
-      description: 'Check-in reward',
-      created_at: new Date().toISOString(),
-      source: 'check-in'
-    },
-    {
-      id: 'trans-2', 
-      user_id: profile?.id || 'user-1',
-      userId: profile?.id || 'user-1',
-      transaction_type: 'earn' as const,
-      points: 25,
-      description: 'Review reward',
-      created_at: new Date(Date.now() - 86400000).toISOString(),
-      source: 'review'
-    }
-  ].map(transformRewardTransaction);
-
-  const transactionHistory = profile?.transactionHistory?.length ? 
-    profile.transactionHistory : mockTransactionHistory;
-
   return (
-    <div className="space-y-6">
-      {/* Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Points</CardTitle>
-            <Star className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{profile?.points || 0}</div>
-            <p className="text-xs text-muted-foreground">
-              {profile?.lifetime_points || profile?.lifetimePoints || 0} lifetime points
-            </p>
-          </CardContent>
-        </Card>
+    <div className="container mx-auto p-6 max-w-7xl">
+      <div className="space-y-6">
+        {/* Header Section */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-bold">Rewards Dashboard</h1>
+            <p className="text-muted-foreground">Track your progress and redeem rewards</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="text-lg px-3 py-1">
+              <Trophy className="h-4 w-4 mr-1" />
+              {userTier?.name || 'Bronze'}
+            </Badge>
+            <Badge className="text-lg px-3 py-1">
+              <Star className="h-4 w-4 mr-1" />
+              {userPoints} points
+            </Badge>
+          </div>
+        </div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Current Tier</CardTitle>
-            <Trophy className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {profile?.currentTier?.name || 'Bronze'}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {profile?.currentTier?.benefits?.length || 0} benefits unlocked
-            </p>
-          </CardContent>
-        </Card>
+        <Separator />
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Available Rewards</CardTitle>
-            <Gift className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {profile?.availableRewards?.length || 0}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Ready to redeem
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">Total Points</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{userPoints}</div>
+              <p className="text-xs text-muted-foreground">
+                <TrendingUp className="h-3 w-3 inline mr-1" />
+                +12% from last month
+              </p>
+            </CardContent>
+          </Card>
 
-      {/* Main Content Tabs */}
-      <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="achievements">Achievements</TabsTrigger>
-          <TabsTrigger value="history">History</TabsTrigger>
-        </TabsList>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">Current Tier</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{userTier?.name || 'Bronze'}</div>
+              <p className="text-xs text-muted-foreground">
+                {pointsToNextTier > 0 ? `${pointsToNextTier} to next tier` : 'Max tier reached'}
+              </p>
+            </CardContent>
+          </Card>
 
-        <TabsContent value="overview" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <RewardMilestoneCard
-              type="next-tier"
-              tier={profile?.currentTier}
-              currentPoints={profile?.points || 0}
-              pointsRequired={profile?.currentTier?.points_required || 500}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">Achievements</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {achievements.filter(a => a.isCompleted).length}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                of {achievements.length} completed
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">Rewards Claimed</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{rewardHistory?.length || 0}</div>
+              <p className="text-xs text-muted-foreground">
+                <Gift className="h-3 w-3 inline mr-1" />
+                This month
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Progress Section */}
+          <div className="lg:col-span-2 space-y-6">
+            <AchievementsList 
+              achievements={achievements}
+              achievementsByCategory={achievementsByCategory}
+              isLoading={achievementsLoading}
             />
-            
+          </div>
+
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Next Milestone */}
+            {nextTier && (
+              <RewardMilestoneCard
+                type="next-tier"
+                tier={nextTier}
+                currentPoints={userPoints}
+                pointsRequired={nextTier.minimumPoints}
+              />
+            )}
+
+            {/* Next Achievement */}
+            {nextAchievement && (
+              <RewardMilestoneCard
+                type="achievement"
+                achievement={nextAchievement}
+              />
+            )}
+
+            {/* Quick Actions */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Recent Activity</CardTitle>
+                <CardTitle className="text-sm">Quick Actions</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {transactionHistory.slice(0, 3).map((transaction) => (
-                    <div key={transaction.id} className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium">{transaction.description}</p>
-                        <p className="text-xs text-muted-foreground">{transaction.source}</p>
-                      </div>
-                      <Badge variant="outline">+{transaction.points} pts</Badge>
-                    </div>
-                  ))}
-                </div>
+              <CardContent className="space-y-2">
+                <Button variant="outline" className="w-full justify-start">
+                  <Gift className="h-4 w-4 mr-2" />
+                  Browse Rewards
+                </Button>
+                <Button variant="outline" className="w-full justify-start">
+                  <TrendingUp className="h-4 w-4 mr-2" />
+                  View Progress
+                </Button>
+                <Button variant="outline" className="w-full justify-start">
+                  <Star className="h-4 w-4 mr-2" />
+                  Share Achievement
+                </Button>
               </CardContent>
             </Card>
+
+            {/* Recent Rewards */}
+            <RewardHistory limit={5} />
           </div>
-        </TabsContent>
-
-        <TabsContent value="achievements">
-          <AchievementsList
-            achievements={achievements}
-            achievementsByCategory={achievementsByCategory}
-            isLoading={achievementsLoading}
-          />
-        </TabsContent>
-
-        <TabsContent value="history">
-          <RewardHistory
-            transactions={transactionHistory}
-            isLoading={false}
-          />
-        </TabsContent>
-      </Tabs>
+        </div>
+      </div>
     </div>
   );
 };
+
+export default UserRewardDashboard;

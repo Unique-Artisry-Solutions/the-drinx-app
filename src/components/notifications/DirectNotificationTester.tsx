@@ -5,10 +5,10 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Info, AlertCircle } from "lucide-react";
 import { useDirectNotifications } from '@/hooks/useDirectNotifications';
-import { NotificationStatusAlert } from './direct/NotificationStatusAlert';
-import { NotificationActionButtons } from './direct/NotificationActionButtons';
-import { SystemStatusPanel } from './direct/SystemStatusPanel';
-import { ResetSystemSection } from './direct/ResetSystemSection';
+import NotificationStatusAlert from './direct/NotificationStatusAlert';
+import NotificationActionButtons from './direct/NotificationActionButtons';
+import SystemStatusPanel from './direct/SystemStatusPanel';
+import ResetSystemSection from './direct/ResetSystemSection';
 import { DiagnosticStatusSection } from './DiagnosticStatusSection';
 
 const DirectNotificationTester = () => {
