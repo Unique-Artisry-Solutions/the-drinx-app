@@ -17,7 +17,7 @@ interface EnhancedTestConfig {
   useScreenReader: boolean;
 }
 
-export function EnhancedTestControls() {
+const EnhancedTestControls: React.FC = () => {
   const { state, actions } = useNotifications();
   const { isLoading } = state;
   const { sendTestNotification } = actions;
@@ -122,4 +122,6 @@ export function EnhancedTestControls() {
       </CardContent>
     </Card>
   );
-}
+};
+
+export default EnhancedTestControls;

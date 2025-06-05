@@ -7,7 +7,7 @@ interface NotificationStatusAlertProps {
   permissionStatus: NotificationPermission;
 }
 
-export const NotificationStatusAlert: React.FC<NotificationStatusAlertProps> = ({ permissionStatus }) => {
+const NotificationStatusAlert: React.FC<NotificationStatusAlertProps> = ({ permissionStatus }) => {
   if (permissionStatus === 'granted') {
     return (
       <Alert className="bg-green-50 border-green-200">
@@ -48,3 +48,5 @@ export const NotificationStatusAlert: React.FC<NotificationStatusAlertProps> = (
     </Alert>
   );
 };
+
+export default NotificationStatusAlert;

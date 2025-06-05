@@ -5,7 +5,7 @@ import Layout from '@/components/Layout';
 import NotificationsLayout from '@/components/notifications/NotificationsLayout';
 import NotificationsHeader from './components/NotificationsHeader';
 import UnifiedNotificationsList from '@/components/notifications/UnifiedNotificationsList';
-import { NotificationError } from '@/components/notifications/NotificationError';
+import NotificationError from '@/components/notifications/NotificationError';
 
 export default function NotificationsPage() {
   const { notifications, unreadCount, isLoading, error, markAllAsRead, refetch } = useNotifications();

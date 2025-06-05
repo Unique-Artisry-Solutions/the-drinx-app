@@ -6,7 +6,7 @@ import { ReferralTracker } from './ReferralTracker';
 import { SocialShareWidget } from './SocialShareWidget';
 import { Users, TrendingUp, Share2, Settings } from 'lucide-react';
 
-export const ReferralDashboard: React.FC = () => {
+const ReferralDashboard: React.FC = () => {
   return (
     <div className="container mx-auto p-6 max-w-6xl">
       <div className="mb-6">
@@ -63,3 +63,5 @@ export const ReferralDashboard: React.FC = () => {
     </div>
   );
 };
+
+export default ReferralDashboard;
