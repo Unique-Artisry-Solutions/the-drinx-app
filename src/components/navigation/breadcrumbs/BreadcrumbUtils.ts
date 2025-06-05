@@ -1,29 +1,64 @@
-import { BreadcrumbConfig, routes, dynamicRoutes } from './BreadcrumbConfig';
 
-// Helper function to build breadcrumbs from a pathname
-export function buildBreadcrumbs(pathname: string): BreadcrumbConfig[] {
+import { BreadcrumbConfig, routes, dynamicRoutes } from './BreadcrumbConfig';
+import { UserType } from '@/types/navigation/NavigationTypes';
+
+// Helper function to get the appropriate home path based on user type
+const getHomePathByUserType = (userType: UserType | null, isAuthenticated: boolean): string => {
+  if (!isAuthenticated || !userType) {
+    return '/landing';
+  }
+  
+  switch (userType) {
+    case 'establishment':
+      return '/establishment/dashboard';
+    case 'promoter':
+      return '/promoter/dashboard';
+    case 'admin':
+      return '/admin/system-breakdown';
+    case 'individual':
+      return '/explore';
+    default:
+      return '/landing';
+  }
+};
+
+// Helper function to get the appropriate home label based on user type
+const getHomeLabelByUserType = (userType: UserType | null, isAuthenticated: boolean): string => {
+  if (!isAuthenticated || !userType) {
+    return 'Home';
+  }
+  
+  switch (userType) {
+    case 'establishment':
+    case 'promoter':
+    case 'admin':
+      return 'Dashboard';
+    case 'individual':
+      return 'Explore';
+    default:
+      return 'Home';
+  }
+};
+
+// Helper function to build breadcrumbs from a pathname with proper auth context
+export function buildBreadcrumbs(
+  pathname: string, 
+  userType: UserType | null = null, 
+  isAuthenticated: boolean = false
+): BreadcrumbConfig[] {
   const pathSegments = pathname.split('/').filter(Boolean);
   const breadcrumbs: BreadcrumbConfig[] = [];
   
-  // Always start with home, but conditional on user type
-  const userType = localStorage.getItem('user_type');
+  // Always start with the appropriate home breadcrumb based on user type
+  const homePath = getHomePathByUserType(userType, isAuthenticated);
+  const homeLabel = getHomeLabelByUserType(userType, isAuthenticated);
   
-  // If user is an establishment, home should point to establishment dashboard
-  if (userType === 'establishment') {
+  // Only add home breadcrumb if we're not already on the home page
+  if (pathname !== homePath && pathname !== '/') {
     breadcrumbs.push({
-      ...routes['/'], 
-      path: '/establishment/dashboard',
-      label: 'Dashboard'
+      path: homePath,
+      label: homeLabel,
     });
-  } else if (userType === 'promoter') {
-    // If user is a promoter, home should point to promoter dashboard
-    breadcrumbs.push({
-      ...routes['/'],
-      path: '/promoter/dashboard',
-      label: 'Dashboard'
-    });
-  } else {
-    breadcrumbs.push(routes['/']);
   }
   
   // Special case handling for base paths
@@ -59,7 +94,9 @@ export function buildBreadcrumbs(pathname: string): BreadcrumbConfig[] {
   
   // Handle special case for admin section
   if (pathname.startsWith('/admin/')) {
-    handleSpecialBasePath('/admin', 'Admin');
+    if (pathname !== '/admin/system-breakdown') {
+      handleSpecialBasePath('/admin/system-breakdown', 'Admin');
+    }
   }
   
   // Handle special case for profile section

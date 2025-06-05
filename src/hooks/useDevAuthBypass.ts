@@ -1,46 +1,31 @@
-
-import { useMemo } from 'react';
-import { useAuth } from '@/contexts/auth/AuthProvider';
 import { useDevelopmentMode } from '@/contexts/DevelopmentModeContext';
-import { DevAuthService } from '@/services/DevAuthService';
-import { UserType } from '@/types/navigation';
+import { useAuthenticatedUser } from './useAuthenticatedUser';
+import { UserType } from '@/types/navigation/NavigationTypes';
 
+/**
+ * Hook that provides auth state with development mode bypass
+ * This allows breadcrumbs and navigation to work correctly in dev mode
+ */
 export const useDevAuthBypass = () => {
-  const { user, session, isAuthenticated, userType, isLoading } = useAuth();
   const { isDevelopment, isDevModeActive, devMode } = useDevelopmentMode();
+  const { userType: authUserType, isAuthenticated: authIsAuthenticated } = useAuthenticatedUser();
 
-  const effectiveAuth = useMemo(() => {
-    return DevAuthService.getEffectiveAuthState(
-      user,
-      session,
-      isAuthenticated,
+  // In development mode with dev mode active, use dev settings
+  if (isDevelopment && isDevModeActive && devMode) {
+    return {
+      userType: devMode as UserType,
+      isAuthenticated: true,
       isDevelopment,
-      isDevModeActive,
-      devMode
-    );
-  }, [user, session, isAuthenticated, isDevelopment, isDevModeActive, devMode]);
+      isDevModeActive
+    };
+  }
 
-  const shouldBypass = useMemo(() => {
-    return DevAuthService.shouldBypassAuth(isDevelopment, isDevModeActive, devMode);
-  }, [isDevelopment, isDevModeActive, devMode]);
-
+  // Otherwise use auth state
   return {
-    // Effective auth state
-    user: effectiveAuth.user,
-    session: effectiveAuth.session,
-    isAuthenticated: effectiveAuth.isAuthenticated,
-    userType: effectiveAuth.userType as UserType,
-    
-    // Loading state
-    isLoading: isLoading && !shouldBypass,
-    
-    // Dev mode info
-    isUsingDevBypass: shouldBypass,
-    
-    // Utilities
-    canAccess: (requiredUserType: UserType) => {
-      return effectiveAuth.userType === requiredUserType;
-    }
+    userType: authUserType,
+    isAuthenticated: authIsAuthenticated,
+    isDevelopment,
+    isDevModeActive
   };
 };
 
