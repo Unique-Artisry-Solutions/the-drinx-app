@@ -71,16 +71,16 @@ export const safeValidation = {
   // Validate object structure
   validateObject: <T extends Record<string, any>>(
     obj: unknown,
-    requiredKeys: (keyof T)[],
-    optionalKeys: (keyof T)[] = []
+    requiredKeys: string[],
+    optionalKeys: string[] = []
   ): { isValid: boolean; missing: string[]; extra: string[] } => {
     if (!obj || typeof obj !== 'object') {
-      return { isValid: false, missing: requiredKeys as string[], extra: [] };
+      return { isValid: false, missing: requiredKeys, extra: [] };
     }
     
     const objKeys = Object.keys(obj);
-    const allValidKeys = [...requiredKeys, ...optionalKeys] as string[];
-    const missing = requiredKeys.filter(key => !(key as string) in obj) as string[];
+    const allValidKeys = [...requiredKeys, ...optionalKeys];
+    const missing = requiredKeys.filter(key => !(key in obj));
     const extra = objKeys.filter(key => !allValidKeys.includes(key));
     
     return { isValid: missing.length === 0, missing, extra };
