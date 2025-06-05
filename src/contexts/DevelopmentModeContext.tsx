@@ -23,119 +23,56 @@ export const DevelopmentModeProvider: React.FC<{ children: React.ReactNode }> = 
   const [isDevelopment, setIsDevelopment] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Initialize development mode detection
+  // Initialize development mode detection quickly
   useEffect(() => {
-    try {
-      const hostname = window.location.hostname;
-      const isDevMode = hostname === 'localhost' || 
-                       hostname === '127.0.0.1' ||
-                       hostname.includes('preview--') ||
-                       hostname.includes('lovable') ||
-                       process.env.NODE_ENV === 'development';
-      
-      console.log('Development mode detected:', isDevMode, 'hostname:', hostname);
-      setIsDevelopment(isDevMode);
-      
-      if (isDevMode) {
-        const savedDevType = localStorage.getItem('dev_user_type') as DevUserType;
-        console.log('Restored dev type from localStorage:', savedDevType);
-        if (savedDevType && ['individual', 'establishment', 'promoter', 'admin'].includes(savedDevType)) {
-          setDevMode(savedDevType);
+    const initDevMode = () => {
+      try {
+        const hostname = window.location.hostname;
+        const isDevEnv = hostname === 'localhost' || 
+                        hostname === '127.0.0.1' ||
+                        hostname.includes('preview--') ||
+                        hostname.includes('lovable') ||
+                        process.env.NODE_ENV === 'development';
+        
+        console.log('🛠️ Development mode detected:', isDevEnv);
+        setIsDevelopment(isDevEnv);
+        
+        if (isDevEnv) {
+          const savedDevType = localStorage.getItem('dev_user_type') as DevUserType;
+          if (savedDevType && ['individual', 'establishment', 'promoter', 'admin'].includes(savedDevType)) {
+            console.log('🔄 Restored dev type:', savedDevType);
+            setDevMode(savedDevType);
+          }
         }
-      } else {
-        localStorage.removeItem('dev_user_type');
-        setDevMode(null);
+      } catch (error) {
+        console.error('❌ Error initializing dev mode:', error);
+      } finally {
+        setIsInitialized(true);
       }
-    } catch (error) {
-      console.error('Error initializing development mode:', error);
-    } finally {
-      setIsInitialized(true);
-    }
+    };
+
+    // Initialize immediately, don't wait
+    initDevMode();
   }, []);
 
-  // Handle URL dev mode parameters
-  useEffect(() => {
-    if (!isInitialized || !isDevelopment) return;
-    
-    try {
-      const searchParams = new URLSearchParams(location.search);
-      const devModeParam = searchParams.get('dev_mode');
-      
-      if (devModeParam) {
-        const validTypes: DevUserType[] = ['individual', 'establishment', 'promoter', 'admin'];
-        if (validTypes.includes(devModeParam as DevUserType)) {
-          console.log('Switching to dev mode from URL param:', devModeParam);
-          switchToUserType(devModeParam as DevUserType);
-        }
-      }
-    } catch (error) {
-      console.error('Error handling URL dev mode params:', error);
-    }
-  }, [location.search, isInitialized, isDevelopment]);
-
-  const navigateToUserDashboard = useCallback((userType: DevUserType) => {
-    try {
-      // Clean URL parameters
-      const newUrl = new URL(window.location.href);
-      newUrl.searchParams.delete('dev_mode');
-      window.history.replaceState({}, '', newUrl.toString());
-
-      // Navigate to appropriate dashboard
-      let targetPath = '';
-      switch (userType) {
-        case 'establishment':
-          targetPath = '/establishment/dashboard';
-          break;
-        case 'promoter':
-          targetPath = '/promoter/dashboard';
-          break;
-        case 'admin':
-          targetPath = '/admin/system-breakdown';
-          break;
-        case 'individual':
-          targetPath = '/explore';
-          break;
-        default:
-          targetPath = '/landing';
-      }
-      
-      console.log('Navigating to dashboard:', targetPath);
-      if (location.pathname !== targetPath) {
-        navigate(targetPath, { replace: true });
-      }
-    } catch (error) {
-      console.error('Error navigating to user dashboard:', error);
-    }
-  }, [navigate, location.pathname]);
-
   const switchToUserType = useCallback((userType: DevUserType) => {
-    try {
-      if (!isDevelopment || devMode === userType) return;
-      
-      console.log('Switching dev mode from', devMode, 'to', userType);
-      setDevMode(userType);
-      
-      if (userType) {
-        localStorage.setItem('dev_user_type', userType);
-        navigateToUserDashboard(userType);
-      } else {
-        localStorage.removeItem('dev_user_type');
-        navigate('/landing', { replace: true });
-      }
-    } catch (error) {
-      console.error('Error switching user type:', error);
+    if (!isDevelopment) return;
+    
+    console.log('🔄 Switching dev mode to:', userType);
+    setDevMode(userType);
+    
+    if (userType) {
+      localStorage.setItem('dev_user_type', userType);
+    } else {
+      localStorage.removeItem('dev_user_type');
     }
-  }, [isDevelopment, devMode, navigateToUserDashboard, navigate]);
+  }, [isDevelopment]);
 
   const exitDevMode = useCallback(() => {
-    try {
-      console.log('Exiting dev mode');
-      setDevMode(null);
-      localStorage.removeItem('dev_user_type');
-      navigate('/landing', { replace: true });
-    } catch (error) {
-      console.error('Error exiting dev mode:', error);
-    }
+    console.log('🚪 Exiting dev mode');
+    setDevMode(null);
+    localStorage.removeItem('dev_user_type');
+    navigate('/landing', { replace: true });
   }, [navigate]);
 
   const value: DevelopmentModeContextType = {

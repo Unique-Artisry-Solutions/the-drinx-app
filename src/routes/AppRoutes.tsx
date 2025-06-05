@@ -1,12 +1,12 @@
 
 import React, { Suspense } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth/AuthProvider';
 import { useDevelopmentMode } from '@/contexts/DevelopmentModeContext';
 import ProtectedRoute from './protectedRoutes';
 import PageSuspense from '@/components/loading/PageSuspense';
 
-// Lazy load pages - using correct paths from the codebase
+// Lazy load pages
 const LandingPage = React.lazy(() => import('@/pages/LandingPage'));
 const ExplorePage = React.lazy(() => import('@/pages/ExplorePage'));
 const ProfilePage = React.lazy(() => import('@/pages/ProfilePage'));
@@ -16,7 +16,7 @@ const RewardsPage = React.lazy(() => import('@/pages/rewards/index'));
 const NotificationsPage = React.lazy(() => import('@/pages/notifications/NotificationsPage'));
 const DebugPage = React.lazy(() => import('@/components/debug/DebugPage'));
 
-// Admin pages - using correct path
+// Admin pages
 const AdminSystemBreakdownPage = React.lazy(() => import('@/pages/admin/SystemBreakdownPage'));
 
 // Establishment pages
@@ -26,28 +26,68 @@ const EstablishmentDashboardPage = React.lazy(() => import('@/pages/establishmen
 const PromoterDashboardPage = React.lazy(() => import('@/pages/promoter/PromoterDashboardPage'));
 
 const AppRoutes: React.FC = () => {
-  const { isLoading: authLoading } = useAuth();
-  const { isInitialized } = useDevelopmentMode();
+  const { isLoading: authLoading, isAuthenticated, userType } = useAuth();
+  const { isInitialized, isDevelopment, devMode } = useDevelopmentMode();
 
-  // Show loading while initializing
-  if (authLoading || !isInitialized) {
+  // Simple loading state - don't block for too long
+  if (!isInitialized || authLoading) {
     return (
-      <PageSuspense>
-        <div>Loading...</div>
-      </PageSuspense>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-sm text-muted-foreground">Loading...</p>
+        </div>
+      </div>
     );
   }
+
+  // Create a simple redirect component for the root route
+  const IndexRedirect = () => {
+    // In dev mode, determine where to go based on dev user type
+    if (isDevelopment && devMode) {
+      switch (devMode) {
+        case 'admin':
+          return <Navigate to="/admin/system-breakdown" replace />;
+        case 'establishment':
+          return <Navigate to="/establishment/dashboard" replace />;
+        case 'promoter':
+          return <Navigate to="/promoter/dashboard" replace />;
+        case 'individual':
+          return <Navigate to="/explore" replace />;
+        default:
+          return <Navigate to="/landing" replace />;
+      }
+    }
+
+    // Normal auth flow
+    if (isAuthenticated && userType) {
+      switch (userType) {
+        case 'admin':
+          return <Navigate to="/admin/system-breakdown" replace />;
+        case 'establishment':
+          return <Navigate to="/establishment/dashboard" replace />;
+        case 'promoter':
+          return <Navigate to="/promoter/dashboard" replace />;
+        default:
+          return <Navigate to="/explore" replace />;
+      }
+    }
+
+    return <Navigate to="/landing" replace />;
+  };
 
   return (
     <PageSuspense>
       <Routes>
+        {/* Root route with smart redirect */}
+        <Route path="/" element={<IndexRedirect />} />
+        
         {/* Public routes */}
-        <Route path="/" element={<LandingPage />} />
         <Route path="/landing" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/explore" element={<ExplorePage />} />
         
-        {/* Debug route (development only) */}
+        {/* Debug route (always accessible in development) */}
         <Route path="/debug" element={<DebugPage />} />
         
         {/* Protected routes */}
