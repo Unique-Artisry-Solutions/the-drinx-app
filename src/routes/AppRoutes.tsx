@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { adminRoutes } from './config/adminRoutes';
@@ -13,11 +12,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
 
-// Only lazy load complex pages that actually benefit from it
-const EventDetailPage = React.lazy(() => import('@/pages/EventDetailPage'));
-const BarCrawlDetail = React.lazy(() => import('@/pages/BarCrawlDetail'));
-const CheckoutPage = React.lazy(() => import('@/pages/CheckoutPage'));
-const PurchaseSuccessPage = React.lazy(() => import('@/pages/PurchaseSuccessPage'));
+// Direct imports for commerce and event pages - simplified routing
+import CheckoutPage from '@/pages/CheckoutPage';
+import PurchaseSuccessPage from '@/pages/PurchaseSuccessPage';
+import EventDetailPage from '@/pages/EventDetailPage';
+import BarCrawlDetail from '@/pages/BarCrawlDetail';
+
+// Keep lazy loading only for scanner page (requires camera permissions)
 const EventScannerPage = React.lazy(() => import('@/pages/events/EventScannerPage'));
 
 const AppRoutes = () => {
@@ -38,44 +39,15 @@ const AppRoutes = () => {
             <Route key={route.path} path={route.path} element={route.element} />
           ))}
 
-          {/* Commerce Routes - Keep lazy loading for heavy pages */}
-          <Route 
-            path="/checkout" 
-            element={
-              <PageSuspense fallback={<Skeleton className="h-screen w-full" />}>
-                <CheckoutPage />
-              </PageSuspense>
-            } 
-          />
-          
-          <Route 
-            path="/purchase-success" 
-            element={
-              <PageSuspense fallback={<Skeleton className="h-screen w-full" />}>
-                <PurchaseSuccessPage />
-              </PageSuspense>
-            } 
-          />
+          {/* Simplified Commerce Routes - Direct rendering */}
+          <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/purchase-success" element={<PurchaseSuccessPage />} />
 
-          {/* Event Routes - Keep lazy loading for complex functionality */}
-          <Route 
-            path="/event/:id" 
-            element={
-              <PageSuspense fallback={<Skeleton className="h-screen w-full" />}>
-                <EventDetailPage />
-              </PageSuspense>
-            } 
-          />
-          
-          <Route 
-            path="/bar-crawl/:id" 
-            element={
-              <PageSuspense fallback={<Skeleton className="h-screen w-full" />}>
-                <BarCrawlDetail />
-              </PageSuspense>
-            }
-          />
+          {/* Simplified Event Routes - Direct rendering */}
+          <Route path="/event/:id" element={<EventDetailPage />} />
+          <Route path="/bar-crawl/:id" element={<BarCrawlDetail />} />
 
+          {/* Scanner route - Keep lazy loading for camera permissions */}
           <Route 
             path="/events/scan/:eventId/:token" 
             element={
