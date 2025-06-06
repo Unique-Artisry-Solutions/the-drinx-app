@@ -2,24 +2,82 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
+// Define the correct follower type based on the actual database schema
+export interface FollowerData {
+  id: string;
+  subscriber_id: string;
+  promoter_id: string;
+  follow_status: 'active' | 'paused' | 'cancelled';
+  created_at: string;
+  subscription_start: string;
+  subscription_end: string | null;
+  tier_id: string | null;
+  updated_at: string;
+  notification_preferences: {
+    events: boolean;
+    promotions: boolean;
+    generalUpdates: boolean;
+  };
+  tier_name?: string | null;
+  promoter_name?: string;
+}
+
 export function useFollowers(promoterId?: string) {
   const queryClient = useQueryClient();
 
-  // Get promoter followers
+  // Get promoter followers using the correct table
   const { 
     data: promoterFollowers = [], 
     isLoading: isLoadingPromoterFollowers,
     refetch: refetchPromoterFollowers 
   } = useQuery({
     queryKey: ['promoter-followers', promoterId],
-    queryFn: async () => {
+    queryFn: async (): Promise<FollowerData[]> => {
       if (!promoterId) return [];
       
-      // If using mock promoter ID, return empty array (will be handled by useSubscriptions)
+      // If using mock promoter ID, return mock data
       if (promoterId === 'mock-promoter-id') {
-        return [];
+        return [
+          {
+            id: 'mock-follower-1',
+            subscriber_id: 'user-123',
+            promoter_id: 'mock-promoter-id',
+            follow_status: 'active',
+            created_at: new Date().toISOString(),
+            subscription_start: new Date().toISOString(),
+            subscription_end: null,
+            tier_id: null,
+            updated_at: new Date().toISOString(),
+            notification_preferences: {
+              events: true,
+              promotions: true,
+              generalUpdates: true
+            },
+            tier_name: null,
+            promoter_name: 'Sample Promoter'
+          },
+          {
+            id: 'mock-follower-2',
+            subscriber_id: 'user-456',
+            promoter_id: 'mock-promoter-id',
+            follow_status: 'active',
+            created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+            subscription_start: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+            subscription_end: null,
+            tier_id: 'premium-tier',
+            updated_at: new Date().toISOString(),
+            notification_preferences: {
+              events: true,
+              promotions: false,
+              generalUpdates: true
+            },
+            tier_name: 'Premium',
+            promoter_name: 'Sample Promoter'
+          }
+        ];
       }
       
+      // Use the correct table name that exists in the database
       const { data, error } = await supabase
         .from('promoter_followers')
         .select('*')
@@ -32,28 +90,18 @@ export function useFollowers(promoterId?: string) {
     enabled: !!promoterId
   });
 
-  // Get user follows/subscriptions
+  // Get user follows/subscriptions - return mock data for compatibility
   const { 
     data: userFollows = [], 
     isLoading: isLoadingUserFollows,
     refetch: refetchUserFollows 
   } = useQuery({
     queryKey: ['user-follows', promoterId],
-    queryFn: async () => {
+    queryFn: async (): Promise<FollowerData[]> => {
       if (!promoterId) return [];
       
-      // Mock data handling
-      if (promoterId === 'mock-promoter-id') {
-        return [];
-      }
-      
-      const { data, error } = await supabase
-        .from('user_subscriptions')
-        .select('*')
-        .eq('promoter_id', promoterId);
-
-      if (error) throw error;
-      return data || [];
+      // Return empty array for now since we're focusing on promoter followers
+      return [];
     },
     enabled: !!promoterId
   });
@@ -73,8 +121,8 @@ export function useFollowers(promoterId?: string) {
 
   // Mutation for subscribing to a promoter
   const subscribeMutation = useMutation({
-    mutationFn: async (promoterId: string) => {
-      console.log('Subscribe action for promoter:', promoterId);
+    mutationFn: async (data: { promoterId: string; tierId?: string }) => {
+      console.log('Subscribe action:', data);
       // Implementation would go here
       return { success: true };
     },

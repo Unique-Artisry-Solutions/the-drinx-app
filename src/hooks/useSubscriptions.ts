@@ -1,66 +1,8 @@
 
-import { useFollowers } from './useFollowers';
+import { useFollowers, type FollowerData } from './useFollowers';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { SubscriptionTier } from '@/types/SubscriptionTypes';
-
-// Mock data for development with proper structure
-const MOCK_FOLLOWERS = [
-  {
-    id: 'mock-follower-1',
-    subscriber_id: 'user-123',
-    promoter_id: 'mock-promoter-id',
-    follow_status: 'active' as const,
-    created_at: new Date().toISOString(),
-    subscription_start: new Date().toISOString(),
-    subscription_end: null,
-    tier_id: null,
-    updated_at: new Date().toISOString(),
-    notification_preferences: {
-      events: true,
-      promotions: true,
-      generalUpdates: true
-    },
-    tier_name: null,
-    promoter_name: 'Sample Promoter'
-  },
-  {
-    id: 'mock-follower-2',
-    subscriber_id: 'user-456',
-    promoter_id: 'mock-promoter-id',
-    follow_status: 'active' as const,
-    created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-    subscription_start: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-    subscription_end: null,
-    tier_id: 'premium-tier',
-    updated_at: new Date().toISOString(),
-    notification_preferences: {
-      events: true,
-      promotions: false,
-      generalUpdates: true
-    },
-    tier_name: 'Premium',
-    promoter_name: 'Sample Promoter'
-  },
-  {
-    id: 'mock-follower-3',
-    subscriber_id: 'user-789',
-    promoter_id: 'mock-promoter-id',
-    follow_status: 'active' as const,
-    created_at: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
-    subscription_start: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
-    subscription_end: null,
-    tier_id: null,
-    updated_at: new Date().toISOString(),
-    notification_preferences: {
-      events: false,
-      promotions: true,
-      generalUpdates: true
-    },
-    tier_name: null,
-    promoter_name: 'Sample Promoter'
-  }
-];
 
 export function useSubscriptions(promoterId?: string) {
   const followers = useFollowers(promoterId);
@@ -89,14 +31,10 @@ export function useSubscriptions(promoterId?: string) {
     enabled: !!promoterId
   });
 
-  // Provide mock data for development when using mock promoter ID
-  const mockFollowers = promoterId === 'mock-promoter-id' ? MOCK_FOLLOWERS : [];
-  const actualFollowers = followers.promoterFollowers || [];
-  const finalFollowers = actualFollowers.length > 0 ? actualFollowers : mockFollowers;
+  // Use the followers data directly
+  const finalFollowers = followers.promoterFollowers;
 
   console.log('useSubscriptions - promoterId:', promoterId);
-  console.log('useSubscriptions - actualFollowers:', actualFollowers);
-  console.log('useSubscriptions - mockFollowers:', mockFollowers);
   console.log('useSubscriptions - finalFollowers:', finalFollowers);
 
   return {
@@ -106,7 +44,7 @@ export function useSubscriptions(promoterId?: string) {
     // User follows/subscriptions - map to the followers data structure
     subscriptions: followers.userFollows,
     
-    // Followers for promoter - with mock data fallback
+    // Followers for promoter
     followers: finalFollowers,
     
     // Loading states

@@ -2,10 +2,20 @@
 import React from 'react';
 import { useSubscriptions } from '@/hooks/useSubscriptions';
 import SubscriptionCard from './SubscriptionCard';
+import type { FollowerData } from '@/hooks/useFollowers';
 
 interface SubscriptionListProps {
   promoterId: string;
 }
+
+// Type guard to safely check if an object is FollowerData
+const isFollowerData = (obj: any): obj is FollowerData => {
+  return obj && 
+         typeof obj === 'object' && 
+         'promoter_id' in obj && 
+         'tier_id' in obj &&
+         'id' in obj;
+};
 
 const SubscriptionList: React.FC<SubscriptionListProps> = ({ promoterId }) => {
   const { tiers, subscriptions, isLoading } = useSubscriptions(promoterId);
@@ -14,13 +24,17 @@ const SubscriptionList: React.FC<SubscriptionListProps> = ({ promoterId }) => {
     return <div className="flex justify-center p-8">Loading follow options...</div>;
   }
 
-  // Check if user is already following/subscribed
-  const currentSubscription = subscriptions.find(
-    (sub) => sub.promoter_id === promoterId
+  // Check if user is already following/subscribed with proper type checking
+  const currentSubscription = subscriptions.find((sub: any) => 
+    isFollowerData(sub) && sub.promoter_id === promoterId
   );
 
-  const isFollowing = !!currentSubscription && !currentSubscription.tier_id;
-  const isSubscribed = !!currentSubscription && !!currentSubscription.tier_id;
+  const isFollowing = !!currentSubscription && 
+                     isFollowerData(currentSubscription) && 
+                     !currentSubscription.tier_id;
+  const isSubscribed = !!currentSubscription && 
+                      isFollowerData(currentSubscription) && 
+                      !!currentSubscription.tier_id;
 
   return (
     <div className="space-y-6 p-4">
@@ -36,13 +50,14 @@ const SubscriptionList: React.FC<SubscriptionListProps> = ({ promoterId }) => {
         <SubscriptionCard
           promoterId={promoterId}
           isFollowing={isFollowing}
-          currentSubscriptionId={currentSubscription?.id}
+          currentSubscriptionId={isFollowerData(currentSubscription) ? currentSubscription.id : undefined}
           isFreeFollower={true}
         />
 
         {/* Premium Tiers */}
         {tiers.map((tier) => {
-          const isCurrentTier = currentSubscription?.tier_id === tier.id;
+          const isCurrentTier = isFollowerData(currentSubscription) && 
+                               currentSubscription.tier_id === tier.id;
           
           return (
             <SubscriptionCard
@@ -50,7 +65,7 @@ const SubscriptionList: React.FC<SubscriptionListProps> = ({ promoterId }) => {
               tier={tier}
               promoterId={promoterId}
               isSubscribed={isCurrentTier}
-              currentSubscriptionId={currentSubscription?.id}
+              currentSubscriptionId={isFollowerData(currentSubscription) ? currentSubscription.id : undefined}
             />
           );
         })}

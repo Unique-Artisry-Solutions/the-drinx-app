@@ -4,11 +4,20 @@ import { useAuth } from '@/contexts/auth';
 import { useToast } from '@/hooks/use-toast';
 import { realTimeFollowerNotificationService } from '@/services/RealTimeFollowerNotificationService';
 import { useSubscriptions } from '@/hooks/useSubscriptions';
+import type { FollowerData } from '@/hooks/useFollowers';
 
 interface UseRealTimeFollowerNotificationsProps {
   promoterId?: string;
   enabled?: boolean;
 }
+
+// Type guard to safely check if an object is FollowerData
+const isFollowerData = (obj: any): obj is FollowerData => {
+  return obj && 
+         typeof obj === 'object' && 
+         'promoter_id' in obj && 
+         'follow_status' in obj;
+};
 
 export function useRealTimeFollowerNotifications({ 
   promoterId, 
@@ -83,9 +92,11 @@ export function useRealTimeFollowerNotifications({
   useEffect(() => {
     if (!enabled || !user || !promoterId || isSubscribed.current) return;
 
-    // Check if user follows this promoter
-    const isFollowing = subscriptions.some(sub => 
-      sub.promoter_id === promoterId && sub.follow_status === 'active'
+    // Check if user follows this promoter with proper type checking
+    const isFollowing = subscriptions.some((sub: any) => 
+      isFollowerData(sub) && 
+      sub.promoter_id === promoterId && 
+      sub.follow_status === 'active'
     );
 
     if (isFollowing) {

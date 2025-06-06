@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { useSubscriptions } from '@/hooks/useSubscriptions';
 import { Heart, UserPlus, UserMinus, Bell, BellOff } from 'lucide-react';
+import type { FollowerData } from '@/hooks/useFollowers';
 
 interface FollowButtonProps {
   promoterId: string;
@@ -15,6 +16,15 @@ interface FollowButtonProps {
   showNotificationToggle?: boolean;
   className?: string;
 }
+
+// Type guard to safely check if an object is FollowerData
+const isFollowerData = (obj: any): obj is FollowerData => {
+  return obj && 
+         typeof obj === 'object' && 
+         'id' in obj && 
+         'promoter_id' in obj && 
+         'notification_preferences' in obj;
+};
 
 const FollowButton: React.FC<FollowButtonProps> = ({
   promoterId,
@@ -29,14 +39,17 @@ const FollowButton: React.FC<FollowButtonProps> = ({
   const { toast } = useToast();
   const { subscriptions, followers, follow, unfollow, updatePreferences } = useSubscriptions(promoterId);
 
-  // Check if currently following
-  const currentSubscription = subscriptions.find(sub => sub.promoter_id === promoterId);
+  // Check if currently following with proper type checking
+  const currentSubscription = subscriptions.find((sub: any) => 
+    isFollowerData(sub) && sub.promoter_id === promoterId
+  );
   const isFollowing = !!currentSubscription;
-  const hasNotifications = currentSubscription?.notification_preferences?.events ?? true;
+  const hasNotifications = isFollowerData(currentSubscription) && 
+                          currentSubscription.notification_preferences?.events !== false;
 
   const handleFollowToggle = async () => {
     try {
-      if (isFollowing) {
+      if (isFollowing && isFollowerData(currentSubscription)) {
         await unfollow.mutateAsync(currentSubscription.id);
       } else {
         await follow.mutateAsync(promoterId);
@@ -51,7 +64,7 @@ const FollowButton: React.FC<FollowButtonProps> = ({
   };
 
   const handleNotificationToggle = async () => {
-    if (!currentSubscription) return;
+    if (!isFollowerData(currentSubscription)) return;
 
     try {
       await updatePreferences.mutateAsync({

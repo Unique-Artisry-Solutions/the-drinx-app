@@ -1,174 +1,163 @@
 
 import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
-import { useAuth } from '@/contexts/auth';
-import { useSubscriptions } from '@/hooks/useSubscriptions';
-import { SubscriptionTier } from '@/types/SubscriptionTypes';
-import { featuresByTier, getFeature } from '@/lib/features/registry';
-import { CheckIcon, Heart, Crown } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { useSubscriptions } from '@/hooks/useSubscriptions';
+import { useToast } from '@/hooks/use-toast';
+import { Heart, Crown, Check } from 'lucide-react';
+import type { SubscriptionTier } from '@/types/SubscriptionTypes';
+import type { FollowerData } from '@/hooks/useFollowers';
 
 interface SubscriptionCardProps {
-  tier?: SubscriptionTier;
   promoterId: string;
+  tier?: SubscriptionTier;
   isFollowing?: boolean;
   isSubscribed?: boolean;
   currentSubscriptionId?: string;
   isFreeFollower?: boolean;
 }
 
-export const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
-  tier,
+// Type guard to safely check if an object is FollowerData
+const isFollowerData = (obj: any): obj is FollowerData => {
+  return obj && 
+         typeof obj === 'object' && 
+         'id' in obj && 
+         'promoter_id' in obj;
+};
+
+const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
   promoterId,
+  tier,
   isFollowing = false,
   isSubscribed = false,
   currentSubscriptionId,
-  isFreeFollower = false,
+  isFreeFollower = false
 }) => {
-  const { user } = useAuth();
-  const { follow, subscribe, unsubscribe } = useSubscriptions(promoterId);
+  const { follow, subscribe, unfollow } = useSubscriptions(promoterId);
+  const { toast } = useToast();
 
   const handleAction = async () => {
-    if (isFollowing || isSubscribed) {
-      if (currentSubscriptionId) {
-        await unsubscribe.mutateAsync(currentSubscriptionId);
+    try {
+      if (isFreeFollower) {
+        if (isFollowing) {
+          // Unfollow - need a subscription ID
+          if (currentSubscriptionId) {
+            await unfollow.mutateAsync(currentSubscriptionId);
+          }
+        } else {
+          // Follow for free
+          await follow.mutateAsync(promoterId);
+        }
+      } else if (tier) {
+        if (isSubscribed) {
+          // Unsubscribe from premium tier
+          if (currentSubscriptionId) {
+            await unfollow.mutateAsync(currentSubscriptionId);
+          }
+        } else {
+          // Subscribe to premium tier - pass the correct object structure
+          await subscribe.mutateAsync({
+            promoterId,
+            tierId: tier.id
+          });
+        }
       }
-    } else {
-      if (tier) {
-        // Subscribe to premium tier
-        await subscribe.mutateAsync({ promoterId, tierId: tier.id });
-      } else {
-        // Free follow - pass just the promoterId string
-        await follow.mutateAsync(promoterId);
-      }
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to update subscription',
+        variant: 'destructive'
+      });
     }
   };
 
-  const isLoading = follow.isPending || subscribe.isPending || unsubscribe.isPending;
+  const getButtonText = () => {
+    if (isFreeFollower) {
+      return isFollowing ? 'Unfollow' : 'Follow for Free';
+    }
+    return isSubscribed ? 'Unsubscribe' : `Subscribe for $${tier?.price}/month`;
+  };
 
-  // Free follower card
-  if (!tier) {
-    return (
-      <Card className="w-full max-w-sm border-2 border-green-200">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-xl font-bold flex items-center gap-2">
-              <Heart className="h-5 w-5 text-green-500" />
-              Free Follow
-            </CardTitle>
-            <Badge variant="secondary" className="bg-green-100 text-green-700">
-              Free
-            </Badge>
-          </div>
-        </CardHeader>
-        <CardContent className="text-center">
-          <div className="mb-6">
-            <div className="text-2xl font-bold text-green-600 mb-2">Free to Follow</div>
-            <p className="text-sm text-gray-600">Stay connected with this promoter</p>
-          </div>
-          <ul className="space-y-2 text-left mb-6">
-            <li className="flex items-center">
-              <CheckIcon className="h-5 w-5 text-green-500 mr-2" />
-              <span>Get notified of new events</span>
-            </li>
-            <li className="flex items-center">
-              <CheckIcon className="h-5 w-5 text-green-500 mr-2" />
-              <span>Follow promoter updates</span>
-            </li>
-            <li className="flex items-center">
-              <CheckIcon className="h-5 w-5 text-green-500 mr-2" />
-              <span>Basic event information</span>
-            </li>
-          </ul>
-        </CardContent>
-        <CardFooter className="flex justify-center">
-          <Button
-            onClick={handleAction}
-            disabled={!user || isLoading}
-            className={isFollowing 
-              ? 'bg-red-600 hover:bg-red-700' 
-              : 'bg-green-600 hover:bg-green-700'}
-          >
-            {isLoading
-              ? 'Processing...'
-              : isFollowing
-              ? 'Unfollow'
-              : 'Follow for Free'}
-          </Button>
-        </CardFooter>
-      </Card>
-    );
-  }
-
-  // Premium tier card
-  const tierFeatures = featuresByTier[tier.tier || 'basic'] || [];
+  const getButtonVariant = () => {
+    if (isFollowing || isSubscribed) {
+      return 'outline';
+    }
+    return isFreeFollower ? 'default' : 'default';
+  };
 
   return (
-    <Card className={`w-full max-w-sm ${tier.tier === 'vip' ? 'border-2 border-purple-300' : ''}`}>
+    <Card className={`relative ${(isFollowing || isSubscribed) ? 'ring-2 ring-primary' : ''}`}>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle className="text-xl font-bold flex items-center gap-2">
-            {tier.tier === 'vip' && <Crown className="h-5 w-5 text-purple-500" />}
-            {tier.name}
+          <CardTitle className="flex items-center gap-2">
+            {isFreeFollower ? (
+              <>
+                <Heart className="h-5 w-5 text-red-500" />
+                Free Follower
+              </>
+            ) : (
+              <>
+                <Crown className="h-5 w-5 text-purple-500" />
+                {tier?.name || 'Premium'}
+              </>
+            )}
           </CardTitle>
-          <Badge variant={tier.tier === 'vip' ? 'default' : 'secondary'}>
-            {tier.tier?.toUpperCase()}
-          </Badge>
+          {(isFollowing || isSubscribed) && (
+            <Badge variant="default" className="flex items-center gap-1">
+              <Check className="h-3 w-3" />
+              Active
+            </Badge>
+          )}
         </div>
+        {!isFreeFollower && tier && (
+          <div className="text-2xl font-bold">
+            ${tier.price}
+            <span className="text-sm font-normal text-muted-foreground">/month</span>
+          </div>
+        )}
       </CardHeader>
-      <CardContent className="text-center">
-        <div className="mb-6">
-          <div className="text-2xl font-bold mb-2">Premium Follow</div>
-          <p className="text-sm text-gray-600">Enhanced experience with exclusive benefits</p>
+      <CardContent className="space-y-4">
+        <div className="space-y-2">
+          {isFreeFollower ? (
+            <>
+              <div className="flex items-center gap-2">
+                <Check className="h-4 w-4 text-green-500" />
+                <span>Get notified about new events</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Check className="h-4 w-4 text-green-500" />
+                <span>Access to public promotions</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Check className="h-4 w-4 text-green-500" />
+                <span>Basic event updates</span>
+              </div>
+            </>
+          ) : tier?.benefits ? (
+            tier.benefits.map((benefit: string, index: number) => (
+              <div key={index} className="flex items-center gap-2">
+                <Check className="h-4 w-4 text-green-500" />
+                <span>{benefit}</span>
+              </div>
+            ))
+          ) : (
+            <div className="flex items-center gap-2">
+              <Check className="h-4 w-4 text-green-500" />
+              <span>Premium benefits included</span>
+            </div>
+          )}
         </div>
-        <ul className="space-y-2 text-left mb-6">
-          {/* Display features included in this tier */}
-          {tierFeatures.map((featureId) => {
-            const feature = getFeature(featureId);
-            if (!feature) return null;
-            
-            return (
-              <li key={feature.id} className="flex items-center">
-                <CheckIcon className="h-5 w-5 text-green-500 mr-2" />
-                <span>{feature.name}</span>
-              </li>
-            );
-          })}
-          
-          {/* Display original features from the tier if any */}
-          {Array.isArray(tier.features) && tier.features.map((feature: any, index: number) => {
-            // Skip if this is a string that might be a duplicate with our feature registry
-            if (typeof feature === 'string' && tierFeatures.length > 0) return null;
-            
-            return (
-              <li key={index} className="flex items-center">
-                <CheckIcon className="h-5 w-5 text-green-500 mr-2" />
-                {typeof feature === 'string' ? feature : JSON.stringify(feature)}
-              </li>
-            );
-          })}
 
-          {/* Always include free features */}
-          <li className="flex items-center">
-            <CheckIcon className="h-5 w-5 text-green-500 mr-2" />
-            <span>All free follower benefits</span>
-          </li>
-        </ul>
-      </CardContent>
-      <CardFooter className="flex justify-center">
         <Button
           onClick={handleAction}
-          disabled={!user || isLoading}
-          className={isSubscribed ? 'bg-red-600 hover:bg-red-700' : 'bg-purple-600 hover:bg-purple-700'}
+          variant={getButtonVariant()}
+          className="w-full"
+          disabled={follow.isPending || subscribe.isPending || unfollow.isPending}
         >
-          {isLoading
-            ? 'Processing...'
-            : isSubscribed
-            ? 'Unfollow'
-            : 'Follow Premium'}
+          {getButtonText()}
         </Button>
-      </CardFooter>
+      </CardContent>
     </Card>
   );
 };
