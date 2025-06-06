@@ -10,6 +10,8 @@ import { FollowerCountWidget } from '@/components/promoter/FollowerCountWidget';
 import FollowerAnalyticsWidgets from '@/components/promoter/followers/FollowerAnalyticsWidgets';
 import EnhancedFollowerAnalytics from '@/components/promoter/followers/EnhancedFollowerAnalytics';
 import JourneyTrackingWidget from '@/components/promoter/followers/JourneyTrackingWidget';
+import ChurnAnalytics from '@/components/promoter/followers/ChurnAnalytics';
+import FollowerTierManagement from '@/components/promoter/followers/FollowerTierManagement';
 
 const PromoterFollowersPage: React.FC = () => {
   const { user } = useAuth();
@@ -29,10 +31,12 @@ const PromoterFollowersPage: React.FC = () => {
         </div>
 
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
             <TabsTrigger value="journey">Journey</TabsTrigger>
+            <TabsTrigger value="churn">Churn Risk</TabsTrigger>
+            <TabsTrigger value="tiers">Tiers</TabsTrigger>
             <TabsTrigger value="list">Followers</TabsTrigger>
           </TabsList>
 
@@ -62,6 +66,14 @@ const PromoterFollowersPage: React.FC = () => {
 
           <TabsContent value="journey" className="space-y-6">
             <JourneyTrackingWidget promoterId={promoterId} />
+          </TabsContent>
+
+          <TabsContent value="churn" className="space-y-6">
+            <ChurnAnalytics promoterId={promoterId} />
+          </TabsContent>
+
+          <TabsContent value="tiers" className="space-y-6">
+            <FollowerTierManagement promoterId={promoterId} />
           </TabsContent>
 
           <TabsContent value="list" className="space-y-6">
