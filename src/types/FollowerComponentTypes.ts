@@ -1,3 +1,4 @@
+
 export interface FollowerComponentProps {
   promoterId: string;
   className?: string;

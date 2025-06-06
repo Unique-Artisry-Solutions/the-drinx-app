@@ -1,40 +1,30 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { ChevronRight } from 'lucide-react';
-import { 
-  BreadcrumbItem as UIBreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbPage,
-  BreadcrumbSeparator
-} from '@/components/ui/breadcrumb';
-import { BreadcrumbConfig } from './BreadcrumbConfig';
+import { BreadcrumbItem as BreadcrumbItemUI, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
+import LinkComponent from '../LinkComponent';
+import { BreadcrumbItem as BreadcrumbItemType } from './BreadcrumbUtils';
 
 interface BreadcrumbItemProps {
-  crumb: BreadcrumbConfig;
+  crumb: BreadcrumbItemType;
   isLast: boolean;
 }
 
 const BreadcrumbItem: React.FC<BreadcrumbItemProps> = ({ crumb, isLast }) => {
   return (
-    <React.Fragment>
-      <UIBreadcrumbItem>
+    <>
+      <BreadcrumbItemUI>
         {isLast ? (
-          <BreadcrumbPage className="flex items-center">
-            {crumb.icon && crumb.icon}
-            <span className={crumb.icon ? "ml-1" : ""}>{crumb.label}</span>
-          </BreadcrumbPage>
+          <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
         ) : (
           <BreadcrumbLink asChild>
-            <Link to={crumb.path} className="flex items-center hover:text-primary transition-colors">
-              {crumb.icon && crumb.icon}
-              <span className={crumb.icon ? "ml-1" : ""}>{crumb.label}</span>
-            </Link>
+            <LinkComponent href={crumb.path}>
+              {crumb.label}
+            </LinkComponent>
           </BreadcrumbLink>
         )}
-      </UIBreadcrumbItem>
-      {!isLast && <BreadcrumbSeparator><ChevronRight className="h-3 w-3" /></BreadcrumbSeparator>}
-    </React.Fragment>
+      </BreadcrumbItemUI>
+      {!isLast && <BreadcrumbSeparator />}
+    </>
   );
 };
 
