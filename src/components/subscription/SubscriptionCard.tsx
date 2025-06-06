@@ -86,6 +86,9 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
     return isFreeFollower ? 'default' : 'default';
   };
 
+  // Get benefits safely
+  const benefits = tier?.benefits || [];
+
   return (
     <Card className={`relative ${(isFollowing || isSubscribed) ? 'ring-2 ring-primary' : ''}`}>
       <CardHeader>
@@ -134,8 +137,8 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
                 <span>Basic event updates</span>
               </div>
             </>
-          ) : tier?.benefits ? (
-            tier.benefits.map((benefit: string, index: number) => (
+          ) : benefits.length > 0 ? (
+            benefits.map((benefit: string, index: number) => (
               <div key={index} className="flex items-center gap-2">
                 <Check className="h-4 w-4 text-green-500" />
                 <span>{benefit}</span>

@@ -23,6 +23,7 @@ export interface SubscriptionTier {
   price: number; // Keep for potential future premium following features
   tier: 'basic' | 'premium' | 'vip';
   features: Record<string, any>[];
+  benefits: string[]; // Add benefits property
   is_active: boolean;
   is_free: boolean; // Most following will be free
   created_at: string;
