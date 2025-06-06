@@ -9,11 +9,14 @@ interface FollowerCountWidgetProps {
 }
 
 export const FollowerCountWidget: React.FC<FollowerCountWidgetProps> = ({ promoterId }) => {
-  const { subscriptions, isLoading } = useSubscriptions(promoterId);
+  const { followers, isLoading } = useSubscriptions(promoterId);
 
-  const totalFollowers = subscriptions?.length || 0;
-  const freeFollowers = subscriptions?.filter(sub => !sub.tier_id).length || 0;
-  const premiumFollowers = subscriptions?.filter(sub => sub.tier_id).length || 0;
+  console.log('FollowerCountWidget - followers:', followers);
+  console.log('FollowerCountWidget - isLoading:', isLoading);
+
+  const totalFollowers = followers?.length || 0;
+  const freeFollowers = followers?.filter(follower => !follower.tier_id).length || 0;
+  const premiumFollowers = followers?.filter(follower => follower.tier_id).length || 0;
 
   if (isLoading) {
     return (

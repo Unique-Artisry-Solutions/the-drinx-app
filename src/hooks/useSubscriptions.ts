@@ -4,6 +4,46 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { SubscriptionTier } from '@/types/SubscriptionTypes';
 
+// Mock data for development
+const MOCK_FOLLOWERS = [
+  {
+    id: 'mock-follower-1',
+    subscriber_id: 'user-123',
+    promoter_id: 'mock-promoter-id',
+    follow_status: 'active' as const,
+    created_at: new Date().toISOString(),
+    notification_preferences: {
+      events: true,
+      promotions: true,
+      generalUpdates: true
+    }
+  },
+  {
+    id: 'mock-follower-2',
+    subscriber_id: 'user-456',
+    promoter_id: 'mock-promoter-id',
+    follow_status: 'active' as const,
+    created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+    notification_preferences: {
+      events: true,
+      promotions: false,
+      generalUpdates: true
+    }
+  },
+  {
+    id: 'mock-follower-3',
+    subscriber_id: 'user-789',
+    promoter_id: 'mock-promoter-id',
+    follow_status: 'active' as const,
+    created_at: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
+    notification_preferences: {
+      events: false,
+      promotions: true,
+      generalUpdates: true
+    }
+  }
+];
+
 export function useSubscriptions(promoterId?: string) {
   const followers = useFollowers(promoterId);
 
@@ -12,6 +52,11 @@ export function useSubscriptions(promoterId?: string) {
     queryKey: ['subscription-tiers', promoterId],
     queryFn: async () => {
       if (!promoterId) return [];
+      
+      // If using mock promoter ID, return mock data
+      if (promoterId === 'mock-promoter-id') {
+        return [];
+      }
       
       const { data, error } = await supabase
         .from('promoter_subscription_tiers')
@@ -26,6 +71,16 @@ export function useSubscriptions(promoterId?: string) {
     enabled: !!promoterId
   });
 
+  // Provide mock data for development when using mock promoter ID
+  const mockFollowers = promoterId === 'mock-promoter-id' ? MOCK_FOLLOWERS : [];
+  const actualFollowers = followers.promoterFollowers || [];
+  const finalFollowers = actualFollowers.length > 0 ? actualFollowers : mockFollowers;
+
+  console.log('useSubscriptions - promoterId:', promoterId);
+  console.log('useSubscriptions - actualFollowers:', actualFollowers);
+  console.log('useSubscriptions - mockFollowers:', mockFollowers);
+  console.log('useSubscriptions - finalFollowers:', finalFollowers);
+
   return {
     // Subscription tiers
     tiers,
@@ -33,8 +88,8 @@ export function useSubscriptions(promoterId?: string) {
     // User follows/subscriptions - map to the followers data structure
     subscriptions: followers.userFollows,
     
-    // Followers for promoter
-    followers: followers.promoterFollowers,
+    // Followers for promoter - with mock data fallback
+    followers: finalFollowers,
     
     // Loading states
     isLoading: followers.isLoading || tiersLoading,
@@ -42,7 +97,7 @@ export function useSubscriptions(promoterId?: string) {
     // Actions
     follow: followers.follow,
     subscribe: followers.subscribe,
-    unfollow: followers.unfollow, // Add the missing unfollow method
+    unfollow: followers.unfollow,
     unsubscribe: followers.unfollow, // Alias for consistency
     
     // Promoter communication actions

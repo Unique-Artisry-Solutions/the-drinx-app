@@ -23,6 +23,7 @@ const Breadcrumbs: React.FC = () => {
     { path: '/promoter/settings', metadata: { breadcrumb: 'Settings' } },
     { path: '/promoter/profile', metadata: { breadcrumb: 'Profile' } },
     { path: '/promoter/events', metadata: { breadcrumb: 'Events' } },
+    { path: '/promoter/followers', metadata: { breadcrumb: 'Followers' } },
     { path: '/promoter/analytics', metadata: { breadcrumb: 'Analytics' } }
   ];
 
@@ -34,23 +35,26 @@ const Breadcrumbs: React.FC = () => {
 
   return (
     <nav className="flex items-center space-x-2 text-sm text-muted-foreground mb-4">
-      {breadcrumbs.map((breadcrumb, index) => (
-        <React.Fragment key={breadcrumb.path}>
-          {index > 0 && <ChevronRight className="h-4 w-4" />}
-          {index === breadcrumbs.length - 1 ? (
-            <span className="font-medium text-foreground">
-              {breadcrumb.label}
-            </span>
-          ) : (
-            <LinkComponent 
-              href={breadcrumb.path}
-              className="hover:text-foreground transition-colors"
-            >
-              {breadcrumb.label}
-            </LinkComponent>
-          )}
-        </React.Fragment>
-      ))}
+      {breadcrumbs.map((breadcrumb, index) => {
+        const isLast = index === breadcrumbs.length - 1;
+        return (
+          <div key={breadcrumb.path} className="flex items-center">
+            {index > 0 && <ChevronRight className="h-4 w-4 mr-2" />}
+            {isLast ? (
+              <span className="font-medium text-foreground">
+                {breadcrumb.label}
+              </span>
+            ) : (
+              <LinkComponent 
+                href={breadcrumb.path}
+                className="hover:text-foreground transition-colors"
+              >
+                {breadcrumb.label}
+              </LinkComponent>
+            )}
+          </div>
+        );
+      })}
     </nav>
   );
 };
