@@ -2,11 +2,14 @@
 import React from 'react';
 import Layout from '@/components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useSubscriptions } from '@/hooks/useSubscriptions';
 import { useAuth } from '@/contexts/auth/AuthProvider';
 import FollowerList from '@/components/promoter/followers/FollowerList';
 import { FollowerCountWidget } from '@/components/promoter/FollowerCountWidget';
 import FollowerAnalyticsWidgets from '@/components/promoter/followers/FollowerAnalyticsWidgets';
+import EnhancedFollowerAnalytics from '@/components/promoter/followers/EnhancedFollowerAnalytics';
+import JourneyTrackingWidget from '@/components/promoter/followers/JourneyTrackingWidget';
 
 const PromoterFollowersPage: React.FC = () => {
   const { user } = useAuth();
@@ -25,22 +28,51 @@ const PromoterFollowersPage: React.FC = () => {
           <h1 className="text-3xl font-bold">Followers</h1>
         </div>
 
-        {/* Analytics widgets */}
-        <FollowerAnalyticsWidgets 
-          promoterId={promoterId}
-          metrics={['total', 'growth', 'engagement']}
-        />
+        <Tabs defaultValue="overview" className="w-full">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
+            <TabsTrigger value="journey">Journey</TabsTrigger>
+            <TabsTrigger value="list">Followers</TabsTrigger>
+          </TabsList>
 
-        {/* Follower count widget */}
-        <FollowerCountWidget promoterId={promoterId} />
+          <TabsContent value="overview" className="space-y-6">
+            {/* Basic analytics widgets */}
+            <FollowerAnalyticsWidgets 
+              promoterId={promoterId}
+              metrics={['total', 'growth', 'engagement']}
+            />
 
-        {/* Main followers list */}
-        <FollowerList 
-          promoterId={promoterId}
-          showActions={true}
-          onError={(error) => console.error('FollowerList error:', error)}
-          onSuccess={(data) => console.log('FollowerList success:', data)}
-        />
+            {/* Follower count widget */}
+            <FollowerCountWidget promoterId={promoterId} />
+
+            {/* Recent followers preview */}
+            <FollowerList 
+              promoterId={promoterId}
+              maxItems={5}
+              showActions={false}
+              onError={(error) => console.error('FollowerList error:', error)}
+              onSuccess={(data) => console.log('FollowerList success:', data)}
+            />
+          </TabsContent>
+
+          <TabsContent value="analytics" className="space-y-6">
+            <EnhancedFollowerAnalytics promoterId={promoterId} />
+          </TabsContent>
+
+          <TabsContent value="journey" className="space-y-6">
+            <JourneyTrackingWidget promoterId={promoterId} />
+          </TabsContent>
+
+          <TabsContent value="list" className="space-y-6">
+            <FollowerList 
+              promoterId={promoterId}
+              showActions={true}
+              onError={(error) => console.error('FollowerList error:', error)}
+              onSuccess={(data) => console.log('FollowerList success:', data)}
+            />
+          </TabsContent>
+        </Tabs>
 
         {/* Debug info */}
         {process.env.NODE_ENV === 'development' && (

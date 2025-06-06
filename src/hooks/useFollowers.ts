@@ -1,24 +1,52 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/auth';
 import { useToast } from '@/hooks/use-toast';
 
 // Define the correct follower type based on the actual database schema
 export interface FollowerData {
   id: string;
-  promoter_id: string;
   subscriber_id: string;
-  tier_id?: string | null;
-  follow_status: 'active' | 'paused' | 'cancelled' | 'pending';
-  subscription_start: string;
-  subscription_end?: string | null;
-  created_at: string;
-  updated_at: string;
-  notification_preferences?: any;
-  promoter_name?: string;
+  promoter_id: string;
+  tier_id?: string;
   tier_name?: string;
+  promoter_name?: string;
+  follow_status: 'active' | 'paused' | 'cancelled' | 'pending';
+  subscription_start?: string;
+  created_at: string;
+  notification_preferences?: {
+    events?: boolean;
+    promotions?: boolean;
+    announcements?: boolean;
+  };
+  // New Phase 1 fields
+  discovery_source?: string;
+  referral_source?: string;
+  utm_campaign?: string;
+  utm_medium?: string;
+  utm_source?: string;
+  last_engagement_at?: string;
+  engagement_count: number;
+  total_interactions: number;
+  churn_risk_score: number;
+  follower_tier: string;
+  discovery_metadata?: Record<string, any>;
+}
+
+export interface FollowRequest {
+  promoterId: string;
+  discoverySource?: string;
+  referralSource?: string;
+  utmParams?: {
+    campaign?: string;
+    medium?: string;
+    source?: string;
+  };
+  metadata?: Record<string, any>;
 }
 
 export function useFollowers(promoterId?: string) {
+  const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -34,15 +62,27 @@ export function useFollowers(promoterId?: string) {
       const mockUserFollows: FollowerData[] = [
         {
           id: 'follow-1',
-          promoter_id: 'mock-promoter-id',
           subscriber_id: 'mock-user-id',
+          promoter_id: 'mock-promoter-id',
           tier_id: null,
+          tier_name: 'Basic',
+          promoter_name: 'Sample Promoter',
           follow_status: 'active' as const,
           subscription_start: new Date().toISOString(),
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
           notification_preferences: { events: true, promotions: true },
-          promoter_name: 'Sample Promoter'
+          discovery_source: 'Social Media',
+          referral_source: 'Referral',
+          utm_campaign: 'SummerSale',
+          utm_medium: 'CPC',
+          utm_source: 'Google',
+          last_engagement_at: new Date().toISOString(),
+          engagement_count: 10,
+          total_interactions: 50,
+          churn_risk_score: 0.5,
+          follower_tier: 'new',
+          discovery_metadata: { source: 'Facebook', type: 'Post' }
         }
       ];
       return mockUserFollows;
@@ -60,28 +100,51 @@ export function useFollowers(promoterId?: string) {
       const mockFollowers: FollowerData[] = [
         {
           id: 'follower-1',
-          promoter_id: promoterId,
           subscriber_id: 'user-1',
+          promoter_id: promoterId,
           tier_id: null,
+          tier_name: 'Basic',
+          promoter_name: 'User One',
           follow_status: 'active' as const,
           subscription_start: new Date().toISOString(),
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
           notification_preferences: { events: true, promotions: true },
-          promoter_name: 'User One'
+          discovery_source: 'Social Media',
+          referral_source: 'Referral',
+          utm_campaign: 'SummerSale',
+          utm_medium: 'CPC',
+          utm_source: 'Google',
+          last_engagement_at: new Date().toISOString(),
+          engagement_count: 10,
+          total_interactions: 50,
+          churn_risk_score: 0.5,
+          follower_tier: 'new',
+          discovery_metadata: { source: 'Facebook', type: 'Post' }
         },
         {
           id: 'follower-2',
-          promoter_id: promoterId,
           subscriber_id: 'user-2',
+          promoter_id: promoterId,
           tier_id: 'tier-1',
+          tier_name: 'Premium',
+          promoter_name: 'User Two',
           follow_status: 'active' as const,
           subscription_start: new Date().toISOString(),
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
           notification_preferences: { events: true, promotions: false },
-          promoter_name: 'User Two',
-          tier_name: 'Premium'
+          discovery_source: 'Social Media',
+          referral_source: 'Referral',
+          utm_campaign: 'SummerSale',
+          utm_medium: 'CPC',
+          utm_source: 'Google',
+          last_engagement_at: new Date().toISOString(),
+          engagement_count: 10,
+          total_interactions: 50,
+          churn_risk_score: 0.5,
+          follower_tier: 'new',
+          discovery_metadata: { source: 'Facebook', type: 'Post' }
         }
       ];
       return mockFollowers;
@@ -89,16 +152,53 @@ export function useFollowers(promoterId?: string) {
     enabled: !!promoterId
   });
 
-  // Mutation for following a promoter
-  const followMutation = useMutation({
-    mutationFn: async (promoterId: string) => {
-      console.log('Follow action for promoter:', promoterId);
-      // Implementation would go here
-      return { success: true };
+  // Enhanced follow mutation with journey tracking
+  const follow = useMutation({
+    mutationFn: async (request: FollowRequest | string) => {
+      if (!user) throw new Error('Authentication required');
+
+      const followData = typeof request === 'string' ? { promoterId: request } : request;
+      
+      const insertData = {
+        subscriber_id: user.id,
+        promoter_id: followData.promoterId,
+        follow_status: 'active' as const,
+        discovery_source: followData.discoverySource,
+        referral_source: followData.referralSource,
+        utm_campaign: followData.utmParams?.campaign,
+        utm_medium: followData.utmParams?.medium,
+        utm_source: followData.utmParams?.source,
+        discovery_metadata: followData.metadata || {},
+        engagement_count: 0,
+        total_interactions: 0,
+        churn_risk_score: 0,
+        follower_tier: 'new'
+      };
+
+      const { data, error } = await supabase
+        .from('promoter_followers')
+        .insert([insertData])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      toast({
+        title: 'Successfully followed!',
+        description: 'You are now following this promoter.',
+      });
       queryClient.invalidateQueries({ queryKey: ['user-follows'] });
       queryClient.invalidateQueries({ queryKey: ['promoter-followers'] });
+    },
+    onError: (error) => {
+      console.error('Follow error:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to follow promoter',
+        variant: 'destructive'
+      });
     }
   });
 
@@ -172,7 +272,7 @@ export function useFollowers(promoterId?: string) {
     isLoading: userFollowsLoading || promoterFollowersLoading,
     
     // Mutations
-    follow: followMutation,
+    follow,
     subscribe: subscribeMutation,
     unfollow: unfollowMutation,
     sendNotification: sendNotificationMutation,

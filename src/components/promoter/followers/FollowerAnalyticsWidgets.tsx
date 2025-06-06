@@ -1,54 +1,34 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Users, TrendingUp, Calendar, Bell } from 'lucide-react';
 import { useSubscriptions } from '@/hooks/useSubscriptions';
-import { FollowerAnalyticsProps } from '@/types/FollowerComponentTypes';
-import FollowerErrorBoundary from './FollowerErrorBoundary';
+import { Users, TrendingUp, UserPlus, MessageCircle } from 'lucide-react';
+import JourneyTrackingWidget from './JourneyTrackingWidget';
+import EnhancedFollowerAnalytics from './EnhancedFollowerAnalytics';
 
-// Type guard for notification preferences
-const hasNotificationPreferences = (follower: any): follower is { notification_preferences: { events?: boolean } } => {
-  return follower && 
-         typeof follower === 'object' && 
-         'notification_preferences' in follower &&
-         typeof follower.notification_preferences === 'object' &&
-         follower.notification_preferences !== null;
-};
+interface FollowerAnalyticsWidgetsProps {
+  promoterId: string;
+  metrics?: ('total' | 'growth' | 'engagement' | 'journey' | 'detailed')[];
+  detailed?: boolean;
+}
 
-const FollowerAnalyticsWidgets: React.FC<FollowerAnalyticsProps> = ({ 
+const FollowerAnalyticsWidgets: React.FC<FollowerAnalyticsWidgetsProps> = ({
   promoterId,
-  detailed = false,
-  timeRange = 'month',
   metrics = ['total', 'growth', 'engagement'],
-  className = '',
-  onError,
-  onSuccess
+  detailed = false
 }) => {
   const { followers, isLoading } = useSubscriptions(promoterId);
 
-  React.useEffect(() => {
-    if (followers && onSuccess) {
-      onSuccess({ followers, count: followers.length });
-    }
-  }, [followers, onSuccess]);
-
-  const handleError = (error: Error) => {
-    console.error('FollowerAnalyticsWidgets error:', error);
-    onError?.(error);
-  };
-
   if (isLoading) {
     return (
-      <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 ${className}`}>
-        {Array.from({ length: 4 }).map((_, i) => (
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {[1, 2, 3].map((i) => (
           <Card key={i}>
-            <CardHeader className="pb-2">
-              <div className="h-4 bg-muted animate-pulse rounded" />
+            <CardHeader>
+              <CardTitle>Loading...</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="h-8 bg-muted animate-pulse rounded mb-2" />
-              <div className="h-3 bg-muted animate-pulse rounded w-2/3" />
+              <div className="animate-pulse bg-gray-200 h-8 rounded"></div>
             </CardContent>
           </Card>
         ))}
@@ -57,85 +37,79 @@ const FollowerAnalyticsWidgets: React.FC<FollowerAnalyticsProps> = ({
   }
 
   const totalFollowers = followers?.length || 0;
-  const activeFollowers = followers?.filter(f => f.follow_status === 'active').length || 0;
   const recentFollowers = followers?.filter(f => {
-    const createdAt = new Date(f.created_at);
-    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-    return createdAt > thirtyDaysAgo;
+    const followDate = new Date(f.created_at);
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    return followDate > sevenDaysAgo;
   }).length || 0;
 
-  const notificationEnabled = followers?.filter(f => {
-    if (!hasNotificationPreferences(f)) return false;
-    return f.notification_preferences.events !== false;
-  }).length || 0;
+  const activeFollowers = followers?.filter(f => f.follow_status === 'active').length || 0;
 
-  const widgets = [
-    {
-      title: 'Total Followers',
-      value: totalFollowers,
-      icon: Users,
-      change: '+12%',
-      description: 'All time followers',
-      show: metrics.includes('total')
-    },
-    {
-      title: 'Active Followers',
-      value: activeFollowers,
-      icon: TrendingUp,
-      change: '+8%',
-      description: 'Currently following',
-      show: metrics.includes('engagement')
-    },
-    {
-      title: 'Recent Growth',
-      value: recentFollowers,
-      icon: Calendar,
-      change: '+24%',
-      description: 'Last 30 days',
-      show: metrics.includes('growth')
-    },
-    {
-      title: 'Notifications On',
-      value: notificationEnabled,
-      icon: Bell,
-      change: '92%',
-      description: 'Receive notifications',
-      show: metrics.includes('notifications')
-    }
-  ].filter(widget => widget.show);
+  if (detailed) {
+    return (
+      <div className="space-y-6">
+        <EnhancedFollowerAnalytics promoterId={promoterId} />
+        <JourneyTrackingWidget promoterId={promoterId} />
+      </div>
+    );
+  }
 
   return (
-    <FollowerErrorBoundary onError={handleError}>
-      <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-${Math.min(widgets.length, 4)} gap-4 ${className}`}>
-        {widgets.map((widget, index) => {
-          const Icon = widget.icon;
-          return (
-            <Card key={index}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  {widget.title}
-                </CardTitle>
-                <Icon className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{widget.value}</div>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Badge variant="secondary" className="text-xs">
-                    {widget.change}
-                  </Badge>
-                  <span>{widget.description}</span>
-                </div>
-                {detailed && (
-                  <div className="mt-2 text-xs text-muted-foreground">
-                    Based on {timeRange} data
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          );
-        })}
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {metrics.includes('total') && (
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Followers</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{totalFollowers}</div>
+              <p className="text-xs text-muted-foreground">
+                {activeFollowers} active
+              </p>
+            </CardContent>
+          </Card>
+        )}
+
+        {metrics.includes('growth') && (
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">This Week</CardTitle>
+              <UserPlus className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{recentFollowers}</div>
+              <p className="text-xs text-muted-foreground">
+                New followers
+              </p>
+            </CardContent>
+          </Card>
+        )}
+
+        {metrics.includes('engagement') && (
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Engagement</CardTitle>
+              <MessageCircle className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {Math.round((activeFollowers / totalFollowers) * 100) || 0}%
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Active rate
+              </p>
+            </CardContent>
+          </Card>
+        )}
       </div>
-    </FollowerErrorBoundary>
+
+      {metrics.includes('journey') && (
+        <JourneyTrackingWidget promoterId={promoterId} />
+      )}
+    </div>
   );
 };
 

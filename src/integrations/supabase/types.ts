@@ -2502,6 +2502,136 @@ export type Database = {
           },
         ]
       }
+      follower_analytics_daily: {
+        Row: {
+          avg_engagement_score: number | null
+          created_at: string | null
+          date: string
+          discovery_sources: Json | null
+          id: string
+          lost_followers: number | null
+          new_followers: number | null
+          promoter_id: string
+          total_followers: number | null
+        }
+        Insert: {
+          avg_engagement_score?: number | null
+          created_at?: string | null
+          date: string
+          discovery_sources?: Json | null
+          id?: string
+          lost_followers?: number | null
+          new_followers?: number | null
+          promoter_id: string
+          total_followers?: number | null
+        }
+        Update: {
+          avg_engagement_score?: number | null
+          created_at?: string | null
+          date?: string
+          discovery_sources?: Json | null
+          id?: string
+          lost_followers?: number | null
+          new_followers?: number | null
+          promoter_id?: string
+          total_followers?: number | null
+        }
+        Relationships: []
+      }
+      follower_engagement_scores: {
+        Row: {
+          activity_score: number | null
+          created_at: string | null
+          follower_id: string | null
+          id: string
+          interaction_score: number | null
+          last_calculated_at: string | null
+          loyalty_score: number | null
+          overall_score: number | null
+          recency_score: number | null
+          score_metadata: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          activity_score?: number | null
+          created_at?: string | null
+          follower_id?: string | null
+          id?: string
+          interaction_score?: number | null
+          last_calculated_at?: string | null
+          loyalty_score?: number | null
+          overall_score?: number | null
+          recency_score?: number | null
+          score_metadata?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          activity_score?: number | null
+          created_at?: string | null
+          follower_id?: string | null
+          id?: string
+          interaction_score?: number | null
+          last_calculated_at?: string | null
+          loyalty_score?: number | null
+          overall_score?: number | null
+          recency_score?: number | null
+          score_metadata?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "follower_engagement_scores_follower_id_fkey"
+            columns: ["follower_id"]
+            isOneToOne: true
+            referencedRelation: "promoter_followers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      follower_journey_events: {
+        Row: {
+          created_at: string | null
+          event_data: Json | null
+          event_type: string
+          follower_id: string | null
+          id: string
+          ip_address: unknown | null
+          referrer_url: string | null
+          source_page: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          event_data?: Json | null
+          event_type: string
+          follower_id?: string | null
+          id?: string
+          ip_address?: unknown | null
+          referrer_url?: string | null
+          source_page?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          event_data?: Json | null
+          event_type?: string
+          follower_id?: string | null
+          id?: string
+          ip_address?: unknown | null
+          referrer_url?: string | null
+          source_page?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "follower_journey_events_follower_id_fkey"
+            columns: ["follower_id"]
+            isOneToOne: false
+            referencedRelation: "promoter_followers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ingredient_pairing_scores: {
         Row: {
           complementary_notes: string | null
@@ -3779,40 +3909,73 @@ export type Database = {
       }
       promoter_followers: {
         Row: {
+          churn_risk_score: number | null
           created_at: string
+          discovery_metadata: Json | null
+          discovery_source: string | null
+          engagement_count: number | null
           follow_status: string
+          follower_tier: string | null
           id: string
+          last_engagement_at: string | null
           notification_preferences: Json
           promoter_id: string
+          referral_source: string | null
           subscriber_id: string
           subscription_end: string | null
           subscription_start: string
           tier_id: string | null
+          total_interactions: number | null
           updated_at: string
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
         }
         Insert: {
+          churn_risk_score?: number | null
           created_at?: string
+          discovery_metadata?: Json | null
+          discovery_source?: string | null
+          engagement_count?: number | null
           follow_status?: string
+          follower_tier?: string | null
           id?: string
+          last_engagement_at?: string | null
           notification_preferences?: Json
           promoter_id: string
+          referral_source?: string | null
           subscriber_id: string
           subscription_end?: string | null
           subscription_start?: string
           tier_id?: string | null
+          total_interactions?: number | null
           updated_at?: string
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
         }
         Update: {
+          churn_risk_score?: number | null
           created_at?: string
+          discovery_metadata?: Json | null
+          discovery_source?: string | null
+          engagement_count?: number | null
           follow_status?: string
+          follower_tier?: string | null
           id?: string
+          last_engagement_at?: string | null
           notification_preferences?: Json
           promoter_id?: string
+          referral_source?: string | null
           subscriber_id?: string
           subscription_end?: string | null
           subscription_start?: string
           tier_id?: string | null
+          total_interactions?: number | null
           updated_at?: string
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
         }
         Relationships: [
           {
@@ -6657,6 +6820,10 @@ export type Database = {
           error: string
         }[]
       }
+      calculate_engagement_score: {
+        Args: { p_follower_id: string }
+        Returns: number
+      }
       calculate_fees_and_taxes: {
         Args: { p_amount: number; p_region?: string; p_event_type?: string }
         Returns: {
@@ -6783,6 +6950,18 @@ export type Database = {
           p_page_url?: string
           p_user_agent?: string
           p_ip_address?: string
+        }
+        Returns: string
+      }
+      track_follower_journey_event: {
+        Args: {
+          p_follower_id: string
+          p_event_type: string
+          p_event_data?: Json
+          p_source_page?: string
+          p_referrer_url?: string
+          p_user_agent?: string
+          p_ip_address?: unknown
         }
         Returns: string
       }
