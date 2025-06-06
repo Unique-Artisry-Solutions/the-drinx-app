@@ -2599,6 +2599,73 @@ export type Database = {
           },
         ]
       }
+      follower_achievements: {
+        Row: {
+          achievement_id: string | null
+          achievement_type: string
+          badge_id: string | null
+          celebration_viewed: boolean | null
+          earned_at: string | null
+          follower_id: string | null
+          id: string
+          metadata: Json | null
+          milestone_id: string | null
+          notification_sent: boolean | null
+          points_earned: number | null
+          progress_data: Json | null
+        }
+        Insert: {
+          achievement_id?: string | null
+          achievement_type: string
+          badge_id?: string | null
+          celebration_viewed?: boolean | null
+          earned_at?: string | null
+          follower_id?: string | null
+          id?: string
+          metadata?: Json | null
+          milestone_id?: string | null
+          notification_sent?: boolean | null
+          points_earned?: number | null
+          progress_data?: Json | null
+        }
+        Update: {
+          achievement_id?: string | null
+          achievement_type?: string
+          badge_id?: string | null
+          celebration_viewed?: boolean | null
+          earned_at?: string | null
+          follower_id?: string | null
+          id?: string
+          metadata?: Json | null
+          milestone_id?: string | null
+          notification_sent?: boolean | null
+          points_earned?: number | null
+          progress_data?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "follower_achievements_badge_id_fkey"
+            columns: ["badge_id"]
+            isOneToOne: false
+            referencedRelation: "follower_badges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "follower_achievements_follower_id_fkey"
+            columns: ["follower_id"]
+            isOneToOne: false
+            referencedRelation: "promoter_followers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "follower_achievements_milestone_id_fkey"
+            columns: ["milestone_id"]
+            isOneToOne: false
+            referencedRelation: "loyalty_milestones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       follower_analytics_daily: {
         Row: {
           avg_engagement_score: number | null
@@ -2634,6 +2701,65 @@ export type Database = {
           total_followers?: number | null
         }
         Relationships: []
+      }
+      follower_badges: {
+        Row: {
+          category: string
+          color_code: string | null
+          created_at: string | null
+          description: string | null
+          icon: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          points_reward: number | null
+          promoter_id: string | null
+          rarity: string | null
+          requirements: Json | null
+          unlock_condition: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          category: string
+          color_code?: string | null
+          created_at?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          points_reward?: number | null
+          promoter_id?: string | null
+          rarity?: string | null
+          requirements?: Json | null
+          unlock_condition?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          color_code?: string | null
+          created_at?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          points_reward?: number | null
+          promoter_id?: string | null
+          rarity?: string | null
+          requirements?: Json | null
+          unlock_condition?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "follower_badges_promoter_id_fkey"
+            columns: ["promoter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       follower_engagement_history: {
         Row: {
@@ -2776,6 +2902,68 @@ export type Database = {
           },
         ]
       }
+      gamification_rewards: {
+        Row: {
+          availability_end: string | null
+          availability_start: string | null
+          cost_points: number | null
+          cost_tier_level: number | null
+          created_at: string | null
+          current_redemptions: number | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          max_redemptions: number | null
+          name: string
+          promoter_id: string | null
+          reward_data: Json | null
+          reward_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          availability_end?: string | null
+          availability_start?: string | null
+          cost_points?: number | null
+          cost_tier_level?: number | null
+          created_at?: string | null
+          current_redemptions?: number | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_redemptions?: number | null
+          name: string
+          promoter_id?: string | null
+          reward_data?: Json | null
+          reward_type: string
+          updated_at?: string | null
+        }
+        Update: {
+          availability_end?: string | null
+          availability_start?: string | null
+          cost_points?: number | null
+          cost_tier_level?: number | null
+          created_at?: string | null
+          current_redemptions?: number | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_redemptions?: number | null
+          name?: string
+          promoter_id?: string | null
+          reward_data?: Json | null
+          reward_type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gamification_rewards_promoter_id_fkey"
+            columns: ["promoter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ingredient_pairing_scores: {
         Row: {
           complementary_notes: string | null
@@ -2802,6 +2990,109 @@ export type Database = {
           pairing_score?: number
         }
         Relationships: []
+      }
+      loyalty_milestones: {
+        Row: {
+          auto_upgrade: boolean | null
+          created_at: string | null
+          engagement_threshold: number | null
+          id: string
+          is_active: boolean | null
+          milestone_name: string
+          points_threshold: number | null
+          promoter_id: string | null
+          requirements: Json
+          rewards: Json | null
+          special_conditions: Json | null
+          tier_level: number
+          time_requirement_days: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          auto_upgrade?: boolean | null
+          created_at?: string | null
+          engagement_threshold?: number | null
+          id?: string
+          is_active?: boolean | null
+          milestone_name: string
+          points_threshold?: number | null
+          promoter_id?: string | null
+          requirements?: Json
+          rewards?: Json | null
+          special_conditions?: Json | null
+          tier_level: number
+          time_requirement_days?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          auto_upgrade?: boolean | null
+          created_at?: string | null
+          engagement_threshold?: number | null
+          id?: string
+          is_active?: boolean | null
+          milestone_name?: string
+          points_threshold?: number | null
+          promoter_id?: string | null
+          requirements?: Json
+          rewards?: Json | null
+          special_conditions?: Json | null
+          tier_level?: number
+          time_requirement_days?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loyalty_milestones_promoter_id_fkey"
+            columns: ["promoter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      loyalty_points: {
+        Row: {
+          created_at: string | null
+          current_points: number | null
+          follower_id: string | null
+          id: string
+          last_earned_at: string | null
+          last_spent_at: string | null
+          lifetime_points: number | null
+          points_spent: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          current_points?: number | null
+          follower_id?: string | null
+          id?: string
+          last_earned_at?: string | null
+          last_spent_at?: string | null
+          lifetime_points?: number | null
+          points_spent?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          current_points?: number | null
+          follower_id?: string | null
+          id?: string
+          last_earned_at?: string | null
+          last_spent_at?: string | null
+          lifetime_points?: number | null
+          points_spent?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loyalty_points_follower_id_fkey"
+            columns: ["follower_id"]
+            isOneToOne: true
+            referencedRelation: "promoter_followers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       message_read_status: {
         Row: {
@@ -4062,8 +4353,11 @@ export type Database = {
           engagement_tier: string | null
           follow_status: string
           follower_tier: string | null
+          gamification_score: number | null
           id: string
+          last_badge_earned_at: string | null
           last_engagement_at: string | null
+          loyalty_tier_level: number | null
           notification_preferences: Json
           promoter_id: string
           referral_source: string | null
@@ -4072,7 +4366,9 @@ export type Database = {
           subscription_end: string | null
           subscription_start: string
           tier_id: string | null
+          tier_progress_percentage: number | null
           tier_updated_at: string | null
+          total_badges_earned: number | null
           total_interactions: number | null
           updated_at: string
           utm_campaign: string | null
@@ -4089,8 +4385,11 @@ export type Database = {
           engagement_tier?: string | null
           follow_status?: string
           follower_tier?: string | null
+          gamification_score?: number | null
           id?: string
+          last_badge_earned_at?: string | null
           last_engagement_at?: string | null
+          loyalty_tier_level?: number | null
           notification_preferences?: Json
           promoter_id: string
           referral_source?: string | null
@@ -4099,7 +4398,9 @@ export type Database = {
           subscription_end?: string | null
           subscription_start?: string
           tier_id?: string | null
+          tier_progress_percentage?: number | null
           tier_updated_at?: string | null
+          total_badges_earned?: number | null
           total_interactions?: number | null
           updated_at?: string
           utm_campaign?: string | null
@@ -4116,8 +4417,11 @@ export type Database = {
           engagement_tier?: string | null
           follow_status?: string
           follower_tier?: string | null
+          gamification_score?: number | null
           id?: string
+          last_badge_earned_at?: string | null
           last_engagement_at?: string | null
+          loyalty_tier_level?: number | null
           notification_preferences?: Json
           promoter_id?: string
           referral_source?: string | null
@@ -4126,7 +4430,9 @@ export type Database = {
           subscription_end?: string | null
           subscription_start?: string
           tier_id?: string | null
+          tier_progress_percentage?: number | null
           tier_updated_at?: string | null
+          total_badges_earned?: number | null
           total_interactions?: number | null
           updated_at?: string
           utm_campaign?: string | null
