@@ -35,7 +35,7 @@ export const QuickActions: React.FC = () => {
       title: "Manage Followers",
       description: "View and engage followers",
       icon: Users,
-      action: () => navigate('/promoter/dashboard?tab=followers'),
+      action: () => navigate('/promoter/followers'),
       color: "bg-green-500 hover:bg-green-600"
     },
     {
