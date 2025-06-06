@@ -1,143 +1,94 @@
-
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { BarChart3, Calendar, Route, Users, TrendingUp, DollarSign } from 'lucide-react';
-import { QuickActions } from '@/components/promoter/QuickActions';
+import { DashboardOverviewTab } from '@/components/promoter/dashboard/DashboardOverviewTab';
 import MessagingWidget from '@/components/promoter/dashboard/MessagingWidget';
+import RecentActivityCard from '@/components/establishment/RecentActivityCard';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-const PromoterDashboard: React.FC = () => {
+const PromoterDashboard = () => {
   console.log('PromoterDashboard rendering...');
-  
+
+  // Mock data for recent activity
+  const mockActivities = [
+    {
+      id: '1',
+      type: 'visit' as const,
+      user: 'Sarah Johnson',
+      content: 'Attended your event at Blue Moon Lounge',
+      time: '2 hours ago'
+    },
+    {
+      id: '2',
+      type: 'order' as const,
+      user: 'Mike Chen',
+      content: 'Purchased VIP tickets for Summer Circuit',
+      time: '4 hours ago'
+    },
+    {
+      id: '3',
+      type: 'review' as const,
+      user: 'Emma Davis',
+      content: 'Left 5-star review for Downtown Pub event',
+      time: '6 hours ago'
+    }
+  ];
+
+  // Mock performance overview data
+  const performanceData = {
+    totalEvents: 12,
+    activeEvents: 5,
+    totalTicketsSold: 1247,
+    totalRevenue: 28540,
+    monthlyGrowth: 15.3
+  };
+
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold">Promoter Dashboard</h1>
-          <p className="text-muted-foreground">Manage your events and track performance</p>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Events</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">12</div>
-            <p className="text-xs text-muted-foreground">+2 from last month</p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Circuits</CardTitle>
-            <Route className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">8</div>
-            <p className="text-xs text-muted-foreground">+1 from last month</p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Attendees</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">2,847</div>
-            <p className="text-xs text-muted-foreground">+15% from last month</p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Revenue</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">$23,456</div>
-            <p className="text-xs text-muted-foreground">+8% from last month</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Quick Actions Section */}
-      <QuickActions />
-
+      {/* Performance Overview, Venue Communications, and Recent Activity in 3-column row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Messaging Widget - Now prominently displayed */}
-        <div className="lg:col-span-1">
-          <MessagingWidget />
-        </div>
-
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center space-x-4">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium">New event created: Summer Vibes Circuit</p>
-                  <p className="text-xs text-muted-foreground">2 hours ago</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-4">
-                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium">50 new ticket sales</p>
-                  <p className="text-xs text-muted-foreground">5 hours ago</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-4">
-                <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium">Event approval pending</p>
-                  <p className="text-xs text-muted-foreground">1 day ago</p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">        
+        {/* Performance Overview */}
         <Card>
           <CardHeader>
             <CardTitle>Performance Overview</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-sm">Event Attendance Rate</span>
-                <span className="text-sm font-medium">87%</span>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="text-center p-3 bg-blue-50 rounded-lg">
+                  <div className="text-2xl font-bold text-blue-600">{performanceData.totalEvents}</div>
+                  <div className="text-xs text-blue-600">Total Events</div>
+                </div>
+                <div className="text-center p-3 bg-green-50 rounded-lg">
+                  <div className="text-2xl font-bold text-green-600">{performanceData.activeEvents}</div>
+                  <div className="text-xs text-green-600">Active Events</div>
+                </div>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div className="bg-green-500 h-2 rounded-full" style={{ width: '87%' }}></div>
-              </div>
-              
-              <div className="flex justify-between items-center">
-                <span className="text-sm">Customer Satisfaction</span>
-                <span className="text-sm font-medium">94%</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div className="bg-blue-500 h-2 rounded-full" style={{ width: '94%' }}></div>
-              </div>
-              
-              <div className="flex justify-between items-center">
-                <span className="text-sm">Revenue Growth</span>
-                <span className="text-sm font-medium">+12%</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div className="bg-purple-500 h-2 rounded-full" style={{ width: '62%' }}></div>
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-sm text-muted-foreground">Tickets Sold</span>
+                  <span className="font-medium">{performanceData.totalTicketsSold}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-muted-foreground">Revenue</span>
+                  <span className="font-medium">${performanceData.totalRevenue.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-muted-foreground">Growth</span>
+                  <span className="font-medium text-green-600">+{performanceData.monthlyGrowth}%</span>
+                </div>
               </div>
             </div>
           </CardContent>
         </Card>
+
+        {/* Venue Communications */}
+        <MessagingWidget />
+
+        {/* Recent Activity */}
+        <RecentActivityCard activities={mockActivities} />
       </div>
+
+      {/* Rest of the dashboard content */}
+      <DashboardOverviewTab promoterId="current-promoter" />
     </div>
   );
 };
