@@ -1,26 +1,24 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Users, 
-  TrendingUp, 
+  Crown, 
   Bell, 
-  Mail, 
+  TrendingUp, 
+  Calendar,
+  Heart,
+  Clock,
   Download,
-  Search,
-  Filter,
-  MessageSquare,
-  Settings,
-  BarChart3
+  Plus,
+  Mail
 } from 'lucide-react';
 import { useSubscriptions } from '@/hooks/useSubscriptions';
 import { FollowerCountWidget } from '@/components/promoter/FollowerCountWidget';
-import FollowerList from '@/components/promoter/followers/FollowerList';
-import FollowerAnalyticsWidgets from '@/components/promoter/followers/FollowerAnalyticsWidgets';
+import EnhancedFollowerList from '@/components/promoter/followers/EnhancedFollowerList';
+import FollowerAnalyticsDashboard from '@/components/promoter/followers/FollowerAnalyticsDashboard';
+import FollowerCommunicationHub from '@/components/promoter/followers/FollowerCommunicationHub';
 import { useAuth } from '@/contexts/auth';
 
 const PromoterFollowersPage: React.FC = () => {
@@ -222,7 +220,7 @@ const PromoterFollowersPage: React.FC = () => {
         </TabsList>
 
         <TabsContent value="followers" className="space-y-4">
-          <FollowerList
+          <EnhancedFollowerList
             promoterId={promoterId}
             searchTerm={searchTerm}
             showActions={true}
@@ -231,7 +229,7 @@ const PromoterFollowersPage: React.FC = () => {
         </TabsContent>
 
         <TabsContent value="analytics" className="space-y-4">
-          <FollowerAnalyticsWidgets
+          <FollowerAnalyticsDashboard
             promoterId={promoterId}
             detailed={true}
             timeRange="month"
@@ -264,57 +262,10 @@ const PromoterFollowersPage: React.FC = () => {
         </TabsContent>
 
         <TabsContent value="communication" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Quick Message Templates</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Button variant="outline" className="w-full justify-start">
-                  <Mail className="h-4 w-4 mr-2" />
-                  Welcome New Followers
-                </Button>
-                <Button variant="outline" className="w-full justify-start">
-                  <Bell className="h-4 w-4 mr-2" />
-                  Event Announcement
-                </Button>
-                <Button variant="outline" className="w-full justify-start">
-                  <MessageSquare className="h-4 w-4 mr-2" />
-                  Promotional Update
-                </Button>
-                <Button variant="outline" className="w-full justify-start">
-                  <TrendingUp className="h-4 w-4 mr-2" />
-                  Engagement Survey
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Communication Stats</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Messages Sent</span>
-                    <span className="font-medium">24 this month</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Open Rate</span>
-                    <span className="font-medium">68%</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Click Rate</span>
-                    <span className="font-medium">12%</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Unsubscribes</span>
-                    <span className="font-medium">3 this month</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+          <FollowerCommunicationHub
+            promoterId={promoterId}
+            className="space-y-4"
+          />
         </TabsContent>
 
         <TabsContent value="settings" className="space-y-4">
