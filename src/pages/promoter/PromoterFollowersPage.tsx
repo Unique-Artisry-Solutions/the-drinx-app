@@ -14,6 +14,11 @@ import ChurnAnalytics from '@/components/promoter/followers/ChurnAnalytics';
 import FollowerTierManagement from '@/components/promoter/followers/FollowerTierManagement';
 import EngagementScoringDashboard from '@/components/promoter/followers/EngagementScoringDashboard';
 import WelcomeAutomationDashboard from '@/components/welcomeAutomation/WelcomeAutomationDashboard';
+import FollowerManagementDashboard from '@/components/promoter/followers/FollowerManagementDashboard';
+import EnhancedEngagementAnalytics from '@/components/promoter/followers/EnhancedEngagementAnalytics';
+import PredictiveChurnAnalysis from '@/components/promoter/followers/PredictiveChurnAnalysis';
+import FollowerJourneyMapping from '@/components/promoter/followers/FollowerJourneyMapping';
+import TierProgressionTracking from '@/components/promoter/followers/TierProgressionTracking';
 
 const PromoterFollowersPage: React.FC = () => {
   const { user } = useAuth();
@@ -29,59 +34,54 @@ const PromoterFollowersPage: React.FC = () => {
     <Layout>
       <div className="space-y-6">
         <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold">Followers</h1>
+          <div>
+            <h1 className="text-3xl font-bold">Follower Management</h1>
+            <p className="text-muted-foreground">
+              Comprehensive follower analytics, engagement tracking, and growth optimization
+            </p>
+          </div>
         </div>
 
-        <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-8">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
+        <Tabs defaultValue="dashboard" className="w-full">
+          <TabsList className="grid w-full grid-cols-10">
+            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
             <TabsTrigger value="engagement">Engagement</TabsTrigger>
-            <TabsTrigger value="journey">Journey</TabsTrigger>
             <TabsTrigger value="churn">Churn Risk</TabsTrigger>
+            <TabsTrigger value="journey">Journey</TabsTrigger>
             <TabsTrigger value="tiers">Tiers</TabsTrigger>
+            <TabsTrigger value="progression">Progression</TabsTrigger>
             <TabsTrigger value="welcome">Welcome</TabsTrigger>
             <TabsTrigger value="list">Followers</TabsTrigger>
+            <TabsTrigger value="legacy">Legacy</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="overview" className="space-y-6">
-            {/* Basic analytics widgets */}
-            <FollowerAnalyticsWidgets 
-              promoterId={promoterId}
-              metrics={['total', 'growth', 'engagement']}
-            />
-
-            {/* Follower count widget */}
-            <FollowerCountWidget promoterId={promoterId} />
-
-            {/* Recent followers preview */}
-            <FollowerList 
-              promoterId={promoterId}
-              maxItems={5}
-              showActions={false}
-              onError={(error) => console.error('FollowerList error:', error)}
-              onSuccess={(data) => console.log('FollowerList success:', data)}
-            />
+          <TabsContent value="dashboard" className="space-y-6">
+            <FollowerManagementDashboard promoterId={promoterId} />
           </TabsContent>
 
           <TabsContent value="analytics" className="space-y-6">
-            <EnhancedFollowerAnalytics promoterId={promoterId} />
+            <EnhancedEngagementAnalytics promoterId={promoterId} />
           </TabsContent>
 
           <TabsContent value="engagement" className="space-y-6">
             <EngagementScoringDashboard promoterId={promoterId} />
           </TabsContent>
 
-          <TabsContent value="journey" className="space-y-6">
-            <JourneyTrackingWidget promoterId={promoterId} />
+          <TabsContent value="churn" className="space-y-6">
+            <PredictiveChurnAnalysis promoterId={promoterId} />
           </TabsContent>
 
-          <TabsContent value="churn" className="space-y-6">
-            <ChurnAnalytics promoterId={promoterId} />
+          <TabsContent value="journey" className="space-y-6">
+            <FollowerJourneyMapping promoterId={promoterId} />
           </TabsContent>
 
           <TabsContent value="tiers" className="space-y-6">
             <FollowerTierManagement promoterId={promoterId} />
+          </TabsContent>
+
+          <TabsContent value="progression" className="space-y-6">
+            <TierProgressionTracking promoterId={promoterId} />
           </TabsContent>
 
           <TabsContent value="welcome" className="space-y-6">
@@ -92,6 +92,31 @@ const PromoterFollowersPage: React.FC = () => {
             <FollowerList 
               promoterId={promoterId}
               showActions={true}
+              onError={(error) => console.error('FollowerList error:', error)}
+              onSuccess={(data) => console.log('FollowerList success:', data)}
+            />
+          </TabsContent>
+
+          <TabsContent value="legacy" className="space-y-6">
+            {/* Legacy overview components */}
+            <FollowerAnalyticsWidgets 
+              promoterId={promoterId}
+              metrics={['total', 'growth', 'engagement']}
+            />
+
+            <FollowerCountWidget promoterId={promoterId} />
+
+            <EnhancedFollowerAnalytics promoterId={promoterId} />
+
+            <JourneyTrackingWidget promoterId={promoterId} />
+
+            <ChurnAnalytics promoterId={promoterId} />
+
+            {/* Recent followers preview */}
+            <FollowerList 
+              promoterId={promoterId}
+              maxItems={5}
+              showActions={false}
               onError={(error) => console.error('FollowerList error:', error)}
               onSuccess={(data) => console.log('FollowerList success:', data)}
             />
