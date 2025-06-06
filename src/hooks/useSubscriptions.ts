@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { SubscriptionTier } from '@/types/SubscriptionTypes';
 
-// Mock data for development
+// Mock data for development with proper structure
 const MOCK_FOLLOWERS = [
   {
     id: 'mock-follower-1',
@@ -12,11 +12,17 @@ const MOCK_FOLLOWERS = [
     promoter_id: 'mock-promoter-id',
     follow_status: 'active' as const,
     created_at: new Date().toISOString(),
+    subscription_start: new Date().toISOString(),
+    subscription_end: null,
+    tier_id: null,
+    updated_at: new Date().toISOString(),
     notification_preferences: {
       events: true,
       promotions: true,
       generalUpdates: true
-    }
+    },
+    tier_name: null,
+    promoter_name: 'Sample Promoter'
   },
   {
     id: 'mock-follower-2',
@@ -24,11 +30,17 @@ const MOCK_FOLLOWERS = [
     promoter_id: 'mock-promoter-id',
     follow_status: 'active' as const,
     created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+    subscription_start: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+    subscription_end: null,
+    tier_id: 'premium-tier',
+    updated_at: new Date().toISOString(),
     notification_preferences: {
       events: true,
       promotions: false,
       generalUpdates: true
-    }
+    },
+    tier_name: 'Premium',
+    promoter_name: 'Sample Promoter'
   },
   {
     id: 'mock-follower-3',
@@ -36,11 +48,17 @@ const MOCK_FOLLOWERS = [
     promoter_id: 'mock-promoter-id',
     follow_status: 'active' as const,
     created_at: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
+    subscription_start: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
+    subscription_end: null,
+    tier_id: null,
+    updated_at: new Date().toISOString(),
     notification_preferences: {
       events: false,
       promotions: true,
       generalUpdates: true
-    }
+    },
+    tier_name: null,
+    promoter_name: 'Sample Promoter'
   }
 ];
 
@@ -94,7 +112,7 @@ export function useSubscriptions(promoterId?: string) {
     // Loading states
     isLoading: followers.isLoading || tiersLoading,
     
-    // Actions
+    // Actions - pass through the mutations
     follow: followers.follow,
     subscribe: followers.subscribe,
     unfollow: followers.unfollow,

@@ -1,212 +1,119 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, Search, Filter, Settings, MessageSquare } from 'lucide-react';
 import { useSubscriptions } from '@/hooks/useSubscriptions';
-import { FollowerCountWidget } from './FollowerCountWidget';
-import { FollowerCommunication } from './FollowerCommunication';
 
 interface FollowerManagementDashboardProps {
   promoterId: string;
 }
 
-export const FollowerManagementDashboard: React.FC<FollowerManagementDashboardProps> = ({ 
-  promoterId 
-}) => {
-  const { subscriptions: followers, tiers, isLoading } = useSubscriptions(promoterId);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterTier, setFilterTier] = useState<string>('all');
+// Type guards for safe property access
+const hasTierId = (follower: any): follower is { tier_id: string | null; tier_name?: string | null } => {
+  return follower && typeof follower === 'object' && 'tier_id' in follower;
+};
 
-  const filteredFollowers = followers.filter(follower => {
-    const matchesSearch = !searchTerm || 
-      follower.tier_name?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesTier = filterTier === 'all' || 
-      (filterTier === 'free' && !follower.tier_id) ||
-      (filterTier === 'premium' && follower.tier_id) ||
-      follower.tier_id === filterTier;
-    
-    return matchesSearch && matchesTier;
-  });
+const hasNotificationPreferences = (follower: any): follower is { notification_preferences: { events?: boolean } } => {
+  return follower && 
+         typeof follower === 'object' && 
+         'notification_preferences' in follower &&
+         typeof follower.notification_preferences === 'object' &&
+         follower.notification_preferences !== null;
+};
+
+const hasSubscriptionStart = (follower: any): follower is { subscription_start: string } => {
+  return follower && typeof follower === 'object' && 'subscription_start' in follower;
+};
+
+const FollowerManagementDashboard: React.FC<FollowerManagementDashboardProps> = ({ promoterId }) => {
+  const { followers, isLoading } = useSubscriptions(promoterId);
 
   if (isLoading) {
     return (
-      <div className="flex justify-center p-8">
-        <div>Loading follower data...</div>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Follower Management Dashboard</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center">Loading followers...</div>
+        </CardContent>
+      </Card>
     );
   }
 
+  const stats = {
+    total: followers?.length || 0,
+    premium: followers?.filter(f => hasTierId(f) && f.tier_id).length || 0,
+    free: followers?.filter(f => !hasTierId(f) || !f.tier_id).length || 0,
+    withNotifications: followers?.filter(f => 
+      hasNotificationPreferences(f) && f.notification_preferences.events !== false
+    ).length || 0
+  };
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Users className="h-6 w-6" />
-            Follower Management
-          </h1>
-          <p className="text-muted-foreground">
-            Manage your followers and send targeted communications
-          </p>
+    <Card>
+      <CardHeader>
+        <CardTitle>Follower Management Dashboard</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <div className="text-center">
+            <div className="text-2xl font-bold">{stats.total}</div>
+            <div className="text-sm text-muted-foreground">Total Followers</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold">{stats.premium}</div>
+            <div className="text-sm text-muted-foreground">Premium</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold">{stats.free}</div>
+            <div className="text-sm text-muted-foreground">Free</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold">{stats.withNotifications}</div>
+            <div className="text-sm text-muted-foreground">Notifications On</div>
+          </div>
         </div>
-      </div>
 
-      {/* Overview Stats */}
-      <FollowerCountWidget promoterId={promoterId} />
-
-      <Tabs defaultValue="followers" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="followers">Followers</TabsTrigger>
-          <TabsTrigger value="communication">Communication</TabsTrigger>
-          <TabsTrigger value="settings">Settings</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="followers" className="space-y-6">
-          {/* Search and Filter */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Search className="h-5 w-5" />
-                Search & Filter Followers
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex gap-4">
-                <Input
-                  placeholder="Search followers..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="flex-1"
-                />
-                <Button variant="outline" className="flex items-center gap-2">
-                  <Filter className="h-4 w-4" />
-                  Filter
-                </Button>
+        <div className="space-y-2">
+          {followers?.slice(0, 5).map((follower) => (
+            <div key={follower.id} className="flex items-center justify-between p-3 border rounded">
+              <div>
+                <div className="font-medium">
+                  Follower {follower.subscriber_id.slice(0, 8)}...
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  {hasSubscriptionStart(follower) && (
+                    <span>
+                      Joined: {new Date(follower.subscription_start).toLocaleDateString()}
+                    </span>
+                  )}
+                  {hasTierId(follower) && follower.tier_id && (
+                    <span className="ml-2">
+                      Tier: {follower.tier_name || 'Premium'}
+                    </span>
+                  )}
+                </div>
               </div>
-              
-              <div className="flex gap-2 flex-wrap">
-                <Button
-                  variant={filterTier === 'all' ? 'default' : 'outline'}
-                  onClick={() => setFilterTier('all')}
-                  size="sm"
-                >
-                  All ({followers.length})
-                </Button>
-                <Button
-                  variant={filterTier === 'free' ? 'default' : 'outline'}
-                  onClick={() => setFilterTier('free')}
-                  size="sm"
-                >
-                  Free ({followers.filter(f => !f.tier_id).length})
-                </Button>
-                <Button
-                  variant={filterTier === 'premium' ? 'default' : 'outline'}
-                  onClick={() => setFilterTier('premium')}
-                  size="sm"
-                >
-                  Premium ({followers.filter(f => f.tier_id).length})
-                </Button>
-                {tiers.map(tier => (
-                  <Button
-                    key={tier.id}
-                    variant={filterTier === tier.id ? 'default' : 'outline'}
-                    onClick={() => setFilterTier(tier.id)}
-                    size="sm"
-                  >
-                    {tier.name} ({followers.filter(f => f.tier_id === tier.id).length})
-                  </Button>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Followers List */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Followers ({filteredFollowers.length})</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {filteredFollowers.length === 0 ? (
-                  <div className="text-center p-8 text-muted-foreground">
-                    No followers found matching your criteria.
-                  </div>
-                ) : (
-                  filteredFollowers.map((follower) => (
-                    <div
-                      key={follower.id}
-                      className="flex items-center justify-between p-4 border rounded-lg"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                          <Users className="h-5 w-5 text-gray-600" />
-                        </div>
-                        <div>
-                          <div className="font-medium">Follower</div>
-                          <div className="text-sm text-muted-foreground">
-                            Followed {new Date(follower.subscription_start).toLocaleDateString()}
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center gap-3">
-                        <Badge variant={follower.tier_id ? 'default' : 'secondary'}>
-                          {follower.tier_id ? follower.tier_name || 'Premium' : 'Free'}
-                        </Badge>
-                        
-                        <div className="flex gap-1">
-                          {follower.notification_preferences.events && (
-                            <Badge variant="outline" className="text-xs">Events</Badge>
-                          )}
-                          {follower.notification_preferences.promotions && (
-                            <Badge variant="outline" className="text-xs">Promos</Badge>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))
+              <div className="flex items-center gap-2">
+                {hasNotificationPreferences(follower) && 
+                 follower.notification_preferences.events !== false && (
+                  <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
+                    Notifications On
+                  </span>
+                )}
+                {hasNotificationPreferences(follower) && 
+                 follower.notification_preferences.events === false && (
+                  <span className="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded">
+                    Notifications Off
+                  </span>
                 )}
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="communication">
-          <FollowerCommunication promoterId={promoterId} />
-        </TabsContent>
-
-        <TabsContent value="settings">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Settings className="h-5 w-5" />
-                Follower Settings
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="p-4 border rounded-lg">
-                <h4 className="font-medium mb-2">Auto-follow Settings</h4>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Configure how new followers are handled automatically.
-                </p>
-                <Button variant="outline">Configure Auto-follow</Button>
-              </div>
-              
-              <div className="p-4 border rounded-lg">
-                <h4 className="font-medium mb-2">Default Notifications</h4>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Set default notification preferences for new followers.
-                </p>
-                <Button variant="outline">Manage Defaults</Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-    </div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
   );
 };
+
+export default FollowerManagementDashboard;

@@ -18,6 +18,19 @@ import { FollowerListProps } from '@/types/FollowerComponentTypes';
 import FollowerErrorBoundary from './FollowerErrorBoundary';
 import { FollowerListSkeleton } from './FollowerLoadingStates';
 
+// Type guards for safe property access
+const hasNotificationPreferences = (follower: any): follower is { notification_preferences: { events?: boolean } } => {
+  return follower && 
+         typeof follower === 'object' && 
+         'notification_preferences' in follower &&
+         typeof follower.notification_preferences === 'object' &&
+         follower.notification_preferences !== null;
+};
+
+const hasPromoterName = (follower: any): follower is { promoter_name?: string } => {
+  return follower && typeof follower === 'object' && 'promoter_name' in follower;
+};
+
 const FollowerList: React.FC<FollowerListProps> = ({ 
   promoterId, 
   searchTerm = '',
@@ -35,9 +48,10 @@ const FollowerList: React.FC<FollowerListProps> = ({
     
     let filtered = followers.filter(follower => {
       const searchLower = searchTerm.toLowerCase();
+      const promoterName = hasPromoterName(follower) ? (follower.promoter_name || '') : '';
       const matchesSearch = (
         follower.subscriber_id.toLowerCase().includes(searchLower) ||
-        (follower.promoter_name || '').toLowerCase().includes(searchLower)
+        promoterName.toLowerCase().includes(searchLower)
       );
 
       if (!matchesSearch) return false;
@@ -46,7 +60,8 @@ const FollowerList: React.FC<FollowerListProps> = ({
       if (filters) {
         if (filters.status && follower.follow_status !== filters.status) return false;
         if (filters.notificationsEnabled !== undefined) {
-          const hasNotifications = follower.notification_preferences?.events ?? true;
+          const hasNotifications = hasNotificationPreferences(follower) && 
+                                   follower.notification_preferences.events !== false;
           if (filters.notificationsEnabled !== hasNotifications) return false;
         }
         if (filters.joinedAfter && new Date(follower.created_at) < filters.joinedAfter) return false;
@@ -97,7 +112,8 @@ const FollowerList: React.FC<FollowerListProps> = ({
         <div className="space-y-4">
           {filteredFollowers.map((follower, index) => {
             const joinedDate = new Date(follower.created_at);
-            const hasNotifications = follower.notification_preferences?.events ?? true;
+            const hasNotifications = hasNotificationPreferences(follower) && 
+                                   follower.notification_preferences.events !== false;
             
             return (
               <div key={follower.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">

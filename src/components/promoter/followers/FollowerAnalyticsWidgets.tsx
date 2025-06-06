@@ -7,6 +7,15 @@ import { useSubscriptions } from '@/hooks/useSubscriptions';
 import { FollowerAnalyticsProps } from '@/types/FollowerComponentTypes';
 import FollowerErrorBoundary from './FollowerErrorBoundary';
 
+// Type guard for notification preferences
+const hasNotificationPreferences = (follower: any): follower is { notification_preferences: { events?: boolean } } => {
+  return follower && 
+         typeof follower === 'object' && 
+         'notification_preferences' in follower &&
+         typeof follower.notification_preferences === 'object' &&
+         follower.notification_preferences !== null;
+};
+
 const FollowerAnalyticsWidgets: React.FC<FollowerAnalyticsProps> = ({ 
   promoterId,
   detailed = false,
@@ -55,9 +64,10 @@ const FollowerAnalyticsWidgets: React.FC<FollowerAnalyticsProps> = ({
     return createdAt > thirtyDaysAgo;
   }).length || 0;
 
-  const notificationEnabled = followers?.filter(f => 
-    f.notification_preferences?.events !== false
-  ).length || 0;
+  const notificationEnabled = followers?.filter(f => {
+    if (!hasNotificationPreferences(f)) return false;
+    return f.notification_preferences.events !== false;
+  }).length || 0;
 
   const widgets = [
     {

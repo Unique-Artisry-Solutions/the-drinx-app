@@ -8,6 +8,11 @@ interface FollowerCountWidgetProps {
   promoterId: string;
 }
 
+// Type guard to safely access tier_id property
+const hasTierId = (follower: any): follower is { tier_id: string | null } => {
+  return follower && typeof follower === 'object' && 'tier_id' in follower;
+};
+
 export const FollowerCountWidget: React.FC<FollowerCountWidgetProps> = ({ promoterId }) => {
   const { followers, isLoading } = useSubscriptions(promoterId);
 
@@ -15,8 +20,12 @@ export const FollowerCountWidget: React.FC<FollowerCountWidgetProps> = ({ promot
   console.log('FollowerCountWidget - isLoading:', isLoading);
 
   const totalFollowers = followers?.length || 0;
-  const freeFollowers = followers?.filter(follower => !follower.tier_id).length || 0;
-  const premiumFollowers = followers?.filter(follower => follower.tier_id).length || 0;
+  const freeFollowers = followers?.filter(follower => 
+    !hasTierId(follower) || !follower.tier_id
+  ).length || 0;
+  const premiumFollowers = followers?.filter(follower => 
+    hasTierId(follower) && follower.tier_id
+  ).length || 0;
 
   if (isLoading) {
     return (
