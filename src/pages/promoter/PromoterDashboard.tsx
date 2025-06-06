@@ -3,8 +3,11 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart3, Calendar, Route, Users, TrendingUp, DollarSign } from 'lucide-react';
 import { QuickActions } from '@/components/promoter/QuickActions';
+import MessagingWidget from '@/components/promoter/dashboard/MessagingWidget';
 
 const PromoterDashboard: React.FC = () => {
+  console.log('PromoterDashboard rendering...');
+  
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -63,8 +66,13 @@ const PromoterDashboard: React.FC = () => {
       {/* Quick Actions Section */}
       <QuickActions />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Messaging Widget - Now prominently displayed */}
+        <div className="lg:col-span-1">
+          <MessagingWidget />
+        </div>
+
+        <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle>Recent Activity</CardTitle>
           </CardHeader>
@@ -94,7 +102,9 @@ const PromoterDashboard: React.FC = () => {
             </div>
           </CardContent>
         </Card>
-        
+      </div>
+      
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">        
         <Card>
           <CardHeader>
             <CardTitle>Performance Overview</CardTitle>
