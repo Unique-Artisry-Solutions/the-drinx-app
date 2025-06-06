@@ -65,9 +65,9 @@ const FollowerList: React.FC<FollowerListProps> = ({
   if (searchTerm) {
     filteredFollowers = filteredFollowers.filter((follower: any) => {
       if (!isFollowerData(follower)) return false;
-      const promoterName = follower.promoter_name || '';
+      const displayName = follower.promoter_name || follower.profiles?.display_name || '';
       const subscriberId = follower.subscriber_id || '';
-      return promoterName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      return displayName.toLowerCase().includes(searchTerm.toLowerCase()) ||
              subscriberId.toLowerCase().includes(searchTerm.toLowerCase());
     });
   }
@@ -102,7 +102,7 @@ const FollowerList: React.FC<FollowerListProps> = ({
             {filteredFollowers.map((follower: any) => {
               if (!isFollowerData(follower)) return null;
               
-              const promoterName = follower.promoter_name || `Follower ${follower.subscriber_id.slice(0, 8)}...`;
+              const displayName = follower.promoter_name || `Follower ${follower.subscriber_id.slice(0, 8)}...`;
               const hasNotifications = hasNotificationPreferences(follower) && 
                                      follower.notification_preferences.events !== false;
 
@@ -110,7 +110,7 @@ const FollowerList: React.FC<FollowerListProps> = ({
                 <div key={follower.id} className="p-4 border rounded-lg">
                   <div className="flex items-center justify-between">
                     <div>
-                      <div className="font-medium">{promoterName}</div>
+                      <div className="font-medium">{displayName}</div>
                       <div className="text-sm text-muted-foreground">
                         Status: {follower.follow_status}
                       </div>

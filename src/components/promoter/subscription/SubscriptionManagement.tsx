@@ -62,7 +62,7 @@ const SubscriptionManagement: React.FC<SubscriptionManagementProps> = ({ promote
                       {follower.promoter_name || `Follower ${follower.subscriber_id.slice(0, 8)}...`}
                     </div>
                     <div className="text-sm text-muted-foreground">
-                      Tier: {follower.tier_name || follower.tier_name || 'Free'}
+                      Tier: {follower.tier_name || 'Free'}
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
