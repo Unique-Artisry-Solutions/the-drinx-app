@@ -77,7 +77,7 @@ export const DashboardWidgets: React.FC<DashboardWidgetsProps> = ({ promoterId }
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-2.5">
           {/* Streamlined Follower Count Widget */}
           <FollowerCountWidget promoterId={promoterId} />
           
