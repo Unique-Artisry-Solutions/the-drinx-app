@@ -10,23 +10,50 @@ export interface EngagementScore {
   interaction_score: number;
   loyalty_score: number;
   recency_score: number;
+  conversion_score: number;
+  recommended_tier: string;
+  score_breakdown: Record<string, any>;
   last_calculated_at: string;
-  score_metadata: Record<string, any>;
   created_at: string;
   updated_at: string;
 }
 
-interface FollowerWithScore {
+export interface EngagementRule {
+  id: string;
+  promoter_id: string | null;
+  rule_name: string;
+  signal_type: 'activity' | 'interaction' | 'loyalty' | 'recency' | 'conversion';
+  base_weight: number;
+  current_weight: number;
+  conditions: Record<string, any>;
+  score_formula: Record<string, any>;
+  is_active: boolean;
+}
+
+export interface EngagementTierThreshold {
+  id: string;
+  promoter_id: string | null;
+  tier_name: 'bronze' | 'silver' | 'gold' | 'platinum';
+  min_score: number;
+  max_score: number | null;
+  benefits: string[];
+  color_code: string;
+  is_active: boolean;
+}
+
+interface FollowerWithEngagementScore {
   id: string;
   promoter_id: string;
   subscriber_id: string;
   engagement_count: number;
   total_interactions: number;
-  churn_risk_score: number;
-  follower_tier: string;
+  engagement_score: number;
+  engagement_tier: string;
+  score_last_updated: string;
+  tier_updated_at: string;
   last_engagement_at?: string;
-  discovery_source?: string;
-  engagement_score?: EngagementScore;
+  follower_tier: string;
+  created_at: string;
 }
 
 export function useEngagementScoring(promoterId: string) {
@@ -38,15 +65,46 @@ export function useEngagementScoring(promoterId: string) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('promoter_followers')
-        .select(`
-          *,
-          follower_engagement_scores(*)
-        `)
+        .select('*')
         .eq('promoter_id', promoterId)
-        .order('created_at', { ascending: false });
+        .order('engagement_score', { ascending: false });
 
       if (error) throw error;
-      return data as FollowerWithScore[];
+      return data as FollowerWithEngagementScore[];
+    },
+    enabled: !!promoterId
+  });
+
+  // Get engagement scoring rules
+  const { data: scoringRules } = useQuery({
+    queryKey: ['engagement-scoring-rules', promoterId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('engagement_scoring_rules')
+        .select('*')
+        .or(`promoter_id.eq.${promoterId},promoter_id.is.null`)
+        .eq('is_active', true)
+        .order('signal_type');
+
+      if (error) throw error;
+      return data as EngagementRule[];
+    },
+    enabled: !!promoterId
+  });
+
+  // Get tier thresholds
+  const { data: tierThresholds } = useQuery({
+    queryKey: ['engagement-tier-thresholds', promoterId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('engagement_tier_thresholds')
+        .select('*')
+        .or(`promoter_id.eq.${promoterId},promoter_id.is.null`)
+        .eq('is_active', true)
+        .order('min_score');
+
+      if (error) throw error;
+      return data as EngagementTierThreshold[];
     },
     enabled: !!promoterId
   });
@@ -54,7 +112,7 @@ export function useEngagementScoring(promoterId: string) {
   // Calculate engagement score for a specific follower
   const calculateScore = useMutation({
     mutationFn: async (followerId: string) => {
-      const { data, error } = await supabase.rpc('calculate_engagement_score', {
+      const { data, error } = await supabase.rpc('calculate_comprehensive_engagement_score', {
         p_follower_id: followerId
       });
 
@@ -72,7 +130,7 @@ export function useEngagementScoring(promoterId: string) {
       if (!followersWithScores) return;
 
       const promises = followersWithScores.map(follower =>
-        supabase.rpc('calculate_engagement_score', {
+        supabase.rpc('calculate_comprehensive_engagement_score', {
           p_follower_id: follower.id
         })
       );
@@ -84,43 +142,107 @@ export function useEngagementScoring(promoterId: string) {
     }
   });
 
+  // Update scoring rule weights
+  const updateScoringRule = useMutation({
+    mutationFn: async (params: { ruleId: string; updates: Partial<EngagementRule> }) => {
+      const { data, error } = await supabase
+        .from('engagement_scoring_rules')
+        .update(params.updates)
+        .eq('id', params.ruleId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['engagement-scoring-rules'] });
+    }
+  });
+
+  // Update tier thresholds
+  const updateTierThreshold = useMutation({
+    mutationFn: async (params: { thresholdId: string; updates: Partial<EngagementTierThreshold> }) => {
+      const { data, error } = await supabase
+        .from('engagement_tier_thresholds')
+        .update(params.updates)
+        .eq('id', params.thresholdId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['engagement-tier-thresholds'] });
+    }
+  });
+
   // Get engagement score distribution
   const scoreDistribution = followersWithScores?.reduce((acc, follower) => {
-    const score = follower.engagement_score?.[0]?.overall_score || 0;
+    const score = follower.engagement_score || 0;
     
-    if (score >= 80) acc.excellent = (acc.excellent || 0) + 1;
-    else if (score >= 60) acc.good = (acc.good || 0) + 1;
-    else if (score >= 40) acc.average = (acc.average || 0) + 1;
-    else if (score >= 20) acc.poor = (acc.poor || 0) + 1;
-    else acc.inactive = (acc.inactive || 0) + 1;
+    if (score >= 75) acc.platinum = (acc.platinum || 0) + 1;
+    else if (score >= 50) acc.gold = (acc.gold || 0) + 1;
+    else if (score >= 25) acc.silver = (acc.silver || 0) + 1;
+    else acc.bronze = (acc.bronze || 0) + 1;
     
+    return acc;
+  }, {} as Record<string, number>);
+
+  // Get tier distribution
+  const tierDistribution = followersWithScores?.reduce((acc, follower) => {
+    const tier = follower.engagement_tier || 'bronze';
+    acc[tier] = (acc[tier] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
 
   return {
     followersWithScores,
+    scoringRules,
+    tierThresholds,
     isLoading,
     calculateScore,
     calculateAllScores,
-    scoreDistribution
+    updateScoringRule,
+    updateTierThreshold,
+    scoreDistribution,
+    tierDistribution
   };
 }
 
-// Hook for individual follower engagement tracking
+// Hook for individual follower engagement tracking with real-time updates
 export function useFollowerEngagement(followerId: string) {
   const queryClient = useQueryClient();
 
-  const { data: engagementScore } = useQuery({
+  const { data: followerScore } = useQuery({
     queryKey: ['follower-engagement', followerId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('follower_engagement_scores')
+        .from('promoter_followers')
         .select('*')
-        .eq('follower_id', followerId)
+        .eq('id', followerId)
         .single();
 
       if (error && error.code !== 'PGRST116') throw error;
-      return data as EngagementScore | null;
+      return data as FollowerWithEngagementScore | null;
+    },
+    enabled: !!followerId
+  });
+
+  // Get engagement history for this follower
+  const { data: engagementHistory } = useQuery({
+    queryKey: ['follower-engagement-history', followerId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('follower_engagement_history')
+        .select('*')
+        .eq('follower_id', followerId)
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+      if (error) throw error;
+      return data;
     },
     enabled: !!followerId
   });
@@ -131,25 +253,20 @@ export function useFollowerEngagement(followerId: string) {
       value?: number;
       metadata?: Record<string, any>;
     }) => {
-      // First update the follower's engagement metrics
+      // Update follower engagement metrics
       const { error: updateError } = await supabase
         .from('promoter_followers')
         .update({
           last_engagement_at: new Date().toISOString(),
-          engagement_count: 1, // Will be handled by database trigger
-          total_interactions: params.value || 1
+          engagement_count: (followerScore?.engagement_count || 0) + 1,
+          total_interactions: (followerScore?.total_interactions || 0) + (params.value || 1)
         })
         .eq('id', followerId);
 
       if (updateError) throw updateError;
 
-      // Then recalculate the engagement score
-      const { data, error } = await supabase.rpc('calculate_engagement_score', {
-        p_follower_id: followerId
-      });
-
-      if (error) throw error;
-      return data;
+      // The trigger will automatically recalculate the engagement score
+      return true;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['follower-engagement'] });
@@ -158,7 +275,8 @@ export function useFollowerEngagement(followerId: string) {
   });
 
   return {
-    engagementScore,
+    followerScore,
+    engagementHistory,
     updateEngagement
   };
 }

@@ -3,6 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useSubscriptions } from '@/hooks/useSubscriptions';
+import EngagementScoreWidget from './EngagementScoreWidget';
 import type { FollowerListProps } from '@/types/FollowerComponentTypes';
 import type { FollowerData } from '@/hooks/useFollowers';
 
@@ -14,6 +15,16 @@ const isFollowerData = (follower: any): follower is FollowerData => {
          'subscriber_id' in follower &&
          'follow_status' in follower &&
          'created_at' in follower;
+};
+
+const hasEngagementData = (follower: any): follower is FollowerData & { 
+  engagement_score: number; 
+  engagement_tier: string;
+  score_last_updated: string;
+} => {
+  return isFollowerData(follower) && 
+         typeof follower.engagement_score === 'number' &&
+         typeof follower.engagement_tier === 'string';
 };
 
 const hasNotificationPreferences = (follower: any): follower is FollowerData & { notification_preferences: { events: boolean } } => {
@@ -87,6 +98,14 @@ const FollowerList: React.FC<FollowerListProps> = ({
     });
   }
 
+  // Sort by engagement score if available
+  filteredFollowers = filteredFollowers.sort((a: any, b: any) => {
+    if (hasEngagementData(a) && hasEngagementData(b)) {
+      return b.engagement_score - a.engagement_score;
+    }
+    return 0;
+  });
+
   if (maxItems) {
     filteredFollowers = filteredFollowers.slice(0, maxItems);
   }
@@ -109,16 +128,44 @@ const FollowerList: React.FC<FollowerListProps> = ({
               return (
                 <div key={follower.id} className="p-4 border rounded-lg">
                   <div className="flex items-center justify-between">
-                    <div>
-                      <div className="font-medium">{displayName}</div>
-                      <div className="text-sm text-muted-foreground">
-                        Status: {follower.follow_status}
+                    <div className="flex-1 space-y-2">
+                      <div>
+                        <div className="font-medium">{displayName}</div>
+                        <div className="text-sm text-muted-foreground">
+                          Status: {follower.follow_status}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          Joined: {new Date(follower.created_at).toLocaleDateString()}
+                        </div>
                       </div>
-                      <div className="text-sm text-muted-foreground">
-                        Joined: {new Date(follower.created_at).toLocaleDateString()}
-                      </div>
+
+                      {/* Engagement Score Display */}
+                      {hasEngagementData(follower) && (
+                        <div className="mt-2">
+                          <EngagementScoreWidget
+                            followerId={follower.id}
+                            score={follower.engagement_score}
+                            tier={follower.engagement_tier as any}
+                            lastUpdated={follower.score_last_updated}
+                            compact={true}
+                          />
+                        </div>
+                      )}
                     </div>
-                    <div className="flex flex-col items-end gap-1">
+
+                    <div className="flex flex-col items-end gap-2">
+                      {/* Engagement Metrics */}
+                      {hasEngagementData(follower) && (
+                        <div className="text-right text-sm">
+                          <div className="text-muted-foreground">Engagement</div>
+                          <div className="font-medium">{follower.engagement_count || 0} actions</div>
+                          <div className="text-xs text-muted-foreground">
+                            {follower.total_interactions || 0} total interactions
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Notifications Status */}
                       <span className={`text-xs px-2 py-1 rounded ${
                         hasNotifications 
                           ? 'bg-green-100 text-green-800' 
@@ -126,6 +173,8 @@ const FollowerList: React.FC<FollowerListProps> = ({
                       }`}>
                         {hasNotifications ? 'Notifications On' : 'Notifications Off'}
                       </span>
+
+                      {/* Tier Badge */}
                       {follower.tier_name && (
                         <Badge variant="secondary" className="text-xs">
                           {follower.tier_name}

@@ -1233,6 +1233,103 @@ export type Database = {
         }
         Relationships: []
       }
+      engagement_scoring_rules: {
+        Row: {
+          base_weight: number | null
+          conditions: Json | null
+          created_at: string | null
+          current_weight: number | null
+          id: string
+          is_active: boolean | null
+          promoter_id: string | null
+          rule_name: string
+          score_formula: Json | null
+          signal_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          base_weight?: number | null
+          conditions?: Json | null
+          created_at?: string | null
+          current_weight?: number | null
+          id?: string
+          is_active?: boolean | null
+          promoter_id?: string | null
+          rule_name: string
+          score_formula?: Json | null
+          signal_type: string
+          updated_at?: string | null
+        }
+        Update: {
+          base_weight?: number | null
+          conditions?: Json | null
+          created_at?: string | null
+          current_weight?: number | null
+          id?: string
+          is_active?: boolean | null
+          promoter_id?: string | null
+          rule_name?: string
+          score_formula?: Json | null
+          signal_type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "engagement_scoring_rules_promoter_id_fkey"
+            columns: ["promoter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      engagement_tier_thresholds: {
+        Row: {
+          benefits: Json | null
+          color_code: string | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          max_score: number | null
+          min_score: number
+          promoter_id: string | null
+          tier_name: string
+          updated_at: string | null
+        }
+        Insert: {
+          benefits?: Json | null
+          color_code?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_score?: number | null
+          min_score: number
+          promoter_id?: string | null
+          tier_name: string
+          updated_at?: string | null
+        }
+        Update: {
+          benefits?: Json | null
+          color_code?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_score?: number | null
+          min_score?: number
+          promoter_id?: string | null
+          tier_name?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "engagement_tier_thresholds_promoter_id_fkey"
+            columns: ["promoter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       establishment_ai_customizations: {
         Row: {
           created_at: string
@@ -2537,6 +2634,53 @@ export type Database = {
           total_followers?: number | null
         }
         Relationships: []
+      }
+      follower_engagement_history: {
+        Row: {
+          change_reason: string | null
+          created_at: string | null
+          follower_id: string | null
+          id: string
+          metadata: Json | null
+          new_score: number | null
+          new_tier: string | null
+          previous_score: number | null
+          previous_tier: string | null
+          score_breakdown: Json | null
+        }
+        Insert: {
+          change_reason?: string | null
+          created_at?: string | null
+          follower_id?: string | null
+          id?: string
+          metadata?: Json | null
+          new_score?: number | null
+          new_tier?: string | null
+          previous_score?: number | null
+          previous_tier?: string | null
+          score_breakdown?: Json | null
+        }
+        Update: {
+          change_reason?: string | null
+          created_at?: string | null
+          follower_id?: string | null
+          id?: string
+          metadata?: Json | null
+          new_score?: number | null
+          new_tier?: string | null
+          previous_score?: number | null
+          previous_tier?: string | null
+          score_breakdown?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "follower_engagement_history_follower_id_fkey"
+            columns: ["follower_id"]
+            isOneToOne: false
+            referencedRelation: "promoter_followers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       follower_engagement_scores: {
         Row: {
@@ -3914,6 +4058,8 @@ export type Database = {
           discovery_metadata: Json | null
           discovery_source: string | null
           engagement_count: number | null
+          engagement_score: number | null
+          engagement_tier: string | null
           follow_status: string
           follower_tier: string | null
           id: string
@@ -3921,10 +4067,12 @@ export type Database = {
           notification_preferences: Json
           promoter_id: string
           referral_source: string | null
+          score_last_updated: string | null
           subscriber_id: string
           subscription_end: string | null
           subscription_start: string
           tier_id: string | null
+          tier_updated_at: string | null
           total_interactions: number | null
           updated_at: string
           utm_campaign: string | null
@@ -3937,6 +4085,8 @@ export type Database = {
           discovery_metadata?: Json | null
           discovery_source?: string | null
           engagement_count?: number | null
+          engagement_score?: number | null
+          engagement_tier?: string | null
           follow_status?: string
           follower_tier?: string | null
           id?: string
@@ -3944,10 +4094,12 @@ export type Database = {
           notification_preferences?: Json
           promoter_id: string
           referral_source?: string | null
+          score_last_updated?: string | null
           subscriber_id: string
           subscription_end?: string | null
           subscription_start?: string
           tier_id?: string | null
+          tier_updated_at?: string | null
           total_interactions?: number | null
           updated_at?: string
           utm_campaign?: string | null
@@ -3960,6 +4112,8 @@ export type Database = {
           discovery_metadata?: Json | null
           discovery_source?: string | null
           engagement_count?: number | null
+          engagement_score?: number | null
+          engagement_tier?: string | null
           follow_status?: string
           follower_tier?: string | null
           id?: string
@@ -3967,10 +4121,12 @@ export type Database = {
           notification_preferences?: Json
           promoter_id?: string
           referral_source?: string | null
+          score_last_updated?: string | null
           subscriber_id?: string
           subscription_end?: string | null
           subscription_start?: string
           tier_id?: string | null
+          tier_updated_at?: string | null
           total_interactions?: number | null
           updated_at?: string
           utm_campaign?: string | null
@@ -6818,6 +6974,19 @@ export type Database = {
           points_change: number
           new_balance: number
           error: string
+        }[]
+      }
+      calculate_comprehensive_engagement_score: {
+        Args: { p_follower_id: string }
+        Returns: {
+          overall_score: number
+          activity_score: number
+          interaction_score: number
+          loyalty_score: number
+          recency_score: number
+          conversion_score: number
+          recommended_tier: string
+          score_breakdown: Json
         }[]
       }
       calculate_engagement_score: {
