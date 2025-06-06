@@ -2902,6 +2902,72 @@ export type Database = {
           },
         ]
       }
+      follower_onboarding_progress: {
+        Row: {
+          automation_flow_id: string | null
+          completed_at: string | null
+          completed_steps: Json | null
+          conversion_events: Json | null
+          created_at: string | null
+          current_step: number | null
+          engagement_score: number | null
+          follower_id: string | null
+          id: string
+          is_completed: boolean | null
+          personalization_data: Json | null
+          started_at: string | null
+          step_completion_dates: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          automation_flow_id?: string | null
+          completed_at?: string | null
+          completed_steps?: Json | null
+          conversion_events?: Json | null
+          created_at?: string | null
+          current_step?: number | null
+          engagement_score?: number | null
+          follower_id?: string | null
+          id?: string
+          is_completed?: boolean | null
+          personalization_data?: Json | null
+          started_at?: string | null
+          step_completion_dates?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          automation_flow_id?: string | null
+          completed_at?: string | null
+          completed_steps?: Json | null
+          conversion_events?: Json | null
+          created_at?: string | null
+          current_step?: number | null
+          engagement_score?: number | null
+          follower_id?: string | null
+          id?: string
+          is_completed?: boolean | null
+          personalization_data?: Json | null
+          started_at?: string | null
+          step_completion_dates?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "follower_onboarding_progress_automation_flow_id_fkey"
+            columns: ["automation_flow_id"]
+            isOneToOne: false
+            referencedRelation: "welcome_automation_flows"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "follower_onboarding_progress_follower_id_fkey"
+            columns: ["follower_id"]
+            isOneToOne: false
+            referencedRelation: "promoter_followers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gamification_rewards: {
         Row: {
           availability_end: string | null
@@ -4359,6 +4425,11 @@ export type Database = {
           last_engagement_at: string | null
           loyalty_tier_level: number | null
           notification_preferences: Json
+          onboarding_completed: boolean | null
+          onboarding_completed_at: string | null
+          onboarding_progress_score: number | null
+          onboarding_stage: string | null
+          onboarding_started_at: string | null
           promoter_id: string
           referral_source: string | null
           score_last_updated: string | null
@@ -4374,6 +4445,7 @@ export type Database = {
           utm_campaign: string | null
           utm_medium: string | null
           utm_source: string | null
+          welcome_flow_id: string | null
         }
         Insert: {
           churn_risk_score?: number | null
@@ -4391,6 +4463,11 @@ export type Database = {
           last_engagement_at?: string | null
           loyalty_tier_level?: number | null
           notification_preferences?: Json
+          onboarding_completed?: boolean | null
+          onboarding_completed_at?: string | null
+          onboarding_progress_score?: number | null
+          onboarding_stage?: string | null
+          onboarding_started_at?: string | null
           promoter_id: string
           referral_source?: string | null
           score_last_updated?: string | null
@@ -4406,6 +4483,7 @@ export type Database = {
           utm_campaign?: string | null
           utm_medium?: string | null
           utm_source?: string | null
+          welcome_flow_id?: string | null
         }
         Update: {
           churn_risk_score?: number | null
@@ -4423,6 +4501,11 @@ export type Database = {
           last_engagement_at?: string | null
           loyalty_tier_level?: number | null
           notification_preferences?: Json
+          onboarding_completed?: boolean | null
+          onboarding_completed_at?: string | null
+          onboarding_progress_score?: number | null
+          onboarding_stage?: string | null
+          onboarding_started_at?: string | null
           promoter_id?: string
           referral_source?: string | null
           score_last_updated?: string | null
@@ -4438,6 +4521,7 @@ export type Database = {
           utm_campaign?: string | null
           utm_medium?: string | null
           utm_source?: string | null
+          welcome_flow_id?: string | null
         }
         Relationships: [
           {
@@ -4445,6 +4529,13 @@ export type Database = {
             columns: ["tier_id"]
             isOneToOne: false
             referencedRelation: "promoter_subscription_tiers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promoter_followers_welcome_flow_id_fkey"
+            columns: ["welcome_flow_id"]
+            isOneToOne: false
+            referencedRelation: "welcome_automation_flows"
             referencedColumns: ["id"]
           },
         ]
@@ -5446,6 +5537,142 @@ export type Database = {
             columns: ["urgency_campaign_id"]
             isOneToOne: false
             referencedRelation: "urgency_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scheduled_message_deliveries: {
+        Row: {
+          created_at: string | null
+          delivery_status: string | null
+          engagement_metrics: Json | null
+          error_message: string | null
+          follower_id: string | null
+          id: string
+          onboarding_progress_id: string | null
+          response_data: Json | null
+          retry_count: number | null
+          scheduled_for: string
+          scheduled_message_id: string | null
+          sent_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          delivery_status?: string | null
+          engagement_metrics?: Json | null
+          error_message?: string | null
+          follower_id?: string | null
+          id?: string
+          onboarding_progress_id?: string | null
+          response_data?: Json | null
+          retry_count?: number | null
+          scheduled_for: string
+          scheduled_message_id?: string | null
+          sent_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          delivery_status?: string | null
+          engagement_metrics?: Json | null
+          error_message?: string | null
+          follower_id?: string | null
+          id?: string
+          onboarding_progress_id?: string | null
+          response_data?: Json | null
+          retry_count?: number | null
+          scheduled_for?: string
+          scheduled_message_id?: string | null
+          sent_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scheduled_message_deliveries_follower_id_fkey"
+            columns: ["follower_id"]
+            isOneToOne: false
+            referencedRelation: "promoter_followers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scheduled_message_deliveries_onboarding_progress_id_fkey"
+            columns: ["onboarding_progress_id"]
+            isOneToOne: false
+            referencedRelation: "follower_onboarding_progress"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scheduled_message_deliveries_scheduled_message_id_fkey"
+            columns: ["scheduled_message_id"]
+            isOneToOne: false
+            referencedRelation: "scheduled_welcome_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scheduled_welcome_messages: {
+        Row: {
+          automation_flow_id: string | null
+          created_at: string | null
+          delay_minutes: number
+          id: string
+          is_active: boolean | null
+          message_content: string
+          message_data: Json | null
+          message_type: string
+          promoter_id: string | null
+          send_conditions: Json | null
+          step_name: string
+          step_number: number
+          subject_line: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          automation_flow_id?: string | null
+          created_at?: string | null
+          delay_minutes?: number
+          id?: string
+          is_active?: boolean | null
+          message_content: string
+          message_data?: Json | null
+          message_type: string
+          promoter_id?: string | null
+          send_conditions?: Json | null
+          step_name: string
+          step_number: number
+          subject_line?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          automation_flow_id?: string | null
+          created_at?: string | null
+          delay_minutes?: number
+          id?: string
+          is_active?: boolean | null
+          message_content?: string
+          message_data?: Json | null
+          message_type?: string
+          promoter_id?: string | null
+          send_conditions?: Json | null
+          step_name?: string
+          step_number?: number
+          subject_line?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scheduled_welcome_messages_automation_flow_id_fkey"
+            columns: ["automation_flow_id"]
+            isOneToOne: false
+            referencedRelation: "welcome_automation_flows"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scheduled_welcome_messages_promoter_id_fkey"
+            columns: ["promoter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -7009,6 +7236,56 @@ export type Database = {
           },
         ]
       }
+      welcome_automation_flows: {
+        Row: {
+          completion_criteria: Json | null
+          created_at: string | null
+          description: string | null
+          flow_config: Json | null
+          flow_name: string
+          id: string
+          is_active: boolean | null
+          promoter_id: string | null
+          success_metrics: Json | null
+          trigger_conditions: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          completion_criteria?: Json | null
+          created_at?: string | null
+          description?: string | null
+          flow_config?: Json | null
+          flow_name: string
+          id?: string
+          is_active?: boolean | null
+          promoter_id?: string | null
+          success_metrics?: Json | null
+          trigger_conditions?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          completion_criteria?: Json | null
+          created_at?: string | null
+          description?: string | null
+          flow_config?: Json | null
+          flow_name?: string
+          id?: string
+          is_active?: boolean | null
+          promoter_id?: string | null
+          success_metrics?: Json | null
+          trigger_conditions?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "welcome_automation_flows_promoter_id_fkey"
+            columns: ["promoter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       campaign_segment_analytics: {
@@ -7260,6 +7537,10 @@ export type Database = {
       }
     }
     Functions: {
+      advance_onboarding_step: {
+        Args: { p_follower_id: string }
+        Returns: boolean
+      }
       aggregate_daily_analytics: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -7403,6 +7684,10 @@ export type Database = {
       refresh_reward_profile_cache: {
         Args: { p_user_id: string; p_establishment_id?: string }
         Returns: undefined
+      }
+      start_follower_onboarding: {
+        Args: { p_follower_id: string }
+        Returns: boolean
       }
       switch_active_role: {
         Args: { role_to_activate: Database["public"]["Enums"]["user_role"] }

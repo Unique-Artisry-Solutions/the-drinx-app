@@ -13,6 +13,7 @@ import JourneyTrackingWidget from '@/components/promoter/followers/JourneyTracki
 import ChurnAnalytics from '@/components/promoter/followers/ChurnAnalytics';
 import FollowerTierManagement from '@/components/promoter/followers/FollowerTierManagement';
 import EngagementScoringDashboard from '@/components/promoter/followers/EngagementScoringDashboard';
+import WelcomeAutomationDashboard from '@/components/welcomeAutomation/WelcomeAutomationDashboard';
 
 const PromoterFollowersPage: React.FC = () => {
   const { user } = useAuth();
@@ -32,13 +33,14 @@ const PromoterFollowersPage: React.FC = () => {
         </div>
 
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-7">
+          <TabsList className="grid w-full grid-cols-8">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
             <TabsTrigger value="engagement">Engagement</TabsTrigger>
             <TabsTrigger value="journey">Journey</TabsTrigger>
             <TabsTrigger value="churn">Churn Risk</TabsTrigger>
             <TabsTrigger value="tiers">Tiers</TabsTrigger>
+            <TabsTrigger value="welcome">Welcome</TabsTrigger>
             <TabsTrigger value="list">Followers</TabsTrigger>
           </TabsList>
 
@@ -80,6 +82,10 @@ const PromoterFollowersPage: React.FC = () => {
 
           <TabsContent value="tiers" className="space-y-6">
             <FollowerTierManagement promoterId={promoterId} />
+          </TabsContent>
+
+          <TabsContent value="welcome" className="space-y-6">
+            <WelcomeAutomationDashboard promoterId={promoterId} />
           </TabsContent>
 
           <TabsContent value="list" className="space-y-6">
