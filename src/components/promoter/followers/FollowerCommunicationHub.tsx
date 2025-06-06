@@ -1,254 +1,176 @@
 
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { 
-  Mail, 
-  MessageSquare, 
   Send, 
-  Clock, 
   Users, 
-  Zap,
+  Clock, 
+  MessageSquare, 
+  FileText, 
   Calendar,
+  Target,
   History,
-  Template,
-  Plus
+  Settings
 } from 'lucide-react';
 import { useSubscriptions } from '@/hooks/useSubscriptions';
-import { FollowerComponentProps } from '@/types/FollowerComponentTypes';
+import { useToast } from '@/hooks/use-toast';
+
+interface FollowerCommunicationHubProps {
+  promoterId: string;
+}
 
 interface MessageTemplate {
   id: string;
   name: string;
   subject: string;
   content: string;
-  category: 'event' | 'promotion' | 'general';
+  category: 'announcement' | 'promotion' | 'event' | 'general';
 }
 
-const FollowerCommunicationHub: React.FC<FollowerComponentProps> = ({
-  promoterId,
-  className = '',
-  onError,
-  onSuccess
-}) => {
-  const { followers, sendNotification } = useSubscriptions(promoterId);
+const FollowerCommunicationHub: React.FC<FollowerCommunicationHubProps> = ({ promoterId }) => {
   const [activeTab, setActiveTab] = useState('compose');
-  
-  // Message composition state
-  const [messageTitle, setMessageTitle] = useState('');
   const [messageContent, setMessageContent] = useState('');
-  const [selectedAudience, setSelectedAudience] = useState('all');
-  const [priority, setPriority] = useState('medium');
-  const [scheduleDate, setScheduleDate] = useState('');
-  const [scheduleTime, setScheduleTime] = useState('');
+  const [messageTitle, setMessageTitle] = useState('');
+  const [selectedTiers, setSelectedTiers] = useState<string[]>([]);
+  const [priority, setPriority] = useState<'low' | 'medium' | 'high' | 'urgent'>('medium');
+  const [includeEmail, setIncludeEmail] = useState(true);
+  const [includePush, setIncludePush] = useState(true);
+  const [scheduleMessage, setScheduleMessage] = useState(false);
+  const [scheduledDate, setScheduledDate] = useState('');
   
-  // Templates state
-  const [templates] = useState<MessageTemplate[]>([
+  const { followers, sendNotification } = useSubscriptions(promoterId);
+  const { toast } = useToast();
+
+  // Mock templates - in real implementation, these would come from API
+  const messageTemplates: MessageTemplate[] = [
     {
       id: '1',
-      name: 'Event Reminder',
-      subject: 'Don\'t Miss Tonight\'s Event!',
-      content: 'Hey there! Just a quick reminder about tonight\'s amazing event. We can\'t wait to see you there!',
+      name: 'Event Announcement',
+      subject: 'New Event Coming Soon!',
+      content: 'We\'re excited to announce our upcoming event...',
       category: 'event'
     },
     {
       id: '2',
-      name: 'Happy Hour Promotion',
-      subject: 'Special Happy Hour Just for You!',
-      content: 'Join us for an exclusive happy hour with 50% off all drinks from 5-7 PM today!',
+      name: 'Special Promotion',
+      subject: 'Exclusive Discount Just for You!',
+      content: 'As one of our valued followers, you get early access...',
       category: 'promotion'
     },
     {
       id: '3',
-      name: 'Weekly Update',
-      subject: 'This Week\'s Highlights',
-      content: 'Here\'s what\'s happening this week at our venues. Check out these exciting events and promotions!',
+      name: 'General Update',
+      subject: 'What\'s New This Week',
+      content: 'Here\'s what we\'ve been up to...',
       category: 'general'
     }
-  ]);
+  ];
 
-  const [messageHistory] = useState([
-    {
-      id: '1',
-      title: 'Summer Circuit Launch',
-      sentAt: '2024-01-15T10:30:00Z',
-      recipients: 156,
-      openRate: 78,
-      clickRate: 12
-    },
-    {
-      id: '2',
-      title: 'Happy Hour Special',
-      sentAt: '2024-01-14T16:00:00Z',
-      recipients: 142,
-      openRate: 85,
-      clickRate: 18
-    },
-    {
-      id: '3',
-      title: 'Weekend Event Alert',
-      sentAt: '2024-01-13T14:20:00Z',
-      recipients: 134,
-      openRate: 72,
-      clickRate: 8
-    }
-  ]);
-
-  const totalFollowers = followers?.length || 0;
-  const activeFollowers = followers?.filter(f => f.follow_status === 'active').length || 0;
-  const notificationEnabled = followers?.filter(f => 
-    f.notification_preferences?.events !== false
-  ).length || 0;
-
-  const getAudienceSize = () => {
-    switch (selectedAudience) {
-      case 'all': return totalFollowers;
-      case 'active': return activeFollowers;
-      case 'notifications': return notificationEnabled;
-      case 'premium': return followers?.filter(f => f.tier_id).length || 0;
-      case 'free': return followers?.filter(f => !f.tier_id).length || 0;
-      default: return 0;
-    }
-  };
+  const activeFollowers = followers?.filter(f => f.follow_status === 'active') || [];
+  const targetAudience = selectedTiers.length > 0 
+    ? activeFollowers.filter(f => selectedTiers.includes(f.tier_id || 'free'))
+    : activeFollowers;
 
   const handleSendMessage = async () => {
-    if (!messageTitle || !messageContent) return;
+    if (!messageContent.trim() || !messageTitle.trim()) {
+      toast({
+        title: 'Missing Information',
+        description: 'Please fill in both title and message content.',
+        variant: 'destructive'
+      });
+      return;
+    }
 
     try {
-      if (scheduleDate && scheduleTime) {
-        // Handle scheduled message
-        console.log('Scheduling message for:', scheduleDate, scheduleTime);
-      } else {
-        // Send immediate message
-        await sendNotification.mutateAsync({
-          message: messageContent,
-          title: messageTitle,
-          priority
-        });
-        
-        // Clear form
-        setMessageTitle('');
-        setMessageContent('');
-        setSelectedAudience('all');
-        setPriority('medium');
-        
-        if (onSuccess) {
-          onSuccess({ sent: true, recipients: getAudienceSize() });
-        }
-      }
+      const notification = {
+        title: messageTitle,
+        content: messageContent,
+        priority,
+        includeEmail,
+        includePush,
+        targetTiers: selectedTiers
+      };
+
+      await sendNotification.mutateAsync({
+        promoterId,
+        notification
+      });
+
+      // Reset form
+      setMessageContent('');
+      setMessageTitle('');
+      setSelectedTiers([]);
+      setPriority('medium');
+      
+      toast({
+        title: 'Message Sent',
+        description: `Successfully sent to ${targetAudience.length} followers`,
+      });
     } catch (error) {
-      if (onError) {
-        onError(error as Error);
-      }
+      toast({
+        title: 'Failed to send message',
+        description: 'Please try again later.',
+        variant: 'destructive'
+      });
     }
   };
 
-  const handleUseTemplate = (template: MessageTemplate) => {
+  const handleTemplateSelect = (template: MessageTemplate) => {
     setMessageTitle(template.subject);
     setMessageContent(template.content);
-    setActiveTab('compose');
   };
 
   return (
-    <div className={`space-y-6 ${className}`}>
-      {/* Communication Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Reach</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalFollowers}</div>
-            <p className="text-xs text-muted-foreground">Available followers</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Notifications On</CardTitle>
-            <Mail className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{notificationEnabled}</div>
-            <p className="text-xs text-muted-foreground">
-              {totalFollowers > 0 ? ((notificationEnabled / totalFollowers) * 100).toFixed(0) : 0}% opt-in rate
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg. Open Rate</CardTitle>
-            <Zap className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">78%</div>
-            <p className="text-xs text-muted-foreground">Last 30 days</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Messages Sent</CardTitle>
-            <MessageSquare className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">24</div>
-            <p className="text-xs text-muted-foreground">This month</p>
-          </CardContent>
-        </Card>
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-lg font-semibold">Communication Hub</h3>
+        <p className="text-sm text-muted-foreground">
+          Send messages, announcements, and updates to your followers
+        </p>
       </div>
 
-      {/* Communication Interface */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="compose">Compose</TabsTrigger>
           <TabsTrigger value="templates">Templates</TabsTrigger>
-          <TabsTrigger value="scheduled">Scheduled</TabsTrigger>
           <TabsTrigger value="history">History</TabsTrigger>
+          <TabsTrigger value="audience">Audience</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="compose" className="space-y-6">
+        <TabsContent value="compose" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Compose Message</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <Send className="h-5 w-5" />
+                Compose Message
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Audience Selection */}
+              {/* Message Details */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Audience</label>
-                  <Select value={selectedAudience} onValueChange={setSelectedAudience}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select audience" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Followers ({totalFollowers})</SelectItem>
-                      <SelectItem value="active">Active Followers ({activeFollowers})</SelectItem>
-                      <SelectItem value="notifications">Notifications Enabled ({notificationEnabled})</SelectItem>
-                      <SelectItem value="premium">Premium ({followers?.filter(f => f.tier_id).length || 0})</SelectItem>
-                      <SelectItem value="free">Free ({followers?.filter(f => !f.tier_id).length || 0})</SelectItem>
-                    </SelectContent>
-                  </Select>
+                <div className="space-y-2">
+                  <Label htmlFor="messageTitle">Message Title</Label>
+                  <Input
+                    id="messageTitle"
+                    value={messageTitle}
+                    onChange={(e) => setMessageTitle(e.target.value)}
+                    placeholder="Enter message title..."
+                  />
                 </div>
-
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Priority</label>
-                  <Select value={priority} onValueChange={setPriority}>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="priority">Priority</Label>
+                  <Select value={priority} onValueChange={(value: any) => setPriority(value)}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select priority" />
+                      <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="low">Low</SelectItem>
@@ -261,150 +183,235 @@ const FollowerCommunicationHub: React.FC<FollowerComponentProps> = ({
               </div>
 
               {/* Message Content */}
-              <div>
-                <label className="text-sm font-medium mb-2 block">Message Title</label>
-                <Input
-                  placeholder="Enter message title..."
-                  value={messageTitle}
-                  onChange={(e) => setMessageTitle(e.target.value)}
+              <div className="space-y-2">
+                <Label htmlFor="messageContent">Message Content</Label>
+                <Textarea
+                  id="messageContent"
+                  value={messageContent}
+                  onChange={(e) => setMessageContent(e.target.value)}
+                  placeholder="Write your message here..."
+                  rows={6}
                 />
               </div>
 
-              <div>
-                <label className="text-sm font-medium mb-2 block">Message Content</label>
-                <Textarea
-                  placeholder="Enter your message..."
-                  value={messageContent}
-                  onChange={(e) => setMessageContent(e.target.value)}
-                  rows={4}
-                />
+              {/* Delivery Options */}
+              <div className="space-y-4">
+                <h4 className="font-medium">Delivery Options</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="includeEmail"
+                      checked={includeEmail}
+                      onCheckedChange={setIncludeEmail}
+                    />
+                    <Label htmlFor="includeEmail">Send via Email</Label>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="includePush"
+                      checked={includePush}
+                      onCheckedChange={setIncludePush}
+                    />
+                    <Label htmlFor="includePush">Send Push Notifications</Label>
+                  </div>
+                </div>
               </div>
 
               {/* Scheduling */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Schedule Date (Optional)</label>
-                  <Input
-                    type="date"
-                    value={scheduleDate}
-                    onChange={(e) => setScheduleDate(e.target.value)}
+              <div className="space-y-4">
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="scheduleMessage"
+                    checked={scheduleMessage}
+                    onCheckedChange={setScheduleMessage}
                   />
+                  <Label htmlFor="scheduleMessage">Schedule for later</Label>
                 </div>
+                
+                {scheduleMessage && (
+                  <div className="space-y-2">
+                    <Label htmlFor="scheduledDate">Schedule Date & Time</Label>
+                    <Input
+                      id="scheduledDate"
+                      type="datetime-local"
+                      value={scheduledDate}
+                      onChange={(e) => setScheduledDate(e.target.value)}
+                    />
+                  </div>
+                )}
+              </div>
 
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Schedule Time (Optional)</label>
-                  <Input
-                    type="time"
-                    value={scheduleTime}
-                    onChange={(e) => setScheduleTime(e.target.value)}
-                  />
+              {/* Target Audience Summary */}
+              <div className="p-4 bg-muted rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <Target className="h-4 w-4" />
+                  <span className="font-medium">Target Audience</span>
                 </div>
+                <p className="text-sm text-muted-foreground">
+                  This message will be sent to {targetAudience.length} active followers
+                  {selectedTiers.length > 0 && ` (filtered by tier)`}
+                </p>
               </div>
 
               {/* Send Button */}
-              <div className="flex items-center justify-between pt-4 border-t">
-                <div className="text-sm text-muted-foreground">
-                  Will reach {getAudienceSize()} followers
-                </div>
-                
-                <Button 
-                  onClick={handleSendMessage}
-                  disabled={!messageTitle || !messageContent || sendNotification.isPending}
-                >
-                  {scheduleDate && scheduleTime ? (
-                    <>
-                      <Clock className="h-4 w-4 mr-2" />
-                      Schedule Message
-                    </>
-                  ) : (
-                    <>
-                      <Send className="h-4 w-4 mr-2" />
-                      Send Now
-                    </>
-                  )}
-                </Button>
-              </div>
+              <Button 
+                onClick={handleSendMessage} 
+                className="w-full"
+                disabled={!messageContent.trim() || !messageTitle.trim()}
+              >
+                <Send className="h-4 w-4 mr-2" />
+                {scheduleMessage ? 'Schedule Message' : 'Send Message'}
+              </Button>
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="templates" className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-medium">Message Templates</h3>
-            <Button variant="outline" size="sm">
-              <Plus className="h-4 w-4 mr-2" />
-              New Template
-            </Button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {templates.map((template) => (
-              <Card key={template.id} className="cursor-pointer hover:shadow-md transition-shadow">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-sm">{template.name}</CardTitle>
-                    <Badge variant="outline">{template.category}</Badge>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <div className="text-sm font-medium">{template.subject}</div>
-                    <div className="text-xs text-muted-foreground line-clamp-3">
-                      {template.content}
-                    </div>
-                    <Button 
-                      size="sm" 
-                      className="w-full"
-                      onClick={() => handleUseTemplate(template)}
-                    >
-                      <Template className="h-4 w-4 mr-2" />
-                      Use Template
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="scheduled" className="space-y-6">
+        <TabsContent value="templates" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Scheduled Messages</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Message Templates
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>No scheduled messages</p>
-                <p className="text-sm">Messages you schedule will appear here</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {messageTemplates.map((template) => (
+                  <Card key={template.id} className="cursor-pointer hover:bg-muted/50 transition-colors">
+                    <CardContent className="p-4">
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <h4 className="font-medium">{template.name}</h4>
+                          <Badge variant="outline">{template.category}</Badge>
+                        </div>
+                        <p className="text-sm font-medium text-muted-foreground">{template.subject}</p>
+                        <p className="text-xs text-muted-foreground line-clamp-2">{template.content}</p>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="w-full"
+                          onClick={() => handleTemplateSelect(template)}
+                        >
+                          Use Template
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="history" className="space-y-6">
+        <TabsContent value="history" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Message History</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <History className="h-5 w-5" />
+                Message History
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {messageHistory.map((message) => (
-                  <div key={message.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div>
-                      <div className="font-medium">{message.title}</div>
-                      <div className="text-sm text-muted-foreground">
-                        Sent {new Date(message.sentAt).toLocaleDateString()} to {message.recipients} followers
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="flex gap-4 text-sm">
-                        <span>{message.openRate}% opened</span>
-                        <span>{message.clickRate}% clicked</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                <div className="text-center py-8 text-muted-foreground">
+                  <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No messages sent yet</p>
+                  <p className="text-sm">Your sent messages will appear here</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="audience" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Audience Settings
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <Card>
+                  <CardContent className="p-4 text-center">
+                    <p className="text-2xl font-bold text-blue-600">{activeFollowers.length}</p>
+                    <p className="text-sm text-muted-foreground">Total Active Followers</p>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardContent className="p-4 text-center">
+                    <p className="text-2xl font-bold text-green-600">
+                      {followers?.filter(f => f.notification_preferences?.events).length || 0}
+                    </p>
+                    <p className="text-sm text-muted-foreground">Push Notifications Enabled</p>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardContent className="p-4 text-center">
+                    <p className="text-2xl font-bold text-purple-600">0</p>
+                    <p className="text-sm text-muted-foreground">Messages Sent This Month</p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <div className="space-y-4">
+                <h4 className="font-medium">Audience Segmentation</h4>
+                <p className="text-sm text-muted-foreground">
+                  Select specific follower tiers to target your messages more effectively.
+                </p>
+                
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                  <Badge 
+                    variant={selectedTiers.includes('free') ? 'default' : 'outline'}
+                    className="cursor-pointer justify-center"
+                    onClick={() => {
+                      setSelectedTiers(prev => 
+                        prev.includes('free') 
+                          ? prev.filter(t => t !== 'free')
+                          : [...prev, 'free']
+                      );
+                    }}
+                  >
+                    Free Followers
+                  </Badge>
+                  <Badge 
+                    variant={selectedTiers.includes('premium') ? 'default' : 'outline'}
+                    className="cursor-pointer justify-center"
+                    onClick={() => {
+                      setSelectedTiers(prev => 
+                        prev.includes('premium') 
+                          ? prev.filter(t => t !== 'premium')
+                          : [...prev, 'premium']
+                      );
+                    }}
+                  >
+                    Premium
+                  </Badge>
+                  <Badge 
+                    variant={selectedTiers.includes('vip') ? 'default' : 'outline'}
+                    className="cursor-pointer justify-center"
+                    onClick={() => {
+                      setSelectedTiers(prev => 
+                        prev.includes('vip') 
+                          ? prev.filter(t => t !== 'vip')
+                          : [...prev, 'vip']
+                      );
+                    }}
+                  >
+                    VIP
+                  </Badge>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setSelectedTiers([])}
+                  >
+                    Clear All
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>

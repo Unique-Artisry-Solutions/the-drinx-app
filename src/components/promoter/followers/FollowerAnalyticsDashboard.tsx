@@ -2,372 +2,317 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 import { 
   Users, 
   TrendingUp, 
   MessageSquare, 
-  Heart,
-  Download,
   Calendar,
+  Download,
   BarChart3,
   PieChart,
   Activity
 } from 'lucide-react';
-import { FollowerAnalyticsProps } from '@/types/FollowerComponentTypes';
-import AnalyticsMetricCard from '@/components/charts/AnalyticsMetricCard';
+import { useSubscriptions } from '@/hooks/useSubscriptions';
+import { formatDistanceToNow } from 'date-fns';
 
-export const FollowerAnalyticsDashboard: React.FC<FollowerAnalyticsProps> = ({ 
-  promoterId,
-  className = '',
-  timeRange = 'month',
-  onError,
-  onSuccess
-}) => {
-  const [selectedTimeRange, setSelectedTimeRange] = useState(timeRange);
-  const [activeTab, setActiveTab] = useState('overview');
+interface FollowerAnalyticsDashboardProps {
+  promoterId: string;
+}
 
-  // Mock data - in real implementation, this would come from API
-  const mockAnalytics = {
-    overview: {
-      totalFollowers: 1247,
-      activeFollowers: 892,
-      newThisWeek: 23,
-      engagementRate: 67.8,
-      topLocation: 'Downtown',
-      averageAge: 28
-    },
-    growth: [
-      { date: '2024-01-01', followers: 1100, newFollowers: 45, unfollowers: 12 },
-      { date: '2024-01-08', followers: 1133, newFollowers: 38, unfollowers: 5 },
-      { date: '2024-01-15', followers: 1166, newFollowers: 42, unfollowers: 9 },
-      { date: '2024-01-22', followers: 1199, newFollowers: 51, unfollowers: 18 },
-      { date: '2024-01-29', followers: 1232, newFollowers: 48, unfollowers: 15 },
-      { date: '2024-02-05', followers: 1247, newFollowers: 23, unfollowers: 8 }
-    ],
-    demographics: {
-      ageGroups: [
-        { range: '18-24', count: 312, percentage: 25 },
-        { range: '25-34', count: 436, percentage: 35 },
-        { range: '35-44', count: 287, percentage: 23 },
-        { range: '45+', count: 212, percentage: 17 }
-      ],
-      locations: [
-        { city: 'Downtown', count: 445, percentage: 36 },
-        { city: 'Midtown', count: 324, percentage: 26 },
-        { city: 'Uptown', count: 278, percentage: 22 },
-        { city: 'Suburbs', count: 200, percentage: 16 }
-      ]
-    },
-    engagement: {
-      totalInteractions: 3421,
-      averageEngagement: 67.8,
-      topContent: [
-        { title: 'Summer Circuit Launch', interactions: 234, reach: 892 },
-        { title: 'Happy Hour Special', interactions: 189, reach: 567 },
-        { title: 'Weekend Event', interactions: 156, reach: 445 }
-      ]
-    }
+const FollowerAnalyticsDashboard: React.FC<FollowerAnalyticsDashboardProps> = ({ promoterId }) => {
+  const [timeRange, setTimeRange] = useState<'week' | 'month' | 'quarter' | 'year'>('month');
+  const [selectedMetrics, setSelectedMetrics] = useState<string[]>(['growth', 'engagement']);
+  
+  const { followers, isLoading } = useSubscriptions(promoterId);
+
+  // Calculate analytics data
+  const totalFollowers = followers?.length || 0;
+  const activeFollowers = followers?.filter(f => f.follow_status === 'active').length || 0;
+  const recentFollowers = followers?.filter(f => {
+    const joinDate = new Date(f.created_at);
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    return joinDate > weekAgo;
+  }).length || 0;
+
+  const notificationOptIns = followers?.filter(f => 
+    f.notification_preferences?.events === true
+  ).length || 0;
+
+  const handleTimeRangeChange = (value: string) => {
+    setTimeRange(value as 'week' | 'month' | 'quarter' | 'year');
   };
 
-  const handleExport = (format: string) => {
-    console.log(`Exporting analytics data in ${format} format`);
-    onSuccess?.({ message: `Analytics exported as ${format}` });
+  const handleExportAnalytics = () => {
+    console.log('Exporting analytics data...');
+    // TODO: Implement export functionality
   };
 
-  const timeRangeOptions = [
-    { value: 'week', label: 'This Week' },
-    { value: 'month', label: 'This Month' },
-    { value: 'quarter', label: 'This Quarter' },
-    { value: 'year', label: 'This Year' }
-  ];
-
-  const OverviewTab = () => (
-    <div className="space-y-6">
-      {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <AnalyticsMetricCard
-          title="Total Followers"
-          value={mockAnalytics.overview.totalFollowers.toLocaleString()}
-          icon={Users}
-          iconColor="text-blue-500"
-          change={12}
-        />
-        <AnalyticsMetricCard
-          title="Active Followers"
-          value={mockAnalytics.overview.activeFollowers.toLocaleString()}
-          icon={Activity}
-          iconColor="text-green-500"
-          change={8}
-        />
-        <AnalyticsMetricCard
-          title="New This Week"
-          value={mockAnalytics.overview.newThisWeek.toString()}
-          icon={TrendingUp}
-          iconColor="text-purple-500"
-          change={15}
-        />
-        <AnalyticsMetricCard
-          title="Engagement Rate"
-          value={`${mockAnalytics.overview.engagementRate}%`}
-          icon={Heart}
-          iconColor="text-red-500"
-          change={5}
-        />
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        {[...Array(6)].map((_, i) => (
+          <Card key={i}>
+            <CardContent className="p-6">
+              <div className="animate-pulse">
+                <div className="h-4 bg-muted rounded w-1/4 mb-2"></div>
+                <div className="h-8 bg-muted rounded w-1/2"></div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
-
-      {/* Quick Insights */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Quick Insights</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="text-center p-4 bg-blue-50 rounded-lg">
-              <div className="text-2xl font-bold text-blue-600">
-                {mockAnalytics.overview.topLocation}
-              </div>
-              <div className="text-sm text-blue-600">Top Location</div>
-            </div>
-            <div className="text-center p-4 bg-green-50 rounded-lg">
-              <div className="text-2xl font-bold text-green-600">
-                {mockAnalytics.overview.averageAge}
-              </div>
-              <div className="text-sm text-green-600">Average Age</div>
-            </div>
-            <div className="text-center p-4 bg-purple-50 rounded-lg">
-              <div className="text-2xl font-bold text-purple-600">
-                {Math.round(mockAnalytics.overview.totalFollowers / 30)}
-              </div>
-              <div className="text-sm text-purple-600">Daily Average</div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-
-  const GrowthTab = () => (
-    <div className="space-y-6">
-      {/* Growth Chart Placeholder */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5" />
-            Follower Growth Trend
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-64 bg-gray-50 rounded-lg flex items-center justify-center">
-            <div className="text-center">
-              <BarChart3 className="h-12 w-12 text-gray-400 mx-auto mb-2" />
-              <p className="text-gray-500">Growth chart would be rendered here</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Growth Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">+{mockAnalytics.growth[mockAnalytics.growth.length - 1].newFollowers}</div>
-              <div className="text-sm text-gray-600">New This Week</div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600">
-                {Math.round(mockAnalytics.growth.reduce((acc, curr) => acc + curr.newFollowers, 0) / mockAnalytics.growth.length)}
-              </div>
-              <div className="text-sm text-gray-600">Avg Weekly Growth</div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-purple-600">
-                {((mockAnalytics.overview.totalFollowers - 1100) / 1100 * 100).toFixed(1)}%
-              </div>
-              <div className="text-sm text-gray-600">Total Growth</div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  );
-
-  const DemographicsTab = () => (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Age Distribution */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Age Distribution</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {mockAnalytics.demographics.ageGroups.map((group) => (
-                <div key={group.range} className="flex items-center justify-between">
-                  <span className="text-sm font-medium">{group.range}</span>
-                  <div className="flex items-center gap-2">
-                    <div className="w-24 bg-gray-200 rounded-full h-2">
-                      <div 
-                        className="bg-blue-500 h-2 rounded-full" 
-                        style={{ width: `${group.percentage}%` }}
-                      />
-                    </div>
-                    <span className="text-sm text-gray-600 w-12">{group.percentage}%</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Location Distribution */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Top Locations</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {mockAnalytics.demographics.locations.map((location) => (
-                <div key={location.city} className="flex items-center justify-between">
-                  <span className="text-sm font-medium">{location.city}</span>
-                  <div className="flex items-center gap-2">
-                    <div className="w-24 bg-gray-200 rounded-full h-2">
-                      <div 
-                        className="bg-green-500 h-2 rounded-full" 
-                        style={{ width: `${location.percentage}%` }}
-                      />
-                    </div>
-                    <span className="text-sm text-gray-600 w-12">{location.percentage}%</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  );
-
-  const EngagementTab = () => (
-    <div className="space-y-6">
-      {/* Engagement Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <AnalyticsMetricCard
-          title="Total Interactions"
-          value={mockAnalytics.engagement.totalInteractions.toLocaleString()}
-          icon={MessageSquare}
-          iconColor="text-blue-500"
-          change={18}
-        />
-        <AnalyticsMetricCard
-          title="Avg Engagement"
-          value={`${mockAnalytics.engagement.averageEngagement}%`}
-          icon={Activity}
-          iconColor="text-green-500"
-          change={12}
-        />
-        <AnalyticsMetricCard
-          title="Top Content Reach"
-          value={mockAnalytics.engagement.topContent[0]?.reach.toString() || '0'}
-          icon={TrendingUp}
-          iconColor="text-purple-500"
-          change={25}
-        />
-      </div>
-
-      {/* Top Performing Content */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Top Performing Content</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {mockAnalytics.engagement.topContent.map((content, index) => (
-              <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
-                <div>
-                  <div className="font-medium">{content.title}</div>
-                  <div className="text-sm text-gray-600">
-                    {content.interactions} interactions • {content.reach} reach
-                  </div>
-                </div>
-                <Badge variant="outline">
-                  #{index + 1}
-                </Badge>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
+    );
+  }
 
   return (
-    <div className={`space-y-6 ${className}`}>
-      {/* Header with Controls */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div className="space-y-6">
+      {/* Analytics Controls */}
+      <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Follower Analytics</h2>
-          <p className="text-gray-600">Detailed insights into your follower base</p>
+          <h3 className="text-lg font-semibold">Follower Analytics</h3>
+          <p className="text-sm text-muted-foreground">
+            Comprehensive insights into your follower growth and engagement
+          </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Select value={selectedTimeRange} onValueChange={setSelectedTimeRange}>
-            <SelectTrigger className="w-40">
+        
+        <div className="flex gap-2">
+          <Select value={timeRange} onValueChange={handleTimeRangeChange}>
+            <SelectTrigger className="w-32">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {timeRangeOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
+              <SelectItem value="week">This Week</SelectItem>
+              <SelectItem value="month">This Month</SelectItem>
+              <SelectItem value="quarter">This Quarter</SelectItem>
+              <SelectItem value="year">This Year</SelectItem>
             </SelectContent>
           </Select>
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => handleExport('csv')}
-            className="flex items-center gap-2"
-          >
-            <Download className="h-4 w-4" />
+          
+          <Button variant="outline" onClick={handleExportAnalytics}>
+            <Download className="h-4 w-4 mr-2" />
             Export
           </Button>
         </div>
       </div>
 
-      {/* Analytics Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
+      {/* Key Metrics Overview */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Total Followers</p>
+                <p className="text-2xl font-bold">{totalFollowers.toLocaleString()}</p>
+              </div>
+              <Users className="h-8 w-8 text-blue-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Active Followers</p>
+                <p className="text-2xl font-bold">{activeFollowers.toLocaleString()}</p>
+                <p className="text-xs text-green-600">
+                  {totalFollowers > 0 ? ((activeFollowers / totalFollowers) * 100).toFixed(1) : 0}% active
+                </p>
+              </div>
+              <Activity className="h-8 w-8 text-green-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">New This Week</p>
+                <p className="text-2xl font-bold">{recentFollowers.toLocaleString()}</p>
+                <p className="text-xs text-blue-600">
+                  +{Math.round((recentFollowers / Math.max(totalFollowers - recentFollowers, 1)) * 100)}% growth
+                </p>
+              </div>
+              <TrendingUp className="h-8 w-8 text-blue-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Notification Opt-ins</p>
+                <p className="text-2xl font-bold">{notificationOptIns.toLocaleString()}</p>
+                <p className="text-xs text-purple-600">
+                  {totalFollowers > 0 ? ((notificationOptIns / totalFollowers) * 100).toFixed(1) : 0}% opted in
+                </p>
+              </div>
+              <MessageSquare className="h-8 w-8 text-purple-500" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Detailed Analytics Tabs */}
+      <Tabs defaultValue="growth" className="space-y-4">
+        <TabsList>
           <TabsTrigger value="growth">Growth</TabsTrigger>
-          <TabsTrigger value="demographics">Demographics</TabsTrigger>
           <TabsTrigger value="engagement">Engagement</TabsTrigger>
+          <TabsTrigger value="demographics">Demographics</TabsTrigger>
+          <TabsTrigger value="activity">Activity</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview" className="mt-6">
-          <OverviewTab />
+        <TabsContent value="growth" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BarChart3 className="h-5 w-5" />
+                Follower Growth Over Time
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-64 flex items-center justify-center text-muted-foreground">
+                Growth chart visualization will be implemented here
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Growth Rate</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-sm">This {timeRange}</span>
+                    <span className="text-sm font-medium">+{recentFollowers}</span>
+                  </div>
+                  <Progress value={(recentFollowers / Math.max(totalFollowers, 1)) * 100} className="h-2" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Retention Rate</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-sm">Active retention</span>
+                    <span className="text-sm font-medium">
+                      {totalFollowers > 0 ? ((activeFollowers / totalFollowers) * 100).toFixed(1) : 0}%
+                    </span>
+                  </div>
+                  <Progress value={(activeFollowers / Math.max(totalFollowers, 1)) * 100} className="h-2" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
-        <TabsContent value="growth" className="mt-6">
-          <GrowthTab />
+        <TabsContent value="engagement" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MessageSquare className="h-5 w-5" />
+                Engagement Metrics
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-green-600">{notificationOptIns}</p>
+                  <p className="text-sm text-muted-foreground">Push Notifications</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-blue-600">-</p>
+                  <p className="text-sm text-muted-foreground">Messages Sent</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-purple-600">-</p>
+                  <p className="text-sm text-muted-foreground">Click Rate</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
-        <TabsContent value="demographics" className="mt-6">
-          <DemographicsTab />
+        <TabsContent value="demographics" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <PieChart className="h-5 w-5" />
+                Follower Demographics
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-medium mb-2">Join Date Distribution</h4>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm">Last 7 days</span>
+                      <Badge variant="secondary">{recentFollowers}</Badge>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm">Last 30 days</span>
+                      <Badge variant="secondary">
+                        {followers?.filter(f => {
+                          const joinDate = new Date(f.created_at);
+                          const monthAgo = new Date();
+                          monthAgo.setDate(monthAgo.getDate() - 30);
+                          return joinDate > monthAgo;
+                        }).length || 0}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
-        <TabsContent value="engagement" className="mt-6">
-          <EngagementTab />
+        <TabsContent value="activity" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Activity className="h-5 w-5" />
+                Recent Activity
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {followers?.slice(0, 5).map((follower, index) => (
+                  <div key={follower.id} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div>
+                      <p className="font-medium">New follower #{index + 1}</p>
+                      <p className="text-sm text-muted-foreground">
+                        Joined {formatDistanceToNow(new Date(follower.created_at), { addSuffix: true })}
+                      </p>
+                    </div>
+                    <Badge variant={follower.follow_status === 'active' ? 'default' : 'secondary'}>
+                      {follower.follow_status}
+                    </Badge>
+                  </div>
+                ))}
+                
+                {followers?.length === 0 && (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No follower activity yet
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>
