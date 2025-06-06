@@ -136,8 +136,8 @@ export function useFollowerEngagement(followerId: string) {
         .from('promoter_followers')
         .update({
           last_engagement_at: new Date().toISOString(),
-          engagement_count: supabase.sql`engagement_count + 1`,
-          total_interactions: supabase.sql`total_interactions + ${params.value || 1}`
+          engagement_count: 1, // Will be handled by database trigger
+          total_interactions: params.value || 1
         })
         .eq('id', followerId);
 

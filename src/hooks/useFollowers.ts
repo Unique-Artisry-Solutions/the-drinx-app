@@ -1,152 +1,122 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/auth/AuthProvider';
+import type { NotificationPreferences } from '@/types/SubscriptionTypes';
 
 export interface FollowerData {
   id: string;
   promoter_id: string;
   subscriber_id: string;
-  tier_id?: string | null;
-  subscription_start: string;
-  subscription_end?: string | null;
-  status: 'active' | 'cancelled' | 'expired';
+  tier_id?: string;
   follow_status: 'active' | 'paused' | 'cancelled' | 'pending';
   created_at: string;
-  promoter_name?: string;
-  tier_name?: string;
-  notification_preferences?: {
-    events: boolean;
-    promotions: boolean;
-    announcements: boolean;
-    email_notifications?: boolean;
-    push_notifications?: boolean;
-  };
-  discovery_source?: string;
-  referral_source?: string;
-  engagement_count?: number;
-  total_interactions?: number;
+  updated_at: string;
+  engagement_count: number;
+  total_interactions: number;
+  churn_risk_score: number;
+  follower_tier: string;
   last_engagement_at?: string;
-  churn_risk_score?: number;
-  follower_tier?: string;
+  discovery_source?: string;
+  discovery_metadata?: Record<string, any>;
+  notification_preferences: NotificationPreferences;
+  profiles?: {
+    display_name?: string;
+    avatar_url?: string;
+  };
+  promoter_subscription_tiers?: {
+    name: string;
+    price: number;
+    tier: string;
+  };
 }
 
 export function useFollowers(promoterId?: string) {
-  const { toast } = useToast();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  // Get all followers for a promoter
-  const { data: promoterFollowers, isLoading: promoterLoading, refetch: refetchPromoterFollowers } = useQuery({
+  console.log('useFollowers - promoterId:', promoterId);
+  console.log('useFollowers - user:', user?.id);
+
+  // Get followers for a promoter (when user is the promoter)
+  const { data: promoterFollowers = [], isLoading: isLoadingPromoterFollowers, refetch: refetchPromoterFollowers } = useQuery({
     queryKey: ['promoter-followers', promoterId],
     queryFn: async () => {
       if (!promoterId) return [];
-
-      if (promoterId === 'mock-promoter-id') {
-        return [];
-      }
-
+      
+      console.log('Fetching promoter followers for:', promoterId);
+      
       const { data, error } = await supabase
         .from('promoter_followers')
         .select(`
           *,
-          promoter_subscription_tiers(name)
+          profiles!promoter_followers_subscriber_id_fkey(display_name, avatar_url),
+          promoter_subscription_tiers!promoter_followers_tier_id_fkey(name, price, tier)
         `)
         .eq('promoter_id', promoterId)
+        .eq('follow_status', 'active')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-
-      return (data || []).map(item => ({
-        id: item.id,
-        promoter_id: item.promoter_id,
-        subscriber_id: item.subscriber_id,
-        tier_id: item.tier_id,
-        subscription_start: item.subscription_start || item.created_at,
-        subscription_end: item.subscription_end,
-        status: item.status || 'active',
-        follow_status: item.follow_status || 'active',
-        created_at: item.created_at,
-        tier_name: item.promoter_subscription_tiers?.name,
-        notification_preferences: item.notification_preferences || {
-          events: true,
-          promotions: true,
-          announcements: true
-        },
-        discovery_source: item.discovery_source,
-        referral_source: item.referral_source,
-        engagement_count: item.engagement_count || 0,
-        total_interactions: item.total_interactions || 0,
-        last_engagement_at: item.last_engagement_at,
-        churn_risk_score: item.churn_risk_score || 0,
-        follower_tier: item.follower_tier || 'new'
-      })) as FollowerData[];
+      if (error) {
+        console.error('Error fetching promoter followers:', error);
+        throw error;
+      }
+      
+      console.log('Promoter followers data:', data);
+      return data as FollowerData[];
     },
     enabled: !!promoterId
   });
 
-  // Get user's follows/subscriptions
-  const { data: userFollows, isLoading: userLoading, refetch: refetchUserFollows } = useQuery({
-    queryKey: ['user-follows'],
+  // Get user's follows (when user is following promoters)
+  const { data: userFollows = [], isLoading: isLoadingUserFollows, refetch: refetchUserFollows } = useQuery({
+    queryKey: ['user-follows', user?.id],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return [];
-
+      if (!user?.id) return [];
+      
+      console.log('Fetching user follows for:', user.id);
+      
       const { data, error } = await supabase
         .from('promoter_followers')
         .select(`
           *,
-          promoter_subscription_tiers(name)
+          profiles!promoter_followers_promoter_id_fkey(display_name, avatar_url),
+          promoter_subscription_tiers!promoter_followers_tier_id_fkey(name, price, tier)
         `)
         .eq('subscriber_id', user.id)
+        .eq('follow_status', 'active')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-
-      return (data || []).map(item => ({
-        id: item.id,
-        promoter_id: item.promoter_id,
-        subscriber_id: item.subscriber_id,
-        tier_id: item.tier_id,
-        subscription_start: item.subscription_start || item.created_at,
-        subscription_end: item.subscription_end,
-        status: item.status || 'active',
-        follow_status: item.follow_status || 'active',
-        created_at: item.created_at,
-        tier_name: item.promoter_subscription_tiers?.name,
-        notification_preferences: item.notification_preferences || {
-          events: true,
-          promotions: true,
-          announcements: true
-        },
-        discovery_source: item.discovery_source,
-        referral_source: item.referral_source,
-        engagement_count: item.engagement_count || 0,
-        total_interactions: item.total_interactions || 0,
-        last_engagement_at: item.last_engagement_at,
-        churn_risk_score: item.churn_risk_score || 0,
-        follower_tier: item.follower_tier || 'new'
-      })) as FollowerData[];
-    }
+      if (error) {
+        console.error('Error fetching user follows:', error);
+        throw error;
+      }
+      
+      console.log('User follows data:', data);
+      return data as FollowerData[];
+    },
+    enabled: !!user?.id
   });
 
-  // Follow a promoter (free)
+  // Follow a promoter
   const follow = useMutation({
-    mutationFn: async (promoterId: string) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
-
+    mutationFn: async (promoterIdToFollow: string) => {
+      if (!user?.id) throw new Error('User not authenticated');
+      
+      console.log('Following promoter:', promoterIdToFollow);
+      
       const { data, error } = await supabase
         .from('promoter_followers')
         .insert({
-          promoter_id: promoterId,
+          promoter_id: promoterIdToFollow,
           subscriber_id: user.id,
           follow_status: 'active',
-          status: 'active',
-          subscription_start: new Date().toISOString(),
           notification_preferences: {
             events: true,
             promotions: true,
-            announcements: true
+            announcements: true,
+            email_notifications: true,
+            push_notifications: false
           }
         })
         .select()
@@ -158,32 +128,29 @@ export function useFollowers(promoterId?: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-follows'] });
       queryClient.invalidateQueries({ queryKey: ['promoter-followers'] });
-      toast({
-        title: 'Success',
-        description: 'You are now following this promoter!'
-      });
     }
   });
 
-  // Subscribe to a paid tier
+  // Subscribe to a promoter tier
   const subscribe = useMutation({
-    mutationFn: async ({ promoterId, tierId }: { promoterId: string; tierId: string }) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
-
+    mutationFn: async (params: { promoterId: string; tierId: string }) => {
+      if (!user?.id) throw new Error('User not authenticated');
+      
+      console.log('Subscribing to promoter tier:', params);
+      
       const { data, error } = await supabase
         .from('promoter_followers')
         .insert({
-          promoter_id: promoterId,
+          promoter_id: params.promoterId,
           subscriber_id: user.id,
-          tier_id: tierId,
+          tier_id: params.tierId,
           follow_status: 'active',
-          status: 'active',
-          subscription_start: new Date().toISOString(),
           notification_preferences: {
             events: true,
             promotions: true,
-            announcements: true
+            announcements: true,
+            email_notifications: true,
+            push_notifications: false
           }
         })
         .select()
@@ -195,69 +162,69 @@ export function useFollowers(promoterId?: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-follows'] });
       queryClient.invalidateQueries({ queryKey: ['promoter-followers'] });
-      toast({
-        title: 'Success',
-        description: 'Subscription successful!'
-      });
     }
   });
 
   // Unfollow/unsubscribe
   const unfollow = useMutation({
-    mutationFn: async (subscriptionId: string) => {
+    mutationFn: async (followerId: string) => {
+      console.log('Unfollowing/unsubscribing:', followerId);
+      
       const { error } = await supabase
         .from('promoter_followers')
-        .update({
-          follow_status: 'cancelled',
-          status: 'cancelled',
-          subscription_end: new Date().toISOString()
-        })
-        .eq('id', subscriptionId);
+        .update({ follow_status: 'cancelled' })
+        .eq('id', followerId);
 
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-follows'] });
       queryClient.invalidateQueries({ queryKey: ['promoter-followers'] });
-      toast({
-        title: 'Success',
-        description: 'Unfollowed successfully'
-      });
     }
   });
 
-  // Communication actions for promoters
+  // Send notification
   const sendNotification = useMutation({
-    mutationFn: async ({ followerId, message }: { followerId: string; message: string }) => {
-      console.log('Sending notification to follower:', followerId, message);
+    mutationFn: async (params: { followerId: string; message: string }) => {
+      console.log('Sending notification:', params);
+      
+      // This would integrate with your notification system
+      // For now, just log the action
       return { success: true };
     }
   });
 
+  // Send flyer
   const sendFlyer = useMutation({
-    mutationFn: async ({ followerId, flyerUrl }: { followerId: string; flyerUrl: string }) => {
-      console.log('Sending flyer to follower:', followerId, flyerUrl);
+    mutationFn: async (params: { followerId: string; flyerUrl: string }) => {
+      console.log('Sending flyer:', params);
+      
+      // This would integrate with your flyer system
       return { success: true };
     }
   });
 
+  // Send discount code
   const sendDiscountCode = useMutation({
-    mutationFn: async ({ followerId, discountCode }: { followerId: string; discountCode: string }) => {
-      console.log('Sending discount code to follower:', followerId, discountCode);
+    mutationFn: async (params: { followerId: string; discountCode: string }) => {
+      console.log('Sending discount code:', params);
+      
+      // This would integrate with your discount system
       return { success: true };
     }
   });
 
-  // Update follower preferences
+  // Update preferences
   const updatePreferences = useMutation({
-    mutationFn: async ({ followerId, preferences }: { 
-      followerId: string; 
-      preferences: Partial<FollowerData['notification_preferences']> 
-    }) => {
+    mutationFn: async (params: { followerId: string; preferences: Partial<NotificationPreferences> }) => {
+      console.log('Updating preferences:', params);
+      
       const { error } = await supabase
         .from('promoter_followers')
-        .update({ notification_preferences: preferences })
-        .eq('id', followerId);
+        .update({ 
+          notification_preferences: params.preferences 
+        })
+        .eq('id', params.followerId);
 
       if (error) throw error;
     },
@@ -273,7 +240,7 @@ export function useFollowers(promoterId?: string) {
     userFollows,
     
     // Loading states
-    isLoading: promoterLoading || userLoading,
+    isLoading: isLoadingPromoterFollowers || isLoadingUserFollows,
     
     // Actions
     follow,

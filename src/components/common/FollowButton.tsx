@@ -68,7 +68,7 @@ const FollowButton: React.FC<FollowButtonProps> = ({
 
     try {
       await updatePreferences.mutateAsync({
-        subscriptionId: currentSubscription.id,
+        followerId: currentSubscription.id,
         preferences: {
           ...currentSubscription.notification_preferences,
           events: !hasNotifications

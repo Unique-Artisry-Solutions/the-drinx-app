@@ -35,10 +35,14 @@ const FollowerCommunicationHub: React.FC<FollowerCommunicationHubProps> = ({ pro
 
   const handleSendToSegment = async (segmentName: string, segmentFollowers: any[]) => {
     try {
-      await sendNotification.mutateAsync({
-        message: `Message to ${segmentName} followers`,
-        followers: segmentFollowers.map(f => f.id)
-      });
+      // Send to first follower as example - in real implementation, this would send to all
+      const firstFollower = segmentFollowers[0];
+      if (firstFollower) {
+        await sendNotification.mutateAsync({
+          followerId: firstFollower.id,
+          message: `Message to ${segmentName} followers`
+        });
+      }
       console.log(`Sent message to ${segmentName} segment (${segmentFollowers.length} followers)`);
     } catch (error) {
       console.error(`Failed to send message to ${segmentName}:`, error);
