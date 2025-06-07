@@ -1,62 +1,83 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { useEngagementScoring } from '@/hooks/useEngagementScoring';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
 import { 
-  TrendingUp, 
-  Users, 
-  Target, 
-  Award,
-  BarChart3,
-  PieChart,
-  Activity
-} from 'lucide-react';
-import {
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
   ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  PieChart as RechartsPieChart,
+  PieChart,
+  Pie,
   Cell,
   LineChart,
-  Line
+  Line,
+  Area,
+  AreaChart
 } from 'recharts';
+import { 
+  TrendingUp, 
+  TrendingDown, 
+  Users, 
+  MessageCircle, 
+  Heart,
+  Share2,
+  Eye,
+  Target,
+  Award,
+  Activity
+} from 'lucide-react';
+import { useSubscriptions } from '@/hooks/useSubscriptions';
+import { useEngagementScoring } from '@/hooks/useEngagementScoring';
 
 interface EnhancedEngagementAnalyticsProps {
   promoterId: string;
 }
 
-const TIER_COLORS = {
-  bronze: '#CD7F32',
-  silver: '#C0C0C0', 
-  gold: '#FFD700',
-  platinum: '#E5E4E2'
-};
-
 const EnhancedEngagementAnalytics: React.FC<EnhancedEngagementAnalyticsProps> = ({ promoterId }) => {
-  const { tiers, followerScores, isLoading, getTierForScore } = useEngagementScoring(promoterId);
+  const { followers, isLoading } = useSubscriptions(promoterId);
+  const { tiers, followerScores } = useEngagementScoring(promoterId);
+
+  // Mock engagement data for demonstration
+  const engagementData = [
+    { date: '2024-01', views: 1200, likes: 340, comments: 89, shares: 23 },
+    { date: '2024-02', views: 1350, likes: 385, comments: 102, shares: 31 },
+    { date: '2024-03', views: 1580, likes: 445, comments: 127, shares: 38 },
+    { date: '2024-04', views: 1420, likes: 390, comments: 95, shares: 28 },
+    { date: '2024-05', views: 1680, likes: 478, comments: 134, shares: 42 },
+    { date: '2024-06', views: 1850, likes: 523, comments: 156, shares: 48 }
+  ];
+
+  const tierDistribution = [
+    { name: 'Bronze', value: 45, color: '#CD7F32' },
+    { name: 'Silver', value: 35, color: '#C0C0C0' },
+    { name: 'Gold', value: 15, color: '#FFD700' },
+    { name: 'Platinum', value: 5, color: '#E5E4E2' }
+  ];
+
+  const engagementMetrics = {
+    totalEngagements: 2847,
+    averageEngagementRate: 4.2,
+    topPerformingContent: 'Summer Event Announcement',
+    monthlyGrowth: 12.5
+  };
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {[1, 2, 3, 4].map(i => (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {[1, 2, 3, 4, 5, 6].map((i) => (
           <Card key={i}>
             <CardHeader>
-              <div className="animate-pulse">
-                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-              </div>
+              <div className="animate-pulse bg-gray-200 h-4 w-32 rounded"></div>
             </CardHeader>
             <CardContent>
-              <div className="animate-pulse space-y-2">
-                <div className="h-8 bg-gray-200 rounded"></div>
-                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-              </div>
+              <div className="animate-pulse bg-gray-200 h-8 w-24 rounded mb-2"></div>
+              <div className="animate-pulse bg-gray-200 h-3 w-full rounded"></div>
             </CardContent>
           </Card>
         ))}
@@ -64,338 +85,191 @@ const EnhancedEngagementAnalytics: React.FC<EnhancedEngagementAnalyticsProps> = 
     );
   }
 
-  // Calculate engagement distribution
-  const engagementDistribution = followerScores.reduce((acc: any, score: any) => {
-    const tier = getTierForScore(score.overall_score || 0);
-    const tierName = tier?.tier_name || 'unranked';
-    acc[tierName] = (acc[tierName] || 0) + 1;
-    return acc;
-  }, {});
-
-  const distributionData = Object.entries(engagementDistribution).map(([tier, count]) => ({
-    tier: tier.charAt(0).toUpperCase() + tier.slice(1),
-    count,
-    percentage: Math.round((count as number / followerScores.length) * 100)
-  }));
-
-  // Score trend data (mock for now)
-  const scoreTrendData = [
-    { period: 'Week 1', avgScore: 45, newFollowers: 12 },
-    { period: 'Week 2', avgScore: 52, newFollowers: 18 },
-    { period: 'Week 3', avgScore: 48, newFollowers: 15 },
-    { period: 'Week 4', avgScore: 61, newFollowers: 22 }
-  ];
-
-  // Engagement breakdown
-  const avgScores = followerScores.reduce((acc: any, score: any) => {
-    acc.activity += score.activity_score || 0;
-    acc.interaction += score.interaction_score || 0;
-    acc.loyalty += score.loyalty_score || 0;
-    acc.recency += score.recency_score || 0;
-    return acc;
-  }, { activity: 0, interaction: 0, loyalty: 0, recency: 0 });
-
-  const followerCount = followerScores.length || 1;
-  const breakdownData = [
-    { 
-      category: 'Activity', 
-      score: Math.round(avgScores.activity / followerCount),
-      icon: Activity,
-      color: 'text-blue-500'
-    },
-    { 
-      category: 'Interaction', 
-      score: Math.round(avgScores.interaction / followerCount),
-      icon: Users,
-      color: 'text-green-500'
-    },
-    { 
-      category: 'Loyalty', 
-      score: Math.round(avgScores.loyalty / followerCount),
-      icon: Award,
-      color: 'text-purple-500'
-    },
-    { 
-      category: 'Recency', 
-      score: Math.round(avgScores.recency / followerCount),
-      icon: Target,
-      color: 'text-orange-500'
-    }
-  ];
-
-  const overallAverage = Math.round(
-    breakdownData.reduce((sum, item) => sum + item.score, 0) / breakdownData.length
-  );
-
   return (
     <div className="space-y-6">
-      {/* Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      {/* Key Metrics Overview */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Overall Score</p>
-                <p className="text-2xl font-bold">{overallAverage}</p>
-                <p className="text-xs text-green-600">+5.2% from last week</p>
-              </div>
-              <BarChart3 className="h-8 w-8 text-blue-500" />
-            </div>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Followers</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{followers?.length || 0}</div>
+            <p className="text-xs text-muted-foreground">
+              <TrendingUp className="inline h-3 w-3 mr-1" />
+              +12% from last month
+            </p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">High Engagement</p>
-                <p className="text-2xl font-bold">
-                  {followerScores.filter(s => (s.overall_score || 0) >= 70).length}
-                </p>
-                <p className="text-xs text-purple-600">
-                  {Math.round((followerScores.filter(s => (s.overall_score || 0) >= 70).length / followerCount) * 100)}% of followers
-                </p>
-              </div>
-              <TrendingUp className="h-8 w-8 text-purple-500" />
-            </div>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Engagement Rate</CardTitle>
+            <Activity className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{engagementMetrics.averageEngagementRate}%</div>
+            <p className="text-xs text-muted-foreground">
+              <TrendingUp className="inline h-3 w-3 mr-1" />
+              +0.8% from last month
+            </p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Active Tiers</p>
-                <p className="text-2xl font-bold">{tiers.length}</p>
-                <p className="text-xs text-orange-600">Engagement levels</p>
-              </div>
-              <Award className="h-8 w-8 text-orange-500" />
-            </div>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Engagements</CardTitle>
+            <Heart className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{engagementMetrics.totalEngagements.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">
+              <TrendingUp className="inline h-3 w-3 mr-1" />
+              +{engagementMetrics.monthlyGrowth}% this month
+            </p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Top Tier</p>
-                <p className="text-2xl font-bold">
-                  {distributionData.find(d => d.tier === 'Platinum')?.count || 0}
-                </p>
-                <p className="text-xs text-yellow-600">Platinum members</p>
-              </div>
-              <Users className="h-8 w-8 text-yellow-500" />
-            </div>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Top Content</CardTitle>
+            <Award className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-sm font-medium">{engagementMetrics.topPerformingContent}</div>
+            <p className="text-xs text-muted-foreground">
+              Best performing this month
+            </p>
           </CardContent>
         </Card>
       </div>
 
-      <Tabs defaultValue="breakdown" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="breakdown">Score Breakdown</TabsTrigger>
-          <TabsTrigger value="distribution">Tier Distribution</TabsTrigger>
-          <TabsTrigger value="trends">Trends</TabsTrigger>
-          <TabsTrigger value="insights">Insights</TabsTrigger>
-        </TabsList>
+      {/* Engagement Trends Chart */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Engagement Trends</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={300}>
+            <AreaChart data={engagementData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="date" />
+              <YAxis />
+              <Tooltip />
+              <Area type="monotone" dataKey="views" stackId="1" stroke="#8884d8" fill="#8884d8" />
+              <Area type="monotone" dataKey="likes" stackId="1" stroke="#82ca9d" fill="#82ca9d" />
+              <Area type="monotone" dataKey="comments" stackId="1" stroke="#ffc658" fill="#ffc658" />
+              <Area type="monotone" dataKey="shares" stackId="1" stroke="#ff7300" fill="#ff7300" />
+            </AreaChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
 
-        <TabsContent value="breakdown" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Engagement Score Breakdown</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {breakdownData.map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <div key={item.category} className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Icon className={`h-5 w-5 ${item.color}`} />
-                          <span className="font-medium">{item.category}</span>
-                        </div>
-                        <Badge variant="outline">{item.score}/100</Badge>
-                      </div>
-                      <Progress value={item.score} className="h-2" />
-                      <p className="text-xs text-muted-foreground">
-                        {item.score >= 80 ? 'Excellent' : 
-                         item.score >= 60 ? 'Good' : 
-                         item.score >= 40 ? 'Average' : 'Needs Improvement'}
-                      </p>
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+      {/* Engagement Breakdown and Tier Distribution */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Engagement Breakdown</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={250}>
+              <BarChart data={engagementData.slice(-4)}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="views" fill="#8884d8" name="Views" />
+                <Bar dataKey="likes" fill="#82ca9d" name="Likes" />
+                <Bar dataKey="comments" fill="#ffc658" name="Comments" />
+                <Bar dataKey="shares" fill="#ff7300" name="Shares" />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
 
-        <TabsContent value="distribution" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Tier Distribution</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <RechartsPieChart>
-                    <Pie
-                      data={distributionData}
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={80}
-                      dataKey="count"
-                      label={({ tier, percentage }) => `${tier}: ${percentage}%`}
-                    >
-                      {distributionData.map((entry, index) => (
-                        <Cell 
-                          key={`cell-${index}`} 
-                          fill={TIER_COLORS[entry.tier.toLowerCase() as keyof typeof TIER_COLORS] || '#8884d8'} 
-                        />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </RechartsPieChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Tier Breakdown</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {distributionData.map((item) => (
-                    <div key={item.tier} className="flex items-center justify-between p-3 border rounded">
-                      <div className="flex items-center gap-3">
-                        <div 
-                          className="w-4 h-4 rounded"
-                          style={{ 
-                            backgroundColor: TIER_COLORS[item.tier.toLowerCase() as keyof typeof TIER_COLORS] || '#8884d8' 
-                          }}
-                        />
-                        <span className="font-medium">{item.tier}</span>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-bold">{item.count}</p>
-                        <p className="text-sm text-muted-foreground">{item.percentage}%</p>
-                      </div>
-                    </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Follower Tier Distribution</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={250}>
+              <PieChart>
+                <Pie
+                  data={tierDistribution}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {tierDistribution.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Top Performers */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Top Performing Content</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {[
+              { title: 'Summer Event Announcement', engagements: 2847, type: 'Event' },
+              { title: 'New Cocktail Menu Reveal', engagements: 1923, type: 'Promotion' },
+              { title: 'Behind the Scenes Video', engagements: 1456, type: 'Content' },
+              { title: 'Customer Spotlight', engagements: 1234, type: 'Social' }
+            ].map((content, index) => (
+              <div key={index} className="flex items-center justify-between p-3 border rounded">
+                <div className="flex-1">
+                  <div className="font-medium">{content.title}</div>
+                  <div className="text-sm text-muted-foreground">
+                    {String(content.engagements)} engagements
+                  </div>
                 </div>
-              </CardContent>
-            </Card>
+                <Badge variant="outline">{content.type}</Badge>
+              </div>
+            ))}
           </div>
-        </TabsContent>
+        </CardContent>
+      </Card>
 
-        <TabsContent value="trends" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Engagement Trends</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={scoreTrendData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="period" />
-                  <YAxis />
-                  <Tooltip />
-                  <Line 
-                    type="monotone" 
-                    dataKey="avgScore" 
-                    stroke="#8884d8" 
-                    strokeWidth={2}
-                    name="Average Score"
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="newFollowers" 
-                    stroke="#82ca9d" 
-                    strokeWidth={2}
-                    name="New Followers"
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="insights" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Key Insights</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="p-3 bg-blue-50 rounded-lg">
-                    <h4 className="font-medium text-blue-900">Top Performing Segment</h4>
-                    <p className="text-sm text-blue-700">
-                      {distributionData[0]?.tier || 'Gold'} tier shows highest engagement with {distributionData[0]?.percentage || 35}% of followers
-                    </p>
-                  </div>
-                  
-                  <div className="p-3 bg-green-50 rounded-lg">
-                    <h4 className="font-medium text-green-900">Growth Opportunity</h4>
-                    <p className="text-sm text-green-700">
-                      {followerScores.filter(s => (s.overall_score || 0) >= 40 && (s.overall_score || 0) < 70).length} followers 
-                      are close to tier upgrade
-                    </p>
-                  </div>
-                  
-                  <div className="p-3 bg-orange-50 rounded-lg">
-                    <h4 className="font-medium text-orange-900">Attention Needed</h4>
-                    <p className="text-sm text-orange-700">
-                      {followerScores.filter(s => (s.overall_score || 0) < 30).length} followers 
-                      have low engagement scores
-                    </p>
-                  </div>
+      {/* Engagement Score Distribution */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Engagement Score Distribution</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {[
+              { range: '90-100', count: 12, percentage: 8 },
+              { range: '80-89', count: 28, percentage: 18 },
+              { range: '70-79', count: 45, percentage: 28 },
+              { range: '60-69', count: 38, percentage: 24 },
+              { range: '50-59', count: 23, percentage: 15 },
+              { range: '0-49', count: 14, percentage: 9 }
+            ].map((score, index) => (
+              <div key={index} className="flex items-center space-x-4">
+                <div className="w-16 text-sm font-medium">{score.range}</div>
+                <div className="flex-1">
+                  <Progress value={score.percentage} className="h-2" />
                 </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Recommendations</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-start gap-3">
-                    <Target className="h-5 w-5 text-blue-500 mt-1" />
-                    <div>
-                      <h4 className="font-medium">Boost Low Performers</h4>
-                      <p className="text-sm text-muted-foreground">
-                        Create targeted content for followers with low engagement scores
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-start gap-3">
-                    <Award className="h-5 w-5 text-purple-500 mt-1" />
-                    <div>
-                      <h4 className="font-medium">Reward Top Tiers</h4>
-                      <p className="text-sm text-muted-foreground">
-                        Offer exclusive benefits to maintain high-engagement followers
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-start gap-3">
-                    <Users className="h-5 w-5 text-green-500 mt-1" />
-                    <div>
-                      <h4 className="font-medium">Encourage Interaction</h4>
-                      <p className="text-sm text-muted-foreground">
-                        Focus on interactive content to improve overall scores
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                <div className="w-12 text-sm text-muted-foreground">{score.count}</div>
+                <div className="w-12 text-sm text-muted-foreground">{score.percentage}%</div>
+              </div>
+            ))}
           </div>
-        </TabsContent>
-      </Tabs>
+        </CardContent>
+      </Card>
     </div>
   );
 };

@@ -63,7 +63,7 @@ export interface FollowerPreferences {
   sms?: boolean;
 }
 
-// Enhanced FollowerData interface with missing properties
+// Enhanced FollowerData interface with all missing properties
 export interface FollowerData {
   id: string;
   user_id: string;
@@ -75,6 +75,18 @@ export interface FollowerData {
   last_seen?: string;
   status?: 'active' | 'paused' | 'cancelled';
   tier?: string;
+  // Properties that components are trying to access
+  subscriber_id: string;
+  follow_status: 'active' | 'paused' | 'cancelled';
+  created_at: string;
+  tier_id?: string;
+  tier_name?: string;
+  promoter_name?: string;
+  engagement_tier?: string;
+  follower_tier?: string;
+  score_last_updated?: string;
+  last_engagement_at?: string;
+  notification_preferences?: FollowerPreferences;
   // New properties to fix build errors
   gamification_score?: number;
   loyalty_tier_level?: number;

@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { useSubscriptions } from '@/hooks/useSubscriptions';
 import { Heart, UserPlus, UserMinus, Bell, BellOff } from 'lucide-react';
-import type { FollowerData } from '@/hooks/useFollowers';
+import type { FollowerData, FollowerPreferences } from '@/types/FollowerComponentTypes';
 
 interface FollowButtonProps {
   promoterId: string;
@@ -22,8 +22,26 @@ const isFollowerData = (obj: any): obj is FollowerData => {
   return obj && 
          typeof obj === 'object' && 
          'id' in obj && 
-         'promoter_id' in obj && 
-         'notification_preferences' in obj;
+         'promoter_id' in obj;
+};
+
+// Helper function to safely get notification preferences
+const getNotificationPreferences = (obj: any): FollowerPreferences | null => {
+  if (!obj || typeof obj !== 'object') return null;
+  
+  if ('notification_preferences' in obj && obj.notification_preferences) {
+    if (typeof obj.notification_preferences === 'object') {
+      return obj.notification_preferences as FollowerPreferences;
+    }
+  }
+  
+  if ('preferences' in obj && obj.preferences) {
+    if (typeof obj.preferences === 'object') {
+      return obj.preferences as FollowerPreferences;
+    }
+  }
+  
+  return null;
 };
 
 const FollowButton: React.FC<FollowButtonProps> = ({
@@ -44,15 +62,16 @@ const FollowButton: React.FC<FollowButtonProps> = ({
     isFollowerData(sub) && sub.promoter_id === promoterId
   );
   const isFollowing = !!currentSubscription;
-  const hasNotifications = isFollowerData(currentSubscription) && 
-                          currentSubscription.notification_preferences?.events !== false;
+  
+  const preferences = isFollowerData(currentSubscription) ? getNotificationPreferences(currentSubscription) : null;
+  const hasNotifications = preferences?.events !== false;
 
   const handleFollowToggle = async () => {
     try {
       if (isFollowing && isFollowerData(currentSubscription)) {
-        await unfollow.mutateAsync(currentSubscription.id);
+        await unfollow.mutateAsync({ promoterId });
       } else {
-        await follow.mutateAsync(promoterId);
+        await follow.mutateAsync({ promoterId });
       }
     } catch (error) {
       toast({
@@ -67,10 +86,18 @@ const FollowButton: React.FC<FollowButtonProps> = ({
     if (!isFollowerData(currentSubscription)) return;
 
     try {
+      const currentPrefs = getNotificationPreferences(currentSubscription) || {
+        events: true,
+        promotions: true,
+        generalUpdates: true,
+        email: true,
+        push: false
+      };
+
       await updatePreferences.mutateAsync({
         followerId: currentSubscription.id,
         preferences: {
-          ...currentSubscription.notification_preferences,
+          ...currentPrefs,
           events: !hasNotifications
         }
       });

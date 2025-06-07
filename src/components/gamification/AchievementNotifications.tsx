@@ -1,230 +1,249 @@
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { X, Award, Star, Crown, Gift } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-import type { FollowerAchievement } from '@/types/gamification';
+import { X, Trophy, Star, Target, Zap, Crown } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
 
-interface AchievementNotificationProps {
-  achievement: FollowerAchievement;
-  onClose: () => void;
-  onViewDetails?: () => void;
+interface Achievement {
+  id: string;
+  title: string;
+  description: string;
+  points: number;
+  icon: string;
+  rarity: 'common' | 'rare' | 'epic' | 'legendary';
+  category: string;
+  unlockedAt: Date;
 }
 
 interface AchievementNotificationsProps {
-  newAchievements: FollowerAchievement[];
-  onMarkViewed: (achievementId: string) => void;
-  onViewDetails?: (achievement: FollowerAchievement) => void;
+  userId?: string;
+  maxVisible?: number;
+  autoHide?: boolean;
+  autoHideDelay?: number;
+  position?: 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left';
+  showPoints?: boolean;
+  enableSound?: boolean;
+  onAchievementClick?: (achievement: Achievement) => void;
+  onDismiss?: (achievementId: string) => void;
 }
 
-const getAchievementIcon = (type: string) => {
-  switch (type) {
-    case 'badge':
-      return Award;
-    case 'milestone':
-      return Star;
-    case 'tier_upgrade':
-      return Crown;
-    default:
-      return Gift;
-  }
-};
-
-const getAchievementColor = (type: string) => {
-  switch (type) {
-    case 'badge':
-      return 'from-blue-400 to-blue-600';
-    case 'milestone':
-      return 'from-purple-400 to-purple-600';
-    case 'tier_upgrade':
-      return 'from-yellow-400 to-yellow-600';
-    default:
-      return 'from-green-400 to-green-600';
-  }
-};
-
-const CelebrationParticles: React.FC = () => {
-  return (
-    <div className="absolute inset-0 pointer-events-none">
-      {Array.from({ length: 20 }).map((_, i) => (
-        <motion.div
-          key={i}
-          className="absolute w-2 h-2 bg-yellow-400 rounded-full"
-          initial={{
-            x: '50%',
-            y: '50%',
-            scale: 0,
-            opacity: 1
-          }}
-          animate={{
-            x: `${50 + (Math.random() - 0.5) * 200}%`,
-            y: `${50 + (Math.random() - 0.5) * 200}%`,
-            scale: [0, 1, 0],
-            opacity: [1, 1, 0]
-          }}
-          transition={{
-            duration: 2,
-            delay: i * 0.1,
-            ease: "easeOut"
-          }}
-        />
-      ))}
-    </div>
-  );
-};
-
-const AchievementNotification: React.FC<AchievementNotificationProps> = ({
-  achievement,
-  onClose,
-  onViewDetails
-}) => {
-  const IconComponent = getAchievementIcon(achievement.achievement_type);
-  const colorClass = getAchievementColor(achievement.achievement_type);
-
-  const getTitle = () => {
-    switch (achievement.achievement_type) {
-      case 'badge':
-        return `Badge Earned: ${achievement.badge?.name || 'New Badge'}`;
-      case 'milestone':
-        return `Milestone Reached: ${achievement.milestone?.milestone_name || 'New Milestone'}`;
-      case 'tier_upgrade':
-        return `Tier Upgrade: ${achievement.milestone?.milestone_name || 'New Tier'}`;
-      default:
-        return 'Achievement Unlocked!';
-    }
-  };
-
-  const getDescription = () => {
-    if (achievement.badge) {
-      return achievement.badge.description || 'You earned a new badge!';
-    }
-    if (achievement.milestone) {
-      return `Welcome to ${achievement.milestone.milestone_name}!`;
-    }
-    return 'Congratulations on your achievement!';
-  };
-
-  return (
-    <motion.div
-      initial={{ scale: 0, opacity: 0, y: 50 }}
-      animate={{ scale: 1, opacity: 1, y: 0 }}
-      exit={{ scale: 0, opacity: 0, y: -50 }}
-      className="fixed bottom-4 right-4 z-50 max-w-sm"
-    >
-      <Card className="relative overflow-hidden border-2 border-yellow-300 shadow-2xl">
-        <div className={`absolute inset-0 bg-gradient-to-br ${colorClass} opacity-10`} />
-        <CelebrationParticles />
-        
-        <CardContent className="p-4 relative">
-          <div className="flex items-start justify-between mb-3">
-            <div className="flex items-center gap-3">
-              <div className={`p-2 rounded-full bg-gradient-to-br ${colorClass} text-white`}>
-                <IconComponent className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="font-bold text-lg">{getTitle()}</h3>
-                <p className="text-sm text-muted-foreground">{getDescription()}</p>
-              </div>
-            </div>
-            <Button variant="ghost" size="sm" onClick={onClose}>
-              <X className="w-4 h-4" />
-            </Button>
-          </div>
-
-          {achievement.badge && (
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-2xl">{achievement.badge.icon}</span>
-              <Badge variant="outline" className="text-xs">
-                {achievement.badge.rarity}
-              </Badge>
-            </div>
-          )}
-
-          {achievement.points_earned > 0 && (
-            <div className="flex items-center gap-2 mb-3 p-2 bg-yellow-50 rounded-lg">
-              <Star className="w-4 h-4 text-yellow-600" />
-              <span className="text-sm font-medium text-yellow-700">
-                +{achievement.points_earned} points earned!
-              </span>
-            </div>
-          )}
-
-          <div className="flex gap-2">
-            <Button size="sm" onClick={onViewDetails} className="flex-1">
-              View Details
-            </Button>
-            <Button size="sm" variant="outline" onClick={onClose}>
-              Dismiss
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    </motion.div>
-  );
-};
-
 const AchievementNotifications: React.FC<AchievementNotificationsProps> = ({
-  newAchievements,
-  onMarkViewed,
-  onViewDetails
+  userId,
+  maxVisible = 3,
+  autoHide = true,
+  autoHideDelay = 5000,
+  position = 'top-right',
+  showPoints = true,
+  enableSound = false,
+  onAchievementClick,
+  onDismiss
 }) => {
-  const [visibleAchievements, setVisibleAchievements] = useState<FollowerAchievement[]>([]);
+  const [achievements, setAchievements] = useState<Achievement[]>([]);
+  const [visibleAchievements, setVisibleAchievements] = useState<Achievement[]>([]);
+
+  // Mock achievements for demonstration
+  const mockAchievements: Achievement[] = [
+    {
+      id: '1',
+      title: 'First Check-in',
+      description: 'Completed your first venue check-in!',
+      points: 100,
+      icon: 'trophy',
+      rarity: 'common',
+      category: 'exploration',
+      unlockedAt: new Date()
+    },
+    {
+      id: '2',
+      title: 'Social Butterfly',
+      description: 'Connected with 10 friends',
+      points: 250,
+      icon: 'star',
+      rarity: 'rare',
+      category: 'social',
+      unlockedAt: new Date()
+    }
+  ];
 
   useEffect(() => {
-    // Show new achievements that haven't been viewed
-    const unviewedAchievements = newAchievements.filter(
-      achievement => !achievement.celebration_viewed
-    );
+    // Simulate receiving new achievements
+    const timer = setTimeout(() => {
+      setAchievements(mockAchievements);
+    }, 1000);
 
-    if (unviewedAchievements.length > 0) {
-      // Show one at a time with delay
-      unviewedAchievements.forEach((achievement, index) => {
-        setTimeout(() => {
-          setVisibleAchievements(prev => [...prev, achievement]);
-        }, index * 1000);
-      });
+    return () => clearTimeout(timer);
+  }, [userId]);
+
+  useEffect(() => {
+    // Update visible achievements based on maxVisible limit
+    setVisibleAchievements(achievements.slice(0, maxVisible));
+  }, [achievements, maxVisible]);
+
+  useEffect(() => {
+    if (autoHide && visibleAchievements.length > 0) {
+      const timer = setTimeout(() => {
+        handleDismissAll();
+      }, autoHideDelay);
+
+      return () => clearTimeout(timer);
     }
-  }, [newAchievements]);
+  }, [visibleAchievements, autoHide, autoHideDelay]);
 
-  const handleClose = (achievement: FollowerAchievement) => {
-    setVisibleAchievements(prev => prev.filter(a => a.id !== achievement.id));
-    onMarkViewed(achievement.id);
-
-    // Auto-dismiss after 8 seconds
-    setTimeout(() => {
-      setVisibleAchievements(prev => prev.filter(a => a.id !== achievement.id));
-    }, 8000);
+  const getIcon = (iconName: string) => {
+    switch (iconName) {
+      case 'trophy': return Trophy;
+      case 'star': return Star;
+      case 'target': return Target;
+      case 'zap': return Zap;
+      case 'crown': return Crown;
+      default: return Trophy;
+    }
   };
 
-  const handleViewDetails = (achievement: FollowerAchievement) => {
-    onViewDetails?.(achievement);
-    handleClose(achievement);
+  const getRarityColor = (rarity: string) => {
+    switch (rarity) {
+      case 'common': return 'bg-gray-500';
+      case 'rare': return 'bg-blue-500';
+      case 'epic': return 'bg-purple-500';
+      case 'legendary': return 'bg-yellow-500';
+      default: return 'bg-gray-500';
+    }
   };
+
+  const getPositionClasses = () => {
+    switch (position) {
+      case 'top-left': return 'top-4 left-4';
+      case 'top-right': return 'top-4 right-4';
+      case 'bottom-left': return 'bottom-4 left-4';
+      case 'bottom-right': return 'bottom-4 right-4';
+      default: return 'top-4 right-4';
+    }
+  };
+
+  const handleDismiss = (achievementId: string) => {
+    setVisibleAchievements(prev => 
+      prev.filter(achievement => achievement.id !== achievementId)
+    );
+    setAchievements(prev => 
+      prev.filter(achievement => achievement.id !== achievementId)
+    );
+    onDismiss?.(achievementId);
+  };
+
+  const handleDismissAll = () => {
+    setVisibleAchievements([]);
+    setAchievements([]);
+  };
+
+  const handleAchievementClick = (achievement: Achievement) => {
+    onAchievementClick?.(achievement);
+  };
+
+  if (visibleAchievements.length === 0) {
+    return null;
+  }
 
   return (
-    <AnimatePresence mode="popLayout">
-      {visibleAchievements.map((achievement, index) => (
+    <div 
+      className={`fixed ${getPositionClasses()} z-50 space-y-2 max-w-sm`}
+    >
+      <AnimatePresence>
+        {visibleAchievements.map((achievement, index) => {
+          const IconComponent = getIcon(achievement.icon);
+          
+          return (
+            <motion.div
+              key={achievement.id}
+              initial={{ opacity: 0, x: position.includes('right') ? 100 : -100, scale: 0.8 }}
+              animate={{ opacity: 1, x: 0, scale: 1 }}
+              exit={{ opacity: 0, x: position.includes('right') ? 100 : -100, scale: 0.8 }}
+              transition={{ 
+                type: "spring", 
+                stiffness: 300, 
+                damping: 30,
+                delay: index * 0.1 
+              }}
+              whileHover={{ scale: 1.02 }}
+              style={{ 
+                position: 'relative',
+                zIndex: 1000 + index
+              }}
+            >
+              <Card 
+                className={`cursor-pointer shadow-lg border-l-4 ${getRarityColor(achievement.rarity)} hover:shadow-xl transition-all duration-200`}
+                onClick={() => handleAchievementClick(achievement)}
+              >
+                <CardHeader className="pb-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <div className={`p-2 rounded-full ${getRarityColor(achievement.rarity)} text-white`}>
+                        <IconComponent className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-sm font-bold">
+                          {achievement.title}
+                        </CardTitle>
+                        <Badge 
+                          variant="secondary" 
+                          className={`text-xs ${getRarityColor(achievement.rarity)} text-white`}
+                        >
+                          {achievement.rarity}
+                        </Badge>
+                      </div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0 hover:bg-gray-100"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDismiss(achievement.id);
+                      }}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <p className="text-sm text-muted-foreground mb-2">
+                    {achievement.description}
+                  </p>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground">
+                      {achievement.category}
+                    </span>
+                    {showPoints && (
+                      <Badge variant="outline" className="text-xs">
+                        +{achievement.points} pts
+                      </Badge>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          );
+        })}
+      </AnimatePresence>
+      
+      {visibleAchievements.length > 1 && (
         <motion.div
-          key={achievement.id}
-          style={{ zIndex: 50 + index }}
-          initial={{ y: index * 20 }}
-          animate={{ y: 0 }}
-          className="fixed"
-          style={{ 
-            bottom: `${20 + index * 120}px`, 
-            right: '20px' 
-          }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="flex justify-center"
         >
-          <AchievementNotification
-            achievement={achievement}
-            onClose={() => handleClose(achievement)}
-            onViewDetails={() => handleViewDetails(achievement)}
-          />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleDismissAll}
+            className="text-xs"
+          >
+            Dismiss All ({visibleAchievements.length})
+          </Button>
         </motion.div>
-      ))}
-    </AnimatePresence>
+      )}
+    </div>
   );
 };
 
