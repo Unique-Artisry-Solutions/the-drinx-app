@@ -19,6 +19,7 @@ const MarketingAnalytics = lazy(() => import('@/pages/promoter/MarketingAnalytic
 const PromoterNotificationsPage = lazy(() => import('@/pages/promoter/notifications/PromoterNotificationsPage'));
 const NotificationTestingPage = lazy(() => import('@/pages/promoter/notifications/NotificationTestingPage'));
 const PromoterFollowersPage = lazy(() => import('@/pages/promoter/PromoterFollowersPage'));
+const PromoterSubscribersPage = lazy(() => import('@/pages/promoter/PromoterSubscribersPage'));
 
 export const promoterRoutes: RouteObject[] = [
   { path: '/promoter', element: <PromoterDashboardPage /> }, // Dashboard is now the root
@@ -32,6 +33,7 @@ export const promoterRoutes: RouteObject[] = [
   { path: '/promoter/events/create', element: <CreateEventPage /> },
   { path: '/promoter/analytics', element: <PromoterAnalytics /> },
   { path: '/promoter/followers', element: <PromoterFollowersPage /> },
+  { path: '/promoter/subscribers', element: <PromoterSubscribersPage /> },
   { path: '/promoter/create-swig-circuit', element: <CreateSwigCircuitPage /> },
   { path: '/promoter/marketing-analytics', element: <MarketingAnalytics /> },
   { path: '/promoter/affiliate', element: <PromoterAffiliate /> },
