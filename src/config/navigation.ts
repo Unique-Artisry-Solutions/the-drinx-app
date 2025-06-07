@@ -1,6 +1,5 @@
-
 import { UnifiedNavItem } from '@/types/navigation/NavigationTypes';
-import { Home, Search, User, Settings, Bell, Calendar, MapPin, Users, BarChart3, Shield, Target, Route, UserCheck, DollarSign, Timer, TrendingUp, Mail } from 'lucide-react';
+import { Home, Search, User, Settings, Bell, Calendar, MapPin, Users, BarChart3, Shield, Target, Route, UserCheck, DollarSign, Timer, TrendingUp, Mail, UserPlus } from 'lucide-react';
 
 export const guestNavItems: UnifiedNavItem[] = [
   {
@@ -101,6 +100,16 @@ export const promoterNavItems: UnifiedNavItem[] = [
     label: 'Swig Circuits',
     path: '/promoter/create-swig-circuit',
     icon: Route
+  },
+  {
+    label: 'Followers',
+    path: '/promoter/followers',
+    icon: Users
+  },
+  {
+    label: 'Subscribers',
+    path: '/promoter/subscribers',
+    icon: UserPlus
   },
   {
     label: 'Analytics',

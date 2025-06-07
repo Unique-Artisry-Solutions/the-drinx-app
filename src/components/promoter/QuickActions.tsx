@@ -10,7 +10,8 @@ import {
   Users, 
   Target,
   BarChart3,
-  Settings
+  Settings,
+  UserPlus
 } from 'lucide-react';
 
 export const QuickActions: React.FC = () => {
@@ -39,6 +40,13 @@ export const QuickActions: React.FC = () => {
       color: "bg-green-500 hover:bg-green-600"
     },
     {
+      title: "Manage Subscribers",
+      description: "View subscriber analytics",
+      icon: UserPlus,
+      action: () => navigate('/promoter/subscribers'),
+      color: "bg-pink-500 hover:bg-pink-600"
+    },
+    {
       title: "Analytics",
       description: "Check performance metrics",
       icon: BarChart3,
@@ -51,13 +59,6 @@ export const QuickActions: React.FC = () => {
       icon: Target,
       action: () => navigate('/promoter/marketing-analytics'),
       color: "bg-orange-500 hover:bg-orange-600"
-    },
-    {
-      title: "Settings",
-      description: "Configure preferences",
-      icon: Settings,
-      action: () => navigate('/promoter/settings'),
-      color: "bg-gray-500 hover:bg-gray-600"
     }
   ];
 
