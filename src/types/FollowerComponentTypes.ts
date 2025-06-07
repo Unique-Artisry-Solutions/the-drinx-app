@@ -1,4 +1,3 @@
-
 export interface FollowerComponentProps {
   promoterId: string;
   className?: string;
@@ -63,7 +62,35 @@ export interface FollowerPreferences {
   sms?: boolean;
 }
 
-// Enhanced FollowerData interface with all missing properties
+// Updated interfaces for proper communication
+export interface NotificationPayload {
+  followerId: string;
+  message: string;
+  title?: string;
+  metadata?: Record<string, any>;
+}
+
+export interface FlyerPayload {
+  followerId: string;
+  flyer_url: string;
+  metadata?: Record<string, any>;
+}
+
+export interface DiscountPayload {
+  followerId: string;
+  discount_code: string;
+  metadata?: Record<string, any>;
+}
+
+// Bulk messaging interface
+export interface BulkNotificationPayload {
+  followerIds: string[];
+  message: string;
+  title?: string;
+  metadata?: Record<string, any>;
+}
+
+// Updated FollowerData interface with all missing properties
 export interface FollowerData {
   id: string;
   user_id: string;
@@ -97,6 +124,18 @@ export interface FollowerData {
   username?: string;
   avatar_url?: string;
   email?: string;
+  // Additional properties from database
+  churn_risk_score?: number;
+  discovery_source?: string;
+  discovery_metadata?: Record<string, any>;
+  engagement_count?: number;
+  // Profile relationship data
+  profiles?: {
+    username?: string;
+    display_name?: string;
+    avatar_url?: string;
+    email?: string;
+  };
 }
 
 export interface FollowerAnalyticsData {

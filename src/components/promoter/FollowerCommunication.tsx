@@ -12,7 +12,10 @@ const FollowerCommunication: React.FC<FollowerCommunicationProps> = ({ promoterI
 
   const handleSendNotification = async () => {
     try {
-      await sendNotification.mutateAsync({ followerId: 'sample-follower-id', message: 'Sample notification' });
+      await sendNotification.mutateAsync({ 
+        followerId: 'sample-follower-id', 
+        message: 'Sample notification' 
+      });
     } catch (error) {
       console.error('Failed to send notification:', error);
     }
@@ -20,7 +23,10 @@ const FollowerCommunication: React.FC<FollowerCommunicationProps> = ({ promoterI
 
   const handleSendFlyer = async () => {
     try {
-      await sendFlyer.mutateAsync({ followerId: 'sample-follower-id', flyerUrl: 'https://example.com/flyer.pdf' });
+      await sendFlyer.mutateAsync({ 
+        followerId: 'sample-follower-id', 
+        flyer_url: 'https://example.com/flyer.pdf' 
+      });
     } catch (error) {
       console.error('Failed to send flyer:', error);
     }
@@ -28,7 +34,10 @@ const FollowerCommunication: React.FC<FollowerCommunicationProps> = ({ promoterI
 
   const handleSendDiscountCode = async () => {
     try {
-      await sendDiscountCode.mutateAsync({ followerId: 'sample-follower-id', discountCode: 'DISCOUNT20' });
+      await sendDiscountCode.mutateAsync({ 
+        followerId: 'sample-follower-id', 
+        discount_code: 'DISCOUNT20' 
+      });
     } catch (error) {
       console.error('Failed to send discount code:', error);
     }

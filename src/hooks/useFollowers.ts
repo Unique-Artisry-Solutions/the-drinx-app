@@ -2,171 +2,126 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import type { FollowerData, FollowerPreferences } from '@/types/FollowerComponentTypes';
+import type { FollowerData, FollowerPreferences, NotificationPayload, FlyerPayload, DiscountPayload } from '@/types/FollowerComponentTypes';
 
-interface NotificationPayload {
-  followerId: string;
-  message: string;
-  title?: string;
-  priority?: 'low' | 'medium' | 'high' | 'urgent';
-}
+export { type FollowerData };
 
-interface FlyerPayload {
-  followerId: string;
-  flyerData: any;
-}
-
-interface DiscountPayload {
-  followerId: string;
-  discountData: any;
-}
-
-interface PreferencesPayload {
-  followerId: string;
-  preferences: FollowerPreferences;
-}
-
-export const useFollowers = (promoterId?: string) => {
+export function useFollowers(promoterId?: string) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Get current user's follows/subscriptions
+  // Get user follows (subscriptions/followers from user perspective)
   const { data: userFollows = [], isLoading: userFollowsLoading, refetch: refetchUserFollows } = useQuery({
     queryKey: ['user-follows'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return [];
-
-      // Query the existing promoter_followers table
       const { data, error } = await supabase
         .from('promoter_followers')
         .select(`
           *,
-          profiles!promoter_followers_follower_id_fkey (
-            username,
-            display_name,
-            avatar_url
-          )
-        `)
-        .eq('follower_id', user.id);
-
-      if (error) {
-        console.error('Error fetching user follows:', error);
-        return [];
-      }
-
-      // Map to FollowerData interface
-      return (data || []).map(follow => ({
-        id: follow.id,
-        user_id: follow.follower_id,
-        promoter_id: follow.promoter_id,
-        followed_at: follow.created_at,
-        notifications_enabled: follow.notifications_enabled || true,
-        subscriber_id: follow.follower_id,
-        follow_status: 'active' as const,
-        created_at: follow.created_at,
-        tier_id: follow.tier_id || null,
-        tier_name: follow.tier_name || null,
-        promoter_name: null,
-        engagement_tier: null,
-        follower_tier: null,
-        score_last_updated: null,
-        last_engagement_at: null,
-        notification_preferences: {
-          events: follow.notifications_enabled !== false,
-          promotions: true,
-          generalUpdates: true,
-          email: true,
-          push: false
-        },
-        preferences: {
-          events: follow.notifications_enabled !== false,
-          promotions: true,
-          generalUpdates: true,
-          email: true,
-          push: false
-        }
-      })) as FollowerData[];
-    }
-  });
-
-  // Get followers for a specific promoter
-  const { data: promoterFollowers = [], isLoading: promoterFollowersLoading, refetch: refetchPromoterFollowers } = useQuery({
-    queryKey: ['promoter-followers', promoterId],
-    queryFn: async () => {
-      if (!promoterId) return [];
-
-      // Query the existing promoter_followers table
-      const { data, error } = await supabase
-        .from('promoter_followers')
-        .select(`
-          *,
-          profiles!promoter_followers_follower_id_fkey (
+          profiles!promoter_followers_user_id_fkey (
             username,
             display_name,
             avatar_url,
             email
           )
         `)
-        .eq('promoter_id', promoterId);
+        .order('followed_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching promoter followers:', error);
-        return [];
-      }
-
-      // Map to FollowerData interface
-      return (data || []).map(follow => ({
-        id: follow.id,
-        user_id: follow.follower_id,
-        promoter_id: follow.promoter_id,
-        followed_at: follow.created_at,
-        notifications_enabled: follow.notifications_enabled || true,
-        engagement_score: Math.floor(Math.random() * 100),
-        subscriber_id: follow.follower_id,
+      if (error) throw error;
+      
+      return data.map(item => ({
+        id: item.id,
+        user_id: item.user_id,
+        promoter_id: item.promoter_id,
+        followed_at: item.followed_at,
+        notifications_enabled: item.notifications_enabled || false,
+        engagement_score: item.engagement_score || 0,
+        subscriber_id: item.user_id,
         follow_status: 'active' as const,
-        created_at: follow.created_at,
-        tier_id: follow.tier_id || null,
-        tier_name: follow.tier_name || null,
-        promoter_name: follow.profiles?.display_name || follow.profiles?.username || 'Unknown',
-        engagement_tier: 'bronze',
-        follower_tier: 'standard',
-        score_last_updated: follow.updated_at,
-        last_engagement_at: follow.updated_at,
-        notification_preferences: {
-          events: follow.notifications_enabled !== false,
-          promotions: true,
-          generalUpdates: true,
-          email: true,
-          push: false
-        },
-        preferences: {
-          events: follow.notifications_enabled !== false,
-          promotions: true,
-          generalUpdates: true,
-          email: true,
-          push: false
-        },
-        display_name: follow.profiles?.display_name,
-        username: follow.profiles?.username,
-        avatar_url: follow.profiles?.avatar_url,
-        email: follow.profiles?.email
+        created_at: item.followed_at,
+        status: 'active' as const,
+        engagement_count: item.engagement_count || 0,
+        churn_risk_score: item.churn_risk_score || 0,
+        discovery_source: item.discovery_source || 'direct',
+        discovery_metadata: item.discovery_metadata || {},
+        engagement_tier: item.engagement_tier || 'bronze',
+        tier_name: item.engagement_tier || 'bronze',
+        gamification_score: item.gamification_score || 0,
+        loyalty_tier_level: item.loyalty_tier_level || 1,
+        subscription_start: item.followed_at,
+        last_interaction_at: item.last_interaction_at || item.followed_at,
+        profiles: item.profiles ? {
+          username: item.profiles.username,
+          display_name: item.profiles.display_name,
+          avatar_url: item.profiles.avatar_url,
+          email: item.profiles.email
+        } : undefined
+      })) as FollowerData[];
+    }
+  });
+
+  // Get promoter followers (followers from promoter perspective)
+  const { data: promoterFollowers = [], isLoading: promoterFollowersLoading, refetch: refetchPromoterFollowers } = useQuery({
+    queryKey: ['promoter-followers', promoterId],
+    queryFn: async () => {
+      if (!promoterId) return [];
+      
+      const { data, error } = await supabase
+        .from('promoter_followers')
+        .select(`
+          *,
+          profiles!promoter_followers_user_id_fkey (
+            username,
+            display_name,
+            avatar_url,
+            email
+          )
+        `)
+        .eq('promoter_id', promoterId)
+        .order('followed_at', { ascending: false });
+
+      if (error) throw error;
+      
+      return data.map(item => ({
+        id: item.id,
+        user_id: item.user_id,
+        promoter_id: item.promoter_id,
+        followed_at: item.followed_at,
+        notifications_enabled: item.notifications_enabled || false,
+        engagement_score: item.engagement_score || 0,
+        subscriber_id: item.user_id,
+        follow_status: 'active' as const,
+        created_at: item.followed_at,
+        status: 'active' as const,
+        engagement_count: item.engagement_count || 0,
+        churn_risk_score: item.churn_risk_score || 0,
+        discovery_source: item.discovery_source || 'direct',
+        discovery_metadata: item.discovery_metadata || {},
+        engagement_tier: item.engagement_tier || 'bronze',
+        tier_name: item.engagement_tier || 'bronze',
+        gamification_score: item.gamification_score || 0,
+        loyalty_tier_level: item.loyalty_tier_level || 1,
+        subscription_start: item.followed_at,
+        last_interaction_at: item.last_interaction_at || item.followed_at,
+        profiles: item.profiles ? {
+          username: item.profiles.username,
+          display_name: item.profiles.display_name,
+          avatar_url: item.profiles.avatar_url,
+          email: item.profiles.email
+        } : undefined
       })) as FollowerData[];
     },
     enabled: !!promoterId
   });
 
-  // Follow a promoter
+  // Follow mutation
   const follow = useMutation({
-    mutationFn: async ({ promoterId: targetPromoterId }: { promoterId: string }) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
-
+    mutationFn: async (targetPromoterId: string) => {
       const { data, error } = await supabase
         .from('promoter_followers')
         .insert({
           promoter_id: targetPromoterId,
-          follower_id: user.id,
+          followed_at: new Date().toISOString(),
           notifications_enabled: true
         })
         .select()
@@ -180,33 +135,61 @@ export const useFollowers = (promoterId?: string) => {
       queryClient.invalidateQueries({ queryKey: ['promoter-followers'] });
       toast({
         title: "Success",
-        description: "Successfully followed!",
+        description: "Successfully followed promoter",
       });
     },
     onError: (error) => {
-      console.error('Error following:', error);
+      console.error('Error following promoter:', error);
       toast({
         title: "Error",
-        description: "Failed to follow. Please try again.",
+        description: "Failed to follow promoter. Please try again.",
         variant: "destructive"
       });
     }
   });
 
-  // Subscribe to a promoter (alias for follow for backward compatibility)
-  const subscribe = follow;
+  // Subscribe mutation (enhanced follow)
+  const subscribe = useMutation({
+    mutationFn: async ({ promoterId: targetPromoterId, tierId }: { promoterId: string; tierId?: string }) => {
+      const { data, error } = await supabase
+        .from('promoter_followers')
+        .insert({
+          promoter_id: targetPromoterId,
+          followed_at: new Date().toISOString(),
+          notifications_enabled: true,
+          tier_id: tierId
+        })
+        .select()
+        .single();
 
-  // Unfollow a promoter
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user-follows'] });
+      queryClient.invalidateQueries({ queryKey: ['promoter-followers'] });
+      toast({
+        title: "Success",
+        description: "Successfully subscribed to promoter",
+      });
+    },
+    onError: (error) => {
+      console.error('Error subscribing to promoter:', error);
+      toast({
+        title: "Error",
+        description: "Failed to subscribe to promoter. Please try again.",
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Unfollow mutation
   const unfollow = useMutation({
-    mutationFn: async ({ promoterId: targetPromoterId }: { promoterId: string }) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
-
+    mutationFn: async (followRecordId: string) => {
       const { error } = await supabase
         .from('promoter_followers')
         .delete()
-        .eq('promoter_id', targetPromoterId)
-        .eq('follower_id', user.id);
+        .eq('id', followRecordId);
 
       if (error) throw error;
     },
@@ -215,119 +198,81 @@ export const useFollowers = (promoterId?: string) => {
       queryClient.invalidateQueries({ queryKey: ['promoter-followers'] });
       toast({
         title: "Success",
-        description: "Successfully unfollowed!",
+        description: "Successfully unfollowed promoter",
       });
     },
     onError: (error) => {
-      console.error('Error unfollowing:', error);
+      console.error('Error unfollowing promoter:', error);
       toast({
         title: "Error",
-        description: "Failed to unfollow. Please try again.",
+        description: "Failed to unfollow promoter. Please try again.",
         variant: "destructive"
       });
     }
   });
 
-  // Send notification to followers
+  // Communication mutations (mock implementations)
   const sendNotification = useMutation({
     mutationFn: async (payload: NotificationPayload) => {
-      // Mock implementation - in a real app, this would use the existing notifications table
       console.log('Sending notification:', payload);
-      
-      return {
-        success: true,
-        message: 'Notification sent successfully'
-      };
+      return { success: true };
     },
     onSuccess: () => {
       toast({
         title: "Notification Sent",
-        description: "Your message has been sent to followers!",
-      });
-    },
-    onError: (error) => {
-      console.error('Error sending notification:', error);
-      toast({
-        title: "Error",
-        description: "Failed to send notification. Please try again.",
-        variant: "destructive"
+        description: "Notification sent successfully to follower",
       });
     }
   });
 
-  // Send flyer to followers
   const sendFlyer = useMutation({
     mutationFn: async (payload: FlyerPayload) => {
-      // Mock implementation
       console.log('Sending flyer:', payload);
-      
-      return {
-        success: true,
-        message: 'Flyer sent successfully'
-      };
+      return { success: true };
     },
     onSuccess: () => {
       toast({
         title: "Flyer Sent",
-        description: "Your flyer has been sent to followers!",
-      });
-    },
-    onError: (error) => {
-      console.error('Error sending flyer:', error);
-      toast({
-        title: "Error",
-        description: "Failed to send flyer. Please try again.",
-        variant: "destructive"
+        description: "Flyer sent successfully to follower",
       });
     }
   });
 
-  // Send discount code to followers
   const sendDiscountCode = useMutation({
     mutationFn: async (payload: DiscountPayload) => {
-      // Mock implementation
       console.log('Sending discount code:', payload);
-      
-      return {
-        success: true,
-        message: 'Discount code sent successfully'
-      };
+      return { success: true };
     },
     onSuccess: () => {
       toast({
         title: "Discount Code Sent",
-        description: "Your discount code has been sent to followers!",
-      });
-    },
-    onError: (error) => {
-      console.error('Error sending discount code:', error);
-      toast({
-        title: "Error",
-        description: "Failed to send discount code. Please try again.",
-        variant: "destructive"
+        description: "Discount code sent successfully to follower",
       });
     }
   });
 
-  // Update follower preferences
+  // Update preferences mutation
   const updatePreferences = useMutation({
-    mutationFn: async (payload: PreferencesPayload) => {
-      const { error } = await supabase
+    mutationFn: async ({ followerId, preferences }: { followerId: string; preferences: FollowerPreferences }) => {
+      const { data, error } = await supabase
         .from('promoter_followers')
-        .update({
-          notifications_enabled: payload.preferences.events !== false,
-          updated_at: new Date().toISOString()
+        .update({ 
+          notification_preferences: preferences,
+          notifications_enabled: preferences.events || preferences.promotions || preferences.generalUpdates
         })
-        .eq('id', payload.followerId);
+        .eq('id', followerId)
+        .select()
+        .single();
 
       if (error) throw error;
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-follows'] });
       queryClient.invalidateQueries({ queryKey: ['promoter-followers'] });
       toast({
         title: "Preferences Updated",
-        description: "Your notification preferences have been updated!",
+        description: "Notification preferences updated successfully",
       });
     },
     onError: (error) => {
@@ -341,19 +286,28 @@ export const useFollowers = (promoterId?: string) => {
   });
 
   return {
+    // Data
     userFollows,
     promoterFollowers,
+    
+    // Loading states
     isLoading: userFollowsLoading || promoterFollowersLoading,
+    
+    // Actions
     follow,
     subscribe,
     unfollow,
+    
+    // Communication
     sendNotification,
     sendFlyer,
     sendDiscountCode,
+    
+    // Preferences
     updatePreferences,
+    
+    // Refetch functions
     refetchUserFollows,
     refetchPromoterFollowers
   };
-};
-
-export type { FollowerData, FollowerPreferences };
+}
