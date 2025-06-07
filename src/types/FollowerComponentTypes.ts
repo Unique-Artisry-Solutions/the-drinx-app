@@ -63,6 +63,30 @@ export interface FollowerPreferences {
   sms?: boolean;
 }
 
+// Enhanced FollowerData interface with missing properties
+export interface FollowerData {
+  id: string;
+  user_id: string;
+  promoter_id: string;
+  followed_at: string;
+  notifications_enabled: boolean;
+  engagement_score?: number;
+  preferences?: FollowerPreferences;
+  last_seen?: string;
+  status?: 'active' | 'paused' | 'cancelled';
+  tier?: string;
+  // New properties to fix build errors
+  gamification_score?: number;
+  loyalty_tier_level?: number;
+  subscription_start?: string;
+  last_interaction_at?: string;
+  // User profile data (optional)
+  display_name?: string;
+  username?: string;
+  avatar_url?: string;
+  email?: string;
+}
+
 export interface FollowerAnalyticsData {
   growthData: Array<{
     date: string;
