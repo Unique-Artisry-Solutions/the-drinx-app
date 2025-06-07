@@ -58,7 +58,7 @@ const FollowButton: React.FC<FollowButtonProps> = ({
   const { subscriptions, followers, follow, unfollow, updatePreferences } = useSubscriptions(promoterId);
 
   // Check if currently following with proper type checking
-  const currentSubscription = subscriptions.find((sub: any) => 
+  const currentSubscription = subscriptions?.find((sub: any) => 
     isFollowerData(sub) && sub.promoter_id === promoterId
   );
   const isFollowing = !!currentSubscription;
@@ -69,9 +69,9 @@ const FollowButton: React.FC<FollowButtonProps> = ({
   const handleFollowToggle = async () => {
     try {
       if (isFollowing && isFollowerData(currentSubscription)) {
-        await unfollow.mutateAsync({ promoterId });
+        await unfollow.mutateAsync(currentSubscription.id);
       } else {
-        await follow.mutateAsync({ promoterId });
+        await follow.mutateAsync(promoterId);
       }
     } catch (error) {
       toast({
@@ -171,7 +171,7 @@ const FollowButton: React.FC<FollowButtonProps> = ({
         {getButtonContent()}
       </Button>
 
-      {showFollowerCount && followers.length > 0 && (
+      {showFollowerCount && followers?.length > 0 && (
         <Badge variant="secondary" className="text-xs">
           {followers.length.toLocaleString()} followers
         </Badge>

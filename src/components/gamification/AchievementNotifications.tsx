@@ -38,7 +38,7 @@ const AchievementNotifications: React.FC<AchievementNotificationsProps> = ({
   return (
     <div className="fixed top-20 right-4 z-50 space-y-2 max-w-sm">
       <AnimatePresence>
-        {achievements.map((achievement) => {
+        {achievements?.map((achievement) => {
           const IconComponent = getIcon(achievement.icon);
           
           return (

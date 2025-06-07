@@ -1,3 +1,4 @@
+
 export interface FollowerComponentProps {
   promoterId: string;
   className?: string;
@@ -62,11 +63,12 @@ export interface FollowerPreferences {
   sms?: boolean;
 }
 
-// Updated interfaces for proper communication
+// Updated interfaces for proper communication - fixed message payload structure
 export interface NotificationPayload {
   followerId: string;
   message: string;
   title?: string;
+  subject?: string; // Added for backward compatibility
   metadata?: Record<string, any>;
 }
 
@@ -82,27 +84,30 @@ export interface DiscountPayload {
   metadata?: Record<string, any>;
 }
 
-// Bulk messaging interface
+// Bulk messaging interface - updated to match component usage
 export interface BulkNotificationPayload {
   followerIds: string[];
   message: string;
   title?: string;
+  subject?: string; // Added for backward compatibility
   metadata?: Record<string, any>;
 }
 
-// Updated FollowerData interface with all missing properties
+// Updated FollowerData interface with safe property access patterns
 export interface FollowerData {
+  // Core properties
   id: string;
-  user_id: string;
+  user_id?: string; // Made optional with safe access
   promoter_id: string;
-  followed_at: string;
-  notifications_enabled: boolean;
+  followed_at?: string; // Made optional
+  notifications_enabled?: boolean; // Made optional
   engagement_score?: number;
   preferences?: FollowerPreferences;
   last_seen?: string;
   status?: 'active' | 'paused' | 'cancelled';
   tier?: string;
-  // Properties that components are trying to access
+  
+  // Database column mappings (safe access)
   subscriber_id: string;
   follow_status: 'active' | 'paused' | 'cancelled';
   created_at: string;
@@ -114,22 +119,26 @@ export interface FollowerData {
   score_last_updated?: string;
   last_engagement_at?: string;
   notification_preferences?: FollowerPreferences;
-  // New properties to fix build errors
+  
+  // Safe property additions
   gamification_score?: number;
   loyalty_tier_level?: number;
   subscription_start?: string;
   last_interaction_at?: string;
-  // User profile data (optional)
+  
+  // User profile data with safe access
   display_name?: string;
   username?: string;
   avatar_url?: string;
   email?: string;
-  // Additional properties from database
+  
+  // Database properties with safe defaults
   churn_risk_score?: number;
   discovery_source?: string;
   discovery_metadata?: Record<string, any>;
   engagement_count?: number;
-  // Profile relationship data
+  
+  // Profile relationship data (safe access)
   profiles?: {
     username?: string;
     display_name?: string;
