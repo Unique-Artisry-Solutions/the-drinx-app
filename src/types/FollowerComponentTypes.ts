@@ -46,14 +46,12 @@ export interface FollowerActionResult {
   errors?: string[];
 }
 
-// Updated interface for FollowerNotificationCenter with followerCount
 export interface FollowerNotificationCenterProps extends FollowerComponentProps {
   followerCount?: number;
   defaultMessage?: string;
   allowScheduling?: boolean;
 }
 
-// Add interface for follower preferences
 export interface FollowerPreferences {
   events: boolean;
   promotions: boolean;
@@ -63,12 +61,11 @@ export interface FollowerPreferences {
   sms?: boolean;
 }
 
-// Updated interfaces for proper communication - fixed message payload structure
 export interface NotificationPayload {
   followerId: string;
   message: string;
   title?: string;
-  subject?: string; // Added for backward compatibility
+  subject?: string;
   metadata?: Record<string, any>;
 }
 
@@ -84,30 +81,28 @@ export interface DiscountPayload {
   metadata?: Record<string, any>;
 }
 
-// Bulk messaging interface - updated to match component usage
 export interface BulkNotificationPayload {
   followerIds: string[];
   message: string;
   title?: string;
-  subject?: string; // Added for backward compatibility
+  subject?: string;
   metadata?: Record<string, any>;
 }
 
-// Updated FollowerData interface with safe property access patterns
 export interface FollowerData {
   // Core properties
   id: string;
-  user_id?: string; // Made optional with safe access
+  user_id?: string;
   promoter_id: string;
-  followed_at?: string; // Made optional
-  notifications_enabled?: boolean; // Made optional
+  followed_at?: string;
+  notifications_enabled?: boolean;
   engagement_score?: number;
   preferences?: FollowerPreferences;
   last_seen?: string;
   status?: 'active' | 'paused' | 'cancelled';
   tier?: string;
   
-  // Database column mappings (safe access)
+  // Database column mappings
   subscriber_id: string;
   follow_status: 'active' | 'paused' | 'cancelled';
   created_at: string;
@@ -126,7 +121,7 @@ export interface FollowerData {
   subscription_start?: string;
   last_interaction_at?: string;
   
-  // User profile data with safe access
+  // User profile data
   display_name?: string;
   username?: string;
   avatar_url?: string;
@@ -138,7 +133,7 @@ export interface FollowerData {
   discovery_metadata?: Record<string, any>;
   engagement_count?: number;
   
-  // Profile relationship data (safe access)
+  // Profile relationship data
   profiles?: {
     username?: string;
     display_name?: string;

@@ -7,6 +7,7 @@ import Explore from '@/pages/Explore';
 import PersonalizedExplorePage from '@/pages/PersonalizedExplorePage';
 import ProfilePage from '@/pages/ProfilePage';
 import NotificationsPage from '@/pages/notifications/NotificationsPage';
+import PromoterDetailsPage from '@/pages/promoter/PromoterDetailsPage';
 
 // Simple auth check component for user routes
 const SimpleAuthCheck: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -41,5 +42,9 @@ export const individualRoutes: RouteObject[] = [
   {
     path: '/notifications',
     element: <NotificationsPage />
+  },
+  {
+    path: '/promoter/:promoterId',
+    element: <PromoterDetailsPage />
   }
 ];
