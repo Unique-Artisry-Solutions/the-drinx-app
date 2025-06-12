@@ -3,9 +3,10 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { useSubscriptions } from '@/hooks/useSubscriptions';
-import { Heart, UserPlus, UserMinus, Bell, BellOff } from 'lucide-react';
-import type { FollowerData, FollowerPreferences } from '@/types/FollowerComponentTypes';
+import { useAuth } from '@/contexts/auth';
+import { supabase } from '@/integrations/supabase/client';
+import { Heart, UserPlus, UserMinus } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 interface FollowButtonProps {
   promoterId: string;
@@ -13,36 +14,8 @@ interface FollowButtonProps {
   variant?: 'default' | 'outline' | 'ghost' | 'compact';
   size?: 'sm' | 'default' | 'lg';
   showFollowerCount?: boolean;
-  showNotificationToggle?: boolean;
   className?: string;
 }
-
-// Type guard to safely check if an object is FollowerData
-const isFollowerData = (obj: any): obj is FollowerData => {
-  return obj && 
-         typeof obj === 'object' && 
-         'id' in obj && 
-         'promoter_id' in obj;
-};
-
-// Helper function to safely get notification preferences
-const getNotificationPreferences = (obj: any): FollowerPreferences | null => {
-  if (!obj || typeof obj !== 'object') return null;
-  
-  if ('notification_preferences' in obj && obj.notification_preferences) {
-    if (typeof obj.notification_preferences === 'object') {
-      return obj.notification_preferences as FollowerPreferences;
-    }
-  }
-  
-  if ('preferences' in obj && obj.preferences) {
-    if (typeof obj.preferences === 'object') {
-      return obj.preferences as FollowerPreferences;
-    }
-  }
-  
-  return null;
-};
 
 const FollowButton: React.FC<FollowButtonProps> = ({
   promoterId,
@@ -50,63 +23,125 @@ const FollowButton: React.FC<FollowButtonProps> = ({
   variant = 'default',
   size = 'default',
   showFollowerCount = false,
-  showNotificationToggle = false,
   className = ''
 }) => {
   const [isHovered, setIsHovered] = useState(false);
+  const { user } = useAuth();
   const { toast } = useToast();
-  const { subscriptions, followers, follow, unfollow, updatePreferences } = useSubscriptions(promoterId);
+  const queryClient = useQueryClient();
 
-  // Check if currently following with proper type checking
-  const currentSubscription = subscriptions?.find((sub: any) => 
-    isFollowerData(sub) && sub.promoter_id === promoterId
-  );
-  const isFollowing = !!currentSubscription;
-  
-  const preferences = isFollowerData(currentSubscription) ? getNotificationPreferences(currentSubscription) : null;
-  const hasNotifications = preferences?.events !== false;
+  // Check if currently following
+  const { data: isFollowing = false } = useQuery({
+    queryKey: ['is-following', promoterId, user?.id],
+    queryFn: async () => {
+      if (!user) return false;
+      
+      const { data } = await supabase
+        .from('promoter_followers')
+        .select('id')
+        .eq('promoter_id', promoterId)
+        .eq('subscriber_id', user.id)
+        .eq('follow_status', 'active')
+        .maybeSingle();
+      
+      return !!data;
+    },
+    enabled: !!user && !!promoterId
+  });
 
-  const handleFollowToggle = async () => {
-    try {
-      if (isFollowing && isFollowerData(currentSubscription)) {
-        await unfollow.mutateAsync(currentSubscription.id);
-      } else {
-        await follow.mutateAsync(promoterId);
-      }
-    } catch (error) {
+  // Get follower count
+  const { data: followerCount = 0 } = useQuery({
+    queryKey: ['follower-count', promoterId],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from('promoter_followers')
+        .select('*', { count: 'exact' })
+        .eq('promoter_id', promoterId)
+        .eq('follow_status', 'active');
+      
+      return count || 0;
+    },
+    enabled: !!promoterId && showFollowerCount
+  });
+
+  // Follow mutation
+  const followMutation = useMutation({
+    mutationFn: async () => {
+      if (!user) throw new Error('User must be logged in');
+      
+      const { error } = await supabase
+        .from('promoter_followers')
+        .insert({
+          promoter_id: promoterId,
+          subscriber_id: user.id,
+          follow_status: 'active'
+        });
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['is-following'] });
+      queryClient.invalidateQueries({ queryKey: ['follower-count'] });
+      toast({
+        title: 'Following!',
+        description: `You are now following ${promoterName}`,
+      });
+    },
+    onError: (error) => {
+      console.error('Error following:', error);
       toast({
         title: 'Error',
-        description: `Failed to ${isFollowing ? 'unfollow' : 'follow'} ${promoterName}`,
+        description: `Failed to follow ${promoterName}`,
         variant: 'destructive'
       });
     }
-  };
+  });
 
-  const handleNotificationToggle = async () => {
-    if (!isFollowerData(currentSubscription)) return;
-
-    try {
-      const currentPrefs = getNotificationPreferences(currentSubscription) || {
-        events: true,
-        promotions: true,
-        generalUpdates: true,
-        email: true,
-        push: false
-      };
-
-      await updatePreferences.mutateAsync({
-        followerId: currentSubscription.id,
-        preferences: {
-          ...currentPrefs,
-          events: !hasNotifications
-        }
+  // Unfollow mutation
+  const unfollowMutation = useMutation({
+    mutationFn: async () => {
+      if (!user) throw new Error('User must be logged in');
+      
+      const { error } = await supabase
+        .from('promoter_followers')
+        .delete()
+        .eq('promoter_id', promoterId)
+        .eq('subscriber_id', user.id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['is-following'] });
+      queryClient.invalidateQueries({ queryKey: ['follower-count'] });
+      toast({
+        title: 'Unfollowed',
+        description: `You have unfollowed ${promoterName}`,
       });
-    } catch (error) {
+    },
+    onError: (error) => {
+      console.error('Error unfollowing:', error);
       toast({
         title: 'Error',
-        description: 'Failed to update notification preferences',
+        description: `Failed to unfollow ${promoterName}`,
         variant: 'destructive'
       });
+    }
+  });
+
+  const handleToggleFollow = () => {
+    if (!user) {
+      toast({
+        title: 'Login Required',
+        description: 'Please log in to follow promoters',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    if (isFollowing) {
+      unfollowMutation.mutate();
+    } else {
+      followMutation.mutate();
     }
   };
 
@@ -162,35 +197,19 @@ const FollowButton: React.FC<FollowButtonProps> = ({
       <Button
         variant={getButtonVariant()}
         size={size}
-        onClick={handleFollowToggle}
+        onClick={handleToggleFollow}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
-        disabled={follow.isPending || unfollow.isPending}
+        disabled={followMutation.isPending || unfollowMutation.isPending}
         className={variant === 'compact' ? 'px-3' : ''}
       >
         {getButtonContent()}
       </Button>
 
-      {showFollowerCount && followers?.length > 0 && (
+      {showFollowerCount && followerCount > 0 && (
         <Badge variant="secondary" className="text-xs">
-          {followers.length.toLocaleString()} followers
+          {followerCount.toLocaleString()} followers
         </Badge>
-      )}
-
-      {showNotificationToggle && isFollowing && (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleNotificationToggle}
-          disabled={updatePreferences.isPending}
-          className="px-2"
-        >
-          {hasNotifications ? (
-            <Bell className="h-4 w-4 text-blue-500" />
-          ) : (
-            <BellOff className="h-4 w-4 text-muted-foreground" />
-          )}
-        </Button>
       )}
     </div>
   );
