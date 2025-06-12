@@ -54,7 +54,9 @@ const PersonalizedExplorePage: React.FC = () => {
           id: item.id,
           name: item.name,
           description: item.description,
-          ingredients: Array.isArray(item.ingredients) ? item.ingredients : [item.ingredients],
+          ingredients: Array.isArray(item.ingredients) 
+            ? item.ingredients 
+            : (typeof item.ingredients === 'string' ? [item.ingredients] : []),
           image_url: item.image_url,
           price: parseFloat(item.price) || 0,
           establishment_id: item.establishment_id,
