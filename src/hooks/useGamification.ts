@@ -21,6 +21,23 @@ export interface UserProgress {
   weeklyProgress: number;
 }
 
+// Safe JSON metadata accessor
+const safeGetMetadataCategory = (metadata: any): string => {
+  if (!metadata) return 'general';
+  if (typeof metadata === 'string') {
+    try {
+      const parsed = JSON.parse(metadata);
+      return parsed?.category || 'general';
+    } catch {
+      return 'general';
+    }
+  }
+  if (typeof metadata === 'object' && metadata.category) {
+    return metadata.category;
+  }
+  return 'general';
+};
+
 export function useGamification(userId?: string) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -31,7 +48,6 @@ export function useGamification(userId?: string) {
     queryFn: async () => {
       if (!userId) return [];
       
-      // Use proper Supabase select instead of .raw()
       const { data, error } = await supabase
         .from('reward_transactions')
         .select('*')
@@ -43,14 +59,14 @@ export function useGamification(userId?: string) {
         return [];
       }
 
-      // Transform the data to match Achievement interface
+      // Transform the data to match Achievement interface with safe metadata access
       return (data || []).map(transaction => ({
         id: transaction.id,
         title: transaction.description || 'Achievement',
         description: transaction.description || '',
         points: transaction.points || 0,
         icon: 'trophy',
-        category: transaction.metadata?.category || 'general',
+        category: safeGetMetadataCategory(transaction.metadata),
         unlocked_at: transaction.created_at
       }));
     },
@@ -68,7 +84,7 @@ export function useGamification(userId?: string) {
         .from('user_rewards')
         .select('points, lifetime_points')
         .eq('user_id', userId)
-        .single();
+        .maybeSingle();
 
       if (rewardsError) {
         console.error('Error fetching user rewards:', rewardsError);
@@ -81,7 +97,7 @@ export function useGamification(userId?: string) {
         .eq('user_id', userId)
         .order('current_count', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (streakError) {
         console.error('Error fetching streak data:', streakError);
@@ -95,7 +111,7 @@ export function useGamification(userId?: string) {
         level: Math.floor(totalPoints / 100) + 1,
         achievements: achievements,
         currentStreak,
-        weeklyProgress: Math.min(100, (currentStreak * 14.3)) // Simple calculation
+        weeklyProgress: Math.min(100, (currentStreak * 14.3))
       };
     },
     enabled: !!userId

@@ -25,7 +25,7 @@ export const useSimpleFollowers = (promoterId: string) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Get followers for promoter
+  // Get followers for promoter - using subscriber_id instead of follower_id
   const { data: followers = [], isLoading: followersLoading } = useQuery({
     queryKey: ['simple-followers', promoterId],
     queryFn: async () => {
@@ -33,22 +33,28 @@ export const useSimpleFollowers = (promoterId: string) => {
         .from('promoter_followers')
         .select(`
           id,
-          follower_id,
-          followed_at,
-          profiles!promoter_followers_follower_id_fkey (
+          subscriber_id,
+          created_at,
+          profiles!promoter_followers_subscriber_id_fkey (
             username,
             display_name,
             avatar_url
           )
         `)
         .eq('promoter_id', promoterId)
-        .order('followed_at', { ascending: false });
+        .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching followers:', error);
+        return [];
+      }
       
-      return data.map(follower => ({
-        ...follower,
-        follower_profile: follower.profiles
+      // Transform the data to match SimpleFollower interface
+      return (data || []).map(follower => ({
+        id: follower.id,
+        follower_id: follower.subscriber_id,
+        followed_at: follower.created_at,
+        follower_profile: follower.profiles || undefined
       })) as SimpleFollower[];
     },
     enabled: !!promoterId
@@ -72,14 +78,14 @@ export const useSimpleFollowers = (promoterId: string) => {
         .from('promoter_followers')
         .select('*', { count: 'exact' })
         .eq('promoter_id', promoterId)
-        .gte('followed_at', today);
+        .gte('created_at', today);
 
       // Get new followers this week
       const { count: newWeek } = await supabase
         .from('promoter_followers')
         .select('*', { count: 'exact' })
         .eq('promoter_id', promoterId)
-        .gte('followed_at', weekAgo);
+        .gte('created_at', weekAgo);
 
       // Simple growth calculation
       const previousWeekTotal = (totalFollowers || 0) - (newWeek || 0);
@@ -97,14 +103,14 @@ export const useSimpleFollowers = (promoterId: string) => {
     enabled: !!promoterId
   });
 
-  // Remove follower mutation
+  // Remove follower mutation - using subscriber_id
   const removeFollower = useMutation({
-    mutationFn: async (followerId: string) => {
+    mutationFn: async (subscriberId: string) => {
       const { error } = await supabase
         .from('promoter_followers')
         .delete()
         .eq('promoter_id', promoterId)
-        .eq('follower_id', followerId);
+        .eq('subscriber_id', subscriberId);
 
       if (error) throw error;
     },
