@@ -57,7 +57,7 @@ const EnhancedCommunicationHub: React.FC<EnhancedCommunicationHubProps> = ({ pro
         </TabsContent>
 
         <TabsContent value="gamification" className="mt-6">
-          <GamificationDashboard promoterId={promoterId} mode="promoter" />
+          <GamificationDashboard userId={promoterId} />
         </TabsContent>
       </Tabs>
     </div>

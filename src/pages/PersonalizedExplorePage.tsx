@@ -1,5 +1,5 @@
+
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/router';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import Layout from '@/components/Layout';
@@ -14,7 +14,7 @@ interface Cocktail {
   id: string;
   name: string;
   description: string;
-  ingredients: string;
+  ingredients: string[];
   image_url: string;
   price: number;
   establishment_id: string;
@@ -28,7 +28,6 @@ const PersonalizedExplorePage: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<RecommendationCategoryType>('popular');
   const [cocktails, setCocktails] = useState<Cocktail[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -50,7 +49,19 @@ const PersonalizedExplorePage: React.FC = () => {
           return;
         }
 
-        setCocktails(data as Cocktail[]);
+        // Transform the data to match our interface
+        const transformedData = (data || []).map(item => ({
+          id: item.id,
+          name: item.name,
+          description: item.description,
+          ingredients: Array.isArray(item.ingredients) ? item.ingredients : [item.ingredients],
+          image_url: item.image_url,
+          price: parseFloat(item.price) || 0,
+          establishment_id: item.establishment_id,
+          establishment: item.establishment || { id: item.establishment_id, name: 'Unknown' }
+        })) as Cocktail[];
+
+        setCocktails(transformedData);
       } catch (error) {
         console.error("Unexpected error fetching cocktails:", error);
         toast({
@@ -81,7 +92,7 @@ const PersonalizedExplorePage: React.FC = () => {
         <div className="mb-6">
           <CategoryTabs
             selectedCategory={selectedCategory}
-            onCategoryChange={(value) => setSelectedCategory(value as RecommendationCategoryType)}
+            onCategoryChange={setSelectedCategory}
           />
         </div>
 
@@ -104,9 +115,9 @@ const PersonalizedExplorePage: React.FC = () => {
                 key={cocktail.id}
                 id={cocktail.id}
                 name={cocktail.name}
-                price={cocktail.price}
+                price={cocktail.price.toString()}
                 description={cocktail.description}
-                ingredients={cocktail.ingredients}
+                ingredients={cocktail.ingredients.join(', ')}
                 image={cocktail.image_url}
                 establishment={cocktail.establishment}
               />

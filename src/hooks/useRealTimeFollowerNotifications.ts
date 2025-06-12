@@ -3,6 +3,7 @@ import { useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/contexts/auth';
 import { useToast } from '@/hooks/use-toast';
 import { useFollowers } from '@/hooks/useFollowers';
+import { supabase } from '@/integrations/supabase/client';
 
 interface UseRealTimeFollowerNotificationsProps {
   promoterId?: string;
