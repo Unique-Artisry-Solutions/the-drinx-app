@@ -1,53 +1,82 @@
 
-import React, { useEffect } from 'react';
-import { useAuth } from '@/contexts/auth';
-import { useRealTimeFollowerNotifications } from '@/hooks/useRealTimeFollowerNotifications';
-import { useSubscriptions } from '@/hooks/useSubscriptions';
-import type { FollowerData } from '@/hooks/useFollowers';
+import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { useFollowers, FollowerData } from '@/hooks/useFollowers';
+import { Bell, MessageCircle, Mail } from 'lucide-react';
 
 interface FollowerNotificationIntegrationProps {
-  children: React.ReactNode;
-  promoterId?: string;
-  enabled?: boolean;
+  promoterId: string;
 }
 
-// Type guard to safely check if an object is FollowerData
-const isFollowerData = (obj: any): obj is FollowerData => {
-  return obj && 
-         typeof obj === 'object' && 
-         'follow_status' in obj && 
-         'promoter_id' in obj;
-};
-
-const FollowerNotificationIntegration: React.FC<FollowerNotificationIntegrationProps> = ({
-  children,
-  promoterId,
-  enabled = true
+const FollowerNotificationIntegration: React.FC<FollowerNotificationIntegrationProps> = ({ 
+  promoterId 
 }) => {
-  const { user } = useAuth();
-  const { subscriptions } = useSubscriptions();
-  
-  // Initialize real-time notifications for all followed promoters
-  const followedPromoterIds = subscriptions
-    .filter((sub: any) => isFollowerData(sub) && sub.follow_status === 'active')
-    .map((sub: any) => isFollowerData(sub) ? sub.promoter_id : null)
-    .filter(Boolean);
+  const { followers, sendNotification } = useFollowers(promoterId);
 
-  // Set up notifications for each followed promoter
-  followedPromoterIds.forEach(id => {
-    useRealTimeFollowerNotifications({
-      promoterId: id,
-      enabled: enabled && !!user
-    });
-  });
+  const handleSendWelcomeNotifications = async () => {
+    const recentFollowers = followers
+      .filter(f => {
+        const followDate = new Date(f.created_at);
+        const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+        return followDate > dayAgo;
+      })
+      .map(f => f.subscriber_id);
 
-  // Set up notifications for specific promoter if provided
-  useRealTimeFollowerNotifications({
-    promoterId,
-    enabled: enabled && !!user && !!promoterId
-  });
+    if (recentFollowers.length > 0) {
+      await sendNotification.mutateAsync({
+        followerIds: recentFollowers,
+        message: "Welcome to our community! We're excited to have you here.",
+        title: "Welcome!"
+      });
+    }
+  };
 
-  return <>{children}</>;
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Bell className="h-5 w-5" />
+          Notification Center
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Button
+            variant="outline"
+            className="flex items-center gap-2"
+            onClick={handleSendWelcomeNotifications}
+            disabled={sendNotification.isPending}
+          >
+            <MessageCircle className="h-4 w-4" />
+            Welcome New Followers
+          </Button>
+          
+          <Button
+            variant="outline"
+            className="flex items-center gap-2"
+            disabled
+          >
+            <Mail className="h-4 w-4" />
+            Email Campaign
+          </Button>
+          
+          <Button
+            variant="outline"
+            className="flex items-center gap-2"
+            disabled
+          >
+            <Bell className="h-4 w-4" />
+            Push Notifications
+          </Button>
+        </div>
+        
+        <div className="text-sm text-muted-foreground">
+          Total followers: {followers.length}
+        </div>
+      </CardContent>
+    </Card>
+  );
 };
 
 export default FollowerNotificationIntegration;

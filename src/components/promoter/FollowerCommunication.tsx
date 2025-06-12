@@ -1,77 +1,97 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useSubscriptions } from '@/hooks/useSubscriptions';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useFollowers } from '@/hooks/useFollowers';
+import { useToast } from '@/hooks/use-toast';
 
 interface FollowerCommunicationProps {
   promoterId: string;
+  selectedFollowerIds?: string[];
 }
 
-const FollowerCommunication: React.FC<FollowerCommunicationProps> = ({ promoterId }) => {
-  const { sendNotification, sendFlyer, sendDiscountCode } = useSubscriptions(promoterId);
+const FollowerCommunication: React.FC<FollowerCommunicationProps> = ({ 
+  promoterId, 
+  selectedFollowerIds = [] 
+}) => {
+  const [message, setMessage] = useState('');
+  const [title, setTitle] = useState('');
+  const { sendNotification } = useFollowers(promoterId);
+  const { toast } = useToast();
 
-  const handleSendNotification = async () => {
-    try {
-      await sendNotification.mutateAsync({ 
-        followerId: 'sample-follower-id', 
-        message: 'Sample notification' 
+  const handleSendMessage = async () => {
+    if (!message.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a message.",
+        variant: "destructive"
       });
-    } catch (error) {
-      console.error('Failed to send notification:', error);
+      return;
     }
-  };
 
-  const handleSendFlyer = async () => {
-    try {
-      await sendFlyer.mutateAsync({ 
-        followerId: 'sample-follower-id', 
-        flyer_url: 'https://example.com/flyer.pdf' 
+    if (selectedFollowerIds.length === 0) {
+      toast({
+        title: "Error", 
+        description: "Please select followers to message.",
+        variant: "destructive"
       });
-    } catch (error) {
-      console.error('Failed to send flyer:', error);
+      return;
     }
-  };
 
-  const handleSendDiscountCode = async () => {
     try {
-      await sendDiscountCode.mutateAsync({ 
-        followerId: 'sample-follower-id', 
-        discount_code: 'DISCOUNT20' 
+      await sendNotification.mutateAsync({
+        followerIds: selectedFollowerIds,
+        message,
+        title
       });
+      setMessage('');
+      setTitle('');
     } catch (error) {
-      console.error('Failed to send discount code:', error);
+      console.error('Error sending message:', error);
     }
   };
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Follower Communication</CardTitle>
+        <CardTitle>Send Message to Followers</CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-2">
-          <button 
-            onClick={handleSendNotification}
-            disabled={sendNotification.isPending}
-            className="w-full p-2 bg-blue-500 text-white rounded disabled:opacity-50"
-          >
-            {sendNotification.isPending ? 'Sending...' : 'Send Notification'}
-          </button>
-          <button 
-            onClick={handleSendFlyer}
-            disabled={sendFlyer.isPending}
-            className="w-full p-2 bg-green-500 text-white rounded disabled:opacity-50"
-          >
-            {sendFlyer.isPending ? 'Sending...' : 'Send Flyer'}
-          </button>
-          <button 
-            onClick={handleSendDiscountCode}
-            disabled={sendDiscountCode.isPending}
-            className="w-full p-2 bg-purple-500 text-white rounded disabled:opacity-50"
-          >
-            {sendDiscountCode.isPending ? 'Sending...' : 'Send Discount Code'}
-          </button>
+      <CardContent className="space-y-4">
+        <div>
+          <Label htmlFor="title">Subject (Optional)</Label>
+          <Input
+            id="title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Enter message subject..."
+          />
         </div>
+        
+        <div>
+          <Label htmlFor="message">Message</Label>
+          <Textarea
+            id="message"
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            placeholder="Enter your message..."
+            rows={4}
+          />
+        </div>
+        
+        <div className="text-sm text-muted-foreground">
+          {selectedFollowerIds.length} follower(s) selected
+        </div>
+        
+        <Button 
+          onClick={handleSendMessage}
+          disabled={sendNotification.isPending}
+          className="w-full"
+        >
+          {sendNotification.isPending ? 'Sending...' : 'Send Message'}
+        </Button>
       </CardContent>
     </Card>
   );
