@@ -61,6 +61,7 @@ export interface FollowerPreferences {
   sms?: boolean;
 }
 
+// Fixed notification payloads to support both single and bulk operations
 export interface NotificationPayload {
   followerId: string;
   message: string;
@@ -90,20 +91,10 @@ export interface BulkNotificationPayload {
 }
 
 export interface FollowerData {
-  // Core properties
+  // Core properties with proper database column mapping
   id: string;
-  user_id?: string;
-  promoter_id: string;
-  followed_at?: string;
-  notifications_enabled?: boolean;
-  engagement_score?: number;
-  preferences?: FollowerPreferences;
-  last_seen?: string;
-  status?: 'active' | 'paused' | 'cancelled';
-  tier?: string;
-  
-  // Database column mappings
   subscriber_id: string;
+  promoter_id: string;
   follow_status: 'active' | 'paused' | 'cancelled';
   created_at: string;
   tier_id?: string;
@@ -132,6 +123,7 @@ export interface FollowerData {
   discovery_source?: string;
   discovery_metadata?: Record<string, any>;
   engagement_count?: number;
+  engagement_score?: number;
   
   // Profile relationship data
   profiles?: {

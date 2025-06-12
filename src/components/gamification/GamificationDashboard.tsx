@@ -1,325 +1,181 @@
-
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/auth/AuthProvider';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Trophy, Star, Award, Target } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
 import { useGamification } from '@/hooks/useGamification';
-import { useSubscriptions } from '@/hooks/useSubscriptions';
-import BadgeSystem from './BadgeSystem';
-import TierProgressionEngine from './TierProgressionEngine';
-import LoyaltyRewardsManager from './LoyaltyRewardsManager';
-import AchievementNotifications from './AchievementNotifications';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Trophy, Award, Crown, Gift } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import type { FollowerAchievement, LoyaltyPoints } from '@/types/gamification';
+import AchievementNotifications, { FollowerAchievement } from '@/components/gamification/AchievementNotifications';
 
 interface GamificationDashboardProps {
-  promoterId: string;
-  followerId?: string;
-  mode?: 'promoter' | 'follower';
+  userId?: string;
 }
 
-const GamificationDashboard: React.FC<GamificationDashboardProps> = ({
-  promoterId,
-  followerId,
-  mode = 'follower'
-}) => {
-  const { user } = useAuth();
-  const { toast } = useToast();
-  const { followers } = useSubscriptions(promoterId);
-  
-  const {
-    badges,
-    milestones,
-    rewards,
-    badgesLoading,
-    milestonesLoading,
-    rewardsLoading,
-    awardBadge,
-    processTierUpgrade,
-    fetchFollowerAchievements,
-    fetchLoyaltyPoints,
-    calculateBadgeProgress,
-    calculateTierProgress
-  } = useGamification(promoterId);
-
-  const [achievements, setAchievements] = useState<FollowerAchievement[]>([]);
-  const [loyaltyPoints, setLoyaltyPoints] = useState<LoyaltyPoints | null>(null);
+const GamificationDashboard: React.FC<GamificationDashboardProps> = ({ userId }) => {
+  const { achievements, userStats, isLoading, awardAchievement } = useGamification(userId);
   const [newAchievements, setNewAchievements] = useState<FollowerAchievement[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
 
-  // Get current follower data
-  const currentFollower = followerId 
-    ? followers.find(f => f.id === followerId)
-    : followers.find(f => f.subscriber_id === user?.id);
-
-  const actualFollowerId = followerId || currentFollower?.id;
-
-  // Load achievements and points data
   useEffect(() => {
-    const loadData = async () => {
-      if (!actualFollowerId) return;
+    if (achievements && achievements.length > 0) {
+      // Map achievements to FollowerAchievement
+      const followerAchievements: FollowerAchievement[] = achievements.map(achievement => ({
+        id: achievement.id,
+        title: achievement.title,
+        description: achievement.description,
+        icon: achievement.icon,
+        points: achievement.points,
+        unlocked_at: achievement.unlocked_at || new Date().toISOString(),
+        category: achievement.category
+      }));
 
-      try {
-        setIsLoading(true);
-        const [achievementsData, pointsData] = await Promise.all([
-          fetchFollowerAchievements(actualFollowerId),
-          fetchLoyaltyPoints(actualFollowerId)
-        ]);
+      // Filter out already displayed achievements
+      const newOnes = followerAchievements.filter(achievement =>
+        !newAchievements.find(newAch => newAch.id === achievement.id)
+      );
 
-        setAchievements(achievementsData);
-        setLoyaltyPoints(pointsData);
-
-        // Check for new achievements that haven't been viewed
-        const unviewed = achievementsData.filter(a => !a.celebration_viewed);
-        setNewAchievements(unviewed);
-      } catch (error) {
-        console.error('Error loading gamification data:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to load gamification data',
-          variant: 'destructive'
-        });
-      } finally {
-        setIsLoading(false);
+      // Update state with new achievements
+      if (newOnes.length > 0) {
+        setNewAchievements(prev => [...prev, ...newOnes]);
       }
-    };
-
-    loadData();
-  }, [actualFollowerId, fetchFollowerAchievements, fetchLoyaltyPoints, toast]);
-
-  // Calculate progress data
-  const earnedBadges = achievements
-    .filter(a => a.achievement_type === 'badge' && a.badge)
-    .map(a => a.badge!)
-    .filter(Boolean);
-
-  const badgeProgress = currentFollower ? calculateBadgeProgress(actualFollowerId!, currentFollower) : [];
-  const tierProgress = currentFollower ? calculateTierProgress(currentFollower, loyaltyPoints) : null;
-
-  // Handle badge awarding (promoter mode)
-  const handleAwardBadge = async (badgeId: string) => {
-    if (!actualFollowerId) return;
-
-    try {
-      await awardBadge.mutateAsync({ followerId: actualFollowerId, badgeId });
-      toast({
-        title: 'Badge Awarded!',
-        description: 'The badge has been successfully awarded to the follower.',
-      });
-
-      // Refresh data
-      const updatedAchievements = await fetchFollowerAchievements(actualFollowerId);
-      setAchievements(updatedAchievements);
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to award badge',
-        variant: 'destructive'
-      });
     }
-  };
+  }, [achievements]);
 
-  // Handle tier upgrade
-  const handleTierUpgrade = async () => {
-    if (!actualFollowerId) return;
-
-    try {
-      const upgraded = await processTierUpgrade.mutateAsync(actualFollowerId);
-      if (upgraded) {
-        toast({
-          title: 'Tier Upgraded!',
-          description: 'Congratulations on reaching a new tier!',
-        });
-
-        // Refresh data
-        const [updatedAchievements, updatedPoints] = await Promise.all([
-          fetchFollowerAchievements(actualFollowerId),
-          fetchLoyaltyPoints(actualFollowerId)
-        ]);
-        setAchievements(updatedAchievements);
-        setLoyaltyPoints(updatedPoints);
-      } else {
-        toast({
-          title: 'No Upgrade Available',
-          description: 'Requirements not yet met for next tier.',
-          variant: 'destructive'
-        });
-      }
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to process tier upgrade',
-        variant: 'destructive'
-      });
-    }
-  };
-
-  // Handle achievement celebration viewed
   const handleMarkViewed = (achievementId: string) => {
-    setNewAchievements(prev => prev.filter(a => a.id !== achievementId));
-    // TODO: Update celebration_viewed in database
+    setNewAchievements(prev => prev.filter(achievement => achievement.id !== achievementId));
   };
 
-  if (isLoading || badgesLoading || milestonesLoading || rewardsLoading) {
+  const handleViewDetails = (achievement: FollowerAchievement) => {
+    console.log('Viewing achievement details:', achievement);
+    handleMarkViewed(achievement.id);
+  };
+
+  if (isLoading) {
     return (
       <div className="space-y-6">
-        <div className="text-center">Loading gamification data...</div>
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-1/3 mb-4"></div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="h-32 bg-gray-200 rounded"></div>
+            ))}
+          </div>
+        </div>
       </div>
-    );
-  }
-
-  if (!actualFollowerId) {
-    return (
-      <Card>
-        <CardContent className="text-center py-8">
-          <Trophy className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-          <p className="text-muted-foreground">
-            {mode === 'follower' ? 'Follow this promoter to access gamification features!' : 'No follower data available.'}
-          </p>
-        </CardContent>
-      </Card>
     );
   }
 
   return (
     <div className="space-y-6">
-      {/* Quick Stats Overview */}
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold">Gamification Dashboard</h2>
+        <Button
+          onClick={() => awardAchievement.mutateAsync({
+            userId: userId || '',
+            achievementType: 'test',
+            points: 100
+          })}
+          disabled={!userId || awardAchievement.isPending}
+        >
+          Test Achievement
+        </Button>
+      </div>
+
+      {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
-          <CardContent className="flex items-center p-6">
-            <Award className="h-8 w-8 text-blue-500" />
-            <div className="ml-4">
-              <p className="text-sm font-medium text-muted-foreground">Badges Earned</p>
-              <p className="text-2xl font-bold">{earnedBadges.length}</p>
+          <CardContent className="p-6">
+            <div className="flex items-center">
+              <Trophy className="h-8 w-8 text-yellow-500" />
+              <div className="ml-4">
+                <p className="text-sm font-medium text-muted-foreground">Total Points</p>
+                <p className="text-2xl font-bold">{userStats?.totalPoints || 0}</p>
+              </div>
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
-          <CardContent className="flex items-center p-6">
-            <Crown className="h-8 w-8 text-purple-500" />
-            <div className="ml-4">
-              <p className="text-sm font-medium text-muted-foreground">Current Tier</p>
-              <p className="text-2xl font-bold">{tierProgress?.current_tier || 1}</p>
+          <CardContent className="p-6">
+            <div className="flex items-center">
+              <Star className="h-8 w-8 text-blue-500" />
+              <div className="ml-4">
+                <p className="text-sm font-medium text-muted-foreground">Level</p>
+                <p className="text-2xl font-bold">{userStats?.level || 1}</p>
+              </div>
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
-          <CardContent className="flex items-center p-6">
-            <Gift className="h-8 w-8 text-yellow-500" />
-            <div className="ml-4">
-              <p className="text-sm font-medium text-muted-foreground">Loyalty Points</p>
-              <p className="text-2xl font-bold">{loyaltyPoints?.current_points || 0}</p>
+          <CardContent className="p-6">
+            <div className="flex items-center">
+              <Award className="h-8 w-8 text-purple-500" />
+              <div className="ml-4">
+                <p className="text-sm font-medium text-muted-foreground">Achievements</p>
+                <p className="text-2xl font-bold">{achievements?.length || 0}</p>
+              </div>
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
-          <CardContent className="flex items-center p-6">
-            <Trophy className="h-8 w-8 text-green-500" />
-            <div className="ml-4">
-              <p className="text-sm font-medium text-muted-foreground">Total Score</p>
-              <p className="text-2xl font-bold">{currentFollower?.gamification_score || 0}</p>
+          <CardContent className="p-6">
+            <div className="flex items-center">
+              <Target className="h-8 w-8 text-green-500" />
+              <div className="ml-4">
+                <p className="text-sm font-medium text-muted-foreground">Current Streak</p>
+                <p className="text-2xl font-bold">{userStats?.currentStreak || 0}</p>
+              </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Main Gamification Features */}
-      <Tabs defaultValue="badges" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="badges">Badges</TabsTrigger>
-          <TabsTrigger value="tiers">Tiers</TabsTrigger>
-          <TabsTrigger value="rewards">Rewards</TabsTrigger>
-          <TabsTrigger value="achievements">History</TabsTrigger>
-        </TabsList>
+      {/* Progress Bar */}
+      <Card>
+        <CardContent className="p-6">
+          <h3 className="text-lg font-semibold mb-4">Weekly Progress</h3>
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm">
+              <span>Progress to next level</span>
+              <span>{userStats?.weeklyProgress || 0}%</span>
+            </div>
+            <Progress value={userStats?.weeklyProgress || 0} className="w-full" />
+          </div>
+        </CardContent>
+      </Card>
 
-        <TabsContent value="badges" className="space-y-4">
-          <BadgeSystem
-            badges={badges}
-            badgeProgress={badgeProgress}
-            earnedBadges={earnedBadges}
-            onBadgeClick={mode === 'promoter' ? (badge) => handleAwardBadge(badge.id) : undefined}
-          />
-        </TabsContent>
-
-        <TabsContent value="tiers" className="space-y-4">
-          {tierProgress && (
-            <TierProgressionEngine
-              tierProgress={tierProgress}
-              milestones={milestones}
-              onUpgradeCheck={handleTierUpgrade}
-              isProcessing={processTierUpgrade.isPending}
-            />
-          )}
-        </TabsContent>
-
-        <TabsContent value="rewards" className="space-y-4">
-          <LoyaltyRewardsManager
-            rewards={rewards}
-            loyaltyPoints={loyaltyPoints}
-            currentTierLevel={currentFollower?.loyalty_tier_level || 1}
-            onRewardRedeem={(rewardId) => {
-              toast({
-                title: 'Reward Redeemed!',
-                description: 'Your reward has been successfully redeemed.',
-              });
-            }}
-            redeemedRewards={[]} // TODO: Track redeemed rewards
-          />
-        </TabsContent>
-
-        <TabsContent value="achievements" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Achievement History</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {achievements.map(achievement => (
-                  <div key={achievement.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <div className="text-2xl">
-                        {achievement.badge?.icon || '🏆'}
-                      </div>
-                      <div>
-                        <p className="font-medium">
-                          {achievement.badge?.name || achievement.milestone?.milestone_name || 'Achievement'}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          Earned {new Date(achievement.earned_at).toLocaleDateString()}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-medium">+{achievement.points_earned} points</p>
-                      <p className="text-sm text-muted-foreground capitalize">
-                        {achievement.achievement_type.replace('_', ' ')}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-                {achievements.length === 0 && (
-                  <div className="text-center text-muted-foreground py-8">
-                    No achievements yet. Start engaging to earn your first badge!
-                  </div>
-                )}
+      {/* Recent Achievements */}
+      <Card>
+        <CardContent className="p-6">
+          <h3 className="text-lg font-semibold mb-4">Recent Achievements</h3>
+          <div className="space-y-4">
+            {achievements?.slice(0, 5).map(achievement => (
+              <div key={achievement.id} className="flex items-center space-x-4">
+                <div className="p-2 bg-yellow-100 rounded-full">
+                  <Trophy className="h-4 w-4 text-yellow-600" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium">{achievement.title}</p>
+                  <p className="text-sm text-muted-foreground">{achievement.description}</p>
+                </div>
+                <Badge variant="secondary">+{achievement.points} pts</Badge>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+            ))}
+            {(!achievements || achievements.length === 0) && (
+              <p className="text-muted-foreground text-center py-8">
+                No achievements yet. Start exploring to earn your first achievement!
+              </p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
-      {/* Achievement Notifications */}
+      {/* Achievement Notifications - Fixed prop name */}
       <AchievementNotifications
-        newAchievements={newAchievements}
+        achievements={newAchievements}
         onMarkViewed={handleMarkViewed}
-        onViewDetails={(achievement) => {
-          // TODO: Show achievement detail modal
-          console.log('View achievement details:', achievement);
-        }}
+        onViewDetails={handleViewDetails}
       />
     </div>
   );
