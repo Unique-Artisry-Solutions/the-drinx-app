@@ -73,9 +73,6 @@ const FollowerList: React.FC<FollowerListProps> = ({
                     <Badge variant={follower.follow_status === 'active' ? 'default' : 'secondary'}>
                       {follower.follow_status}
                     </Badge>
-                    {follower.tier_name && (
-                      <Badge variant="outline">{follower.tier_name}</Badge>
-                    )}
                   </div>
                 </div>
               </div>

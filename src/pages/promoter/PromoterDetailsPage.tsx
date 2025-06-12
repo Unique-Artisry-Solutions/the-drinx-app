@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useParams } from 'react-router-dom';
 import Layout from '@/components/Layout';
@@ -11,7 +10,7 @@ import { MapPin, Users, Calendar, Star, CheckCircle, Clock, Ticket } from 'lucid
 import FollowButton from '@/components/common/FollowButton';
 import type { Promoter, PromoterEvent } from '@/types/explore';
 
-const PromoterDetailsPage = () => {
+const PromoterDetailsPage: React.FC = () => {
   const { promoterId } = useParams<{ promoterId: string }>();
 
   // Mock promoter data - in real app, fetch from API
@@ -157,7 +156,7 @@ const PromoterDetailsPage = () => {
 
   return (
     <Layout>
-      <div className="container mx-auto px-4 py-6 max-w-4xl">
+      <div className="container mx-auto px-4 py-8 max-w-4xl">
         {/* Banner */}
         <div 
           className="h-48 md:h-64 rounded-xl mb-6 relative overflow-hidden"
@@ -188,13 +187,12 @@ const PromoterDetailsPage = () => {
                 <div className="flex-1">
                   <div className="flex flex-col md:flex-row md:items-center justify-between mb-3">
                     <h1 className="text-3xl font-bold">{promoter.name}</h1>
-                    <FollowButton 
-                      promoterId={promoter.id}
-                      promoterName={promoter.name}
+                    <FollowButton
+                      promoterId={promoterId}
+                      promoterName={promoter?.display_name || promoter?.username || 'this promoter'}
                       variant="default"
                       size="default"
                       showFollowerCount={true}
-                      showNotificationToggle={true}
                     />
                   </div>
                   

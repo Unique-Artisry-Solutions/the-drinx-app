@@ -1,27 +1,23 @@
 
 import React from 'react';
 import Layout from '@/components/Layout';
-import GamificationDashboard from '@/components/gamification/GamificationDashboard';
 import { useAuth } from '@/contexts/auth/AuthProvider';
+import GamificationDashboard from '@/components/promoter/followers/GamificationDashboard';
 
 const PromoterGamificationPage: React.FC = () => {
   const { user } = useAuth();
-  const promoterId = user?.id || 'mock-promoter-id';
 
   return (
     <Layout>
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold">Gamification & Loyalty</h1>
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold mb-2">Gamification</h1>
           <p className="text-muted-foreground">
-            Manage badges, tiers, and rewards for your followers
+            Track your achievements and progress
           </p>
         </div>
 
-        <GamificationDashboard 
-          promoterId={promoterId}
-          mode="promoter"
-        />
+        <GamificationDashboard userId={user?.id} />
       </div>
     </Layout>
   );
