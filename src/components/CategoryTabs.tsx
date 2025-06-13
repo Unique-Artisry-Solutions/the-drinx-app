@@ -15,13 +15,13 @@ const CategoryTabs: React.FC<CategoryTabsProps> = ({
 }) => {
   return (
     <Tabs value={selectedCategory} onValueChange={(value) => onCategoryChange(value as CategoryType)}>
-      <TabsList className="grid w-full grid-cols-6">
-        <TabsTrigger value="popular">Popular</TabsTrigger>
-        <TabsTrigger value="trending">Trending</TabsTrigger>
-        <TabsTrigger value="new">New</TabsTrigger>
-        <TabsTrigger value="personalized">For You</TabsTrigger>
-        <TabsTrigger value="swig-circuits">Swig Circuits</TabsTrigger>
-        <TabsTrigger value="promoters">Promoters</TabsTrigger>
+      <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-1">
+        <TabsTrigger value="popular" className="text-xs md:text-sm">Popular</TabsTrigger>
+        <TabsTrigger value="trending" className="text-xs md:text-sm">Trending</TabsTrigger>
+        <TabsTrigger value="new" className="text-xs md:text-sm">New</TabsTrigger>
+        <TabsTrigger value="personalized" className="text-xs md:text-sm">For You</TabsTrigger>
+        <TabsTrigger value="swig-circuits" className="text-xs md:text-sm">Swig Circuits</TabsTrigger>
+        <TabsTrigger value="promoters" className="text-xs md:text-sm">Promoters</TabsTrigger>
       </TabsList>
     </Tabs>
   );
