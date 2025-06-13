@@ -20,7 +20,7 @@ const CategoryTabs: React.FC<CategoryTabsProps> = ({
         <TabsTrigger value="trending">Trending</TabsTrigger>
         <TabsTrigger value="new">New</TabsTrigger>
         <TabsTrigger value="personalized">For You</TabsTrigger>
-        <TabsTrigger value="swig-circuits">Circuits</TabsTrigger>
+        <TabsTrigger value="swig-circuits">Swig Circuits</TabsTrigger>
         <TabsTrigger value="promoters">Promoters</TabsTrigger>
       </TabsList>
     </Tabs>
