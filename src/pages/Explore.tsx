@@ -1,90 +1,73 @@
+
 import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Map, List, Grid, Search, Filter } from 'lucide-react';
-import SearchFilter from '@/components/SearchFilter';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import MapView from '@/components/map/MapView';
-import { useUserLocation } from '@/hooks/useUserLocation';
-import { usePersonalizedData } from '@/hooks/usePersonalizedData';
-import { useNearbyEstablishments } from '@/hooks/useNearbyEstablishments';
+import SearchFilter from '@/components/SearchFilter';
+import ViewModeToggle from '@/components/ViewModeToggle';
+import { useEstablishments } from '@/hooks/useEstablishments';
 import { QuickStatsWidget } from '@/components/explore/QuickStatsWidget';
 import { QuickActionCards } from '@/components/explore/QuickActionCards';
-import { RewardsHighlightWidget } from '@/components/explore/RewardsHighlightWidget';
-import { StreakMotivationWidget } from '@/components/explore/StreakMotivationWidget';
-import { NearbyEstablishmentsWidget } from '@/components/explore/NearbyEstablishmentsWidget';
 import { UpcomingEventsWidget } from '@/components/explore/UpcomingEventsWidget';
+import StreakMotivationWidget from '@/components/explore/StreakMotivationWidget';
+import { RewardsHighlightWidget } from '@/components/explore/RewardsHighlightWidget';
+import { NearbyEstablishmentsWidget } from '@/components/explore/NearbyEstablishmentsWidget';
 import { ViewMode } from '@/types/explore';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { usePersonalizedData } from '@/hooks/usePersonalizedData';
+import { useEnhancedQuickActions } from '@/hooks/useEnhancedQuickActions';
+import { useRealtimeActivity } from '@/hooks/useRealtimeActivity';
 
-interface EstablishmentWithDistanceTemp {
-  id: string;
-  name: string;
-  address: string;
-  distance: string;
-  latitude: number;
-  longitude: number;
-  image?: string;
-}
-
-const Explore: React.FC = () => {
+const ExplorePage: React.FC = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeFilters, setActiveFilters] = useState<string[]>([]);
+  const [filters, setFilters] = useState<string[]>([]);
   
-  const { userLocation, refreshLocation, isLoading: isLoadingLocation } = useUserLocation();
-  const { data: nearbyEstablishments } = useNearbyEstablishments(userLocation, 10);
+  // Use existing establishments hook instead of non-existent useNearbyEstablishments
+  const { establishments, isLoading: establishmentsLoading } = useEstablishments({
+    searchTerm: searchQuery
+  });
+  
   const { 
-    loading, 
+    loading: personalizedLoading, 
     isAuthenticated, 
     userStats, 
-    quickActions, 
     recentActivity 
   } = usePersonalizedData();
   
-  const isMobile = useIsMobile();
+  const { actions: quickActions } = useEnhancedQuickActions();
+  const { activities: realtimeActivities } = useRealtimeActivity();
 
-  // Transform establishments to match widget expectations
-  const transformedEstablishments = nearbyEstablishments?.map(est => ({
+  // Convert establishments data for widgets
+  const nearbyEstablishments = establishments.map(est => ({
     id: est.id,
     name: est.name,
     description: est.address || 'Local establishment', // Use address as fallback description
-    distance: est.distance,
-    rating: 4.5, // Default rating since not in the source data
-    isOpen: true, // Default to open since not in the source data
-    imageUrl: est.image
-  })) || [];
+    distance: est.distance || 'Unknown distance',
+    rating: 4.5, // Default rating since not in establishment data
+    isOpen: true // Default to open since we don't have hours data
+  }));
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
   };
 
-  const handleFilterChange = (filters: string[]) => {
-    setActiveFilters(filters);
+  const handleFilterChange = (newFilters: any) => {
+    setFilters(newFilters);
   };
 
-  const renderViewModeButton = (mode: ViewMode, icon: React.ReactNode, label: string) => (
-    <Button
-      key={mode}
-      variant={viewMode === mode ? 'default' : 'outline'}
-      size="sm"
-      onClick={() => setViewMode(mode)}
-      className="flex items-center gap-2"
-    >
-      {icon}
-      {!isMobile && <span>{label}</span>}
-    </Button>
-  );
+  const handleApplyFilters = () => {
+    // Apply filters logic here
+    console.log('Applying filters:', filters);
+  };
 
-  // Loading state
-  if (loading) {
+  if (personalizedLoading || establishmentsLoading) {
     return (
-      <div className="min-h-screen bg-background">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center justify-center h-64">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-              <p className="text-muted-foreground">Loading your personalized experience...</p>
-            </div>
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-4 text-muted-foreground">Loading explore content...</p>
           </div>
         </div>
       </div>
@@ -92,95 +75,120 @@ const Explore: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-6">
-        {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold mb-2">Explore</h1>
-          <p className="text-muted-foreground">
-            Discover mocktails, establishments, and connect with the community
-          </p>
+    <div className="container mx-auto px-4 py-6 space-y-6">
+      {/* Header Section */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold">Explore</h1>
+          <p className="text-muted-foreground">Discover new places, events, and experiences</p>
         </div>
-
-        {/* Search and Filters */}
-        <div className="mb-6">
-          <SearchFilter 
-            onSearch={handleSearch}
-            onFilterChange={handleFilterChange}
-            placeholder="Search establishments, mocktails..."
-          />
-        </div>
-
-        {/* View Mode Toggle */}
-        <div className="flex justify-between items-center mb-6">
-          <div className="flex gap-2">
-            {renderViewModeButton('map', <Map className="h-4 w-4" />, 'Map')}
-            {renderViewModeButton('list', <List className="h-4 w-4" />, 'List')}
-            {renderViewModeButton('grid', <Grid className="h-4 w-4" />, 'Grid')}
-          </div>
-        </div>
-
-        {/* Content based on view mode */}
-        {viewMode === 'map' && (
-          <div className="h-96 rounded-lg overflow-hidden">
-            <MapView 
-              establishments={nearbyEstablishments || []}
-              userLocation={userLocation}
-              onRefreshLocation={refreshLocation}
-              isLoadingLocation={isLoadingLocation}
-            />
-          </div>
-        )}
-
-        {viewMode === 'grid' && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left Column - Quick Stats & Actions */}
-            <div className="space-y-6">
-              {isAuthenticated && userStats && (
-                <QuickStatsWidget 
-                  totalMocktailsTried={userStats.totalMocktailsTried}
-                  totalPoints={userStats.totalPoints}
-                  currentStreak={userStats.currentStreak}
-                />
-              )}
-              
-              {quickActions && quickActions.length > 0 && (
-                <QuickActionCards actions={quickActions} />
-              )}
-            </div>
-            
-            {/* Middle Column - Main Content */}
-            <div className="space-y-6">
-              <NearbyEstablishmentsWidget establishments={transformedEstablishments} />
-              <UpcomingEventsWidget />
-            </div>
-            
-            {/* Right Column - Rewards & Social */}
-            <div className="space-y-6">
-              {isAuthenticated && (
-                <>
-                  <RewardsHighlightWidget />
-                  <StreakMotivationWidget />
-                </>
-              )}
-            </div>
-          </div>
-        )}
-
-        {viewMode === 'list' && (
-          <Card>
-            <CardContent className="p-6">
-              <div className="text-center text-muted-foreground">
-                <List className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <h3 className="text-lg font-medium mb-2">List View</h3>
-                <p>Detailed list view coming soon!</p>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        <ViewModeToggle viewMode={viewMode} onViewModeChange={setViewMode} />
       </div>
+
+      {/* Search and Filters */}
+      <div className="w-full">
+        <SearchFilter
+          onSearch={handleSearch}
+          onFilterChange={handleFilterChange}
+          onApplyFilters={handleApplyFilters}
+          initialSearchTerm={searchQuery}
+          cocktails={[]}
+          establishments={establishments}
+        />
+      </div>
+
+      {/* Main Content */}
+      <Tabs defaultValue="personalized" className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="personalized">For You</TabsTrigger>
+          <TabsTrigger value="map">Map View</TabsTrigger>
+          <TabsTrigger value="establishments">Places</TabsTrigger>
+          <TabsTrigger value="events">Events</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="personalized" className="space-y-6">
+          {isAuthenticated ? (
+            <>
+              {/* Stats and Quick Actions Row */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2">
+                  <QuickStatsWidget
+                    totalMocktailsTried={userStats?.totalMocktailsTried || 0}
+                    totalPoints={userStats?.totalPoints || 0}
+                    currentStreak={userStats?.currentStreak || 0}
+                  />
+                </div>
+                <div>
+                  <StreakMotivationWidget />
+                </div>
+              </div>
+
+              {/* Quick Actions */}
+              <div>
+                <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
+                <QuickActionCards actions={quickActions} />
+              </div>
+
+              {/* Widgets Grid */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <RewardsHighlightWidget
+                  totalPoints={userStats?.totalPoints}
+                  currentTier="Silver"
+                  nextTier="Gold"
+                  progressToNextTier={83}
+                />
+                <NearbyEstablishmentsWidget establishments={nearbyEstablishments} />
+                <UpcomingEventsWidget />
+              </div>
+            </>
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle>Welcome to Explore</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground mb-4">
+                  Sign in to get personalized recommendations and track your progress.
+                </p>
+                <Button>Sign In</Button>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="map">
+          <div className="h-[600px] rounded-lg overflow-hidden">
+            <MapView establishments={establishments} />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="establishments">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {establishments.map((establishment) => (
+              <Card key={establishment.id}>
+                <CardContent className="p-4">
+                  <h3 className="font-semibold">{establishment.name}</h3>
+                  <p className="text-sm text-muted-foreground">{establishment.address}</p>
+                  {establishment.distance && (
+                    <p className="text-sm text-primary">{establishment.distance}</p>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="events">
+          <div className="text-center py-12">
+            <h3 className="text-lg font-semibold mb-2">Events Coming Soon</h3>
+            <p className="text-muted-foreground">
+              We're working on bringing you exciting events in your area.
+            </p>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
 
-export default Explore;
+export default ExplorePage;

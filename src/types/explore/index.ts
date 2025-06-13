@@ -37,4 +37,4 @@ export interface RealtimeActivity {
 export type ViewMode = 'map' | 'list' | 'grid';
 
 // Export ViewMode from ExploreTypes.ts for backward compatibility
-export { ViewMode as ViewModeFromExploreTypes } from '@/types/ExploreTypes';
+export type { ViewMode as ViewModeFromExploreTypes } from '@/types/ExploreTypes';
