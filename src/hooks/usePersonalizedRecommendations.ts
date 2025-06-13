@@ -124,7 +124,7 @@ export const usePersonalizedRecommendations = () => {
     if (activeCategory === 'establishments') return rec.type === 'establishment';
     if (activeCategory === 'cocktails') return rec.type === 'cocktail';
     if (activeCategory === 'events') return rec.type === 'event';
-    if (activeCategory === 'swig-circuits') return rec.type === 'swig-circuit';
+    if (activeCategory === 'recipes') return rec.type === 'recipe';
     return true;
   });
 

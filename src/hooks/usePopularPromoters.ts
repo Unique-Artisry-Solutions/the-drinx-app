@@ -1,29 +1,16 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-
-export interface Promoter {
-  id: string;
-  name: string;
-  description: string;
-  avatar_url?: string;
-  is_verified: boolean;
-  category: string;
-  tags: string[];
-  follower_count: number;
-  event_count: number;
-  rating?: number;
-  location?: string;
-}
+import { Promoter } from '@/types/explore';
 
 export const usePopularPromoters = () => {
   return useQuery({
     queryKey: ['popular-promoters'],
     queryFn: async () => {
-      // First get promoter profiles
+      // Query the correct columns that exist in the profiles table
       const { data: promoters, error: promotersError } = await supabase
         .from('profiles')
-        .select('id, full_name, avatar_url, bio')
+        .select('id, display_name, avatar_url, bio')
         .eq('user_type', 'promoter')
         .limit(12);
 
@@ -35,7 +22,7 @@ export const usePopularPromoters = () => {
       // Transform to our expected format with mock data for demo
       const transformedPromoters: Promoter[] = (promoters || []).map((promoter, index) => ({
         id: promoter.id,
-        name: promoter.full_name || `Promoter ${index + 1}`,
+        name: promoter.display_name || `Promoter ${index + 1}`,
         description: promoter.bio || 'Experienced event promoter creating amazing nightlife experiences',
         avatar_url: promoter.avatar_url,
         is_verified: Math.random() > 0.6, // Random verification for demo
