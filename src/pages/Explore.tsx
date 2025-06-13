@@ -61,7 +61,15 @@ const Explore: React.FC = () => {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {establishments?.slice(0, 6).map((establishment) => (
-                <EstablishmentCard key={establishment.id} establishment={establishment} />
+                <EstablishmentCard 
+                  key={establishment.id}
+                  id={establishment.id}
+                  name={establishment.name}
+                  address={establishment.address}
+                  distance={establishment.distance}
+                  cocktailCount={establishment.cocktailCount}
+                  image={establishment.image}
+                />
               ))}
             </div>
           </CardContent>
