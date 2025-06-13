@@ -1,185 +1,250 @@
-
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Input } from '@/components/ui/input';
-import MapView from '@/components/map/MapView';
-import { SearchFilter } from '@/components/SearchFilter';
-import { ViewModeToggle } from '@/components/ViewModeToggle';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Grid, List, Map as MapIcon } from 'lucide-react';
 import { QuickStatsWidget } from '@/components/explore/QuickStatsWidget';
-import { UpcomingEventsWidget } from '@/components/explore/UpcomingEventsWidget';
-import { NearbyEstablishmentsWidget } from '@/components/explore/NearbyEstablishmentsWidget';
-import StreakMotivationWidget from '@/components/explore/StreakMotivationWidget';
-import RewardsHighlightWidget from '@/components/explore/RewardsHighlightWidget';
 import { QuickActionCards } from '@/components/explore/QuickActionCards';
-import { ViewMode, QuickAction } from '@/types/explore';
+import SearchFilter from '@/components/SearchFilter';
+import { NearbyEstablishmentsWidget } from '@/components/explore/NearbyEstablishmentsWidget';
+import { UpcomingEventsWidget } from '@/components/explore/UpcomingEventsWidget';
+import { RewardsHighlightWidget } from '@/components/explore/RewardsHighlightWidget';
+import StreakMotivationWidget from '@/components/explore/StreakMotivationWidget';
+import { EstablishmentList } from '@/components/EstablishmentList';
+import { ViewModeToggle } from '@/components/ViewModeToggle';
+import { ViewMode } from '@/types/explore';
 import { useEstablishments } from '@/hooks/useEstablishments';
-import { useEnhancedQuickActions } from '@/hooks/useEnhancedQuickActions';
-import { usePersonalizedData } from '@/hooks/usePersonalizedData';
+import { useAuth } from '@/contexts/auth';
 import { useGeolocation } from '@/hooks/useGeolocation';
-import { EstablishmentCard } from '@/types/CoreTypes';
+import { QuickAction } from '@/types/explore';
+import { toast } from 'sonner';
 
-const ExplorePage: React.FC = () => {
-  const [viewMode, setViewMode] = useState<ViewMode>('grid');
+interface Location {
+  latitude: number;
+  longitude: number;
+}
+
+const Explore: React.FC = () => {
+  const { user } = useAuth();
+  const { location } = useGeolocation();
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('popular');
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
+  const [filters, setFilters] = useState({});
 
-  const { latitude, longitude } = useGeolocation();
-  const { establishments, isLoading: establishmentsLoading } = useEstablishments({
-    latitude,
-    longitude,
+  const {
+    establishments,
+    isLoading,
+    error,
+    filterEstablishments,
+    performSearch
+  } = useEstablishments({
+    latitude: location?.latitude,
+    longitude: location?.longitude,
     searchTerm
   });
 
-  const { actions, handleActionClick, isLoading: actionsLoading } = useEnhancedQuickActions();
-  const { 
-    loading: personalizedLoading, 
-    userStats, 
-    isAuthenticated 
-  } = usePersonalizedData();
+  const handleSearch = (query: string) => {
+    setSearchTerm(query);
+    filterEstablishments(query);
+  };
 
-  // Create proper QuickAction array
+  const handleFilterChange = (newFilters: any) => {
+    setFilters(newFilters);
+  };
+
+  const handleApplyFilters = () => {
+    performSearch();
+  };
+
+  // Mock user stats
+  const userStats = {
+    totalMocktailsTried: 23,
+    totalPoints: 1250,
+    currentStreak: 5,
+    establishmentsVisited: 8,
+    favoriteEstablishments: 3
+  };
+
+  // Create quick actions array
   const quickActions: QuickAction[] = [
     {
-      id: 'check-in',
+      id: 'checkin',
       title: 'Check In Nearby',
       description: 'Find and check into nearby establishments',
       iconName: 'MapPin',
       color: 'bg-blue-500',
       isEnabled: true,
-      onClick: actions.checkInNearby
+      onClick: async () => {
+        toast.info('Finding nearby establishments...');
+      }
     },
     {
-      id: 'find-events',
+      id: 'events',
       title: 'Find Events',
-      description: 'Discover upcoming events in your area',
+      description: 'Discover upcoming mocktail events',
       iconName: 'Search',
       color: 'bg-green-500',
       isEnabled: true,
-      onClick: actions.findEvents
+      onClick: async () => {
+        toast.info('Searching for events...');
+      }
     },
     {
-      id: 'create-recipe',
+      id: 'recipe',
       title: 'Create Recipe',
-      description: 'Share your favorite mocktail recipe',
+      description: 'Share your mocktail creation',
       iconName: 'Plus',
       color: 'bg-purple-500',
       isEnabled: true,
-      onClick: actions.createRecipe
+      onClick: async () => {
+        toast.info('Opening recipe creator...');
+      }
     },
     {
-      id: 'start-bar-crawl',
+      id: 'crawl',
       title: 'Start Bar Crawl',
-      description: 'Plan a route through multiple venues',
+      description: 'Begin a new adventure',
       iconName: 'Users',
       color: 'bg-orange-500',
       isEnabled: true,
-      onClick: actions.startBarCrawl
+      onClick: async () => {
+        toast.info('Starting bar crawl...');
+      }
+    },
+    {
+      id: 'share',
+      title: 'Share Achievement',
+      description: 'Celebrate your progress',
+      iconName: 'Share',
+      color: 'bg-pink-500',
+      isEnabled: true,
+      onClick: async () => {
+        toast.info('Sharing achievement...');
+      }
+    },
+    {
+      id: 'friends',
+      title: 'Find Friends',
+      description: 'Connect with other enthusiasts',
+      iconName: 'UserPlus',
+      color: 'bg-indigo-500',
+      isEnabled: true,
+      onClick: async () => {
+        toast.info('Finding friends...');
+      }
     }
   ];
 
-  // Convert establishments to the format expected by widgets
+  // Convert establishments for nearby widget with proper fallbacks
   const nearbyEstablishments = establishments.map(est => ({
     id: est.id,
     name: est.name,
-    description: est.description || est.bio || 'Great establishment for mocktails',
+    description: est.description || est.bio || 'A great place to enjoy mocktails',
     distance: est.distance || '0.0 mi',
-    rating: 4.5, // Default rating since it's not in the establishment data
-    isOpen: true // Default to open since we don't have this data
+    rating: est.rating || 4.0,
+    isOpen: est.isOpen ?? true
   }));
 
-  const renderContent = () => {
-    if (viewMode === 'map') {
-      return (
-        <div className="h-[600px] w-full rounded-lg overflow-hidden">
-          <MapView 
-            establishments={establishments}
-            userLocation={latitude && longitude ? { lat: latitude, lng: longitude } : undefined}
-          />
-        </div>
-      );
-    }
-
-    // Grid view with personalized widgets
-    return (
-      <div className="space-y-6">
-        {/* Quick Actions */}
-        <div>
-          <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
-          <QuickActionCards actions={quickActions} />
-        </div>
-
-        {/* Personalized widgets for authenticated users */}
-        {isAuthenticated && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Stats Widget */}
-            {userStats && (
-              <QuickStatsWidget
-                totalMocktailsTried={userStats.totalMocktailsTried || 0}
-                totalPoints={userStats.totalPoints || 0}
-                currentStreak={userStats.currentStreak || 0}
-              />
-            )}
-            
-            {/* Streak Motivation */}
-            <StreakMotivationWidget />
-            
-            {/* Rewards Highlight */}
-            <RewardsHighlightWidget />
-            
-            {/* Nearby Establishments */}
-            <NearbyEstablishmentsWidget establishments={nearbyEstablishments} />
-            
-            {/* Upcoming Events */}
-            <UpcomingEventsWidget />
-          </div>
-        )}
-
-        {/* For non-authenticated users, show basic widgets */}
-        {!isAuthenticated && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <NearbyEstablishmentsWidget establishments={nearbyEstablishments} />
-            <UpcomingEventsWidget />
-          </div>
-        )}
-      </div>
-    );
-  };
+  // Convert establishments for main list (ensure required properties)
+  const establishmentList = establishments.map(est => ({
+    ...est,
+    cocktailCount: est.cocktailCount || 0,
+    description: est.description || est.bio || 'A great establishment'
+  }));
 
   return (
-    <div className="container mx-auto px-4 py-6">
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold mb-4">Explore</h1>
-        
-        {/* Search and Controls */}
-        <div className="flex flex-col md:flex-row gap-4 mb-4">
-          <div className="flex-1">
-            <Input
-              placeholder="Search establishments, events, or mocktails..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          <ViewModeToggle viewMode={viewMode} onViewModeChange={setViewMode} />
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto px-4 py-6">
+        {/* Search and Filter Section */}
+        <div className="mb-6">
+          <SearchFilter
+            onSearch={handleSearch}
+            onFilterChange={handleFilterChange}
+            onApplyFilters={handleApplyFilters}
+            initialSearchTerm={searchTerm}
+            cocktails={[]}
+            establishments={establishmentList}
+          />
         </div>
 
-        {/* Category Tabs */}
-        <Tabs value={selectedCategory} onValueChange={setSelectedCategory}>
-          <TabsList>
-            <TabsTrigger value="popular">Popular</TabsTrigger>
-            <TabsTrigger value="nearby">Nearby</TabsTrigger>
-            <TabsTrigger value="events">Events</TabsTrigger>
-            <TabsTrigger value="circuits">Swig Circuits</TabsTrigger>
-          </TabsList>
-        </Tabs>
-      </div>
+        {user && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            {/* Left Column - Stats and Actions */}
+            <div className="lg:col-span-2 space-y-6">
+              <QuickStatsWidget {...userStats} />
+              <QuickActionCards actions={quickActions} />
+            </div>
 
-      {/* Main Content */}
-      {renderContent()}
+            {/* Right Column - Widgets */}
+            <div className="space-y-6">
+              <StreakMotivationWidget />
+              <RewardsHighlightWidget />
+              <NearbyEstablishmentsWidget establishments={nearbyEstablishments} />
+              <UpcomingEventsWidget />
+            </div>
+          </div>
+        )}
+
+        {/* Establishments Section */}
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h2 className="text-2xl font-bold">
+              {searchTerm ? `Search Results for "${searchTerm}"` : 'Discover Places'}
+            </h2>
+            <ViewModeToggle viewMode={viewMode} onViewModeChange={setViewMode} />
+          </div>
+
+          <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as ViewMode)}>
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="list" className="flex items-center gap-2">
+                <List className="h-4 w-4" />
+                List
+              </TabsTrigger>
+              <TabsTrigger value="grid" className="flex items-center gap-2">
+                <Grid className="h-4 w-4" />
+                Grid
+              </TabsTrigger>
+              <TabsTrigger value="map" className="flex items-center gap-2">
+                <MapIcon className="h-4 w-4" />
+                Map
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="list" className="mt-6">
+              <EstablishmentList
+                establishments={establishmentList}
+                isLoading={isLoading}
+                error={error}
+                viewMode="list"
+                userLocation={location ? { 
+                  latitude: location.latitude, 
+                  longitude: location.longitude 
+                } : undefined}
+              />
+            </TabsContent>
+
+            <TabsContent value="grid" className="mt-6">
+              <EstablishmentList
+                establishments={establishmentList}
+                isLoading={isLoading}
+                error={error}
+                viewMode="grid"
+                userLocation={location ? { 
+                  latitude: location.latitude, 
+                  longitude: location.longitude 
+                } : undefined}
+              />
+            </TabsContent>
+
+            <TabsContent value="map" className="mt-6">
+              <div className="h-96 bg-muted rounded-lg flex items-center justify-center">
+                <p className="text-muted-foreground">Map view coming soon</p>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </div>
+      </div>
     </div>
   );
 };
 
-export default ExplorePage;
+export default Explore;

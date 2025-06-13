@@ -33,5 +33,5 @@ export interface RealtimeActivity {
   metadata: Record<string, any>;
 }
 
-// ViewMode type definition - properly exported
+// ViewMode type definition - properly exported as type
 export type ViewMode = 'map' | 'list' | 'grid';
