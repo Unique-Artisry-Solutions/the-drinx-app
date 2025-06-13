@@ -1,113 +1,155 @@
 
 import React, { useState } from 'react';
+import Layout from '@/components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import CategoryTabs from '@/components/CategoryTabs';
-import EstablishmentCard from '@/components/EstablishmentCard';
-import CocktailCard from '@/components/CocktailCard';
-import { useEstablishments } from '@/hooks/useEstablishments';
-import { useCocktails } from '@/hooks/useCocktails';
-import RecommendationsWidget from '@/components/explore/personalized/RecommendationsWidget';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { MapPin, Grid, List } from 'lucide-react';
+import { usePersonalizedData } from '@/hooks/usePersonalizedData';
+import { useIsMobile } from '@/hooks/use-mobile';
 
-type CategoryType = 'popular' | 'trending' | 'new' | 'personalized' | 'swig-circuits' | 'promoters';
+// Import widgets
+import { QuickStatsWidget } from '@/components/explore/personalized/QuickStatsWidget';
+import { RecommendationsWidget } from '@/components/explore/personalized/RecommendationsWidget';
+import { ActivityFeedWidget } from '@/components/explore/personalized/ActivityFeedWidget';
+import { QuickActionCards } from '@/components/explore/personalized/QuickActionCards';
+import { RewardsHighlightWidget } from '@/components/explore/personalized/RewardsHighlightWidget';
+import StreakMotivationWidget from '@/components/explore/personalized/StreakMotivationWidget';
+import { NearbyEstablishmentsWidget } from '@/components/explore/personalized/NearbyEstablishmentsWidget';
+import { UpcomingEventsWidget } from '@/components/explore/personalized/UpcomingEventsWidget';
 
 const Explore: React.FC = () => {
-  const [selectedCategory, setSelectedCategory] = useState<CategoryType>('popular');
-  const { establishments, isLoading: establishmentsLoading } = useEstablishments();
-  const { cocktails, isLoading: cocktailsLoading } = useCocktails();
+  const [viewMode, setViewMode] = useState<'map' | 'list' | 'grid'>('grid');
+  const isMobile = useIsMobile();
+  const {
+    loading,
+    userStats,
+    recentActivity,
+    recommendations,
+    quickActions,
+    nearbyEstablishments,
+    upcomingEvents,
+    isAuthenticated
+  } = usePersonalizedData();
 
-  const renderContent = () => {
-    if (selectedCategory === 'personalized') {
-      return (
-        <div className="space-y-6">
-          <RecommendationsWidget />
-        </div>
-      );
-    }
-
-    if (selectedCategory === 'swig-circuits') {
-      return (
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Swig Circuits</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground mb-4">
-                Join organized bar crawls and discover new establishments with fellow mocktail enthusiasts.
-              </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {/* Swig Circuits content will go here */}
-                <div className="p-6 border-2 border-dashed border-gray-300 rounded-lg text-center">
-                  <p className="text-gray-500">No active Swig Circuits available</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      );
-    }
-
-    if (establishmentsLoading || cocktailsLoading) {
-      return <div>Loading...</div>;
-    }
-
+  if (loading) {
     return (
-      <div className="space-y-6">
-        {/* Establishments */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Establishments</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {establishments?.slice(0, 6).map((establishment) => (
-                <EstablishmentCard 
-                  key={establishment.id}
-                  id={establishment.id}
-                  name={establishment.name}
-                  address={establishment.address}
-                  distance={establishment.distance}
-                  cocktailCount={establishment.cocktailCount}
-                  image={establishment.image}
-                />
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Cocktails */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Popular Mocktails</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {cocktails?.slice(0, 6).map((cocktail) => (
-                <CocktailCard key={cocktail.id} {...cocktail} />
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <Layout>
+        <div className="container mx-auto px-4 py-8">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="h-64 bg-muted rounded-lg animate-pulse" />
+            ))}
+          </div>
+        </div>
+      </Layout>
     );
-  };
+  }
+
+  // Transform Activity[] to RealtimeActivity[] by adding required properties
+  const transformedActivity = recentActivity.map(activity => ({
+    ...activity,
+    user: typeof activity.user === 'string' 
+      ? { id: activity.user, name: activity.user } 
+      : activity.user || { id: 'unknown', name: 'Unknown User' },
+    likes: 0,
+    isLiked: false
+  }));
 
   return (
-    <div className="container mx-auto px-4 py-6">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Explore</h1>
-        <p className="text-muted-foreground">Discover new mocktails, establishments, and experiences</p>
-      </div>
+    <Layout>
+      <div className="container mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">Explore</h1>
+            <p className="text-muted-foreground">
+              Discover new places, drinks, and experiences
+            </p>
+          </div>
+          
+          <div className="flex items-center gap-2 mt-4 sm:mt-0">
+            <Button
+              variant={viewMode === 'map' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setViewMode('map')}
+            >
+              <MapPin className="h-4 w-4 mr-2" />
+              Map
+            </Button>
+            <Button
+              variant={viewMode === 'list' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setViewMode('list')}
+            >
+              <List className="h-4 w-4 mr-2" />
+              List
+            </Button>
+            <Button
+              variant={viewMode === 'grid' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setViewMode('grid')}
+            >
+              <Grid className="h-4 w-4 mr-2" />
+              Grid
+            </Button>
+          </div>
+        </div>
 
-      <div className="mb-6">
-        <CategoryTabs 
-          selectedCategory={selectedCategory} 
-          onCategoryChange={setSelectedCategory} 
-        />
-      </div>
+        {/* Mobile Layout */}
+        {isMobile ? (
+          <div className="space-y-6">
+            {isAuthenticated && userStats && (
+              <QuickStatsWidget 
+                totalMocktailsTried={userStats.totalMocktailsTried || 0}
+                totalPoints={userStats.totalPoints || 0}
+                currentStreak={userStats.currentStreak || 0}
+              />
+            )}
+            <QuickActionCards actions={quickActions} />
+            <RecommendationsWidget recommendations={recommendations} />
+            <ActivityFeedWidget activities={transformedActivity} isLoading={loading} />
+            {isAuthenticated && (
+              <>
+                <RewardsHighlightWidget />
+                <StreakMotivationWidget />
+              </>
+            )}
+            <NearbyEstablishmentsWidget establishments={nearbyEstablishments} />
+            <UpcomingEventsWidget events={upcomingEvents} />
+          </div>
+        ) : (
+          /* Desktop Layout */
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            {/* Left Side - Main Content (3 columns) */}
+            <div className="lg:col-span-3 space-y-6">
+              {isAuthenticated && userStats && (
+                <QuickStatsWidget 
+                  totalMocktailsTried={userStats.totalMocktailsTried || 0}
+                  totalPoints={userStats.totalPoints || 0}
+                  currentStreak={userStats.currentStreak || 0}
+                />
+              )}
+              <QuickActionCards actions={quickActions} />
+              <RecommendationsWidget recommendations={recommendations} />
+              <ActivityFeedWidget activities={transformedActivity} isLoading={loading} />
+            </div>
 
-      {renderContent()}
-    </div>
+            {/* Right Side - Sidebar (1 column) */}
+            <div className="space-y-6">
+              {isAuthenticated && (
+                <>
+                  <RewardsHighlightWidget />
+                  <StreakMotivationWidget />
+                </>
+              )}
+              <NearbyEstablishmentsWidget establishments={nearbyEstablishments} />
+              <UpcomingEventsWidget events={upcomingEvents} />
+            </div>
+          </div>
+        )}
+      </div>
+    </Layout>
   );
 };
 
