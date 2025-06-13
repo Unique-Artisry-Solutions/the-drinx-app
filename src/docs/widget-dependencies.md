@@ -1,73 +1,62 @@
 
-# Widget Dependencies Documentation
+# Explore Page Structure Documentation
 
-## PersonalizedExplorePage Required Widgets
+## Explore Page Components
 
-This document outlines the critical widgets that MUST be present on the PersonalizedExplorePage to maintain the intended user experience.
+This document outlines the current structure of the Explore page after removing the personalized widget system.
 
-### Core Required Widgets
+### Current Structure
 
-1. **QuickStatsWidget** - Displays user statistics
-   - Path: `@/components/explore/personalized/QuickStatsWidget`
-   - Props: `totalMocktailsTried`, `totalPoints`, `currentStreak`
-   - Display: Mocktails Tried, Total Points, Current Streaks
-   - Condition: Only shown when `isAuthenticated && userStats`
+The Explore page now uses a CategoryTabs-based layout with the following sections:
 
-2. **RewardsHighlightWidget** - Shows user rewards information
-   - Path: `@/components/explore/personalized/RewardsHighlightWidget`
-   - Props: `totalPoints`, `currentTier`, `nextTier`, `progressToNextTier`
-   - Display: Your Rewards section
-   - Condition: Only shown when `isAuthenticated`
+1. **CategoryTabs Component** - Main navigation for different content types
+   - Path: `@/components/CategoryTabs`
+   - Categories: popular, trending, new, personalized, swig-circuits, promoters
 
-3. **StreakMotivationWidget** - Displays streak motivation
-   - Path: `@/components/explore/personalized/StreakMotivationWidget`
-   - Props: None (uses internal hook)
-   - Display: Streak motivation section
-   - Condition: Only shown when `isAuthenticated`
-
-4. **ActivityFeedWidget** - Shows activity stream
-   - Path: `@/components/explore/personalized/ActivityFeedWidget`
-   - Props: `activities` (converted to RealtimeActivity format)
-   - Display: Activity stream/feed
-   - Condition: Only shown when `isAuthenticated`
+2. **Section Components** - Content display based on selected category
+   - `FeaturedEstablishmentsSection` - Shows establishments
+   - `CocktailsSection` - Displays cocktails with filtering
+   - `EventsSection` - Shows upcoming events
+   - `BarCrawlSection` - Displays swig circuits overview
+   - `SwigCircuitsSection` - Full swig circuits listing
+   - `PromoterSection` - Promoter discovery
 
 ### Layout Structure
 
 ```
-PersonalizedExplorePage
-├── Header Section
-├── Quick Actions (always visible)
-├── Main Grid (XL: 4 columns)
-│   ├── Left Column (XL: 3 columns)
-│   │   ├── QuickStatsWidget (top row)
-│   │   ├── Rewards + Streak Row (2 columns)
-│   │   │   ├── RewardsHighlightWidget
-│   │   │   └── StreakMotivationWidget
-│   │   ├── RecommendationsWidget
-│   │   └── NearbyEstablishmentsWidget
-│   └── Right Column (XL: 1 column)
-│       ├── ActivityFeedWidget
-│       └── UpcomingEventsWidget
+Explore Page
+├── Header Section (Title + ViewModeToggle)
+├── CategoryTabs Navigation
+└── Dynamic Content Based on Selected Category
+    ├── Popular: Establishments + Cocktails + Events
+    ├── Trending: Featured content
+    ├── New: Recently added content
+    ├── Personalized: User-specific (auth required)
+    ├── Swig Circuits: Bar crawls + Circuits
+    └── Promoters: Promoter discovery + Events
 ```
 
-### Validation System
+### Data Integration
 
-The page includes automatic validation that:
-- Checks for widget existence on mount
-- Logs warnings in development mode for missing widgets
-- Displays a debug panel in development showing widget status
+- Uses `useEstablishments` hook for establishment data
+- Uses `useAuth` hook for authentication state
+- Mock data for cocktails and bar crawls (to be replaced with proper hooks)
+- Each section manages its own loading states
 
-### Critical Notes
+### Removed Components
 
-⚠️ **DO NOT REMOVE ANY OF THESE WIDGETS WITHOUT EXPLICIT USER REQUEST**
+The following personalized widget components have been removed:
+- QuickStatsWidget
+- QuickActionCards  
+- UpcomingEventsWidget
+- RewardsHighlightWidget
+- StreakMotivationWidget
+- ActivityFeedWidget
+- NearbyEstablishmentsWidget
 
-- These widgets represent core functionality requested by the user
-- Removing any widget will break the intended user experience
-- Always maintain the activity stream alongside other widgets
-- The layout is designed to be responsive across all screen sizes
+### Notes
 
-### Type Dependencies
-
-- `RealtimeActivity` from `@/types/explore` - Used for activity feed conversion
-- User stats interface for QuickStatsWidget props
-- Proper authentication state from `usePersonalizedData` hook
+- Layout is now consistent with the intended CategoryTabs design
+- No complex grid layouts or personalized widget positioning
+- Responsive design maintained through section-level components
+- View mode toggle integrated at page level

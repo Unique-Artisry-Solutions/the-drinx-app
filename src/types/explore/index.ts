@@ -1,6 +1,6 @@
 
-// Re-export all types from the unified explore types for backward compatibility
+// Re-export all types from the unified explore types
 export * from '../explore';
 
-// This file is maintained for backward compatibility
-// All new explore-related types should be added to src/types/explore.ts
+// Legacy note: Personalized widget types have been removed
+// All explore functionality now uses the unified CategoryTabs structure
