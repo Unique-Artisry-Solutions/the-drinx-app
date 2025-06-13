@@ -1,7 +1,6 @@
 
 import React from 'react';
 import Layout from '@/components/Layout';
-import RecommendationsWidget from '@/components/explore/RecommendationsWidget';
 import QuickActionCards from '@/components/explore/personalized/QuickActionCards';
 import SwigCircuitsSection from '@/components/explore/SwigCircuitsSection';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -24,7 +23,6 @@ const Explore: React.FC = () => {
 
           <QuickActionCards />
           <SwigCircuitsSection />
-          <RecommendationsWidget />
         </div>
       </Layout>
     );
@@ -46,7 +44,6 @@ const Explore: React.FC = () => {
           <div className="lg:col-span-3 space-y-8">
             <QuickActionCards />
             <SwigCircuitsSection />
-            <RecommendationsWidget />
           </div>
         </div>
       </div>
