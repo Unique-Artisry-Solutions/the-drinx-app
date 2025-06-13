@@ -2,8 +2,8 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render } from '@testing-library/react';
-import { QuickStatsWidget } from '@/components/explore/personalized/QuickStatsWidget';
-import { RewardsHighlightWidget } from '@/components/explore/personalized/RewardsHighlightWidget';
+import { QuickStatsWidget } from '@/components/explore/QuickStatsWidget';
+import { RewardsHighlightWidget } from '@/components/explore/RewardsHighlightWidget';
 import { ActivityFeedWidget } from '@/components/explore/personalized/ActivityFeedWidget';
 
 // Mock the hooks
@@ -20,7 +20,7 @@ vi.mock('@/hooks/usePersonalizedData', () => ({
   }))
 }));
 
-describe('Required Widgets Rendering', () => {
+describe('Explore Widget Rendering', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });

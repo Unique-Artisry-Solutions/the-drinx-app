@@ -1,6 +1,36 @@
 
-// Re-export all types from the unified explore types for backward compatibility
-export * from '../explore';
+// Main explore types - unified location for all explore-related types
+export interface UserStats {
+  totalMocktailsTried: number;
+  totalPoints: number;
+  currentStreak: number;
+  establishmentsVisited: number;
+  favoriteEstablishments: number;
+}
 
-// This file is maintained for backward compatibility
-// All new explore-related types should be added to src/types/explore.ts
+export interface QuickAction {
+  id: string;
+  title: string;
+  description: string;
+  iconName: string;
+  color: string;
+  isEnabled: boolean;
+  onClick: () => void;
+}
+
+export interface RealtimeActivity {
+  id: string;
+  type: 'check-in' | 'review' | 'achievement' | 'social';
+  title: string;
+  description: string;
+  timestamp: string;
+  user: {
+    id: string;
+    name: string;
+  };
+  likes: number;
+  isLiked: boolean;
+  metadata: Record<string, any>;
+}
+
+export type ViewMode = 'map' | 'list' | 'grid';
