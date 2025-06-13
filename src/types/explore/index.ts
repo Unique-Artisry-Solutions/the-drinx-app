@@ -33,8 +33,5 @@ export interface RealtimeActivity {
   metadata: Record<string, any>;
 }
 
-// ViewMode type definition
+// ViewMode type definition - properly exported
 export type ViewMode = 'map' | 'list' | 'grid';
-
-// Export ViewMode from ExploreTypes.ts for backward compatibility
-export type { ViewMode as ViewModeFromExploreTypes } from '@/types/ExploreTypes';
