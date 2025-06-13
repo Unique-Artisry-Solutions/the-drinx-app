@@ -2,41 +2,32 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render } from '@testing-library/react';
+import { QuickStatsWidget } from '@/components/explore/personalized/QuickStatsWidget';
+import { RewardsHighlightWidget } from '@/components/explore/personalized/RewardsHighlightWidget';
+import { ActivityFeedWidget } from '@/components/explore/personalized/ActivityFeedWidget';
 
-// Mock basic components since personalized widgets are removed
-const MockQuickStatsWidget = ({ totalMocktailsTried, totalPoints, currentStreak }) => (
-  <div data-testid="quick-stats">
-    <span>{totalMocktailsTried}</span>
-    <span>{totalPoints}</span>
-    <span>{currentStreak}</span>
-  </div>
-);
+// Mock the hooks
+vi.mock('@/hooks/usePersonalizedData', () => ({
+  usePersonalizedData: vi.fn(() => ({
+    loading: false,
+    isAuthenticated: true,
+    userStats: {
+      totalMocktailsTried: 12,
+      totalPoints: 1250,
+      currentStreak: 5
+    },
+    recentActivity: []
+  }))
+}));
 
-const MockRewardsHighlightWidget = ({ totalPoints, currentTier, nextTier, progressToNextTier }) => (
-  <div data-testid="rewards-highlight">
-    <span>{totalPoints}</span>
-    <span>{currentTier}</span>
-    <span>{nextTier}</span>
-    <span>{progressToNextTier}</span>
-  </div>
-);
-
-const MockActivityFeedWidget = ({ activities }) => (
-  <div data-testid="activity-feed">
-    {activities.map(activity => (
-      <div key={activity.id}>{activity.title}</div>
-    ))}
-  </div>
-);
-
-describe('Widget Components (Legacy Test)', () => {
+describe('Required Widgets Rendering', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('should render mock QuickStatsWidget with correct props', () => {
+  it('should render QuickStatsWidget with correct props', () => {
     const { container } = render(
-      <MockQuickStatsWidget 
+      <QuickStatsWidget 
         totalMocktailsTried={12}
         totalPoints={1250}
         currentStreak={5}
@@ -45,9 +36,9 @@ describe('Widget Components (Legacy Test)', () => {
     expect(container).toBeInTheDocument();
   });
 
-  it('should render mock RewardsHighlightWidget', () => {
+  it('should render RewardsHighlightWidget', () => {
     const { container } = render(
-      <MockRewardsHighlightWidget 
+      <RewardsHighlightWidget 
         totalPoints={1250}
         currentTier="Silver"
         nextTier="Gold"
@@ -57,7 +48,7 @@ describe('Widget Components (Legacy Test)', () => {
     expect(container).toBeInTheDocument();
   });
 
-  it('should render mock ActivityFeedWidget with activities', () => {
+  it('should render ActivityFeedWidget with activities', () => {
     const mockActivities = [{
       id: '1',
       type: 'check-in' as const,
@@ -71,14 +62,15 @@ describe('Widget Components (Legacy Test)', () => {
     }];
 
     const { container } = render(
-      <MockActivityFeedWidget activities={mockActivities} />
+      <ActivityFeedWidget activities={mockActivities} />
     );
     expect(container).toBeInTheDocument();
   });
 
-  it('should validate all mock widgets exist', () => {
-    expect(MockQuickStatsWidget).toBeDefined();
-    expect(MockRewardsHighlightWidget).toBeDefined();
-    expect(MockActivityFeedWidget).toBeDefined();
+  it('should validate all required widgets exist', () => {
+    // This test ensures imports are working correctly
+    expect(QuickStatsWidget).toBeDefined();
+    expect(RewardsHighlightWidget).toBeDefined();
+    expect(ActivityFeedWidget).toBeDefined();
   });
 });
