@@ -1,167 +1,153 @@
 
-import React, { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import React, { useState } from 'react';
 import Layout from '@/components/Layout';
-import CocktailCard from '@/components/CocktailCard';
-import { ViewModeToggle } from '@/components/ViewModeToggle';
-import { Skeleton } from '@/components/ui/skeleton';
-import { useToast } from '@/hooks/use-toast';
-import { ViewMode } from '@/types/ExploreTypes';
-import RecommendationsWidget from '@/components/explore/RecommendationsWidget';
-import { FeaturedEstablishmentsSection } from '@/components/explore/FeaturedEstablishmentsSection';
-import { EventsSection } from '@/components/explore/EventsSection';
-import { PromoterDiscoverySection } from '@/components/explore/PromoterDiscoverySection';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { MapPin, Grid, List } from 'lucide-react';
+import { usePersonalizedData } from '@/hooks/usePersonalizedData';
+import { useIsMobile } from '@/hooks/use-mobile';
 
-interface Cocktail {
-  id: string;
-  name: string;
-  description: string;
-  ingredients: string[];
-  image_url: string;
-  price: number;
-  establishment_id: string;
-  establishment: {
-    id: string;
-    name: string;
-  };
-}
+// Import widgets
+import { QuickStatsWidget } from '@/components/explore/personalized/QuickStatsWidget';
+import { RecommendationsWidget } from '@/components/explore/personalized/RecommendationsWidget';
+import { ActivityFeedWidget } from '@/components/explore/personalized/ActivityFeedWidget';
+import { QuickActionCards } from '@/components/explore/personalized/QuickActionCards';
+import { RewardsHighlightWidget } from '@/components/explore/personalized/RewardsHighlightWidget';
+import StreakMotivationWidget from '@/components/explore/personalized/StreakMotivationWidget';
+import { NearbyEstablishmentsWidget } from '@/components/explore/personalized/NearbyEstablishmentsWidget';
+import { UpcomingEventsWidget } from '@/components/explore/personalized/UpcomingEventsWidget';
 
 const Explore: React.FC = () => {
-  const [viewMode, setViewMode] = useState<ViewMode>('grid');
-  const [cocktails, setCocktails] = useState<Cocktail[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
+  const [viewMode, setViewMode] = useState<'map' | 'list' | 'grid'>('grid');
+  const isMobile = useIsMobile();
+  const {
+    loading,
+    userStats,
+    recentActivity,
+    recommendations,
+    quickActions,
+    nearbyEstablishments,
+    upcomingEvents,
+    isAuthenticated
+  } = usePersonalizedData();
 
-  // Fetch cocktails
-  useEffect(() => {
-    const fetchCocktails = async () => {
-      setIsLoading(true);
-      try {
-        const { data, error } = await supabase
-          .from('cocktails')
-          .select('*, establishment:establishment_id(id, name)')
-          .limit(20);
-
-        if (error) {
-          console.error("Error fetching cocktails:", error);
-          toast({
-            title: "Error",
-            description: "Failed to fetch cocktails. Please try again.",
-            variant: "destructive"
-          });
-          return;
-        }
-
-        // Transform the data to match our interface
-        const transformedData = (data || []).map(item => ({
-          id: item.id,
-          name: item.name,
-          description: item.description,
-          ingredients: Array.isArray(item.ingredients) 
-            ? item.ingredients 
-            : (typeof item.ingredients === 'string' ? [item.ingredients] : []),
-          image_url: item.image_url,
-          price: parseFloat(item.price) || 0,
-          establishment_id: item.establishment_id,
-          establishment: item.establishment || { id: item.establishment_id, name: 'Unknown' }
-        })) as Cocktail[];
-
-        setCocktails(transformedData);
-      } catch (error) {
-        console.error("Unexpected error fetching cocktails:", error);
-        toast({
-          title: "Unexpected Error",
-          description: "An unexpected error occurred while fetching cocktails.",
-          variant: "destructive"
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchCocktails();
-  }, [toast]);
-
-  const renderCocktails = () => {
-    if (isLoading) {
-      return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[...Array(6)].map((_, i) => (
-            <div key={i} className="space-y-3">
-              <Skeleton className="w-full h-40 rounded-md" />
-              <div className="space-y-2">
-                <Skeleton className="h-4 w-[250px]" />
-                <Skeleton className="h-4 w-[200px]" />
-              </div>
-            </div>
-          ))}
-        </div>
-      );
-    }
-
-    const gridClass = viewMode === 'grid' 
-      ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'
-      : 'space-y-4';
-
+  if (loading) {
     return (
-      <div className={gridClass}>
-        {cocktails.map((cocktail) => (
-          <CocktailCard
-            key={cocktail.id}
-            id={cocktail.id}
-            name={cocktail.name}
-            price={cocktail.price.toString()}
-            description={cocktail.description}
-            ingredients={cocktail.ingredients}
-            image={cocktail.image_url}
-            establishment={cocktail.establishment}
-          />
-        ))}
-      </div>
+      <Layout>
+        <div className="container mx-auto px-4 py-8">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="h-64 bg-muted rounded-lg animate-pulse" />
+            ))}
+          </div>
+        </div>
+      </Layout>
     );
-  };
+  }
+
+  // Transform Activity[] to RealtimeActivity[] by adding required properties
+  const transformedActivity = recentActivity.map(activity => ({
+    ...activity,
+    user: typeof activity.user === 'string' 
+      ? { id: activity.user, name: activity.user } 
+      : activity.user || { id: 'unknown', name: 'Unknown User' },
+    likes: 0,
+    isLiked: false
+  }));
 
   return (
     <Layout>
       <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-            Explore Experiences
-          </h1>
-          <p className="text-lg text-muted-foreground">
-            Discover amazing cocktails, venues, and experiences near you
-          </p>
-        </div>
-
-        {/* Personalized Recommendations Widget */}
-        <div className="mb-8">
-          <RecommendationsWidget />
-        </div>
-
-        {/* Featured Establishments */}
-        <div className="mb-8">
-          <FeaturedEstablishmentsSection />
-        </div>
-
-        {/* Events Section */}
-        <div className="mb-8">
-          <EventsSection />
-        </div>
-
-        {/* Promoter Discovery */}
-        <div className="mb-8">
-          <PromoterDiscoverySection />
-        </div>
-
-        {/* All Cocktails Section */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-bold">All Cocktails</h2>
-            <ViewModeToggle viewMode={viewMode} onViewModeChange={setViewMode} />
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">Explore</h1>
+            <p className="text-muted-foreground">
+              Discover new places, drinks, and experiences
+            </p>
           </div>
-          {renderCocktails()}
+          
+          <div className="flex items-center gap-2 mt-4 sm:mt-0">
+            <Button
+              variant={viewMode === 'map' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setViewMode('map')}
+            >
+              <MapPin className="h-4 w-4 mr-2" />
+              Map
+            </Button>
+            <Button
+              variant={viewMode === 'list' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setViewMode('list')}
+            >
+              <List className="h-4 w-4 mr-2" />
+              List
+            </Button>
+            <Button
+              variant={viewMode === 'grid' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setViewMode('grid')}
+            >
+              <Grid className="h-4 w-4 mr-2" />
+              Grid
+            </Button>
+          </div>
         </div>
+
+        {/* Mobile Layout */}
+        {isMobile ? (
+          <div className="space-y-6">
+            {isAuthenticated && userStats && (
+              <QuickStatsWidget 
+                totalMocktailsTried={userStats.totalMocktailsTried || 0}
+                totalPoints={userStats.totalPoints || 0}
+                currentStreak={userStats.currentStreak || 0}
+              />
+            )}
+            <QuickActionCards actions={quickActions} />
+            <RecommendationsWidget recommendations={recommendations} />
+            <ActivityFeedWidget activities={transformedActivity} isLoading={loading} />
+            {isAuthenticated && (
+              <>
+                <RewardsHighlightWidget />
+                <StreakMotivationWidget />
+              </>
+            )}
+            <NearbyEstablishmentsWidget establishments={nearbyEstablishments} />
+            <UpcomingEventsWidget events={upcomingEvents} />
+          </div>
+        ) : (
+          /* Desktop Layout */
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            {/* Left Side - Main Content (3 columns) */}
+            <div className="lg:col-span-3 space-y-6">
+              {isAuthenticated && userStats && (
+                <QuickStatsWidget 
+                  totalMocktailsTried={userStats.totalMocktailsTried || 0}
+                  totalPoints={userStats.totalPoints || 0}
+                  currentStreak={userStats.currentStreak || 0}
+                />
+              )}
+              <QuickActionCards actions={quickActions} />
+              <RecommendationsWidget recommendations={recommendations} />
+              <ActivityFeedWidget activities={transformedActivity} isLoading={loading} />
+            </div>
+
+            {/* Right Side - Sidebar (1 column) */}
+            <div className="space-y-6">
+              {isAuthenticated && (
+                <>
+                  <RewardsHighlightWidget />
+                  <StreakMotivationWidget />
+                </>
+              )}
+              <NearbyEstablishmentsWidget establishments={nearbyEstablishments} />
+              <UpcomingEventsWidget events={upcomingEvents} />
+            </div>
+          </div>
+        )}
       </div>
     </Layout>
   );
