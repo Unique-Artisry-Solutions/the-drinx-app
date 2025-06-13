@@ -4,7 +4,6 @@ import { RouteObject } from 'react-router-dom';
 
 // Direct imports for simple user pages - no lazy loading needed
 import Explore from '@/pages/Explore';
-import PersonalizedExplorePage from '@/pages/PersonalizedExplorePage';
 import ProfilePage from '@/pages/ProfilePage';
 import NotificationsPage from '@/pages/notifications/NotificationsPage';
 import PromoterDetailsPage from '@/pages/promoter/PromoterDetailsPage';
@@ -24,14 +23,6 @@ export const individualRoutes: RouteObject[] = [
     element: (
       <SimpleAuthCheck>
         <Explore />
-      </SimpleAuthCheck>
-    )
-  },
-  {
-    path: '/explore/personalized',
-    element: (
-      <SimpleAuthCheck>
-        <PersonalizedExplorePage />
       </SimpleAuthCheck>
     )
   },
