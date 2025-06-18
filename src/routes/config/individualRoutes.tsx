@@ -1,41 +1,45 @@
 
 import React from 'react';
 import { RouteObject } from 'react-router-dom';
+import ProtectedRoute from '@/routes/protectedRoutes';
 
-// Direct imports for simple user pages - no lazy loading needed
+// Direct imports for user pages
 import Explore from '@/pages/Explore';
 import ProfilePage from '@/pages/ProfilePage';
 import NotificationsPage from '@/pages/notifications/NotificationsPage';
 import PromoterDetailsPage from '@/pages/promoter/PromoterDetailsPage';
 
-// Simple auth check component for user routes
-const SimpleAuthCheck: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const isAuthenticated = localStorage.getItem('user_type') !== null;
-  
-  // For user routes, we allow access but show different content based on auth state
-  // This removes the complex protection wrapper while maintaining functionality
-  return <>{children}</>;
-};
-
 export const individualRoutes: RouteObject[] = [
   {
     path: '/explore',
     element: (
-      <SimpleAuthCheck>
+      <ProtectedRoute requireAuth={true} fallbackPath="/">
         <Explore />
-      </SimpleAuthCheck>
+      </ProtectedRoute>
     )
   },
   {
     path: '/profile',
-    element: <ProfilePage />
+    element: (
+      <ProtectedRoute requireAuth={true} fallbackPath="/">
+        <ProfilePage />
+      </ProtectedRoute>
+    )
   },
   {
     path: '/notifications',
-    element: <NotificationsPage />
+    element: (
+      <ProtectedRoute requireAuth={true} fallbackPath="/">
+        <NotificationsPage />
+      </ProtectedRoute>
+    )
   },
   {
     path: '/promoter/:promoterId',
-    element: <PromoterDetailsPage />
+    element: (
+      <ProtectedRoute requireAuth={true} fallbackPath="/">
+        <PromoterDetailsPage />
+      </ProtectedRoute>
+    )
   }
 ];
