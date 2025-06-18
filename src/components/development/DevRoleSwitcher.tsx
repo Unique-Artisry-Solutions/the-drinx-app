@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,7 +11,7 @@ type Position = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
 const DevRoleSwitcher: React.FC = () => {
   const { isDevelopment, devMode, switchToUserType, exitDevMode, isDevModeActive } = useDevelopmentMode();
   const [isExpanded, setIsExpanded] = useState(false);
-  const [position, setPosition] = useState<Position>('top-right');
+  const [position, setPosition] = useState<Position>('bottom-right');
 
   if (!isDevelopment) return null;
 
@@ -44,12 +45,12 @@ const DevRoleSwitcher: React.FC = () => {
       case 'bottom-right':
         return 'bottom-4 right-4';
       default:
-        return 'top-4 right-4';
+        return 'bottom-4 right-4';
     }
   };
 
   const cyclePosition = () => {
-    const positions: Position[] = ['top-right', 'top-left', 'bottom-left', 'bottom-right'];
+    const positions: Position[] = ['bottom-right', 'top-right', 'top-left', 'bottom-left'];
     const currentIndex = positions.indexOf(position);
     const nextIndex = (currentIndex + 1) % positions.length;
     setPosition(positions[nextIndex]);
