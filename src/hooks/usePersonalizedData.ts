@@ -1,106 +1,88 @@
 
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/hooks/core/useAuth';
-import { UserStats } from '@/types/ExploreTypes';
+import { useAuth } from '@/hooks/useAuth';
 
 export interface PersonalizedData {
-  userStats: UserStats;
+  totalMocktailsTried: number;
+  totalPoints: number;
+  currentStreak: number;
+  favoriteEstablishments: any[];
   recentActivity: any[];
-  loading: boolean;
-  isAuthenticated: boolean;
-  error: string | null;
+  recommendations: any[];
 }
 
-export const usePersonalizedData = (): PersonalizedData => {
-  const { state } = useAuth();
-  const { isAuthenticated, isLoading: authLoading } = state;
-  
-  const [userStats, setUserStats] = useState<UserStats>({
+export const usePersonalizedData = () => {
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  const [data, setData] = useState<PersonalizedData>({
     totalMocktailsTried: 0,
     totalPoints: 0,
     currentStreak: 0,
-    establishmentsVisited: 0,
-    favoriteEstablishments: 0,
+    favoriteEstablishments: [],
+    recentActivity: [],
+    recommendations: []
   });
-  
-  const [recentActivity, setRecentActivity] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchPersonalizedData = async () => {
-      // Don't fetch data until auth state is stable
+    const loadPersonalizedData = async () => {
       if (authLoading) {
-        return;
+        return; // Wait for auth to stabilize
       }
 
-      setLoading(true);
+      setIsLoading(true);
       setError(null);
 
       try {
-        if (isAuthenticated) {
-          // Fetch real user data when authenticated
-          // For now, using mock data but structure is ready for real API calls
-          await new Promise(resolve => setTimeout(resolve, 500)); // Simulate API call
-          
-          setUserStats({
-            totalMocktailsTried: 12,
-            totalPoints: 1250,
+        if (isAuthenticated && user) {
+          // Load authenticated user's personalized data
+          const personalizedData = {
+            totalMocktailsTried: 15,
+            totalPoints: 320,
             currentStreak: 5,
-            establishmentsVisited: 8,
-            favoriteEstablishments: 3,
-          });
-
-          setRecentActivity([
-            {
-              id: '1',
-              type: 'check-in',
-              title: 'Checked in at The Zen Garden',
-              description: 'Tried the Tropical Paradise Punch',
-              timestamp: new Date().toISOString(),
-              user: { id: 'user1', name: 'You' },
-              likes: 0,
-              isLiked: false,
-              metadata: {}
-            },
-            {
-              id: '2',
-              type: 'achievement',
-              title: 'Achievement Unlocked!',
-              description: 'Visited 5 establishments this month',
-              timestamp: new Date(Date.now() - 86400000).toISOString(),
-              user: { id: 'user1', name: 'You' },
-              likes: 0,
-              isLiked: false,
-              metadata: {}
-            }
-          ]);
+            favoriteEstablishments: [
+              { id: '1', name: 'The Mocktail Lounge', rating: 4.8 },
+              { id: '2', name: 'Sober Spirits', rating: 4.6 }
+            ],
+            recentActivity: [
+              { id: '1', action: 'Tried new mocktail', timestamp: new Date() },
+              { id: '2', action: 'Visited establishment', timestamp: new Date() }
+            ],
+            recommendations: [
+              { id: '1', type: 'mocktail', name: 'Virgin Mojito Supreme' },
+              { id: '2', type: 'establishment', name: 'Zero Proof Bar' }
+            ]
+          };
+          setData(personalizedData);
         } else {
-          // Reset data for unauthenticated users
-          setUserStats({
+          // Load public/sample data for unauthenticated users
+          const publicData = {
             totalMocktailsTried: 0,
             totalPoints: 0,
             currentStreak: 0,
-            establishmentsVisited: 0,
-            favoriteEstablishments: 0,
-          });
-          setRecentActivity([]);
+            favoriteEstablishments: [],
+            recentActivity: [],
+            recommendations: [
+              { id: '1', type: 'mocktail', name: 'Classic Virgin Mojito' },
+              { id: '2', type: 'establishment', name: 'Popular Spots Near You' }
+            ]
+          };
+          setData(publicData);
         }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch personalized data');
+      } catch (err: any) {
+        setError(err.message || 'Failed to load personalized data');
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
 
-    fetchPersonalizedData();
-  }, [isAuthenticated, authLoading]);
+    loadPersonalizedData();
+  }, [user, isAuthenticated, authLoading]);
 
   return {
-    userStats,
-    recentActivity,
-    loading: loading || authLoading, // Include auth loading in overall loading state
-    isAuthenticated,
-    error
+    data,
+    isLoading: isLoading || authLoading,
+    error,
+    isAuthenticated
   };
 };

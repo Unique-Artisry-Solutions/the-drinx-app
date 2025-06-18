@@ -10,10 +10,8 @@ import PromoterDetailsPage from '@/pages/promoter/PromoterDetailsPage';
 
 // Simple auth check component for user routes
 const SimpleAuthCheck: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const isAuthenticated = localStorage.getItem('user_type') !== null;
-  
   // For user routes, we allow access but show different content based on auth state
-  // This removes the complex protection wrapper while maintaining functionality
+  // The components themselves handle the auth state and show appropriate content
   return <>{children}</>;
 };
 
