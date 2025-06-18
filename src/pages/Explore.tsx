@@ -47,52 +47,64 @@ const Explore: React.FC = () => {
     <Layout>
       <div className="container mx-auto px-4 py-6 space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Explore</h1>
+          <h1 className="text-3xl font-bold">
+            {isAuthenticated ? 'Your Explore Dashboard' : 'Explore Mocktails'}
+          </h1>
         </div>
 
-        {isAuthenticated ? (
-          <>
-            <QuickStatsWidget
-              totalMocktailsTried={userStats.totalMocktailsTried}
-              totalPoints={userStats.totalPoints}
-              currentStreak={userStats.currentStreak}
-            />
-            
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <PersonalizedRecommendations 
-                isAuthenticated={isAuthenticated}
-                loading={loading}
-              />
-              
-              <div className="space-y-4">
-                <h2 className="text-xl font-semibold">Recent Activity</h2>
-                {recentActivity.length > 0 ? (
-                  <div className="space-y-2">
-                    {recentActivity.map((activity) => (
-                      <div key={activity.id} className="p-3 border rounded-lg">
-                        <h3 className="font-medium">{activity.title}</h3>
-                        <p className="text-sm text-muted-foreground">{activity.description}</p>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
+        {/* Stats Widget - now authentication-aware */}
+        <QuickStatsWidget
+          totalMocktailsTried={userStats.totalMocktailsTried}
+          totalPoints={userStats.totalPoints}
+          currentStreak={userStats.currentStreak}
+          isAuthenticated={isAuthenticated}
+        />
+        
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Personalized Recommendations - now authentication-aware */}
+          <PersonalizedRecommendations 
+            isAuthenticated={isAuthenticated}
+            loading={loading}
+          />
+          
+          <div className="space-y-4">
+            <h2 className="text-xl font-semibold">
+              {isAuthenticated ? 'Recent Activity' : 'Getting Started'}
+            </h2>
+            {isAuthenticated ? (
+              recentActivity.length > 0 ? (
+                <div className="space-y-2">
+                  {recentActivity.map((activity) => (
+                    <div key={activity.id} className="p-3 border rounded-lg">
+                      <h3 className="font-medium">{activity.title}</h3>
+                      <p className="text-sm text-muted-foreground">{activity.description}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-4 border rounded-lg text-center">
                   <p className="text-muted-foreground">No recent activity</p>
-                )}
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Start exploring mocktails to see your activity here
+                  </p>
+                </div>
+              )
+            ) : (
+              <div className="p-4 border rounded-lg">
+                <h3 className="font-medium mb-2">Welcome to Spiritless!</h3>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Discover amazing alcohol-free cocktails, track your favorites, and connect with establishments near you.
+                </p>
+                <ul className="text-sm text-muted-foreground space-y-1">
+                  <li>• Browse local establishments</li>
+                  <li>• Discover new mocktail recipes</li>
+                  <li>• Track your taste journey</li>
+                  <li>• Earn points and achievements</li>
+                </ul>
               </div>
-            </div>
-          </>
-        ) : (
-          <div className="text-center py-12">
-            <h2 className="text-2xl font-bold mb-4">Welcome to Explore!</h2>
-            <p className="text-muted-foreground mb-6">
-              Sign in to get personalized recommendations and track your mocktail journey.
-            </p>
-            <PersonalizedRecommendations 
-              isAuthenticated={isAuthenticated}
-              loading={loading}
-            />
+            )}
           </div>
-        )}
+        </div>
       </div>
     </Layout>
   );
