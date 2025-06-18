@@ -2,23 +2,22 @@
 import React from 'react';
 import Layout from '@/components/Layout';
 import { usePersonalizedData } from '@/hooks/usePersonalizedData';
+import PersonalizedRecommendations from '@/components/explore/personalized/PersonalizedRecommendations';
 import { QuickStatsWidget } from '@/components/explore/personalized/QuickStatsWidget';
-import { UnauthenticatedFallback } from '@/components/explore/personalized/UnauthenticatedFallback';
-import PromoterSection from '@/components/explore/PromoterSection';
 
 const Explore: React.FC = () => {
-  const { data, isLoading, error, isAuthenticated } = usePersonalizedData();
+  const { userStats, recentActivity, loading, isAuthenticated, error } = usePersonalizedData();
 
-  if (isLoading) {
+  if (loading) {
     return (
       <Layout>
         <div className="container mx-auto px-4 py-6">
-          <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-              <div className="h-24 bg-gray-200 rounded"></div>
-              <div className="h-24 bg-gray-200 rounded"></div>
-              <div className="h-24 bg-gray-200 rounded"></div>
+          <div className="animate-pulse space-y-6">
+            <div className="h-8 bg-gray-200 rounded w-1/3"></div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-24 bg-gray-200 rounded"></div>
+              ))}
             </div>
           </div>
         </div>
@@ -30,8 +29,14 @@ const Explore: React.FC = () => {
     return (
       <Layout>
         <div className="container mx-auto px-4 py-6">
-          <div className="text-center text-red-600">
-            <p>Error loading explore page: {error}</p>
+          <div className="text-center py-12">
+            <p className="text-red-600 mb-4">Error loading data: {error}</p>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              Retry
+            </button>
           </div>
         </div>
       </Layout>
@@ -40,50 +45,62 @@ const Explore: React.FC = () => {
 
   return (
     <Layout>
-      <div className="container mx-auto px-4 py-6">
-        <div className="mb-6">
+      <div className="container mx-auto px-4 py-6 space-y-6">
+        <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold">
-            {isAuthenticated ? 'Your Personalized Dashboard' : 'Explore Mocktails'}
+            {isAuthenticated ? 'Your Explore Dashboard' : 'Explore Mocktails'}
           </h1>
-          <p className="text-muted-foreground">
-            {isAuthenticated 
-              ? 'Track your mocktail journey and discover new favorites'
-              : 'Discover amazing mocktails and establishments'
-            }
-          </p>
         </div>
 
-        {!isAuthenticated ? (
-          <UnauthenticatedFallback />
-        ) : (
+        {/* Conditional layout based on authentication */}
+        {isAuthenticated ? (
           <>
-            <div className="mb-8">
-              <h2 className="text-xl font-semibold mb-4">Your Stats</h2>
-              <QuickStatsWidget
-                totalMocktailsTried={data.totalMocktailsTried}
-                totalPoints={data.totalPoints}
-                currentStreak={data.currentStreak}
+            {/* Stats Widget - authenticated users only */}
+            <QuickStatsWidget
+              totalMocktailsTried={userStats.totalMocktailsTried}
+              totalPoints={userStats.totalPoints}
+              currentStreak={userStats.currentStreak}
+              isAuthenticated={isAuthenticated}
+            />
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Personalized Recommendations */}
+              <PersonalizedRecommendations 
                 isAuthenticated={isAuthenticated}
+                loading={loading}
               />
-            </div>
-
-            <div className="mb-8">
-              <h2 className="text-xl font-semibold mb-4">Recommended for You</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {data.recommendations.map((rec) => (
-                  <div key={rec.id} className="p-4 border rounded-lg">
-                    <h3 className="font-medium">{rec.name}</h3>
-                    <p className="text-sm text-muted-foreground capitalize">{rec.type}</p>
+              
+              <div className="space-y-4">
+                <h2 className="text-xl font-semibold">Recent Activity</h2>
+                {recentActivity.length > 0 ? (
+                  <div className="space-y-2">
+                    {recentActivity.map((activity) => (
+                      <div key={activity.id} className="p-3 border rounded-lg">
+                        <h3 className="font-medium">{activity.title}</h3>
+                        <p className="text-sm text-muted-foreground">{activity.description}</p>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                ) : (
+                  <div className="p-4 border rounded-lg text-center">
+                    <p className="text-muted-foreground">No recent activity</p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Start exploring mocktails to see your activity here
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </>
+        ) : (
+          <>
+            {/* Full-width unauthenticated experience */}
+            <PersonalizedRecommendations 
+              isAuthenticated={isAuthenticated}
+              loading={loading}
+            />
+          </>
         )}
-
-        <div className="mt-8">
-          <PromoterSection />
-        </div>
       </div>
     </Layout>
   );

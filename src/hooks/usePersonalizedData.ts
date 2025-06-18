@@ -1,88 +1,106 @@
 
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/hooks/core/useAuth';
+import { UserStats } from '@/types/ExploreTypes';
 
 export interface PersonalizedData {
-  totalMocktailsTried: number;
-  totalPoints: number;
-  currentStreak: number;
-  favoriteEstablishments: any[];
+  userStats: UserStats;
   recentActivity: any[];
-  recommendations: any[];
+  loading: boolean;
+  isAuthenticated: boolean;
+  error: string | null;
 }
 
-export const usePersonalizedData = () => {
-  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
-  const [data, setData] = useState<PersonalizedData>({
+export const usePersonalizedData = (): PersonalizedData => {
+  const { state } = useAuth();
+  const { isAuthenticated, isLoading: authLoading } = state;
+  
+  const [userStats, setUserStats] = useState<UserStats>({
     totalMocktailsTried: 0,
     totalPoints: 0,
     currentStreak: 0,
-    favoriteEstablishments: [],
-    recentActivity: [],
-    recommendations: []
+    establishmentsVisited: 0,
+    favoriteEstablishments: 0,
   });
-  const [isLoading, setIsLoading] = useState(true);
+  
+  const [recentActivity, setRecentActivity] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const loadPersonalizedData = async () => {
+    const fetchPersonalizedData = async () => {
+      // Don't fetch data until auth state is stable
       if (authLoading) {
-        return; // Wait for auth to stabilize
+        return;
       }
 
-      setIsLoading(true);
+      setLoading(true);
       setError(null);
 
       try {
-        if (isAuthenticated && user) {
-          // Load authenticated user's personalized data
-          const personalizedData = {
-            totalMocktailsTried: 15,
-            totalPoints: 320,
+        if (isAuthenticated) {
+          // Fetch real user data when authenticated
+          // For now, using mock data but structure is ready for real API calls
+          await new Promise(resolve => setTimeout(resolve, 500)); // Simulate API call
+          
+          setUserStats({
+            totalMocktailsTried: 12,
+            totalPoints: 1250,
             currentStreak: 5,
-            favoriteEstablishments: [
-              { id: '1', name: 'The Mocktail Lounge', rating: 4.8 },
-              { id: '2', name: 'Sober Spirits', rating: 4.6 }
-            ],
-            recentActivity: [
-              { id: '1', action: 'Tried new mocktail', timestamp: new Date() },
-              { id: '2', action: 'Visited establishment', timestamp: new Date() }
-            ],
-            recommendations: [
-              { id: '1', type: 'mocktail', name: 'Virgin Mojito Supreme' },
-              { id: '2', type: 'establishment', name: 'Zero Proof Bar' }
-            ]
-          };
-          setData(personalizedData);
+            establishmentsVisited: 8,
+            favoriteEstablishments: 3,
+          });
+
+          setRecentActivity([
+            {
+              id: '1',
+              type: 'check-in',
+              title: 'Checked in at The Zen Garden',
+              description: 'Tried the Tropical Paradise Punch',
+              timestamp: new Date().toISOString(),
+              user: { id: 'user1', name: 'You' },
+              likes: 0,
+              isLiked: false,
+              metadata: {}
+            },
+            {
+              id: '2',
+              type: 'achievement',
+              title: 'Achievement Unlocked!',
+              description: 'Visited 5 establishments this month',
+              timestamp: new Date(Date.now() - 86400000).toISOString(),
+              user: { id: 'user1', name: 'You' },
+              likes: 0,
+              isLiked: false,
+              metadata: {}
+            }
+          ]);
         } else {
-          // Load public/sample data for unauthenticated users
-          const publicData = {
+          // Reset data for unauthenticated users
+          setUserStats({
             totalMocktailsTried: 0,
             totalPoints: 0,
             currentStreak: 0,
-            favoriteEstablishments: [],
-            recentActivity: [],
-            recommendations: [
-              { id: '1', type: 'mocktail', name: 'Classic Virgin Mojito' },
-              { id: '2', type: 'establishment', name: 'Popular Spots Near You' }
-            ]
-          };
-          setData(publicData);
+            establishmentsVisited: 0,
+            favoriteEstablishments: 0,
+          });
+          setRecentActivity([]);
         }
-      } catch (err: any) {
-        setError(err.message || 'Failed to load personalized data');
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch personalized data');
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     };
 
-    loadPersonalizedData();
-  }, [user, isAuthenticated, authLoading]);
+    fetchPersonalizedData();
+  }, [isAuthenticated, authLoading]);
 
   return {
-    data,
-    isLoading: isLoading || authLoading,
-    error,
-    isAuthenticated
+    userStats,
+    recentActivity,
+    loading: loading || authLoading, // Include auth loading in overall loading state
+    isAuthenticated,
+    error
   };
 };
