@@ -8,20 +8,37 @@ export interface SimpleStreakData {
 }
 
 export const useSimpleStreakData = (): SimpleStreakData => {
+  const [currentStreak, setCurrentStreak] = useState(0);
+  const [longestStreak, setLongestStreak] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate loading
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 100);
+    // Simulate API call - in a real app this would fetch from database
+    const fetchStreakData = async () => {
+      try {
+        setIsLoading(true);
+        
+        // Mock data for now
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        const mockCurrentStreak = Math.floor(Math.random() * 15) + 1;
+        const mockLongestStreak = Math.max(mockCurrentStreak, Math.floor(Math.random() * 30) + 1);
+        
+        setCurrentStreak(mockCurrentStreak);
+        setLongestStreak(mockLongestStreak);
+      } catch (error) {
+        console.error('Error fetching streak data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-    return () => clearTimeout(timer);
+    fetchStreakData();
   }, []);
 
   return {
-    currentStreak: 5,
-    longestStreak: 12,
+    currentStreak,
+    longestStreak,
     isLoading
   };
 };
