@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
@@ -23,13 +24,19 @@ import EstablishmentsPage from '@/pages/EstablishmentsPage';
 import CocktailsPage from '@/pages/CocktailsPage';
 import SocialPage from '@/pages/SocialPage';
 
+// Create wrapper components for routes that need special layout props
+const LandingLayout = () => <Layout forceGuestNavigation={true}><LandingPage /></Layout>;
+
 const AppRoutes: React.FC = () => {
   return (
     <Routes>
+      {/* Landing page with forced guest navigation */}
+      <Route path="/landing" element={<LandingLayout />} />
+      
+      {/* All other routes use standard layout */}
       <Route path="/" element={<Layout />}>
         <Route index element={<Index />} />
         <Route path="explore" element={<ExplorePage />} />
-        <Route path="landing" element={<LandingPage />} />
         <Route path="signup" element={<SignupPage />} />
         <Route path="profile" element={<ProfilePage />} />
         <Route path="settings" element={<SettingsPage />} />
