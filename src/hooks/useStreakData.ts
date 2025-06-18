@@ -11,8 +11,7 @@ export interface StreakDay {
 
 export const useStreakData = () => {
   const { 
-    streakStats, 
-    calculateStreak, 
+    streakData: rewardsData, 
     isLoading: streakRewardsLoading 
   } = useStreakRewards();
   
@@ -49,14 +48,19 @@ export const useStreakData = () => {
     }
   }, [streakRewardsLoading]);
 
-  const currentStreak = streakStats?.currentStreak || 0;
-  const longestStreak = streakStats?.longestStreak || 0;
+  // Use the streak data from useStreakRewards
+  const currentStreak = rewardsData?.currentStreak || 0;
+  const longestStreak = rewardsData?.longestStreak || 0;
 
   return {
     currentStreak,
     longestStreak,
     streakData,
     isLoading: isLoading || streakRewardsLoading,
-    streakStats
+    streakStats: {
+      currentStreak,
+      longestStreak,
+      totalPoints: rewardsData?.totalPoints || 0
+    }
   };
 };

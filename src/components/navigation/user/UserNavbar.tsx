@@ -1,15 +1,12 @@
 
-import React from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Menu, User, Bell, Settings, LogOut, Home } from 'lucide-react';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { useAuth } from '@/contexts/auth/AuthProvider';
 import { useDevAuthBypass } from '@/hooks/useDevAuthBypass';
 import { useDevelopmentMode } from '@/contexts/DevelopmentModeContext';
 import UserProfileDropdown from './UserProfileDropdown';
+import { Menu, X } from 'lucide-react';
 
 interface TabOption {
   value: string;
@@ -28,72 +25,52 @@ const UserNavbar: React.FC<UserNavbarProps> = ({
   tabOptions
 }) => {
   const navigate = useNavigate();
-  const location = useLocation();
-  const { 
-    user: authUser, 
-    isAuthenticated: authIsAuthenticated, 
-    signOut 
-  } = useAuth();
-  
-  const { 
-    user: devUser, 
-    isAuthenticated: devIsAuthenticated, 
-    isUsingDevBypass 
-  } = useDevAuthBypass();
-  
   const { isDevelopment } = useDevelopmentMode();
+  const { userType, isAuthenticated, user } = useDevAuthBypass();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // Use dev auth if bypassing, otherwise use real auth
-  const user = isUsingDevBypass ? devUser : authUser;
-  const isAuthenticated = isUsingDevBypass ? devIsAuthenticated : authIsAuthenticated;
-
-  const handleSignOut = async () => {
-    if (isUsingDevBypass) {
-      // In dev mode, just navigate to landing
-      navigate('/landing');
-    } else {
-      await signOut();
+  const handleLogout = async () => {
+    // In development mode, this would redirect to landing
+    if (isDevelopment) {
       navigate('/landing');
     }
+    // In production, implement actual logout logic
+  };
+
+  // Get username from user object or provide fallback
+  const username = user?.user_metadata?.name || user?.email || 'User';
+
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
   const navItems = [
-    { href: '/explore', label: 'Explore', icon: Home },
+    { href: '/', label: 'Home' },
+    { href: '/explore', label: 'Explore' },
     { href: '/map', label: 'Map' },
-    { href: '/events', label: 'Events' },
-    { href: '/swig-circuits', label: 'Circuits' },
-    { href: '/social', label: 'Social' }
+    { href: '/swig-circuits', label: 'Swig Circuits' },
+    { href: '/events', label: 'Events' }
   ];
 
-  const mobileNavItems = isAuthenticated 
-    ? [
-        { href: '/profile', label: 'Profile', icon: User },
-        { href: '/settings', label: 'Settings', icon: Settings },
-        { href: '/notifications', label: 'Notifications', icon: Bell }
-      ]
-    : [];
-
   return (
-    <nav className="bg-white shadow-sm border-b">
+    <nav className="bg-white dark:bg-gray-900 shadow-sm border-b border-gray-200 dark:border-gray-700">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
-          {/* Logo and Main Nav */}
-          <div className="flex items-center">
-            <Link to="/" className="flex-shrink-0 flex items-center">
-              <span className="text-xl font-bold text-spiritless-pink">Spiritless</span>
+        <div className="flex justify-between items-center h-16">
+          {/* Logo/Brand */}
+          <div className="flex-shrink-0">
+            <Link to="/" className="text-xl font-bold text-primary">
+              Spiritless
             </Link>
-            
-            {/* Desktop Navigation */}
-            <div className="hidden md:ml-6 md:flex md:space-x-8">
+          </div>
+
+          {/* Desktop Navigation */}
+          <div className="hidden md:block">
+            <div className="ml-10 flex items-baseline space-x-4">
               {navItems.map((item) => (
                 <Link
                   key={item.href}
                   to={item.href}
-                  className={`inline-flex items-center px-1 pt-1 text-sm font-medium border-b-2 transition-colors duration-200 ${
-                    location.pathname === item.href
-                      ? 'border-spiritless-pink text-spiritless-pink'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
+                  className="text-gray-500 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
                 >
                   {item.label}
                 </Link>
@@ -101,9 +78,9 @@ const UserNavbar: React.FC<UserNavbarProps> = ({
             </div>
           </div>
 
-          {/* Tabs (if provided) */}
+          {/* Tab Options (if provided) */}
           {tabOptions && handleTabChange && (
-            <div className="flex items-center">
+            <div className="hidden md:block">
               <Tabs value={activeTab} onValueChange={handleTabChange}>
                 <TabsList>
                   {tabOptions.map((option) => (
@@ -116,130 +93,96 @@ const UserNavbar: React.FC<UserNavbarProps> = ({
             </div>
           )}
 
-          {/* Right side */}
-          <div className="flex items-center space-x-4">
-            {/* Development Mode Indicator */}
-            {isDevelopment && isUsingDevBypass && (
-              <Badge variant="secondary" className="text-xs">
-                Dev Mode
-              </Badge>
-            )}
-
-            {/* Desktop Auth Section */}
-            <div className="hidden md:flex md:items-center md:space-x-4">
-              {isAuthenticated ? (
-                <>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => navigate('/notifications')}
-                  >
-                    <Bell className="h-4 w-4" />
-                  </Button>
-                  <UserProfileDropdown />
-                </>
-              ) : (
-                <div className="flex space-x-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => navigate('/login')}
-                  >
+          {/* Desktop Auth Section */}
+          <div className="hidden md:block">
+            {isAuthenticated ? (
+              <UserProfileDropdown
+                username={username}
+                userType={userType || 'individual'}
+                handleLogout={handleLogout}
+                activeTab={activeTab}
+                handleTabChange={handleTabChange}
+                tabOptions={tabOptions}
+              />
+            ) : (
+              <div className="flex items-center space-x-4">
+                <Link to="/login">
+                  <Button variant="ghost" size="sm">
                     Sign In
                   </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => navigate('/signup')}
-                  >
+                </Link>
+                <Link to="/signup">
+                  <Button size="sm">
                     Sign Up
                   </Button>
-                </div>
+                </Link>
+              </div>
+            )}
+          </div>
+
+          {/* Mobile menu button */}
+          <div className="md:hidden">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleMobileMenu}
+              className="p-2"
+            >
+              {isMobileMenuOpen ? (
+                <X className="h-6 w-6" />
+              ) : (
+                <Menu className="h-6 w-6" />
               )}
-            </div>
-
-            {/* Mobile menu */}
-            <div className="md:hidden">
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button variant="ghost" size="sm">
-                    <Menu className="h-5 w-5" />
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="right" className="w-80">
-                  <div className="flex flex-col space-y-4 mt-8">
-                    {/* User Info */}
-                    {isAuthenticated && user && (
-                      <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                        <div className="w-10 h-10 bg-spiritless-pink rounded-full flex items-center justify-center">
-                          <User className="h-5 w-5 text-white" />
-                        </div>
-                        <div>
-                          <p className="font-medium text-sm">
-                            {user.user_metadata?.name || user.email || 'User'}
-                          </p>
-                          <p className="text-xs text-gray-500">{user.email}</p>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Navigation Items */}
-                    <div className="space-y-2">
-                      {navItems.map((item) => (
-                        <Link
-                          key={item.href}
-                          to={item.href}
-                          className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100"
-                        >
-                          {item.icon && <item.icon className="h-5 w-5" />}
-                          <span>{item.label}</span>
-                        </Link>
-                      ))}
-                    </div>
-
-                    {/* Mobile Auth Items */}
-                    {isAuthenticated ? (
-                      <div className="space-y-2 border-t pt-4">
-                        {mobileNavItems.map((item) => (
-                          <Link
-                            key={item.href}
-                            to={item.href}
-                            className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100"
-                          >
-                            <item.icon className="h-5 w-5" />
-                            <span>{item.label}</span>
-                          </Link>
-                        ))}
-                        <button
-                          onClick={handleSignOut}
-                          className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 w-full text-left text-red-600"
-                        >
-                          <LogOut className="h-5 w-5" />
-                          <span>Sign Out</span>
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="space-y-2 border-t pt-4">
-                        <Button
-                          variant="ghost"
-                          className="w-full justify-start"
-                          onClick={() => navigate('/login')}
-                        >
-                          Sign In
-                        </Button>
-                        <Button
-                          className="w-full"
-                          onClick={() => navigate('/signup')}
-                        >
-                          Sign Up
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                </SheetContent>
-              </Sheet>
-            </div>
+            </Button>
           </div>
         </div>
+
+        {/* Mobile Navigation Menu */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden">
+            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+              {navItems.map((item) => (
+                <Link
+                  key={item.href}
+                  to={item.href}
+                  className="text-gray-500 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white block px-3 py-2 rounded-md text-base font-medium transition-colors"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  {item.label}
+                </Link>
+              ))}
+              
+              {/* Mobile Auth Section */}
+              <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                {isAuthenticated ? (
+                  <div className="px-3 py-2">
+                    <UserProfileDropdown
+                      username={username}
+                      userType={userType || 'individual'}
+                      handleLogout={handleLogout}
+                      activeTab={activeTab}
+                      handleTabChange={handleTabChange}
+                      tabOptions={tabOptions}
+                    />
+                  </div>
+                ) : (
+                  <div className="space-y-2 px-3">
+                    <Link to="/login" onClick={() => setIsMobileMenuOpen(false)}>
+                      <Button variant="ghost" size="sm" className="w-full justify-start">
+                        Sign In
+                      </Button>
+                    </Link>
+                    <Link to="/signup" onClick={() => setIsMobileMenuOpen(false)}>
+                      <Button size="sm" className="w-full">
+                        Sign Up
+                      </Button>
+                    </Link>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </nav>
   );
