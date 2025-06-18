@@ -69,64 +69,123 @@ const ExplorePage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header with View Mode Toggle */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Explore</h1>
-          <p className="text-lg text-gray-600 mb-4">Discover new places, drinks, and experiences</p>
-          <div className="flex justify-center">
-            <ViewModeToggle viewMode={viewMode} onViewModeChange={setViewMode} />
+      <div className="max-w-7xl mx-auto space-y-4">
+        {/* Header - Full width */}
+        <div className="bg-blue-500 text-white p-6 rounded-lg text-center">
+          <h1 className="text-4xl font-bold mb-2">Explore</h1>
+          <p className="text-lg mb-4">Discover new places, drinks, and experiences</p>
+          <ViewModeToggle viewMode={viewMode} onViewModeChange={setViewMode} />
+        </div>
+
+        {/* Grid Layout matching the image */}
+        <div className="grid grid-cols-12 gap-4 h-auto">
+          {/* Item 6 - Large green block (spans 12 cols, height ~300px) */}
+          <div className="col-span-12 bg-emerald-500 text-white p-6 rounded-lg min-h-[300px] flex flex-col justify-center">
+            <div className="text-center">
+              <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-2 mb-4">
+                {Array.from({ length: 9 }).map((_, i) => (
+                  <div key={i} className="w-2 h-2 bg-white/30 rounded-full"></div>
+                ))}
+              </div>
+              <h2 className="text-2xl font-bold mb-4">Quick Actions</h2>
+              <QuickActionCards actions={quickActions} />
+            </div>
           </div>
-        </div>
 
-        {/* Stats Section */}
-        {userStats && (
-          <div className="mb-8">
-            <QuickStatsWidget 
-              totalMocktailsTried={userStats.totalMocktailsTried}
-              totalPoints={userStats.totalPoints}
-              currentStreak={userStats.currentStreak}
-            />
+          {/* Item 8 - Large blue block (spans 8 cols) */}
+          <div className="col-span-12 md:col-span-8 bg-blue-500 text-white p-6 rounded-lg min-h-[300px]">
+            <div className="text-center mb-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-2 mb-4">
+                {Array.from({ length: 9 }).map((_, i) => (
+                  <div key={i} className="w-2 h-2 bg-white/30 rounded-full"></div>
+                ))}
+              </div>
+              <h2 className="text-xl font-bold mb-4">Personalized Recommendations</h2>
+            </div>
+            <TabbedRecommendationsWidget recommendations={recommendations} />
           </div>
-        )}
 
-        {/* Quick Actions */}
-        <div className="mb-8">
-          <h2 className="text-2xl font-semibold mb-4">Quick Actions</h2>
-          <QuickActionCards actions={quickActions} />
-        </div>
+          {/* Item 3 - Tall orange block (spans 4 cols) */}
+          <div className="col-span-12 md:col-span-4 bg-orange-300 text-white p-6 rounded-lg min-h-[300px]">
+            <div className="text-center mb-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-2 mb-4">
+                {Array.from({ length: 9 }).map((_, i) => (
+                  <div key={i} className="w-2 h-2 bg-white/30 rounded-full"></div>
+                ))}
+              </div>
+              <h2 className="text-lg font-bold mb-4">Your Stats</h2>
+            </div>
+            {userStats && (
+              <QuickStatsWidget 
+                totalMocktailsTried={userStats.totalMocktailsTried}
+                totalPoints={userStats.totalPoints}
+                currentStreak={userStats.currentStreak}
+              />
+            )}
+          </div>
 
-        {/* Interactive Progress Widgets */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          {/* Your Rewards */}
-          {userStats && (
-            <RewardsHighlightWidget 
-              totalPoints={userStats.totalPoints}
-              currentTier="Silver"
-              nextTier="Gold"
-              progressToNextTier={83}
-            />
-          )}
+          {/* Bottom row with three items */}
+          {/* Item 5 - Purple block */}
+          <div className="col-span-12 md:col-span-4 bg-purple-600 text-white p-6 rounded-lg min-h-[250px]">
+            <div className="text-center mb-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-2 mb-4">
+                {Array.from({ length: 9 }).map((_, i) => (
+                  <div key={i} className="w-2 h-2 bg-white/30 rounded-full"></div>
+                ))}
+              </div>
+              <h2 className="text-lg font-bold mb-4">Your Rewards</h2>
+            </div>
+            {userStats && (
+              <RewardsHighlightWidget 
+                totalPoints={userStats.totalPoints}
+                currentTier="Silver"
+                nextTier="Gold"
+                progressToNextTier={83}
+              />
+            )}
+          </div>
 
-          {/* Streak Motivation */}
-          <StreakMotivationWidget />
-        </div>
+          {/* Item 6 - Brown block */}
+          <div className="col-span-12 md:col-span-4 bg-amber-800 text-white p-6 rounded-lg min-h-[250px]">
+            <div className="text-center mb-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-2 mb-4">
+                {Array.from({ length: 9 }).map((_, i) => (
+                  <div key={i} className="w-2 h-2 bg-white/30 rounded-full"></div>
+                ))}
+              </div>
+              <h2 className="text-lg font-bold mb-4">Streak Motivation</h2>
+            </div>
+            <StreakMotivationWidget />
+          </div>
 
-        {/* Personalized Recommendations with Tabs */}
-        <div className="mb-8">
-          <TabbedRecommendationsWidget recommendations={recommendations} />
-        </div>
+          {/* Item 4 - Green block */}
+          <div className="col-span-12 md:col-span-4 bg-green-600 text-white p-6 rounded-lg min-h-[250px]">
+            <div className="text-center mb-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-2 mb-4">
+                {Array.from({ length: 9 }).map((_, i) => (
+                  <div key={i} className="w-2 h-2 bg-white/30 rounded-full"></div>
+                ))}
+              </div>
+              <h2 className="text-lg font-bold mb-4">Nearby Places</h2>
+            </div>
+            <NearbyEstablishmentsWidget establishments={nearbyEstablishments} />
+          </div>
 
-        {/* Additional Widgets Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Activity Feed */}
-          <ActivityFeedWidget activities={recentActivity} />
-
-          {/* Nearby Establishments */}
-          <NearbyEstablishmentsWidget establishments={nearbyEstablishments} />
-
-          {/* Upcoming Events */}
-          <UpcomingEventsWidget events={upcomingEvents} />
+          {/* Item 7 - Full width orange block */}
+          <div className="col-span-12 bg-orange-500 text-white p-6 rounded-lg min-h-[200px]">
+            <div className="text-center mb-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-2 mb-4">
+                {Array.from({ length: 9 }).map((_, i) => (
+                  <div key={i} className="w-2 h-2 bg-white/30 rounded-full"></div>
+                ))}
+              </div>
+              <h2 className="text-xl font-bold mb-4">Recent Activity & Events</h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <ActivityFeedWidget activities={recentActivity} />
+              <UpcomingEventsWidget events={upcomingEvents} />
+            </div>
+          </div>
         </div>
       </div>
     </div>
