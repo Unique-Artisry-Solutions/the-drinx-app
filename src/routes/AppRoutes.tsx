@@ -24,6 +24,14 @@ import EstablishmentsPage from '@/pages/EstablishmentsPage';
 import CocktailsPage from '@/pages/CocktailsPage';
 import SocialPage from '@/pages/SocialPage';
 
+// Import modular routes
+import { establishmentRoutes } from '@/routes/config/establishmentRoutes';
+import { promoterRoutes } from '@/routes/config/promoterRoutes';
+import { adminRoutes } from '@/routes/config/adminRoutes';
+import { profileRoutes } from '@/routes/config/profileRoutes';
+import { publicRoutes } from '@/routes/config/publicRoutes';
+import { individualRoutes } from '@/routes/config/individualRoutes';
+
 // Create wrapper components for routes that need special layout props
 const LandingLayout = () => <Layout forceGuestNavigation={true}><LandingPage /></Layout>;
 
@@ -33,7 +41,41 @@ const AppRoutes: React.FC = () => {
       {/* Landing page with forced guest navigation */}
       <Route path="/landing" element={<LandingLayout />} />
       
-      {/* All other routes use standard layout */}
+      {/* Public routes - these don't need layout wrapping as they handle it internally */}
+      {publicRoutes.map((route, index) => (
+        <Route key={`public-${index}`} path={route.path} element={route.element} />
+      ))}
+      
+      {/* Admin routes - these have their own protection and layout */}
+      {adminRoutes.map((route, index) => (
+        <Route key={`admin-${index}`} path={route.path} element={route.element}>
+          {route.children?.map((childRoute, childIndex) => (
+            <Route key={`admin-child-${childIndex}`} path={childRoute.path} element={childRoute.element} index={childRoute.index} />
+          ))}
+        </Route>
+      ))}
+      
+      {/* Establishment routes - these have their own protection */}
+      {establishmentRoutes.map((route, index) => (
+        <Route key={`establishment-${index}`} path={route.path} element={route.element} />
+      ))}
+      
+      {/* Promoter routes - these have their own protection */}
+      {promoterRoutes.map((route, index) => (
+        <Route key={`promoter-${index}`} path={route.path} element={route.element} />
+      ))}
+      
+      {/* Individual user routes */}
+      {individualRoutes.map((route, index) => (
+        <Route key={`individual-${index}`} path={route.path} element={route.element} />
+      ))}
+      
+      {/* Profile routes */}
+      {profileRoutes.map((route, index) => (
+        <Route key={`profile-${index}`} path={route.path} element={route.element} />
+      ))}
+      
+      {/* Standard layout routes */}
       <Route path="/" element={<Layout />}>
         <Route index element={<Index />} />
         <Route path="explore" element={<ExplorePage />} />

@@ -1,39 +1,46 @@
 
+import { useState, useEffect } from 'react';
 import { useDevelopmentMode } from '@/contexts/DevelopmentModeContext';
-import { useAuthenticatedUser } from './useAuthenticatedUser';
-import { UserType } from '@/types/navigation/NavigationTypes';
 
-/**
- * Hook that provides auth state with development mode bypass
- * This allows breadcrumbs and navigation to work correctly in dev mode
- */
+export type UserType = 'individual' | 'establishment' | 'promoter' | 'admin' | null;
+
+interface DevAuthBypassState {
+  userType: UserType;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+}
+
 export const useDevAuthBypass = () => {
-  const { isDevelopment, isDevModeActive, devMode } = useDevelopmentMode();
-  const { userType: authUserType, isAuthenticated: authIsAuthenticated, user, isLoading } = useAuthenticatedUser();
+  const { isDevelopment, devMode, isInitialized } = useDevelopmentMode();
+  const [authState, setAuthState] = useState<DevAuthBypassState>({
+    userType: null,
+    isAuthenticated: false,
+    isLoading: true
+  });
 
-  // In development mode with dev mode active, use dev settings
-  if (isDevelopment && isDevModeActive && devMode) {
-    return {
-      userType: devMode as UserType,
-      isAuthenticated: true,
-      isDevelopment,
-      isDevModeActive,
-      user: user || null, // Pass through the actual user if available
-      isUsingDevBypass: true,
-      isLoading: false // When using dev bypass, we're not loading
-    };
-  }
+  useEffect(() => {
+    if (!isInitialized) return;
 
-  // Otherwise use auth state
-  return {
-    userType: authUserType,
-    isAuthenticated: authIsAuthenticated,
-    isDevelopment,
-    isDevModeActive,
-    user: user || null,
-    isUsingDevBypass: false,
-    isLoading: isLoading || false
-  };
+    if (isDevelopment) {
+      // In development mode, use the dev mode setting
+      const userType = devMode;
+      const isAuthenticated = userType !== null;
+      
+      setAuthState({
+        userType,
+        isAuthenticated,
+        isLoading: false
+      });
+    } else {
+      // In production, implement actual auth logic here
+      // For now, default to guest state
+      setAuthState({
+        userType: null,
+        isAuthenticated: false,
+        isLoading: false
+      });
+    }
+  }, [isDevelopment, devMode, isInitialized]);
+
+  return authState;
 };
-
-export default useDevAuthBypass;
