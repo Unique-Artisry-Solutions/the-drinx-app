@@ -1,68 +1,39 @@
 
-import { useState, useEffect } from 'react';
 import { useDevelopmentMode } from '@/contexts/DevelopmentModeContext';
-import { UserType, AuthenticatedUserType } from '@/types/auth';
+import { useAuthenticatedUser } from './useAuthenticatedUser';
+import { UserType } from '@/types/navigation/NavigationTypes';
 
-interface DevAuthBypassState {
-  userType: UserType;
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  isUsingDevBypass: boolean;
-  user: any | null;
-  session: any | null;
-}
-
+/**
+ * Hook that provides auth state with development mode bypass
+ * This allows breadcrumbs and navigation to work correctly in dev mode
+ */
 export const useDevAuthBypass = () => {
-  const { isDevelopment, devMode, isInitialized } = useDevelopmentMode();
-  const [authState, setAuthState] = useState<DevAuthBypassState>({
-    userType: null,
-    isAuthenticated: false,
-    isLoading: true,
+  const { isDevelopment, isDevModeActive, devMode } = useDevelopmentMode();
+  const { userType: authUserType, isAuthenticated: authIsAuthenticated, user, isLoading } = useAuthenticatedUser();
+
+  // In development mode with dev mode active, use dev settings
+  if (isDevelopment && isDevModeActive && devMode) {
+    return {
+      userType: devMode as UserType,
+      isAuthenticated: true,
+      isDevelopment,
+      isDevModeActive,
+      user: user || null, // Pass through the actual user if available
+      isUsingDevBypass: true,
+      isLoading: false // When using dev bypass, we're not loading
+    };
+  }
+
+  // Otherwise use auth state
+  return {
+    userType: authUserType,
+    isAuthenticated: authIsAuthenticated,
+    isDevelopment,
+    isDevModeActive,
+    user: user || null,
     isUsingDevBypass: false,
-    user: null,
-    session: null
-  });
-
-  useEffect(() => {
-    if (!isInitialized) return;
-
-    if (isDevelopment && devMode) {
-      // In development mode with dev mode active, use the dev mode setting
-      const mockUser = {
-        id: `dev-user-${devMode}`,
-        email: `test@${devMode}.com`,
-        user_metadata: {
-          user_type: devMode,
-          name: `Test ${devMode.charAt(0).toUpperCase() + devMode.slice(1)}`
-        }
-      };
-
-      const mockSession = {
-        user: mockUser,
-        access_token: 'dev-token',
-        refresh_token: 'dev-refresh-token'
-      };
-      
-      setAuthState({
-        userType: devMode as AuthenticatedUserType,
-        isAuthenticated: true,
-        isLoading: false,
-        isUsingDevBypass: true,
-        user: mockUser,
-        session: mockSession
-      });
-    } else {
-      // In production or when dev mode is not active
-      setAuthState({
-        userType: null,
-        isAuthenticated: false,
-        isLoading: false,
-        isUsingDevBypass: false,
-        user: null,
-        session: null
-      });
-    }
-  }, [isDevelopment, devMode, isInitialized]);
-
-  return authState;
+    isLoading: isLoading || false
+  };
 };
+
+export default useDevAuthBypass;

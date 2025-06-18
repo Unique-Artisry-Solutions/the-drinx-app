@@ -30,13 +30,11 @@ const ResponsiveLayout: React.FC<ResponsiveLayoutProps> = (props) => {
     window.scrollTo(0, 0);
   }, [location.pathname]);
   
-  console.log('ResponsiveLayout render:', { isDevelopment, isInitialized, location: location.pathname });
-  
   return (
     <div className="w-full min-h-screen">
       {isMobile ? <MobileLayout {...props} /> : <DesktopLayout {...props} />}
       {isDevelopment && isInitialized && (
-        <div className="fixed top-4 right-4 z-[9999] pointer-events-auto">
+        <div className="fixed top-4 right-4 z-[9999]">
           <DevRoleSwitcher />
         </div>
       )}

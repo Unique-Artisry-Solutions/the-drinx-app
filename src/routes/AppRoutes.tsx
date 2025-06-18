@@ -1,105 +1,94 @@
-
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
-import { Layout } from '@/components/Layout';
-import Index from '@/pages/Index';
-import LandingPage from '@/pages/LandingPage';
-import SignupPage from '@/pages/SignupPage';
-import ProfilePage from '@/pages/ProfilePage';
-import SettingsPage from '@/pages/SettingsPage';
-import MapPage from '@/pages/MapPage';
-import CocktailDetail from '@/pages/CocktailDetail';
-import BarCrawlDetail from '@/pages/BarCrawlDetail';
-import SwigCircuitsPage from '@/pages/SwigCircuitsPage';
-import EventsPage from '@/pages/EventsPage';
-import EventDetailPage from '@/pages/EventDetailPage';
-import NotFound from '@/pages/NotFound';
-import MissionPage from '@/pages/MissionPage';
-import VerifyEmail from '@/pages/VerifyEmail';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { adminRoutes } from './config/adminRoutes';
+import { establishmentRoutes } from './config/establishmentRoutes';
+import { promoterRoutes } from './config/promoterRoutes';
+import { profileRoutes } from './config/profileRoutes';
+import { simplifiedPublicRoutes } from './config/simplifiedPublicRoutes';
+import { individualRoutes } from './config/individualRoutes';
+import PageSuspense from '@/components/loading/PageSuspense';
+import { useNavigationTracking } from '@/utils/lazyRouteLoader';
+import { Skeleton } from '@/components/ui/skeleton';
+import { AnimatePresence } from 'framer-motion';
+import { useLocation } from 'react-router-dom';
+
+// Direct imports for commerce and event pages - simplified routing
+import CheckoutPage from '@/pages/CheckoutPage';
 import PurchaseSuccessPage from '@/pages/PurchaseSuccessPage';
-import FinancialManagementPage from '@/pages/FinancialManagementPage';
-import ExplorePage from '@/pages/Explore';
-import CreateRecipePage from '@/pages/CreateRecipePage';
-import EstablishmentsPage from '@/pages/EstablishmentsPage';
-import CocktailsPage from '@/pages/CocktailsPage';
-import SocialPage from '@/pages/SocialPage';
+import EventDetailPage from '@/pages/EventDetailPage';
+import BarCrawlDetail from '@/pages/BarCrawlDetail';
 
-// Import modular routes
-import { establishmentRoutes } from '@/routes/config/establishmentRoutes';
-import { promoterRoutes } from '@/routes/config/promoterRoutes';
-import { adminRoutes } from '@/routes/config/adminRoutes';
-import { profileRoutes } from '@/routes/config/profileRoutes';
-import { publicRoutes } from '@/routes/config/publicRoutes';
-import { individualRoutes } from '@/routes/config/individualRoutes';
+// Keep lazy loading only for scanner page (requires camera permissions)
+const EventScannerPage = React.lazy(() => import('@/pages/events/EventScannerPage'));
 
-// Create wrapper components for routes that need special layout props
-const LandingLayout = () => <Layout forceGuestNavigation={true}><LandingPage /></Layout>;
+const AppRoutes = () => {
+  useNavigationTracking();
+  const location = useLocation();
 
-const AppRoutes: React.FC = () => {
   return (
-    <Routes>
-      {/* Landing page with forced guest navigation */}
-      <Route path="/landing" element={<LandingLayout />} />
-      
-      {/* Public routes - these don't need layout wrapping as they handle it internally */}
-      {publicRoutes.map((route, index) => (
-        <Route key={`public-${index}`} path={route.path} element={route.element} />
-      ))}
-      
-      {/* Admin routes - these have their own protection and layout */}
-      {adminRoutes.map((route, index) => (
-        <Route key={`admin-${index}`} path={route.path} element={route.element}>
-          {route.children?.map((childRoute, childIndex) => (
-            <Route key={`admin-child-${childIndex}`} path={childRoute.path} element={childRoute.element} index={childRoute.index} />
+    <PageSuspense>
+      <AnimatePresence mode="wait">
+        <Routes location={location} key={location.pathname}>
+          {/* Simplified Public Routes - No lazy loading */}
+          {simplifiedPublicRoutes.map((route) => (
+            <Route key={route.path} path={route.path} element={route.element} />
           ))}
-        </Route>
-      ))}
-      
-      {/* Establishment routes - these have their own protection */}
-      {establishmentRoutes.map((route, index) => (
-        <Route key={`establishment-${index}`} path={route.path} element={route.element} />
-      ))}
-      
-      {/* Promoter routes - these have their own protection */}
-      {promoterRoutes.map((route, index) => (
-        <Route key={`promoter-${index}`} path={route.path} element={route.element} />
-      ))}
-      
-      {/* Individual user routes */}
-      {individualRoutes.map((route, index) => (
-        <Route key={`individual-${index}`} path={route.path} element={route.element} />
-      ))}
-      
-      {/* Profile routes */}
-      {profileRoutes.map((route, index) => (
-        <Route key={`profile-${index}`} path={route.path} element={route.element} />
-      ))}
-      
-      {/* Standard layout routes */}
-      <Route path="/" element={<Layout />}>
-        <Route index element={<Index />} />
-        <Route path="explore" element={<ExplorePage />} />
-        <Route path="signup" element={<SignupPage />} />
-        <Route path="profile" element={<ProfilePage />} />
-        <Route path="settings" element={<SettingsPage />} />
-        <Route path="map" element={<MapPage />} />
-        <Route path="cocktails/:id" element={<CocktailDetail />} />
-        <Route path="bar-crawls/:id" element={<BarCrawlDetail />} />
-        <Route path="swig-circuits" element={<SwigCircuitsPage />} />
-        <Route path="events" element={<EventsPage />} />
-        <Route path="events/:id" element={<EventDetailPage />} />
-        <Route path="mission" element={<MissionPage />} />
-        <Route path="verify-email" element={<VerifyEmail />} />
-        <Route path="purchase-success" element={<PurchaseSuccessPage />} />
-        <Route path="financial-management" element={<FinancialManagementPage />} />
-        <Route path="create-recipe" element={<CreateRecipePage />} />
-        <Route path="establishments" element={<EstablishmentsPage />} />
-        <Route path="cocktails" element={<CocktailsPage />} />
-        <Route path="social" element={<SocialPage />} />
-        
-        <Route path="*" element={<NotFound />} />
-      </Route>
-    </Routes>
+
+          {/* Simplified Individual User Routes - Direct rendering */}
+          {individualRoutes.map((route) => (
+            <Route key={route.path} path={route.path} element={route.element} />
+          ))}
+
+          {/* Simplified Commerce Routes - Direct rendering */}
+          <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/purchase-success" element={<PurchaseSuccessPage />} />
+
+          {/* Simplified Event Routes - Direct rendering */}
+          <Route path="/event/:id" element={<EventDetailPage />} />
+          <Route path="/bar-crawl/:id" element={<BarCrawlDetail />} />
+
+          {/* Scanner route - Keep lazy loading for camera permissions */}
+          <Route 
+            path="/events/scan/:eventId/:token" 
+            element={
+              <PageSuspense fallback={<Skeleton className="h-screen w-full" />}>
+                <EventScannerPage />
+              </PageSuspense>
+            }
+          />
+
+          {/* Admin Routes - Keep complex structure */}
+          {adminRoutes.map((route, index) => (
+            <Route key={route.path} path={route.path} element={route.element}>
+              {route.children && route.children.map((childRoute, childIndex) => (
+                <Route 
+                  key={childRoute.path || 'index'} 
+                  path={childRoute.path} 
+                  index={childRoute.index}
+                  element={childRoute.element} 
+                />
+              ))}
+            </Route>
+          ))}
+
+          {/* Other Protected Routes - Keep existing structure */}
+          {establishmentRoutes.map((route) => (
+            <Route key={route.path} path={route.path} element={route.element} />
+          ))}
+
+          {promoterRoutes.map((route) => (
+            <Route key={route.path} path={route.path} element={route.element} />
+          ))}
+
+          {profileRoutes.map((route) => (
+            <Route key={route.path} path={route.path} element={route.element} />
+          ))}
+
+          {/* Fallback */}
+          <Route path="*" element={<Navigate to="/404" replace />} />
+        </Routes>
+      </AnimatePresence>
+    </PageSuspense>
   );
 };
 

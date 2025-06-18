@@ -51,7 +51,6 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
       location.pathname,
       forceGuestNavigation
     );
-    console.log('MobileLayout navigation state update:', navState);
     setEffectiveNavState(navState);
   }, [userType, isAuthenticated, location.pathname, forceGuestNavigation]);
 
@@ -72,7 +71,6 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
   };
 
   const renderNavigation = () => {
-    console.log('Mobile rendering navigation with type:', effectiveNavState.navigationType);
     switch (effectiveNavState.navigationType) {
       case NavigationType.ADMIN:
         return <AdminTopNavigation />;

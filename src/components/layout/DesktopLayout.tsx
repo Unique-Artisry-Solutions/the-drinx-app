@@ -45,7 +45,6 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
       location.pathname,
       forceGuestNavigation
     );
-    console.log('DesktopLayout navigation state update:', navState);
     setEffectiveNavState(navState);
   }, [userType, isAuthenticated, location.pathname, forceGuestNavigation]);
 
@@ -57,7 +56,6 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
   };
 
   const renderNavigation = () => {
-    console.log('Rendering navigation with type:', effectiveNavState.navigationType);
     switch (effectiveNavState.navigationType) {
       case NavigationType.ADMIN:
         return <AdminTopNavigation />;
