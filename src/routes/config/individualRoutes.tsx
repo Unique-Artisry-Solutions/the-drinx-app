@@ -12,10 +12,10 @@ import PromoterDetailsPage from '@/pages/promoter/PromoterDetailsPage';
 // Proper auth check component using real auth context
 const AuthGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { state } = useAuth();
-  const { isLoading, isAuthenticated, navigationReady } = state;
+  const { isLoading, isAuthenticated } = state;
   
   // Show loading while auth state is being determined
-  if (isLoading || !navigationReady) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
