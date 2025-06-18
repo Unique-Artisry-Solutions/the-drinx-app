@@ -1,153 +1,125 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import Layout from '@/components/Layout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MapPin, Grid, List } from 'lucide-react';
 import { usePersonalizedData } from '@/hooks/usePersonalizedData';
-import { useIsMobile } from '@/hooks/use-mobile';
-
-// Import widgets
+import { usePersonalizedRecommendations } from '@/hooks/usePersonalizedRecommendations';
 import { QuickStatsWidget } from '@/components/explore/personalized/QuickStatsWidget';
-import { RecommendationsWidget } from '@/components/explore/personalized/RecommendationsWidget';
+import { RewardsHighlightWidget } from '@/components/explore/personalized/RewardsHighlightWidget';
 import { ActivityFeedWidget } from '@/components/explore/personalized/ActivityFeedWidget';
 import { QuickActionCards } from '@/components/explore/personalized/QuickActionCards';
-import { RewardsHighlightWidget } from '@/components/explore/personalized/RewardsHighlightWidget';
-import StreakMotivationWidget from '@/components/explore/personalized/StreakMotivationWidget';
 import { NearbyEstablishmentsWidget } from '@/components/explore/personalized/NearbyEstablishmentsWidget';
 import { UpcomingEventsWidget } from '@/components/explore/personalized/UpcomingEventsWidget';
+import StreakMotivationWidget from '@/components/explore/personalized/StreakMotivationWidget';
+import WidgetErrorBoundary from '@/components/explore/WidgetErrorBoundary';
 
 const Explore: React.FC = () => {
-  const [viewMode, setViewMode] = useState<'map' | 'list' | 'grid'>('grid');
-  const isMobile = useIsMobile();
   const {
     loading,
+    isAuthenticated,
     userStats,
     recentActivity,
     recommendations,
     quickActions,
     nearbyEstablishments,
-    upcomingEvents,
-    isAuthenticated
+    upcomingEvents
   } = usePersonalizedData();
+
+  const {
+    recommendations: personalizedRecs,
+    isLoading: recsLoading
+  } = usePersonalizedRecommendations();
 
   if (loading) {
     return (
       <Layout>
-        <div className="container mx-auto px-4 py-8">
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="h-64 bg-muted rounded-lg animate-pulse" />
-            ))}
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="w-12 h-12 border-4 border-spiritless-pink border-t-transparent rounded-full animate-spin mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading your personalized experience...</p>
           </div>
         </div>
       </Layout>
     );
   }
 
-  // Transform Activity[] to RealtimeActivity[] by adding required properties
-  const transformedActivity = recentActivity.map(activity => ({
-    ...activity,
-    user: typeof activity.user === 'string' 
-      ? { id: activity.user, name: activity.user } 
-      : activity.user || { id: 'unknown', name: 'Unknown User' },
-    likes: 0,
-    isLiked: false
-  }));
+  if (!isAuthenticated) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">Welcome to Spiritless</h2>
+            <p className="text-gray-600 mb-6">Please sign in to access your personalized explore page</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">Explore</h1>
-            <p className="text-muted-foreground">
-              Discover new places, drinks, and experiences
-            </p>
-          </div>
-          
-          <div className="flex items-center gap-2 mt-4 sm:mt-0">
-            <Button
-              variant={viewMode === 'map' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setViewMode('map')}
-            >
-              <MapPin className="h-4 w-4 mr-2" />
-              Map
-            </Button>
-            <Button
-              variant={viewMode === 'list' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setViewMode('list')}
-            >
-              <List className="h-4 w-4 mr-2" />
-              List
-            </Button>
-            <Button
-              variant={viewMode === 'grid' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setViewMode('grid')}
-            >
-              <Grid className="h-4 w-4 mr-2" />
-              Grid
-            </Button>
-          </div>
+      <div className="container mx-auto px-4 py-6 space-y-6">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Explore</h1>
+          <p className="text-gray-600">Discover your personalized sober social experience</p>
         </div>
 
-        {/* Mobile Layout */}
-        {isMobile ? (
-          <div className="space-y-6">
-            {isAuthenticated && userStats && (
-              <QuickStatsWidget 
-                totalMocktailsTried={userStats.totalMocktailsTried || 0}
-                totalPoints={userStats.totalPoints || 0}
-                currentStreak={userStats.currentStreak || 0}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Column - Main Content */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Quick Stats */}
+            <WidgetErrorBoundary widgetName="Quick Stats">
+              <QuickStatsWidget
+                totalMocktailsTried={userStats.totalMocktailsTried}
+                totalPoints={userStats.totalPoints}
+                currentStreak={userStats.currentStreak}
               />
-            )}
-            <QuickActionCards actions={quickActions} />
-            <RecommendationsWidget recommendations={recommendations} />
-            <ActivityFeedWidget activities={transformedActivity} isLoading={loading} />
-            {isAuthenticated && (
-              <>
-                <RewardsHighlightWidget />
-                <StreakMotivationWidget />
-              </>
-            )}
-            <NearbyEstablishmentsWidget establishments={nearbyEstablishments} />
-            <UpcomingEventsWidget events={upcomingEvents} />
-          </div>
-        ) : (
-          /* Desktop Layout */
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            {/* Left Side - Main Content (3 columns) */}
-            <div className="lg:col-span-3 space-y-6">
-              {isAuthenticated && userStats && (
-                <QuickStatsWidget 
-                  totalMocktailsTried={userStats.totalMocktailsTried || 0}
-                  totalPoints={userStats.totalPoints || 0}
-                  currentStreak={userStats.currentStreak || 0}
-                />
-              )}
-              <QuickActionCards actions={quickActions} />
-              <RecommendationsWidget recommendations={recommendations} />
-              <ActivityFeedWidget activities={transformedActivity} isLoading={loading} />
-            </div>
+            </WidgetErrorBoundary>
 
-            {/* Right Side - Sidebar (1 column) */}
-            <div className="space-y-6">
-              {isAuthenticated && (
-                <>
-                  <RewardsHighlightWidget />
-                  <StreakMotivationWidget />
-                </>
-              )}
-              <NearbyEstablishmentsWidget establishments={nearbyEstablishments} />
-              <UpcomingEventsWidget events={upcomingEvents} />
-            </div>
+            {/* Quick Actions */}
+            <WidgetErrorBoundary widgetName="Quick Actions">
+              <div>
+                <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
+                <QuickActionCards actions={quickActions} />
+              </div>
+            </WidgetErrorBoundary>
+
+            {/* Activity Feed */}
+            <WidgetErrorBoundary widgetName="Activity Feed">
+              <div>
+                <h2 className="text-xl font-semibold mb-4">Recent Activity</h2>
+                <ActivityFeedWidget activities={recentActivity} />
+              </div>
+            </WidgetErrorBoundary>
           </div>
-        )}
+
+          {/* Right Column - Sidebar */}
+          <div className="space-y-6">
+            {/* Streak Motivation */}
+            <WidgetErrorBoundary widgetName="Streak Motivation">
+              <StreakMotivationWidget />
+            </WidgetErrorBoundary>
+
+            {/* Rewards Highlight */}
+            <WidgetErrorBoundary widgetName="Rewards">
+              <RewardsHighlightWidget
+                totalPoints={userStats.totalPoints}
+                currentTier="Silver"
+                nextTier="Gold"
+                progressToNextTier={83}
+              />
+            </WidgetErrorBoundary>
+
+            {/* Nearby Establishments */}
+            <WidgetErrorBoundary widgetName="Nearby Places">
+              <NearbyEstablishmentsWidget establishments={nearbyEstablishments} />
+            </WidgetErrorBoundary>
+
+            {/* Upcoming Events */}
+            <WidgetErrorBoundary widgetName="Upcoming Events">
+              <UpcomingEventsWidget events={upcomingEvents} />
+            </WidgetErrorBoundary>
+          </div>
+        </div>
       </div>
     </Layout>
   );
