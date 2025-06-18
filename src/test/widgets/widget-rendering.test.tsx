@@ -9,9 +9,9 @@ import { ActivityFeedWidget } from '@/components/explore/personalized/ActivityFe
 // Mock the hooks
 vi.mock('@/hooks/usePersonalizedData', () => ({
   usePersonalizedData: vi.fn(() => ({
-    loading: false,
+    isLoading: false,
     isAuthenticated: true,
-    userStats: {
+    data: {
       totalMocktailsTried: 12,
       totalPoints: 1250,
       currentStreak: 5
@@ -31,6 +31,7 @@ describe('Required Widgets Rendering', () => {
         totalMocktailsTried={12}
         totalPoints={1250}
         currentStreak={5}
+        isAuthenticated={true}
       />
     );
     expect(container).toBeInTheDocument();
