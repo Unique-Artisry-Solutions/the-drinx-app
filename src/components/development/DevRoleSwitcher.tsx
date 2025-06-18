@@ -25,13 +25,7 @@ const DevRoleSwitcher: React.FC = () => {
   const currentRole = roleOptions.find(role => role.type === devMode);
 
   const toggleExpanded = () => {
-    if (!isExpanded && !isDevModeActive) {
-      // If expanding and not in dev mode, automatically switch to first role
-      setIsExpanded(true);
-      switchToUserType('individual');
-    } else {
-      setIsExpanded(!isExpanded);
-    }
+    setIsExpanded(!isExpanded);
   };
 
   const getPositionClasses = () => {

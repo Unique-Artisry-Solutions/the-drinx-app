@@ -46,6 +46,19 @@ export const DevelopmentModeProvider: React.FC<{ children: React.ReactNode }> = 
     setIsInitialized(true);
   }, []);
 
+  // Clear dev mode when on landing page or related routes
+  useEffect(() => {
+    if (!isInitialized || !isDevelopment) return;
+    
+    const landingRoutes = ['/', '/landing'];
+    if (landingRoutes.includes(location.pathname)) {
+      if (devMode !== null) {
+        setDevMode(null);
+        localStorage.removeItem('dev_user_type');
+      }
+    }
+  }, [location.pathname, isInitialized, isDevelopment, devMode]);
+
   // Handle URL dev mode parameters
   useEffect(() => {
     if (!isInitialized || !isDevelopment) return;
@@ -74,7 +87,7 @@ export const DevelopmentModeProvider: React.FC<{ children: React.ReactNode }> = 
         targetPath = '/establishment/dashboard';
         break;
       case 'promoter':
-        targetPath = '/promoter'; // Changed from '/promoter/dashboard' to '/promoter'
+        targetPath = '/promoter';
         break;
       case 'admin':
         targetPath = '/admin/system-breakdown';
