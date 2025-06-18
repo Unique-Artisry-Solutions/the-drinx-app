@@ -1,33 +1,26 @@
 
 import React from 'react';
-import { Button } from '@/components/ui/button';
 import { ChevronDown } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { profileDropdownStyles } from './profileDropdownStyles';
 
 interface ProfileDropdownButtonProps {
   isDarkTheme: boolean;
-  isPromoter?: boolean;
+  isPromoter: boolean;
 }
 
-const ProfileDropdownButton: React.FC<ProfileDropdownButtonProps> = ({ 
+const ProfileDropdownButton: React.FC<ProfileDropdownButtonProps> = ({
   isDarkTheme,
-  isPromoter = false
+  isPromoter
 }) => {
-  const baseClasses = profileDropdownStyles.dropdownButton(isDarkTheme);
-  const promoterClasses = isPromoter ? 'border-purple-300 hover:border-purple-400' : '';
-
   return (
-    <Button 
-      variant="outline" 
-      size="icon" 
-      className={cn(baseClasses, promoterClasses, "rounded-full")}
-      aria-label="Toggle profile menu"
-      type="button"
-    >
-      <ChevronDown className={`h-4 w-4 ${isPromoter ? 'text-purple-600' : ''}`} />
-      <span className="sr-only">Toggle profile menu</span>
-    </Button>
+    <ChevronDown 
+      className={`h-3 w-3 ${
+        isPromoter 
+          ? 'text-purple-600' 
+          : isDarkTheme 
+            ? 'text-gray-300' 
+            : 'text-gray-600'
+      }`} 
+    />
   );
 };
 

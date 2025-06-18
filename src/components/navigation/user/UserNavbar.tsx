@@ -3,10 +3,11 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Home, Menu, X } from 'lucide-react';
 import { useDevAuthBypass } from '@/hooks/useDevAuthBypass';
 import { useDevelopmentMode } from '@/contexts/DevelopmentModeContext';
 import UserProfileDropdown from './UserProfileDropdown';
-import { Menu, X } from 'lucide-react';
+import { UserType, toStandardUserType, isStandardUserType } from '@/types/auth';
 
 interface TabOption {
   value: string;
@@ -25,160 +26,164 @@ const UserNavbar: React.FC<UserNavbarProps> = ({
   tabOptions
 }) => {
   const navigate = useNavigate();
-  const { isDevelopment } = useDevelopmentMode();
-  const { userType, isAuthenticated, user } = useDevAuthBypass();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { isDevelopment, disableDevMode } = useDevelopmentMode();
+  
+  const { 
+    userType, 
+    isAuthenticated, 
+    user, 
+    isUsingDevBypass 
+  } = useDevAuthBypass();
 
   const handleLogout = async () => {
-    // In development mode, this would redirect to landing
-    if (isDevelopment) {
+    if (isDevelopment && isUsingDevBypass) {
+      disableDevMode();
+      navigate('/landing');
+    } else {
+      // Handle real logout when implemented
+      console.log('Real logout not implemented yet');
       navigate('/landing');
     }
-    // In production, implement actual logout logic
   };
 
-  // Get username from user object or provide fallback
-  const username = user?.user_metadata?.name || user?.email || 'User';
+  const getUsernameFromUser = (user: any): string => {
+    if (!user) return 'User';
+    
+    return user.user_metadata?.username || 
+           user.user_metadata?.name || 
+           user.user_metadata?.display_name ||
+           user.email?.split('@')[0] ||
+           'User';
+  };
+
+  const username = getUsernameFromUser(user);
+
+  // Convert admin user type to individual for components that don't handle admin
+  const profileDropdownUserType = isStandardUserType(userType) 
+    ? userType 
+    : toStandardUserType(userType);
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
-  const navItems = [
-    { href: '/', label: 'Home' },
-    { href: '/explore', label: 'Explore' },
-    { href: '/map', label: 'Map' },
-    { href: '/swig-circuits', label: 'Swig Circuits' },
-    { href: '/events', label: 'Events' }
-  ];
+  if (!isAuthenticated) {
+    return (
+      <nav className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between h-16">
+            <div className="flex items-center">
+              <Link to="/landing" className="flex items-center">
+                <Home className="h-8 w-8 text-spiritless-pink" />
+                <span className="ml-2 text-xl font-bold text-gray-900">Spiritless</span>
+              </Link>
+            </div>
+            <div className="flex items-center space-x-4">
+              <Button variant="outline" asChild>
+                <Link to="/login">Login</Link>
+              </Button>
+              <Button asChild>
+                <Link to="/signup">Sign Up</Link>
+              </Button>
+            </div>
+          </div>
+        </div>
+      </nav>
+    );
+  }
 
   return (
-    <nav className="bg-white dark:bg-gray-900 shadow-sm border-b border-gray-200 dark:border-gray-700">
+    <nav className="bg-white shadow-sm border-b sticky top-0 z-40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          {/* Logo/Brand */}
-          <div className="flex-shrink-0">
-            <Link to="/" className="text-xl font-bold text-primary">
-              Spiritless
+        <div className="flex justify-between h-16">
+          {/* Logo */}
+          <div className="flex items-center">
+            <Link to="/" className="flex items-center">
+              <Home className="h-8 w-8 text-spiritless-pink" />
+              <span className="ml-2 text-xl font-bold text-gray-900">Spiritless</span>
             </Link>
           </div>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:block">
-            <div className="ml-10 flex items-baseline space-x-4">
-              {navItems.map((item) => (
-                <Link
-                  key={item.href}
-                  to={item.href}
-                  className="text-gray-500 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
-                >
-                  {item.label}
-                </Link>
-              ))}
-            </div>
-          </div>
-
-          {/* Tab Options (if provided) */}
-          {tabOptions && handleTabChange && (
-            <div className="hidden md:block">
+          <div className="hidden md:flex items-center space-x-8">
+            {tabOptions && tabOptions.length > 0 && (
               <Tabs value={activeTab} onValueChange={handleTabChange}>
-                <TabsList>
-                  {tabOptions.map((option) => (
-                    <TabsTrigger key={option.value} value={option.value}>
-                      {option.label}
+                <TabsList className="grid w-full grid-cols-4">
+                  {tabOptions.map((tab) => (
+                    <TabsTrigger key={tab.value} value={tab.value}>
+                      {tab.label}
                     </TabsTrigger>
                   ))}
                 </TabsList>
               </Tabs>
-            </div>
-          )}
-
-          {/* Desktop Auth Section */}
-          <div className="hidden md:block">
-            {isAuthenticated ? (
-              <UserProfileDropdown
-                username={username}
-                userType={userType || 'individual'}
-                handleLogout={handleLogout}
-                activeTab={activeTab}
-                handleTabChange={handleTabChange}
-                tabOptions={tabOptions}
-              />
-            ) : (
-              <div className="flex items-center space-x-4">
-                <Link to="/login">
-                  <Button variant="ghost" size="sm">
-                    Sign In
-                  </Button>
-                </Link>
-                <Link to="/signup">
-                  <Button size="sm">
-                    Sign Up
-                  </Button>
-                </Link>
-              </div>
             )}
           </div>
 
+          {/* Desktop Profile Dropdown */}
+          <div className="hidden md:flex items-center">
+            <UserProfileDropdown
+              username={username}
+              userType={profileDropdownUserType}
+              handleLogout={handleLogout}
+              activeTab={activeTab}
+              handleTabChange={handleTabChange}
+              tabOptions={tabOptions}
+            />
+          </div>
+
           {/* Mobile menu button */}
-          <div className="md:hidden">
+          <div className="md:hidden flex items-center">
             <Button
               variant="ghost"
               size="sm"
               onClick={toggleMobileMenu}
               className="p-2"
             >
-              {isMobileMenuOpen ? (
-                <X className="h-6 w-6" />
-              ) : (
-                <Menu className="h-6 w-6" />
-              )}
+              {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </Button>
           </div>
         </div>
 
-        {/* Mobile Navigation Menu */}
+        {/* Mobile Navigation */}
         {isMobileMenuOpen && (
           <div className="md:hidden">
-            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
-              {navItems.map((item) => (
-                <Link
-                  key={item.href}
-                  to={item.href}
-                  className="text-gray-500 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white block px-3 py-2 rounded-md text-base font-medium transition-colors"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  {item.label}
-                </Link>
-              ))}
+            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white border-t">
+              {tabOptions && tabOptions.length > 0 && (
+                <div className="space-y-1">
+                  {tabOptions.map((tab) => (
+                    <button
+                      key={tab.value}
+                      onClick={() => {
+                        handleTabChange?.(tab.value);
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className={`block px-3 py-2 text-base font-medium w-full text-left ${
+                        activeTab === tab.value
+                          ? 'text-spiritless-pink bg-spiritless-pink/10'
+                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+              )}
               
-              {/* Mobile Auth Section */}
-              <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-                {isAuthenticated ? (
-                  <div className="px-3 py-2">
-                    <UserProfileDropdown
-                      username={username}
-                      userType={userType || 'individual'}
-                      handleLogout={handleLogout}
-                      activeTab={activeTab}
-                      handleTabChange={handleTabChange}
-                      tabOptions={tabOptions}
-                    />
-                  </div>
-                ) : (
-                  <div className="space-y-2 px-3">
-                    <Link to="/login" onClick={() => setIsMobileMenuOpen(false)}>
-                      <Button variant="ghost" size="sm" className="w-full justify-start">
-                        Sign In
-                      </Button>
-                    </Link>
-                    <Link to="/signup" onClick={() => setIsMobileMenuOpen(false)}>
-                      <Button size="sm" className="w-full">
-                        Sign Up
-                      </Button>
-                    </Link>
-                  </div>
-                )}
+              <div className="border-t pt-3 mt-3">
+                <div className="flex items-center justify-between px-3 py-2">
+                  <span className="text-sm font-medium text-gray-700">
+                    {username}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleLogout}
+                    className="text-xs"
+                  >
+                    Logout
+                  </Button>
+                </div>
               </div>
             </div>
           </div>

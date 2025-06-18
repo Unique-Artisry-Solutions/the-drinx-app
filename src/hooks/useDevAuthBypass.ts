@@ -1,8 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { useDevelopmentMode } from '@/contexts/DevelopmentModeContext';
-
-export type UserType = 'individual' | 'establishment' | 'promoter' | 'admin' | null;
+import { UserType, AuthenticatedUserType } from '@/types/auth';
 
 interface DevAuthBypassState {
   userType: UserType;
@@ -45,7 +44,7 @@ export const useDevAuthBypass = () => {
       };
       
       setAuthState({
-        userType: devMode,
+        userType: devMode as AuthenticatedUserType,
         isAuthenticated: true,
         isLoading: false,
         isUsingDevBypass: true,
