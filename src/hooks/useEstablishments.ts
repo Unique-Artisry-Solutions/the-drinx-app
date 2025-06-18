@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabaseClient } from '@/lib/supabaseClient';
-import { calculateDistance } from '@/lib/utils';
+import { calculateDistance } from '@/utils/consolidated';
 import { Establishment } from '@/types/DatabaseTypes';
 
 type FetchEstablishmentsOptions = {
