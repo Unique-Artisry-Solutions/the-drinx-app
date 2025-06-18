@@ -1,156 +1,161 @@
 
 import React from 'react';
-import { Layout } from '@/components/Layout';
+import ResponsiveLayout from '@/components/layout/ResponsiveLayout';
 import { usePersonalizedData } from '@/hooks/usePersonalizedData';
-import { usePersonalizedRecommendations } from '@/hooks/usePersonalizedRecommendations';
-import { QuickStatsWidget } from '@/components/explore/personalized/QuickStatsWidget';
-import { RewardsHighlightWidget } from '@/components/explore/personalized/RewardsHighlightWidget';
-import { ActivityFeedWidget } from '@/components/explore/personalized/ActivityFeedWidget';
-import { PersonalizedRecommendations } from '@/components/explore/personalized/PersonalizedRecommendations';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import QuickStatsWidget from '@/components/explore/personalized/QuickStatsWidget';
+import PersonalizedRecommendations from '@/components/explore/personalized/PersonalizedRecommendations';
 import { Button } from '@/components/ui/button';
-import { LogIn, UserPlus } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { MapPin, User, Star } from 'lucide-react';
 
 const Explore: React.FC = () => {
   const { userStats, recentActivity, loading, isAuthenticated, error } = usePersonalizedData();
-  const { recommendations, isLoading: recommendationsLoading } = usePersonalizedRecommendations();
 
-  // Show loading state while data is being fetched
-  if (loading) {
-    return (
-      <Layout>
-        <div className="container mx-auto px-4 py-8">
-          <div className="flex items-center justify-center min-h-[400px]">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-          </div>
-        </div>
-      </Layout>
-    );
-  }
-
-  // Show error state if data fetching failed
+  // Handle error state
   if (error) {
     return (
-      <Layout>
+      <ResponsiveLayout>
         <div className="container mx-auto px-4 py-8">
-          <Card className="max-w-md mx-auto">
-            <CardHeader>
-              <CardTitle className="text-destructive">Error Loading Data</CardTitle>
-              <CardDescription>{error}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button onClick={() => window.location.reload()}>
-                Try Again
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      </Layout>
-    );
-  }
-
-  // Show fallback content for unauthenticated users
-  if (!isAuthenticated) {
-    return (
-      <Layout>
-        <div className="container mx-auto px-4 py-8">
-          <div className="max-w-2xl mx-auto text-center">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-2xl">Welcome to Explore</CardTitle>
-                <CardDescription>
-                  Discover personalized mocktail recommendations, track your progress, and connect with the community.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="p-4 bg-muted rounded-lg">
-                    <h3 className="font-semibold mb-2">Track Your Journey</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Keep track of mocktails you've tried and establishments you've visited.
-                    </p>
-                  </div>
-                  <div className="p-4 bg-muted rounded-lg">
-                    <h3 className="font-semibold mb-2">Get Recommendations</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Receive personalized suggestions based on your preferences and history.
-                    </p>
-                  </div>
-                  <div className="p-4 bg-muted rounded-lg">
-                    <h3 className="font-semibold mb-2">Earn Rewards</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Collect points and unlock achievements as you explore.
-                    </p>
-                  </div>
-                  <div className="p-4 bg-muted rounded-lg">
-                    <h3 className="font-semibold mb-2">Connect & Share</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Share your experiences and connect with other mocktail enthusiasts.
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                  <Button asChild>
-                    <Link to="/login">
-                      <LogIn className="h-4 w-4 mr-2" />
-                      Sign In
-                    </Link>
-                  </Button>
-                  <Button variant="outline" asChild>
-                    <Link to="/signup">
-                      <UserPlus className="h-4 w-4 mr-2" />
-                      Create Account
-                    </Link>
-                  </Button>
-                </div>
-                
-                <p className="text-sm text-muted-foreground">
-                  Already have an account? <Link to="/login" className="text-primary hover:underline">Sign in here</Link>
-                </p>
-              </CardContent>
-            </Card>
+          <div className="text-center">
+            <p className="text-red-600">Error loading data: {error}</p>
+            <Button 
+              onClick={() => window.location.reload()}
+              className="mt-4"
+            >
+              Retry
+            </Button>
           </div>
         </div>
-      </Layout>
+      </ResponsiveLayout>
     );
   }
 
-  // Show authenticated user content
+  // Show loading state
+  if (loading) {
+    return (
+      <ResponsiveLayout>
+        <div className="container mx-auto px-4 py-8">
+          <div className="space-y-6">
+            <div className="animate-pulse">
+              <div className="h-8 bg-gray-200 rounded w-1/3 mb-4"></div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="h-32 bg-gray-200 rounded"></div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </ResponsiveLayout>
+    );
+  }
+
+  // Render appropriate content based on authentication status
   return (
-    <Layout>
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Explore</h1>
-          <p className="text-muted-foreground">
-            Discover new mocktails, track your progress, and get personalized recommendations.
-          </p>
-        </div>
+    <ResponsiveLayout>
+      <div className="container mx-auto px-4 py-8 space-y-6">
+        {isAuthenticated ? (
+          // Authenticated user dashboard
+          <>
+            <div className="flex items-center justify-between">
+              <h1 className="text-3xl font-bold">Welcome back!</h1>
+              <div className="text-sm text-muted-foreground">
+                Your personalized mocktail journey
+              </div>
+            </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          <QuickStatsWidget
-            totalMocktailsTried={userStats.totalMocktailsTried}
-            totalPoints={userStats.totalPoints}
-            currentStreak={userStats.currentStreak}
-          />
-          
-          <RewardsHighlightWidget
-            totalPoints={userStats.totalPoints}
-            currentTier="Silver"
-            nextTier="Gold" 
-            progressToNextTier={83}
-          />
-          
-          <ActivityFeedWidget activities={recentActivity} />
-        </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <QuickStatsWidget 
+                userStats={userStats}
+                loading={loading}
+                isAuthenticated={isAuthenticated}
+              />
+              
+              <PersonalizedRecommendations 
+                isAuthenticated={isAuthenticated}
+                loading={loading}
+              />
+            </div>
 
-        <PersonalizedRecommendations 
-          recommendations={recommendations}
-          isLoading={recommendationsLoading}
-        />
+            {recentActivity.length > 0 && (
+              <div className="mt-8">
+                <h2 className="text-xl font-semibold mb-4">Recent Activity</h2>
+                <div className="space-y-3">
+                  {recentActivity.slice(0, 3).map((activity) => (
+                    <div key={activity.id} className="border rounded-lg p-4 hover:bg-accent/50 transition-colors">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h3 className="font-medium">{activity.title}</h3>
+                          <p className="text-sm text-muted-foreground mt-1">{activity.description}</p>
+                        </div>
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(activity.timestamp).toLocaleDateString()}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        ) : (
+          // Guest/unauthenticated user content
+          <>
+            <div className="text-center space-y-6">
+              <div>
+                <h1 className="text-4xl font-bold mb-4">Discover Amazing Mocktails</h1>
+                <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+                  Explore the world's best alcohol-free cocktails, find nearby establishments, 
+                  and join a community of mocktail enthusiasts.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+                <div className="text-center p-6 border rounded-lg">
+                  <MapPin className="h-12 w-12 mx-auto mb-4 text-blue-500" />
+                  <h3 className="text-lg font-semibold mb-2">Find Nearby</h3>
+                  <p className="text-muted-foreground">
+                    Discover mocktail bars and restaurants in your area
+                  </p>
+                </div>
+
+                <div className="text-center p-6 border rounded-lg">
+                  <Star className="h-12 w-12 mx-auto mb-4 text-yellow-500" />
+                  <h3 className="text-lg font-semibold mb-2">Rate & Review</h3>
+                  <p className="text-muted-foreground">
+                    Share your experiences and help others find great drinks
+                  </p>
+                </div>
+
+                <div className="text-center p-6 border rounded-lg">
+                  <User className="h-12 w-12 mx-auto mb-4 text-green-500" />
+                  <h3 className="text-lg font-semibold mb-2">Track Progress</h3>
+                  <p className="text-muted-foreground">
+                    Keep track of your mocktail journey and achievements
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-x-4">
+                <Button size="lg" className="bg-spiritless-pink hover:bg-spiritless-pink/90">
+                  Sign Up Free
+                </Button>
+                <Button variant="outline" size="lg">
+                  Learn More
+                </Button>
+              </div>
+            </div>
+
+            {/* Public content that doesn't require authentication */}
+            <div className="mt-12">
+              <PersonalizedRecommendations 
+                isAuthenticated={false}
+                loading={false}
+              />
+            </div>
+          </>
+        )}
       </div>
-    </Layout>
+    </ResponsiveLayout>
   );
 };
 
