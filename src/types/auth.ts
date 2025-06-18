@@ -12,6 +12,26 @@ export type AuthenticatedUserType = 'individual' | 'establishment' | 'promoter' 
 // User types that can be used in regular navigation (excluding admin)
 export type StandardUserType = 'individual' | 'establishment' | 'promoter';
 
+// Session validation types
+export interface SessionValidationResult {
+  isValid: boolean;
+  hasMismatch: boolean;
+  hasLocalStorage: boolean;
+  hasSupabaseSession: boolean;
+  errorDetails?: string;
+}
+
+export interface SessionRecoveryOptions {
+  timeoutMs?: number;
+  autoRecovery?: boolean;
+  silent?: boolean;
+  redirectPath?: string;
+}
+
+export interface StuckStateHandler {
+  cancel: () => void;
+}
+
 // Type guards for safe user type checking
 export const isValidUserType = (value: any): value is AuthenticatedUserType => {
   return typeof value === 'string' && 

@@ -9,6 +9,7 @@ interface DevelopmentModeContextType {
   devMode: DevUserType;
   switchToUserType: (userType: DevUserType) => void;
   exitDevMode: () => void;
+  disableDevMode: () => void;
   isDevModeActive: boolean;
   isInitialized: boolean;
 }
@@ -111,11 +112,17 @@ export const DevelopmentModeProvider: React.FC<{ children: React.ReactNode }> = 
     navigate('/landing', { replace: true });
   }, [navigate]);
 
+  const disableDevMode = useCallback(() => {
+    setDevMode(null);
+    localStorage.removeItem('dev_user_type');
+  }, []);
+
   const value: DevelopmentModeContextType = {
     isDevelopment,
     devMode,
     switchToUserType,
     exitDevMode,
+    disableDevMode,
     isDevModeActive: isDevelopment && devMode !== null,
     isInitialized
   };
