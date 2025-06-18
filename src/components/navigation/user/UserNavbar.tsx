@@ -1,18 +1,15 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Menu, User, Bell, Settings, LogOut, Home } from 'lucide-react';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useAuth } from '@/contexts/auth/AuthProvider';
 import { useDevAuthBypass } from '@/hooks/useDevAuthBypass';
-import { useIsMobile } from '@/hooks/use-mobile';
-import { useAppNavigation } from '@/hooks/useAppNavigation';
-import { supabase } from '@/lib/supabase';
+import { useDevelopmentMode } from '@/contexts/DevelopmentModeContext';
 import UserProfileDropdown from './UserProfileDropdown';
-import UserNavLinks from './UserNavLinks';
-import UserMobileMenu from './UserMobileMenu';
-import { useTheme } from '@/contexts/ThemeContext';
-import NotificationsPopover from '@/components/notifications/NotificationsPopover';
-import { RoleSwitcher } from '../RoleSwitcher';
-import CartButton from '@/components/cart/CartButton';
 
 interface TabOption {
   value: string;
@@ -32,150 +29,217 @@ const UserNavbar: React.FC<UserNavbarProps> = ({
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { goToHomePage } = useAppNavigation();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [username, setUsername] = useState<string | null>("Guest");
-  const { theme } = useTheme();
-  const { signOut } = useAuth();
   const { 
-    user, 
-    userType, 
-    isAuthenticated, 
+    user: authUser, 
+    isAuthenticated: authIsAuthenticated, 
+    signOut 
+  } = useAuth();
+  
+  const { 
+    user: devUser, 
+    isAuthenticated: devIsAuthenticated, 
     isUsingDevBypass 
   } = useDevAuthBypass();
-  const isMobile = useIsMobile();
   
-  // Convert userType to non-admin type for components that don't handle admin
-  const nonAdminUserType = userType === 'admin' ? 'individual' : (userType || 'individual');
-  
-  useEffect(() => {
-    const fetchUsername = async () => {
-      if (user) {
-        try {
-          // In dev mode, use mock profile data
-          if (isUsingDevBypass) {
-            const displayNames = {
-              admin: 'System Administrator',
-              establishment: 'Test Bar & Grill',
-              promoter: 'Test Event Promoter',
-              individual: 'Test Individual'
-            };
-            setUsername(displayNames[userType] || 'Test User');
-            return;
-          }
+  const { isDevelopment } = useDevelopmentMode();
 
-          // For real users, fetch from database
-          const { data, error } = await supabase
-            .from('profiles')
-            .select('username, display_name')
-            .eq('id', user.id)
-            .single();
-          
-          if (data && !error) {
-            setUsername(data.display_name || data.username || "Guest User");
-          }
-        } catch (error) {
-          console.error('Error fetching user data:', error);
-          setUsername("Guest User");
-        }
-      } else {
-        setUsername('Guest User');
-      }
-    };
-    
-    fetchUsername();
-  }, [user, userType, isUsingDevBypass]);
-  
-  const handleLogout = async () => {
-    try {
-      console.log('UserNavbar: Initiating logout via Auth context');
-      // Use the Auth context signOut method to ensure consistent behavior
+  // Use dev auth if bypassing, otherwise use real auth
+  const user = isUsingDevBypass ? devUser : authUser;
+  const isAuthenticated = isUsingDevBypass ? devIsAuthenticated : authIsAuthenticated;
+
+  const handleSignOut = async () => {
+    if (isUsingDevBypass) {
+      // In dev mode, just navigate to landing
+      navigate('/landing');
+    } else {
       await signOut();
-      // No need to navigate here as signOut already redirects to landing
-    } catch (error) {
-      console.error('Error during logout:', error);
-      // Fallback redirect in case the signOut method fails
-      window.location.href = '/landing';
+      navigate('/landing');
     }
   };
-  
-  const handleHomeClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    e.preventDefault(); // Prevent default navigation
-    goToHomePage(userType || 'individual');
-  };
-  
-  const getTabOptions = () => {
-    if (location.pathname === '/establishment/profile' && tabOptions) {
-      return tabOptions;
-    }
-    return undefined;
-  };
-  
-  const isDarkTheme = theme === 'dark';
-  let navbarClass = isDarkTheme ? 'bg-gray-900 shadow-md border-b border-gray-800' : 'bg-white shadow-sm';
-  
-  // Add a custom class for promoter navigation
-  if (userType === 'promoter') {
-    navbarClass = isDarkTheme 
-      ? 'bg-gray-900 shadow-md border-b border-gray-800' 
-      : 'bg-white shadow-sm border-b-2 border-purple-200';
-  }
-  
+
+  const navItems = [
+    { href: '/explore', label: 'Explore', icon: Home },
+    { href: '/map', label: 'Map' },
+    { href: '/events', label: 'Events' },
+    { href: '/swig-circuits', label: 'Circuits' },
+    { href: '/social', label: 'Social' }
+  ];
+
+  const mobileNavItems = isAuthenticated 
+    ? [
+        { href: '/profile', label: 'Profile', icon: User },
+        { href: '/settings', label: 'Settings', icon: Settings },
+        { href: '/notifications', label: 'Notifications', icon: Bell }
+      ]
+    : [];
+
   return (
-    <nav className={`user-top-nav fixed top-0 left-0 w-full z-50 ${navbarClass}`}>
-      <div className="user-nav-container max-w-6xl mx-auto px-4 py-3">
-        <div className="user-nav-inner flex items-center justify-between">
-          <div className="user-nav-left flex items-center">
-            <Link to="#" onClick={handleHomeClick} className={`user-nav-logo text-xl font-semibold mr-6 ${userType === 'promoter' ? 'text-purple-600' : ''}`}>
-              {isMobile ? "SL" : "Spirit"}
-              {!isMobile && <span>less</span>}
-              {userType === 'promoter' && !isMobile && <span className="ml-1 text-xs px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded-md">Promoter</span>}
-              {userType === 'establishment' && !isMobile && <span className="ml-1 text-xs px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded-md">Establishment</span>}
-              {isUsingDevBypass && !isMobile && <span className="ml-1 text-xs px-1.5 py-0.5 bg-orange-100 text-orange-700 rounded-md">Dev Mode</span>}
+    <nav className="bg-white shadow-sm border-b">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between h-16">
+          {/* Logo and Main Nav */}
+          <div className="flex items-center">
+            <Link to="/" className="flex-shrink-0 flex items-center">
+              <span className="text-xl font-bold text-spiritless-pink">Spiritless</span>
             </Link>
             
-            <UserNavLinks userType={nonAdminUserType} />
+            {/* Desktop Navigation */}
+            <div className="hidden md:ml-6 md:flex md:space-x-8">
+              {navItems.map((item) => (
+                <Link
+                  key={item.href}
+                  to={item.href}
+                  className={`inline-flex items-center px-1 pt-1 text-sm font-medium border-b-2 transition-colors duration-200 ${
+                    location.pathname === item.href
+                      ? 'border-spiritless-pink text-spiritless-pink'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </div>
           </div>
-          
-          <div className="user-nav-right flex items-center space-x-4">
-            {username && (
-              <span className="text-sm hidden md:block">
-                Welcome, <span className={`font-medium ${userType === 'promoter' ? 'text-purple-600' : userType === 'establishment' ? 'text-blue-600' : 'text-spiritless-pink'}`}>{username}</span>
-              </span>
+
+          {/* Tabs (if provided) */}
+          {tabOptions && handleTabChange && (
+            <div className="flex items-center">
+              <Tabs value={activeTab} onValueChange={handleTabChange}>
+                <TabsList>
+                  {tabOptions.map((option) => (
+                    <TabsTrigger key={option.value} value={option.value}>
+                      {option.label}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+              </Tabs>
+            </div>
+          )}
+
+          {/* Right side */}
+          <div className="flex items-center space-x-4">
+            {/* Development Mode Indicator */}
+            {isDevelopment && isUsingDevBypass && (
+              <Badge variant="secondary" className="text-xs">
+                Dev Mode
+              </Badge>
             )}
-            
-            <RoleSwitcher />
-            
-            {/* Apply proper stacking context for notifications and cart */}
-            <div className="relative z-40">
-              <NotificationsPopover />
+
+            {/* Desktop Auth Section */}
+            <div className="hidden md:flex md:items-center md:space-x-4">
+              {isAuthenticated ? (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => navigate('/notifications')}
+                  >
+                    <Bell className="h-4 w-4" />
+                  </Button>
+                  <UserProfileDropdown />
+                </>
+              ) : (
+                <div className="flex space-x-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => navigate('/login')}
+                  >
+                    Sign In
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => navigate('/signup')}
+                  >
+                    Sign Up
+                  </Button>
+                </div>
+              )}
             </div>
-            
-            <div className="relative z-40">
-              <CartButton />
+
+            {/* Mobile menu */}
+            <div className="md:hidden">
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="sm">
+                    <Menu className="h-5 w-5" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-80">
+                  <div className="flex flex-col space-y-4 mt-8">
+                    {/* User Info */}
+                    {isAuthenticated && user && (
+                      <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                        <div className="w-10 h-10 bg-spiritless-pink rounded-full flex items-center justify-center">
+                          <User className="h-5 w-5 text-white" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-sm">
+                            {user.user_metadata?.name || user.email || 'User'}
+                          </p>
+                          <p className="text-xs text-gray-500">{user.email}</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Navigation Items */}
+                    <div className="space-y-2">
+                      {navItems.map((item) => (
+                        <Link
+                          key={item.href}
+                          to={item.href}
+                          className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100"
+                        >
+                          {item.icon && <item.icon className="h-5 w-5" />}
+                          <span>{item.label}</span>
+                        </Link>
+                      ))}
+                    </div>
+
+                    {/* Mobile Auth Items */}
+                    {isAuthenticated ? (
+                      <div className="space-y-2 border-t pt-4">
+                        {mobileNavItems.map((item) => (
+                          <Link
+                            key={item.href}
+                            to={item.href}
+                            className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100"
+                          >
+                            <item.icon className="h-5 w-5" />
+                            <span>{item.label}</span>
+                          </Link>
+                        ))}
+                        <button
+                          onClick={handleSignOut}
+                          className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 w-full text-left text-red-600"
+                        >
+                          <LogOut className="h-5 w-5" />
+                          <span>Sign Out</span>
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="space-y-2 border-t pt-4">
+                        <Button
+                          variant="ghost"
+                          className="w-full justify-start"
+                          onClick={() => navigate('/login')}
+                        >
+                          Sign In
+                        </Button>
+                        <Button
+                          className="w-full"
+                          onClick={() => navigate('/signup')}
+                        >
+                          Sign Up
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </SheetContent>
+              </Sheet>
             </div>
-            
-            <UserProfileDropdown 
-              username={username} 
-              userType={nonAdminUserType} 
-              handleLogout={handleLogout} 
-              activeTab={location.pathname === '/establishment/profile' ? activeTab : undefined} 
-              handleTabChange={location.pathname === '/establishment/profile' ? handleTabChange : undefined} 
-              tabOptions={getTabOptions()} 
-            />
           </div>
         </div>
-        
-        <UserMobileMenu 
-          isOpen={isMobileMenuOpen} 
-          username={username} 
-          userType={nonAdminUserType} 
-          onClose={() => setIsMobileMenuOpen(false)} 
-          handleLogout={handleLogout} 
-          activeTab={location.pathname === '/establishment/profile' ? activeTab : undefined} 
-          handleTabChange={location.pathname === '/establishment/profile' ? handleTabChange : undefined} 
-          tabOptions={getTabOptions()} 
-        />
       </div>
     </nav>
   );
