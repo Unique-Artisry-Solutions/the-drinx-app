@@ -1,6 +1,6 @@
-
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/hooks/useAuth';
+import { useQuickActions } from '@/hooks/useQuickActions';
+import { RecommendationCategory } from '@/types/ExploreTypes';
 
 export interface UserStats {
   totalMocktailsTried: number;
@@ -14,23 +14,19 @@ export interface RealtimeActivity {
   title: string;
   description: string;
   timestamp: string;
-  user: {
-    id: string;
-    name: string;
-  };
   likes: number;
   isLiked: boolean;
-  metadata: Record<string, any>;
 }
 
 export interface Recommendation {
   id: string;
-  type: 'cocktail' | 'establishment' | 'event';
+  type: 'establishment' | 'cocktail' | 'event' | 'recipe';
   title: string;
   subtitle: string;
   imageUrl?: string;
   rating?: number;
   reason: string;
+  category: RecommendationCategory;
 }
 
 export interface QuickAction {
@@ -75,146 +71,131 @@ export interface PersonalizedData {
   upcomingEvents: UpcomingEvent[];
 }
 
-export const usePersonalizedData = (): PersonalizedData => {
-  const { isAuthenticated, user } = useAuth();
+export const usePersonalizedData = () => {
   const [loading, setLoading] = useState(true);
-  const [userStats, setUserStats] = useState<UserStats | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(true);
+  const [userStats, setUserStats] = useState<any>(null);
   const [recentActivity, setRecentActivity] = useState<RealtimeActivity[]>([]);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
-  const [quickActions, setQuickActions] = useState<QuickAction[]>([]);
   const [nearbyEstablishments, setNearbyEstablishments] = useState<NearbyEstablishment[]>([]);
   const [upcomingEvents, setUpcomingEvents] = useState<UpcomingEvent[]>([]);
+  
+  const { createQuickActions } = useQuickActions();
+  const quickActions = createQuickActions();
 
   useEffect(() => {
-    const fetchPersonalizedData = async () => {
-      try {
-        setLoading(true);
-        
-        if (isAuthenticated && user) {
-          // Mock user stats
-          const mockStats: UserStats = {
-            totalMocktailsTried: Math.floor(Math.random() * 50) + 10,
-            totalPoints: Math.floor(Math.random() * 2000) + 500,
-            currentStreak: Math.floor(Math.random() * 15) + 1
-          };
-          
-          // Mock recent activity
-          const mockActivity: RealtimeActivity[] = [
-            {
-              id: '1',
-              type: 'check-in',
-              title: 'Checked in at The Mocktail Lounge',
-              description: 'Just arrived for happy hour!',
-              timestamp: new Date(Date.now() - 3600000).toISOString(),
-              user: { id: user.id, name: user.user_metadata?.name || 'You' },
-              likes: 3,
-              isLiked: false,
-              metadata: { establishment: 'The Mocktail Lounge' }
-            },
-            {
-              id: '2',
-              type: 'review',
-              title: 'Reviewed Virgin Mojito',
-              description: 'Amazing blend of mint and lime!',
-              timestamp: new Date(Date.now() - 7200000).toISOString(),
-              user: { id: user.id, name: user.user_metadata?.name || 'You' },
-              likes: 8,
-              isLiked: true,
-              metadata: { cocktail: 'Virgin Mojito', rating: 5 }
-            }
-          ];
+    const loadData = async () => {
+      // Simulate API loading
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
-          // Mock recommendations
-          const mockRecommendations: Recommendation[] = [
-            {
-              id: '1',
-              type: 'cocktail',
-              title: 'Tropical Paradise',
-              subtitle: 'Pineapple, Coconut & Lime',
-              rating: 4.8,
-              reason: 'Based on your love for fruity drinks'
-            },
-            {
-              id: '2',
-              type: 'establishment',
-              title: 'The Garden Lounge',
-              subtitle: '2.1 miles away',
-              rating: 4.6,
-              reason: 'New establishment in your area'
-            }
-          ];
+      // Mock user stats
+      setUserStats({
+        totalMocktailsTried: 12,
+        totalPoints: 1250,
+        currentStreak: 5,
+        establishmentsVisited: 8,
+        favoriteEstablishments: 3
+      });
 
-          // Mock quick actions
-          const mockQuickActions: QuickAction[] = [
-            {
-              id: 'check-in',
-              title: 'Check In',
-              description: 'Find nearby establishments',
-              iconName: 'MapPin',
-              color: 'bg-blue-500',
-              isEnabled: true,
-              onClick: () => console.log('Check in')
-            },
-            {
-              id: 'discover',
-              title: 'Discover',
-              description: 'Explore new mocktails',
-              iconName: 'Search',
-              color: 'bg-green-500',
-              isEnabled: true,
-              onClick: () => console.log('Discover')
-            }
-          ];
-
-          // Mock nearby establishments
-          const mockNearbyEstablishments: NearbyEstablishment[] = [
-            {
-              id: '1',
-              name: 'The Mocktail Lounge',
-              description: 'Creative non-alcoholic cocktails',
-              distance: '0.3 miles',
-              rating: 4.8,
-              isOpen: true
-            },
-            {
-              id: '2',
-              name: 'Sober Social Club',
-              description: 'Community-focused sober bar',
-              distance: '0.7 miles',
-              rating: 4.5,
-              isOpen: true
-            }
-          ];
-
-          // Mock upcoming events
-          const mockUpcomingEvents: UpcomingEvent[] = [
-            {
-              id: '1',
-              title: 'Mocktail Mixology Workshop',
-              description: 'Learn to craft the perfect virgin cocktails',
-              date: 'Dec 15',
-              time: '7:00 PM',
-              location: 'The Mocktail Lounge',
-              attendees: 12
-            }
-          ];
-          
-          setUserStats(mockStats);
-          setRecentActivity(mockActivity);
-          setRecommendations(mockRecommendations);
-          setQuickActions(mockQuickActions);
-          setNearbyEstablishments(mockNearbyEstablishments);
-          setUpcomingEvents(mockUpcomingEvents);
+      // Mock activity feed
+      setRecentActivity([
+        {
+          id: '1',
+          type: 'check-in',
+          title: 'Checked in at The Garden Lounge',
+          description: 'Tried their signature "Garden Paradise" mocktail',
+          timestamp: new Date(Date.now() - 3600000).toISOString(),
+          likes: 5,
+          isLiked: false
+        },
+        {
+          id: '2',
+          type: 'achievement',
+          title: 'Streak Master!',
+          description: 'Achieved 5-day check-in streak',
+          timestamp: new Date(Date.now() - 7200000).toISOString(),
+          likes: 12,
+          isLiked: true
         }
-      } catch (error) {
-        console.error('Error fetching personalized data:', error);
-      } finally {
-        setLoading(false);
-      }
+      ]);
+
+      // Mock recommendations with categories
+      setRecommendations([
+        {
+          id: '1',
+          type: 'cocktail',
+          title: 'Tropical Paradise',
+          subtitle: 'Pineapple, Coconut & Lime',
+          rating: 4.8,
+          reason: 'Based on your love for fruity drinks',
+          category: 'drinks'
+        },
+        {
+          id: '2',
+          type: 'establishment',
+          title: 'The Garden Lounge',
+          subtitle: '2.1 miles away',
+          rating: 4.6,
+          reason: 'New establishment in your area',
+          category: 'places'
+        },
+        {
+          id: '3',
+          type: 'event',
+          title: 'Mocktail Masterclass',
+          subtitle: 'Tomorrow at 7 PM',
+          reason: 'Perfect for your skill level',
+          category: 'events'
+        },
+        {
+          id: '4',
+          type: 'recipe',
+          title: 'Sunset Spritz Recipe',
+          subtitle: 'Easy 5-minute recipe',
+          rating: 4.7,
+          reason: 'Matches your preferred difficulty',
+          category: 'recipes'
+        }
+      ]);
+
+      // Mock nearby establishments
+      setNearbyEstablishments([
+        {
+          id: '1',
+          name: 'The Zen Garden',
+          description: 'Peaceful atmosphere with meditation-inspired mocktails',
+          distance: '0.3 miles',
+          rating: 4.8,
+          isOpen: true
+        },
+        {
+          id: '2',
+          name: 'Rooftop Sunset Bar',
+          description: 'Amazing city views and creative drinks',
+          distance: '0.7 miles',
+          rating: 4.9,
+          isOpen: true
+        }
+      ]);
+
+      // Mock upcoming events
+      setUpcomingEvents([
+        {
+          id: '1',
+          title: 'Mindful Mixology Workshop',
+          description: 'Learn to create mocktails with intention',
+          date: '2024-01-15',
+          time: '7:00 PM',
+          location: 'The Zen Garden',
+          attendees: 24
+        }
+      ]);
+
+      setLoading(false);
     };
 
-    fetchPersonalizedData();
-  }, [isAuthenticated, user]);
+    loadData();
+  }, []);
 
   return {
     loading,

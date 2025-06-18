@@ -8,3 +8,6 @@ export interface UserStats {
 }
 
 export type ViewMode = 'map' | 'list' | 'grid';
+
+// Recommendation category types for filtering
+export type RecommendationCategory = 'all' | 'places' | 'drinks' | 'events' | 'recipes';
