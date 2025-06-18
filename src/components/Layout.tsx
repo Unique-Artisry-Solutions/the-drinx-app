@@ -1,4 +1,6 @@
+
 import React from 'react';
+import { Outlet } from 'react-router-dom';
 import ResponsiveLayout from './layout/ResponsiveLayout';
 import { BaseComponentProps, StandardNavigationProps } from '@/components/shared/types';
 
@@ -9,12 +11,15 @@ interface TabOption {
 
 // Extend with standard props
 interface LayoutProps extends BaseComponentProps, StandardNavigationProps {
-  children: React.ReactNode;
   forceGuestNavigation?: boolean;
 }
 
 export const Layout: React.FC<LayoutProps> = (props) => {
-  return <ResponsiveLayout {...props} />;
+  return (
+    <ResponsiveLayout {...props}>
+      <Outlet />
+    </ResponsiveLayout>
+  );
 };
 
 // Keep default export for backward compatibility during transition

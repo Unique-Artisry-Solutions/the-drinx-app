@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,7 +9,7 @@ import { ActivityFeedWidget } from '@/components/explore/personalized/ActivityFe
 import { RecommendationsWidget } from '@/components/explore/personalized/RecommendationsWidget';
 import { NearbyEstablishmentsWidget } from '@/components/explore/personalized/NearbyEstablishmentsWidget';
 import { UpcomingEventsWidget } from '@/components/explore/personalized/UpcomingEventsWidget';
-import { StreakMotivationWidget } from '@/components/explore/personalized/StreakMotivationWidget';
+import StreakMotivationWidget from '@/components/explore/personalized/StreakMotivationWidget';
 import { QuickActionCards } from '@/components/explore/personalized/QuickActionCards';
 
 const ExplorePage: React.FC = () => {
