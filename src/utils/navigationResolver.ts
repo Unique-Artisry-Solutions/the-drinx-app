@@ -8,7 +8,7 @@ export interface EffectiveAuthState {
 }
 
 /**
- * Simplified navigation state resolver that properly handles unauthenticated users
+ * Simplified navigation state resolver that properly handles authenticated users
  */
 export const resolveNavigationState = (
   userType: UserType | null,
@@ -16,12 +16,11 @@ export const resolveNavigationState = (
   currentPath: string,
   forceGuestNavigation: boolean = false
 ): EffectiveAuthState => {
-  // Public paths that always use guest navigation
-  const publicPaths = ['/', '/landing', '/login', '/signup', '/mission', '/pricing', '/explore'];
-  const isPublicPath = publicPaths.some(path => currentPath === path || currentPath.startsWith(path));
+  console.log('Navigation resolver input:', { userType, isAuthenticated, currentPath, forceGuestNavigation });
   
-  // Force guest navigation for unauthenticated users on public paths
-  if (!isAuthenticated && (isPublicPath || forceGuestNavigation)) {
+  // If guest navigation is forced, always return guest
+  if (forceGuestNavigation) {
+    console.log('Forcing guest navigation');
     return {
       userType: null,
       isAuthenticated: false,
@@ -29,22 +28,39 @@ export const resolveNavigationState = (
     };
   }
   
-  // Determine navigation type for authenticated users
-  let navigationType: NavigationType;
-  
-  if (userType === 'admin' && isAuthenticated && currentPath.startsWith('/admin')) {
-    navigationType = NavigationType.ADMIN;
-  } else if (isAuthenticated && userType && userType !== 'admin') {
-    navigationType = NavigationType.USER;
-  } else {
-    navigationType = NavigationType.GUEST;
+  // For unauthenticated users, always use guest navigation
+  if (!isAuthenticated) {
+    console.log('User not authenticated, using guest navigation');
+    return {
+      userType: null,
+      isAuthenticated: false,
+      navigationType: NavigationType.GUEST
+    };
   }
   
-  return {
+  // For authenticated users, determine navigation type based on user type and path
+  let navigationType: NavigationType;
+  
+  if (userType === 'admin' && currentPath.startsWith('/admin')) {
+    navigationType = NavigationType.ADMIN;
+    console.log('Using admin navigation for admin user on admin path');
+  } else if (isAuthenticated && userType) {
+    // For any authenticated user with a user type, use user navigation
+    navigationType = NavigationType.USER;
+    console.log('Using user navigation for authenticated user:', userType);
+  } else {
+    navigationType = NavigationType.GUEST;
+    console.log('Falling back to guest navigation');
+  }
+  
+  const result = {
     userType,
     isAuthenticated,
     navigationType
   };
+  
+  console.log('Navigation resolver result:', result);
+  return result;
 };
 
 /**
