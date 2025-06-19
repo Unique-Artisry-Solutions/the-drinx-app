@@ -3,10 +3,10 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth';
 import { useToast } from '@/hooks/use-toast';
+import { useDevAuthBypass } from '@/hooks/useDevAuthBypass';
 import { sampleEstablishments, sampleCocktails } from '@/data/sampleData';
 
 export function useProfileData() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userName, setUserName] = useState('');
   const [userEmail, setUserEmail] = useState('');
   const [userJoinDate, setUserJoinDate] = useState<Date | null>(null);
@@ -15,14 +15,12 @@ export function useProfileData() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { signOut } = useAuth();
+  const { isAuthenticated } = useDevAuthBypass();
 
   useEffect(() => {
-    const auth = localStorage.getItem('user_authenticated') === 'true';
-    setIsAuthenticated(auth);
-    
-    if (auth) {
+    if (isAuthenticated) {
       setUserName(localStorage.getItem('user_name') || 'User');
-      setUserEmail(localStorage.getItem('user_email') || '');
+      setUserEmail(localStorage.getItem('user_email') || 'user@example.com');
       
       // Generate a fake join date if one doesn't exist (for demo purposes)
       const storedJoinDate = localStorage.getItem('user_join_date');
@@ -42,7 +40,7 @@ export function useProfileData() {
       // Check if there's an active swig circuit
       checkForActiveSwigCircuit();
     }
-  }, []);
+  }, [isAuthenticated]);
   
   const checkForActiveSwigCircuit = () => {
     // In a real app, this would check the database
@@ -85,9 +83,8 @@ export function useProfileData() {
   };
 
   const handleAuthSuccess = () => {
-    setIsAuthenticated(true);
     setUserName(localStorage.getItem('user_name') || 'User');
-    setUserEmail(localStorage.getItem('user_email') || '');
+    setUserEmail(localStorage.getItem('user_email') || 'user@example.com');
     generateMockActivity();
   };
 
@@ -96,7 +93,6 @@ export function useProfileData() {
       console.log('useProfileData: Initiating logout via Auth context');
       // Use the Auth context signOut method to ensure consistent behavior
       await signOut();
-      setIsAuthenticated(false);
       
       // Note: No need to navigate here as signOut already redirects to landing
     } catch (error) {
