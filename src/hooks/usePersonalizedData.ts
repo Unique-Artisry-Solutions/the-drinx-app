@@ -1,5 +1,3 @@
-
-
 import { useState, useEffect } from 'react';
 import { useDevAuthBypass } from '@/hooks/useDevAuthBypass';
 import { Activity, QuickAction } from '@/types/explore';
@@ -49,6 +47,8 @@ export interface UpcomingEvent {
   location: string;
   attendees: number;
   imageUrl?: string;
+  promoter_username?: string;
+  promoter_id?: string;
 }
 
 export const usePersonalizedData = () => {
@@ -178,7 +178,9 @@ export const usePersonalizedData = () => {
       time: '7:00 PM',
       location: 'The Sober Lounge',
       attendees: 24,
-      imageUrl: '/placeholder.svg'
+      imageUrl: '/placeholder.svg',
+      promoter_username: 'mixology_maven',
+      promoter_id: 'promoter_1'
     },
     {
       id: '2',
@@ -188,7 +190,9 @@ export const usePersonalizedData = () => {
       time: '6:00 PM',
       location: 'Downtown Community Center',
       attendees: 18,
-      imageUrl: '/placeholder.svg'
+      imageUrl: '/placeholder.svg',
+      promoter_username: 'sober_social_host',
+      promoter_id: 'promoter_2'
     }
   ];
 
@@ -212,4 +216,3 @@ export const usePersonalizedData = () => {
     upcomingEvents: mockUpcomingEvents
   };
 };
-
