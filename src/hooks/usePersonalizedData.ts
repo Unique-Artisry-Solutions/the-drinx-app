@@ -1,53 +1,22 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/auth/AuthProvider';
-import { useDevelopmentMode } from '@/contexts/DevelopmentModeContext';
-
-export interface UserStats {
-  totalMocktailsTried: number;
-  totalPoints: number;
-  currentStreak: number;
-  totalVisits: number;
-  favoriteEstablishments: number;
-  rewardsEarned: number;
-  currentTier?: string;
-  nextTier?: string;
-  progressToNextTier?: number;
-}
+import { Recommendation } from '@/types/explore/recommendations';
 
 export interface ActivityItem {
   id: string;
-  type: 'check-in' | 'achievement' | 'review' | 'recipe' | 'bar-crawl' | 'photo-share';
+  type: 'check_in' | 'mocktail_tried' | 'achievement';
   title: string;
   description: string;
   timestamp: string;
-  user: {
-    id: string;
-    name: string;
-  };
-  likes: number;
-  isLiked: boolean;
-  metadata: Record<string, any>;
-}
-
-export interface Recommendation {
-  id: string;
-  type: 'establishment' | 'cocktail' | 'event';
-  title: string;
-  description: string;
-  imageUrl?: string;
-  rating?: number;
-  distance?: string;
+  points: number;
 }
 
 export interface QuickAction {
   id: string;
   title: string;
   description: string;
-  iconName: string;
-  color: string;
-  isEnabled: boolean;
-  onClick: () => void;
+  icon: string;
+  action: string;
 }
 
 export interface NearbyEstablishment {
@@ -57,7 +26,6 @@ export interface NearbyEstablishment {
   distance: string;
   rating: number;
   isOpen: boolean;
-  imageUrl?: string;
 }
 
 export interface UpcomingEvent {
@@ -66,134 +34,138 @@ export interface UpcomingEvent {
   description: string;
   date: string;
   time: string;
-  location: string;
   attendees: number;
-  imageUrl?: string;
+  location: string;
 }
 
-export const usePersonalizedData = () => {
-  const { isAuthenticated, user, isLoading: authLoading } = useAuth();
-  const { isDevelopment, isDevModeActive } = useDevelopmentMode();
+export interface PersonalizedDataState {
+  loading: boolean;
+  isAuthenticated: boolean;
+  userStats: {
+    totalMocktailsTried: number;
+    totalPoints: number;
+    currentStreak: number;
+  };
+  recentActivity: ActivityItem[];
+  recommendations: Recommendation[];
+  quickActions: QuickAction[];
+  nearbyEstablishments: NearbyEstablishment[];
+  upcomingEvents: UpcomingEvent[];
+}
+
+export const usePersonalizedData = (): PersonalizedDataState => {
+  const { isAuthenticated, isLoading } = useAuth();
+  const [personalizedData, setPersonalizedData] = useState<Omit<PersonalizedDataState, 'loading' | 'isAuthenticated'>>({
+    userStats: {
+      totalMocktailsTried: 0,
+      totalPoints: 0,
+      currentStreak: 0
+    },
+    recentActivity: [],
+    recommendations: [],
+    quickActions: [],
+    nearbyEstablishments: [],
+    upcomingEvents: []
+  });
   const [loading, setLoading] = useState(true);
-  const [userStats, setUserStats] = useState<UserStats | null>(null);
-  const [recentActivity, setRecentActivity] = useState<ActivityItem[]>([]);
-  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
-  const [quickActions, setQuickActions] = useState<QuickAction[]>([]);
-  const [nearbyEstablishments, setNearbyEstablishments] = useState<NearbyEstablishment[]>([]);
-  const [upcomingEvents, setUpcomingEvents] = useState<UpcomingEvent[]>([]);
 
   useEffect(() => {
-    const loadPersonalizedData = async () => {
-      setLoading(true);
-      
-      try {
-        // Development mode bypass or authenticated user
-        if ((isDevelopment && isDevModeActive) || isAuthenticated) {
-          // Mock data for authenticated users
-          const mockStats: UserStats = {
-            totalMocktailsTried: 12,
+    if (!isLoading && isAuthenticated) {
+      // Simulate loading personalized data
+      setTimeout(() => {
+        setPersonalizedData({
+          userStats: {
+            totalMocktailsTried: 42,
             totalPoints: 1250,
-            currentStreak: 5,
-            totalVisits: 23,
-            favoriteEstablishments: 4,
-            rewardsEarned: 3,
-            currentTier: 'Silver',
-            nextTier: 'Gold',
-            progressToNextTier: 83
-          };
-
-          const mockActivity: ActivityItem[] = [
+            currentStreak: 7
+          },
+          recentActivity: [
             {
               id: '1',
-              type: 'check-in',
-              title: 'Checked in at The Zen Garden',
-              description: 'Tried their signature meditation mocktail',
-              timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-              user: { id: 'user1', name: 'You' },
-              likes: 0,
-              isLiked: false,
-              metadata: { establishment: 'The Zen Garden' }
+              type: 'check_in',
+              title: 'Checked in at The Sober Lounge',
+              description: 'Enjoyed a Virgin Mojito',
+              timestamp: '2 hours ago',
+              points: 25
             },
             {
               id: '2',
-              type: 'achievement',
-              title: 'Streak Master',
-              description: 'Maintained a 5-day check-in streak!',
-              timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-              user: { id: 'user1', name: 'You' },
-              likes: 3,
-              isLiked: false,
-              metadata: { achievement: 'streak_5_days' }
+              type: 'mocktail_tried',
+              title: 'Tried new mocktail',
+              description: 'Passion Fruit Fizz at Zero Proof Bar',
+              timestamp: '1 day ago',
+              points: 15
             },
             {
               id: '3',
-              type: 'recipe',
-              title: 'Created Virgin Mojito Recipe',
-              description: 'Shared a refreshing summer mocktail recipe',
-              timestamp: new Date(Date.now() - 1000 * 60 * 60 * 4).toISOString(),
-              user: { id: 'user1', name: 'You' },
-              likes: 8,
-              isLiked: false,
-              metadata: { recipe: 'virgin_mojito' }
+              type: 'achievement',
+              title: 'Week Streak Achieved!',
+              description: 'Maintained your sober journey for 7 days',
+              timestamp: '3 days ago',
+              points: 50
             }
-          ];
-
-          const mockRecommendations: Recommendation[] = [
+          ],
+          recommendations: [
             {
               id: '1',
               type: 'establishment',
               title: 'The Mocktail Lounge',
-              description: 'New craft cocktail bar specializing in virgin drinks',
+              description: 'Popular sober bar with creative non-alcoholic cocktails',
+              reason: 'Based on your love for Virgin Mojitos',
               rating: 4.8,
               distance: '0.3 miles'
             },
             {
               id: '2',
               type: 'cocktail',
-              title: 'Lavender Lemonade',
-              description: 'Perfect for your taste preferences',
+              title: 'Elderflower Sparkler',
+              description: 'Refreshing elderflower and lime mocktail',
+              reason: 'Perfect for your citrus preferences',
               rating: 4.6
             },
             {
               id: '3',
               type: 'event',
-              title: 'Mocktail Making Workshop',
-              description: 'Learn new techniques this weekend',
-              rating: 4.9
+              title: 'Sober Social Mixer',
+              description: 'Meet fellow sober enthusiasts',
+              reason: 'Great for expanding your social circle',
+              date: 'Tomorrow',
+              time: '7:00 PM',
+              attendees: 23,
+              location: 'Downtown Community Center'
             }
-          ];
-
-          const mockQuickActions: QuickAction[] = [
+          ],
+          quickActions: [
             {
               id: '1',
-              title: 'Check In Nearby',
-              description: 'Find and check into establishments',
-              iconName: 'MapPin',
-              color: 'bg-blue-500',
-              isEnabled: true,
-              onClick: () => console.log('Check in nearby')
+              title: 'Find Nearby Bars',
+              description: 'Discover sober-friendly establishments',
+              icon: 'map-pin',
+              action: '/map'
             },
             {
               id: '2',
-              title: 'Find Events',
-              description: 'Discover upcoming mocktail events',
-              iconName: 'Search',
-              color: 'bg-green-500',
-              isEnabled: true,
-              onClick: () => console.log('Find events')
+              title: 'Browse Mocktails',
+              description: 'Explore new drink recipes',
+              icon: 'glass',
+              action: '/cocktails'
             },
             {
               id: '3',
+              title: 'Join Events',
+              description: 'Find sober social events',
+              icon: 'calendar',
+              action: '/events'
+            },
+            {
+              id: '4',
               title: 'Create Recipe',
-              description: 'Share your favorite mocktail',
-              iconName: 'Plus',
-              color: 'bg-purple-500',
-              isEnabled: true,
-              onClick: () => console.log('Create recipe')
+              description: 'Share your mocktail creation',
+              icon: 'plus',
+              action: '/profile/recipes'
             }
-          ];
-
-          const mockNearbyEstablishments: NearbyEstablishment[] = [
+          ],
+          nearbyEstablishments: [
             {
               id: '1',
               name: 'The Mocktail Lounge',
@@ -218,71 +190,52 @@ export const usePersonalizedData = () => {
               rating: 4.6,
               isOpen: false
             }
-          ];
-
-          const mockUpcomingEvents: UpcomingEvent[] = [
+          ],
+          upcomingEvents: [
             {
               id: '1',
-              title: 'Mocktail Mixology Workshop',
-              description: 'Learn to craft the perfect virgin cocktails',
-              date: 'Dec 15',
+              title: 'Sober Social Mixer',
+              description: 'Meet fellow sober enthusiasts and enjoy mocktails',
+              date: 'Tomorrow',
               time: '7:00 PM',
-              location: 'The Mocktail Lounge',
-              attendees: 12
+              attendees: 23,
+              location: 'Downtown Community Center'
             },
             {
               id: '2',
-              title: 'Sober Social Hour',
-              description: 'Weekly community meetup',
-              date: 'Dec 17',
-              time: '6:00 PM',
-              location: 'Sober Social Club',
-              attendees: 8
+              title: 'Mocktail Making Class',
+              description: 'Learn to craft professional-level non-alcoholic drinks',
+              date: 'This Saturday',
+              time: '2:00 PM',
+              attendees: 15,
+              location: 'The Sober Lounge'
+            },
+            {
+              id: '3',
+              title: 'Sober Brunch',
+              description: 'Weekend brunch with virgin mimosas and bloody marys',
+              date: 'Sunday',
+              time: '11:00 AM',
+              attendees: 32,
+              location: 'Sunrise Cafe'
             }
-          ];
-
-          setUserStats(mockStats);
-          setRecentActivity(mockActivity);
-          setRecommendations(mockRecommendations);
-          setQuickActions(mockQuickActions);
-          setNearbyEstablishments(mockNearbyEstablishments);
-          setUpcomingEvents(mockUpcomingEvents);
-        } else {
-          // For unauthenticated users, set empty data
-          setUserStats(null);
-          setRecentActivity([]);
-          setRecommendations([]);
-          setQuickActions([]);
-          setNearbyEstablishments([]);
-          setUpcomingEvents([]);
-        }
-      } catch (error) {
-        console.error('Error loading personalized data:', error);
-        setUserStats(null);
-        setRecentActivity([]);
-        setRecommendations([]);
-        setQuickActions([]);
-        setNearbyEstablishments([]);
-        setUpcomingEvents([]);
-      } finally {
+          ]
+        });
         setLoading(false);
-      }
-    };
-
-    // Only load data when auth state is stable
-    if (!authLoading) {
-      loadPersonalizedData();
+      }, 1000);
+    } else {
+      setLoading(false);
     }
-  }, [isAuthenticated, isDevelopment, isDevModeActive, authLoading, user]);
+  }, [isLoading, isAuthenticated]);
 
   return {
-    loading: loading || authLoading,
-    isAuthenticated: (isDevelopment && isDevModeActive) || isAuthenticated,
-    userStats,
-    recentActivity,
-    recommendations,
-    quickActions,
-    nearbyEstablishments,
-    upcomingEvents
+    loading,
+    isAuthenticated,
+    userStats: personalizedData.userStats,
+    recentActivity: personalizedData.recentActivity,
+    recommendations: personalizedData.recommendations,
+    quickActions: personalizedData.quickActions,
+    nearbyEstablishments: personalizedData.nearbyEstablishments,
+    upcomingEvents: personalizedData.upcomingEvents
   };
 };

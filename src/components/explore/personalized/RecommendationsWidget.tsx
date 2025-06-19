@@ -1,24 +1,9 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { MapPin, Clock, Users, Star, Sparkles, Calendar } from 'lucide-react';
-
-export interface Recommendation {
-  id: string;
-  type: 'establishment' | 'cocktail' | 'event';
-  title: string;
-  description: string;
-  reason: string;
-  imageUrl?: string;
-  rating?: number;
-  distance?: string;
-  date?: string;
-  time?: string;
-  attendees?: number;
-  location?: string;
-}
+import { Recommendation } from '@/types/explore/recommendations';
 
 export interface RecommendationsWidgetProps {
   recommendations?: Recommendation[];
