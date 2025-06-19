@@ -1,22 +1,31 @@
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/auth/AuthProvider';
-import { Recommendation } from '@/types/explore/recommendations';
+import { Activity, QuickAction } from '@/types/explore';
 
-export interface ActivityItem {
-  id: string;
-  type: 'check_in' | 'mocktail_tried' | 'achievement';
-  title: string;
-  description: string;
-  timestamp: string;
-  points: number;
+// Updated interfaces to match component expectations
+interface QuickActionData extends QuickAction {
+  // This now extends the main QuickAction type
 }
 
-export interface QuickAction {
-  id: string;
-  title: string;
-  description: string;
-  icon: string;
-  action: string;
+interface ActivityItem extends Activity {
+  user: {
+    id: string;
+    name: string;
+    avatar?: string;
+  };
+  likes: number;
+  isLiked: boolean;
+  imageUrl?: string;
+  metadata?: Record<string, any>;
+}
+
+export interface UserStats {
+  totalMocktailsTried: number;
+  totalPoints: number;
+  currentStreak: number;
+  establishmentsVisited: number;
+  favoriteEstablishments: number;
 }
 
 export interface NearbyEstablishment {
@@ -26,6 +35,7 @@ export interface NearbyEstablishment {
   distance: string;
   rating: number;
   isOpen: boolean;
+  imageUrl?: string;
 }
 
 export interface UpcomingEvent {
@@ -34,208 +44,189 @@ export interface UpcomingEvent {
   description: string;
   date: string;
   time: string;
-  attendees: number;
   location: string;
+  attendees: number;
+  imageUrl?: string;
 }
 
-export interface PersonalizedDataState {
-  loading: boolean;
-  isAuthenticated: boolean;
-  userStats: {
-    totalMocktailsTried: number;
-    totalPoints: number;
-    currentStreak: number;
-  };
-  recentActivity: ActivityItem[];
-  recommendations: Recommendation[];
-  quickActions: QuickAction[];
-  nearbyEstablishments: NearbyEstablishment[];
-  upcomingEvents: UpcomingEvent[];
+export interface Recommendation {
+  id: string;
+  title: string;
+  description: string;
+  type: 'establishment' | 'cocktail' | 'event' | 'recipe';
+  rating?: number;
+  distance?: string;
+  price?: string;
+  imageUrl?: string;
+  reason?: string;
+  tags?: string[];
+  isSaved?: boolean;
+  availability?: 'open' | 'closing-soon' | 'closed';
+  trending?: boolean;
+  metadata?: Record<string, any>;
 }
 
-export const usePersonalizedData = (): PersonalizedDataState => {
-  const { isAuthenticated, isLoading } = useAuth();
-  const [personalizedData, setPersonalizedData] = useState<Omit<PersonalizedDataState, 'loading' | 'isAuthenticated'>>({
-    userStats: {
-      totalMocktailsTried: 0,
-      totalPoints: 0,
-      currentStreak: 0
-    },
-    recentActivity: [],
-    recommendations: [],
-    quickActions: [],
-    nearbyEstablishments: [],
-    upcomingEvents: []
-  });
+export const usePersonalizedData = () => {
+  const { isAuthenticated } = useAuth();
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (!isLoading && isAuthenticated) {
-      // Simulate loading personalized data
-      setTimeout(() => {
-        setPersonalizedData({
-          userStats: {
-            totalMocktailsTried: 42,
-            totalPoints: 1250,
-            currentStreak: 7
-          },
-          recentActivity: [
-            {
-              id: '1',
-              type: 'check_in',
-              title: 'Checked in at The Sober Lounge',
-              description: 'Enjoyed a Virgin Mojito',
-              timestamp: '2 hours ago',
-              points: 25
-            },
-            {
-              id: '2',
-              type: 'mocktail_tried',
-              title: 'Tried new mocktail',
-              description: 'Passion Fruit Fizz at Zero Proof Bar',
-              timestamp: '1 day ago',
-              points: 15
-            },
-            {
-              id: '3',
-              type: 'achievement',
-              title: 'Week Streak Achieved!',
-              description: 'Maintained your sober journey for 7 days',
-              timestamp: '3 days ago',
-              points: 50
-            }
-          ],
-          recommendations: [
-            {
-              id: '1',
-              type: 'establishment',
-              title: 'The Mocktail Lounge',
-              description: 'Popular sober bar with creative non-alcoholic cocktails',
-              reason: 'Based on your love for Virgin Mojitos',
-              rating: 4.8,
-              distance: '0.3 miles'
-            },
-            {
-              id: '2',
-              type: 'cocktail',
-              title: 'Elderflower Sparkler',
-              description: 'Refreshing elderflower and lime mocktail',
-              reason: 'Perfect for your citrus preferences',
-              rating: 4.6
-            },
-            {
-              id: '3',
-              type: 'event',
-              title: 'Sober Social Mixer',
-              description: 'Meet fellow sober enthusiasts',
-              reason: 'Great for expanding your social circle',
-              date: 'Tomorrow',
-              time: '7:00 PM',
-              attendees: 23,
-              location: 'Downtown Community Center'
-            }
-          ],
-          quickActions: [
-            {
-              id: '1',
-              title: 'Find Nearby Bars',
-              description: 'Discover sober-friendly establishments',
-              icon: 'map-pin',
-              action: '/map'
-            },
-            {
-              id: '2',
-              title: 'Browse Mocktails',
-              description: 'Explore new drink recipes',
-              icon: 'glass',
-              action: '/cocktails'
-            },
-            {
-              id: '3',
-              title: 'Join Events',
-              description: 'Find sober social events',
-              icon: 'calendar',
-              action: '/events'
-            },
-            {
-              id: '4',
-              title: 'Create Recipe',
-              description: 'Share your mocktail creation',
-              icon: 'plus',
-              action: '/profile/recipes'
-            }
-          ],
-          nearbyEstablishments: [
-            {
-              id: '1',
-              name: 'The Mocktail Lounge',
-              description: 'Creative non-alcoholic cocktails',
-              distance: '0.3 miles',
-              rating: 4.8,
-              isOpen: true
-            },
-            {
-              id: '2',
-              name: 'Sober Social Club',
-              description: 'Community-focused sober bar',
-              distance: '0.7 miles',
-              rating: 4.5,
-              isOpen: true
-            },
-            {
-              id: '3',
-              name: 'Zero Proof Kitchen',
-              description: 'Farm-to-table mocktails',
-              distance: '1.2 miles',
-              rating: 4.6,
-              isOpen: false
-            }
-          ],
-          upcomingEvents: [
-            {
-              id: '1',
-              title: 'Sober Social Mixer',
-              description: 'Meet fellow sober enthusiasts and enjoy mocktails',
-              date: 'Tomorrow',
-              time: '7:00 PM',
-              attendees: 23,
-              location: 'Downtown Community Center'
-            },
-            {
-              id: '2',
-              title: 'Mocktail Making Class',
-              description: 'Learn to craft professional-level non-alcoholic drinks',
-              date: 'This Saturday',
-              time: '2:00 PM',
-              attendees: 15,
-              location: 'The Sober Lounge'
-            },
-            {
-              id: '3',
-              title: 'Sober Brunch',
-              description: 'Weekend brunch with virgin mimosas and bloody marys',
-              date: 'Sunday',
-              time: '11:00 AM',
-              attendees: 32,
-              location: 'Sunrise Cafe'
-            }
-          ]
-        });
-        setLoading(false);
-      }, 1000);
-    } else {
-      setLoading(false);
+  // Mock data with updated structure
+  const mockUserStats: UserStats = {
+    totalMocktailsTried: 23,
+    totalPoints: 1250,
+    currentStreak: 7,
+    establishmentsVisited: 12,
+    favoriteEstablishments: 5
+  };
+
+  const mockQuickActions: QuickActionData[] = [
+    {
+      id: '1',
+      title: 'Check In Nearby',
+      description: 'Find and check into nearby establishments',
+      iconName: 'MapPin',
+      color: 'bg-blue-500',
+      isEnabled: true,
+      onClick: () => console.log('Check in nearby')
+    },
+    {
+      id: '2',
+      title: 'Find Events',
+      description: 'Discover upcoming sober events',
+      iconName: 'Search',
+      color: 'bg-green-500',
+      isEnabled: true,
+      onClick: () => console.log('Find events')
+    },
+    {
+      id: '3',
+      title: 'Create Recipe',
+      description: 'Share your favorite mocktail recipe',
+      iconName: 'Plus',
+      color: 'bg-purple-500',
+      isEnabled: true,
+      onClick: () => console.log('Create recipe')
     }
-  }, [isLoading, isAuthenticated]);
+  ];
+
+  const mockRecentActivity: ActivityItem[] = [
+    {
+      id: '1',
+      type: 'check-in',
+      title: 'Checked into The Sober Lounge',
+      description: 'Great atmosphere and amazing mocktails!',
+      timestamp: '2 hours ago',
+      location: 'Downtown',
+      user: {
+        id: 'user1',
+        name: 'You',
+        avatar: '/placeholder.svg'
+      },
+      likes: 5,
+      isLiked: false,
+      imageUrl: '/placeholder.svg'
+    },
+    {
+      id: '2',
+      type: 'recipe',
+      title: 'Created Virgin Mojito Supreme',
+      description: 'Fresh mint, lime, and a secret ingredient',
+      timestamp: '1 day ago',
+      user: {
+        id: 'user1',
+        name: 'You',
+        avatar: '/placeholder.svg'
+      },
+      likes: 12,
+      isLiked: true,
+      imageUrl: '/placeholder.svg'
+    }
+  ];
+
+  const mockRecommendations: Recommendation[] = [
+    {
+      id: '1',
+      title: 'The Mindful Bar',
+      description: 'Award-winning mocktails in a cozy atmosphere',
+      type: 'establishment',
+      rating: 4.8,
+      distance: '0.3 miles',
+      reason: 'Based on your recent check-ins',
+      availability: 'open',
+      trending: true
+    },
+    {
+      id: '2',
+      title: 'Lavender Lemonade',
+      description: 'Refreshing summer drink with floral notes',
+      type: 'cocktail',
+      rating: 4.6,
+      reason: 'Popular with users like you',
+      tags: ['refreshing', 'floral', 'summer']
+    }
+  ];
+
+  const mockNearbyEstablishments: NearbyEstablishment[] = [
+    {
+      id: '1',
+      name: 'Zero Proof',
+      description: 'Craft mocktails and alcohol-free wines',
+      distance: '0.2 miles',
+      rating: 4.7,
+      isOpen: true,
+      imageUrl: '/placeholder.svg'
+    },
+    {
+      id: '2',
+      name: 'Sober Social',
+      description: 'Community space for sober socializing',
+      distance: '0.5 miles',
+      rating: 4.5,
+      isOpen: true,
+      imageUrl: '/placeholder.svg'
+    }
+  ];
+
+  const mockUpcomingEvents: UpcomingEvent[] = [
+    {
+      id: '1',
+      title: 'Mocktail Making Workshop',
+      description: 'Learn to craft professional-level mocktails',
+      date: 'Tomorrow',
+      time: '7:00 PM',
+      location: 'The Sober Lounge',
+      attendees: 24,
+      imageUrl: '/placeholder.svg'
+    },
+    {
+      id: '2',
+      title: 'Sober Speed Networking',
+      description: 'Meet like-minded professionals in recovery',
+      date: 'This Weekend',
+      time: '6:00 PM',
+      location: 'Downtown Community Center',
+      attendees: 18,
+      imageUrl: '/placeholder.svg'
+    }
+  ];
+
+  useEffect(() => {
+    // Simulate loading
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   return {
     loading,
     isAuthenticated,
-    userStats: personalizedData.userStats,
-    recentActivity: personalizedData.recentActivity,
-    recommendations: personalizedData.recommendations,
-    quickActions: personalizedData.quickActions,
-    nearbyEstablishments: personalizedData.nearbyEstablishments,
-    upcomingEvents: personalizedData.upcomingEvents
+    userStats: mockUserStats,
+    recentActivity: mockRecentActivity,
+    recommendations: mockRecommendations,
+    quickActions: mockQuickActions,
+    nearbyEstablishments: mockNearbyEstablishments,
+    upcomingEvents: mockUpcomingEvents
   };
 };
