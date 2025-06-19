@@ -1,4 +1,5 @@
 
+
 import { useState, useEffect } from 'react';
 import { useDevAuthBypass } from '@/hooks/useDevAuthBypass';
 import { Activity, QuickAction } from '@/types/explore';
@@ -99,7 +100,7 @@ export const usePersonalizedData = () => {
       type: 'check-in',
       title: 'Checked into The Sober Lounge',
       description: 'Great atmosphere and amazing mocktails!',
-      timestamp: '2 hours ago',
+      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
       location: 'Downtown',
       user: {
         id: 'user1',
@@ -115,7 +116,7 @@ export const usePersonalizedData = () => {
       type: 'recipe',
       title: 'Created Virgin Mojito Supreme',
       description: 'Fresh mint, lime, and a secret ingredient',
-      timestamp: '1 day ago',
+      timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
       user: {
         id: 'user1',
         name: 'You',
@@ -211,3 +212,4 @@ export const usePersonalizedData = () => {
     upcomingEvents: mockUpcomingEvents
   };
 };
+
