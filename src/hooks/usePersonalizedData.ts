@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/auth/AuthProvider';
+import { useDevAuthBypass } from '@/hooks/useDevAuthBypass';
 import { Activity, QuickAction } from '@/types/explore';
 import { Recommendation } from '@/types/explore/recommendations';
 
@@ -51,7 +51,7 @@ export interface UpcomingEvent {
 }
 
 export const usePersonalizedData = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated } = useDevAuthBypass();
   const [loading, setLoading] = useState(true);
 
   // Mock data with updated structure
