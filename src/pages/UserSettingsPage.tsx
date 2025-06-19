@@ -5,12 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Settings, User, Bell, Shield, Eye, Globe } from 'lucide-react';
 
-const SettingsPage: React.FC = () => {
-  // Add console logging to confirm page is rendering
-  React.useEffect(() => {
-    console.log('SettingsPage rendered');
-  }, []);
-
+const UserSettingsPage: React.FC = () => {
   const settingsCategories = [
     {
       title: "Account Settings",
@@ -81,4 +76,4 @@ const SettingsPage: React.FC = () => {
   );
 };
 
-export default SettingsPage;
+export default UserSettingsPage;

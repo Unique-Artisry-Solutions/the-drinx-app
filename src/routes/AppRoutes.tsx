@@ -17,6 +17,7 @@ import CheckoutPage from '@/pages/CheckoutPage';
 import PurchaseSuccessPage from '@/pages/PurchaseSuccessPage';
 import EventDetailPage from '@/pages/EventDetailPage';
 import BarCrawlDetail from '@/pages/BarCrawlDetail';
+import UserSettingsPage from '@/pages/UserSettingsPage';
 
 // Keep lazy loading only for scanner page (requires camera permissions)
 const EventScannerPage = React.lazy(() => import('@/pages/events/EventScannerPage'));
@@ -46,6 +47,9 @@ const AppRoutes = () => {
           {/* Simplified Event Routes - Direct rendering */}
           <Route path="/event/:id" element={<EventDetailPage />} />
           <Route path="/bar-crawl/:id" element={<BarCrawlDetail />} />
+
+          {/* Direct Settings Route */}
+          <Route path="/settings" element={<UserSettingsPage />} />
 
           {/* Scanner route - Keep lazy loading for camera permissions */}
           <Route 

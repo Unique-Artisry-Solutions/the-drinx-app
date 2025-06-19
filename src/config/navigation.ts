@@ -61,6 +61,11 @@ export const individualNavItems: UnifiedNavItem[] = [
     icon: User
   },
   {
+    label: 'Settings',
+    path: '/settings',
+    icon: Settings
+  },
+  {
     label: 'Notifications',
     path: '/notifications',
     icon: Bell
