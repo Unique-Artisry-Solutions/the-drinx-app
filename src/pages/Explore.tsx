@@ -9,6 +9,7 @@ import { ActivityFeedWidget } from '@/components/explore/personalized/ActivityFe
 import { QuickActionCards } from '@/components/explore/personalized/QuickActionCards';
 import { NearbyEstablishmentsWidget } from '@/components/explore/personalized/NearbyEstablishmentsWidget';
 import { UpcomingEventsWidget } from '@/components/explore/personalized/UpcomingEventsWidget';
+import { RecommendationsWidget } from '@/components/explore/personalized/RecommendationsWidget';
 import StreakMotivationWidget from '@/components/explore/personalized/StreakMotivationWidget';
 import WidgetErrorBoundary from '@/components/explore/WidgetErrorBoundary';
 
@@ -81,6 +82,11 @@ const Explore: React.FC = () => {
                 <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
                 <QuickActionCards actions={quickActions} />
               </div>
+            </WidgetErrorBoundary>
+
+            {/* Personalized Recommendations */}
+            <WidgetErrorBoundary widgetName="Personalized Recommendations">
+              <RecommendationsWidget recommendations={recommendations} />
             </WidgetErrorBoundary>
 
             {/* Activity Feed */}
