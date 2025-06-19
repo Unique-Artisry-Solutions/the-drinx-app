@@ -4,6 +4,7 @@ import Layout from '@/components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Settings, User, Bell, Shield, Eye, Globe } from 'lucide-react';
+import FollowedPromotersWidget from '@/components/settings/FollowedPromotersWidget';
 
 const UserSettingsPage: React.FC = () => {
   const settingsCategories = [
@@ -53,23 +54,29 @@ const UserSettingsPage: React.FC = () => {
           <p className="text-muted-foreground">Configure your account and app preferences</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {settingsCategories.map((category) => (
-            <Card key={category.title} className="cursor-pointer hover:shadow-md transition-shadow">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <category.icon className="h-5 w-5" />
-                  {category.title}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground mb-3">{category.description}</p>
-                <Badge variant={category.status === "Available" ? "default" : "outline"}>
-                  {category.status}
-                </Badge>
-              </CardContent>
-            </Card>
-          ))}
+        <div className="space-y-6">
+          {/* Followed Promoters Widget - Featured prominently */}
+          <FollowedPromotersWidget />
+
+          {/* Settings Categories Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {settingsCategories.map((category) => (
+              <Card key={category.title} className="cursor-pointer hover:shadow-md transition-shadow">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <category.icon className="h-5 w-5" />
+                    {category.title}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground mb-3">{category.description}</p>
+                  <Badge variant={category.status === "Available" ? "default" : "outline"}>
+                    {category.status}
+                  </Badge>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
       </div>
     </Layout>
