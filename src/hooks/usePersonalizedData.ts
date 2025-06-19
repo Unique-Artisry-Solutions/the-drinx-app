@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/auth/AuthProvider';
 import { Activity, QuickAction } from '@/types/explore';
+import { Recommendation } from '@/types/explore/recommendations';
 
 // Updated interfaces to match component expectations
 interface QuickActionData extends QuickAction {
@@ -47,23 +48,6 @@ export interface UpcomingEvent {
   location: string;
   attendees: number;
   imageUrl?: string;
-}
-
-export interface Recommendation {
-  id: string;
-  title: string;
-  description: string;
-  type: 'establishment' | 'cocktail' | 'event' | 'recipe';
-  rating?: number;
-  distance?: string;
-  price?: string;
-  imageUrl?: string;
-  reason?: string;
-  tags?: string[];
-  isSaved?: boolean;
-  availability?: 'open' | 'closing-soon' | 'closed';
-  trending?: boolean;
-  metadata?: Record<string, any>;
 }
 
 export const usePersonalizedData = () => {
@@ -151,9 +135,7 @@ export const usePersonalizedData = () => {
       type: 'establishment',
       rating: 4.8,
       distance: '0.3 miles',
-      reason: 'Based on your recent check-ins',
-      availability: 'open',
-      trending: true
+      reason: 'Based on your recent check-ins'
     },
     {
       id: '2',
@@ -161,8 +143,7 @@ export const usePersonalizedData = () => {
       description: 'Refreshing summer drink with floral notes',
       type: 'cocktail',
       rating: 4.6,
-      reason: 'Popular with users like you',
-      tags: ['refreshing', 'floral', 'summer']
+      reason: 'Popular with users like you'
     }
   ];
 

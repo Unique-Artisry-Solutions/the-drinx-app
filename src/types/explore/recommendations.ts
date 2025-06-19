@@ -1,7 +1,7 @@
 
 export interface Recommendation {
   id: string;
-  type: 'establishment' | 'cocktail' | 'event';
+  type: 'establishment' | 'cocktail' | 'event' | 'recipe';
   title: string;
   description: string;
   reason: string;

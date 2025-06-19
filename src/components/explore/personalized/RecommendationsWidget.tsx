@@ -1,8 +1,9 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Clock, Users, Star, Sparkles, Calendar } from 'lucide-react';
+import { MapPin, Clock, Users, Star, Sparkles, Calendar, ChefHat } from 'lucide-react';
 import { Recommendation } from '@/types/explore/recommendations';
 
 export interface RecommendationsWidgetProps {
@@ -38,6 +39,8 @@ export const RecommendationsWidget: React.FC<RecommendationsWidgetProps> = ({
         return <Star className="h-4 w-4" />;
       case 'event':
         return <Calendar className="h-4 w-4" />;
+      case 'recipe':
+        return <ChefHat className="h-4 w-4" />;
       default:
         return <Sparkles className="h-4 w-4" />;
     }
@@ -51,6 +54,8 @@ export const RecommendationsWidget: React.FC<RecommendationsWidgetProps> = ({
         return 'bg-purple-100 text-purple-800';
       case 'event':
         return 'bg-green-100 text-green-800';
+      case 'recipe':
+        return 'bg-orange-100 text-orange-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
