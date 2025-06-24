@@ -12,7 +12,7 @@ interface ActivityUser {
 
 interface ActivityItem {
   id: string;
-  type: 'check-in' | 'recipe' | 'favorite' | 'achievement';
+  type: 'check-in' | 'review' | 'recipe' | 'achievement' | 'bar-crawl' | 'photo-share' | 'favorite';
   title: string;
   description: string;
   timestamp: string;
