@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useDevAuthBypass } from '@/hooks/useDevAuthBypass';
 import { Activity, QuickAction } from '@/types/explore';
 import { Recommendation } from '@/types/explore/recommendations';
+import { useNavigate } from 'react-router-dom';
 
 // Updated interfaces to match component expectations
 interface QuickActionData extends QuickAction {
@@ -52,6 +53,7 @@ export interface UpcomingEvent {
 }
 
 export const usePersonalizedData = () => {
+  const navigate = useNavigate();
   const { isAuthenticated } = useDevAuthBypass();
   const [loading, setLoading] = useState(true);
 
@@ -64,7 +66,7 @@ export const usePersonalizedData = () => {
     favoriteEstablishments: 5
   };
 
-  const mockQuickActions: QuickActionData[] = [
+  const mockQuickActions = [
     {
       id: '1',
       title: 'Check In Nearby',
@@ -76,21 +78,21 @@ export const usePersonalizedData = () => {
     },
     {
       id: '2',
-      title: 'Find Events',
-      description: 'Discover upcoming sober events',
-      iconName: 'Search',
+      title: 'Create Recipe',
+      description: 'Share your mocktail creation',
+      iconName: 'Plus',
       color: 'bg-green-500',
       isEnabled: true,
-      onClick: () => console.log('Find events')
+      onClick: () => navigate('/profile/recipes')
     },
     {
       id: '3',
-      title: 'Create Recipe',
-      description: 'Share your favorite mocktail recipe',
-      iconName: 'Plus',
+      title: 'Find Events',
+      description: 'Discover sober events near you',
+      iconName: 'Search',
       color: 'bg-purple-500',
       isEnabled: true,
-      onClick: () => console.log('Create recipe')
+      onClick: () => console.log('Find events')
     }
   ];
 
@@ -205,33 +207,33 @@ export const usePersonalizedData = () => {
     favoriteEstablishments: 0
   };
 
-  const newUserGettingStartedActions: QuickActionData[] = [
+  const newUserGettingStartedActions = [
     {
-      id: 'new-1',
-      title: 'Find Nearby Places',
-      description: 'Discover sober-friendly venues around you',
+      id: 'getting-started-1',
+      title: 'Check In Nearby',
+      description: 'Find sober-friendly venues and start earning points',
       iconName: 'MapPin',
       color: 'bg-blue-500',
       isEnabled: true,
-      onClick: () => console.log('Find nearby places')
+      onClick: () => console.log('Check in nearby - getting started')
     },
     {
-      id: 'new-2',
-      title: 'Browse Events',
-      description: 'Join alcohol-free social events',
-      iconName: 'Search',
+      id: 'getting-started-2',
+      title: 'Create Recipe',
+      description: 'Share your first mocktail recipe with the community',
+      iconName: 'Plus',
       color: 'bg-green-500',
       isEnabled: true,
-      onClick: () => console.log('Browse events')
+      onClick: () => navigate('/profile/recipes')
     },
     {
-      id: 'new-3',
-      title: 'Learn About Mocktails',
-      description: 'Explore amazing alcohol-free recipes',
-      iconName: 'Plus',
+      id: 'getting-started-3',
+      title: 'Follow Promoters',
+      description: 'Stay updated on sober events and activities',
+      iconName: 'UserPlus',
       color: 'bg-purple-500',
       isEnabled: true,
-      onClick: () => console.log('Learn mocktails')
+      onClick: () => console.log('Follow promoters - getting started')
     }
   ];
 

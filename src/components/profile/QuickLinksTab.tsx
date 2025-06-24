@@ -30,9 +30,9 @@ const QuickLinksTab: React.FC<QuickLinksTabProps> = ({ isPromoter = false }) => 
             </Link>
           </Button>
           <Button variant="outline" className="h-auto py-6 flex-col" asChild>
-            <Link to="/profile/my-creations">
+            <Link to="/profile/recipes">
               <CalendarClock size={24} className="mb-2 text-purple-500" />
-              <span>My Swig Circuits</span>
+              <span>My Recipes</span>
             </Link>
           </Button>
         </div>

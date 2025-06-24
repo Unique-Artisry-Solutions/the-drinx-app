@@ -24,6 +24,7 @@ export const profileRoutes: RouteObject[] = [
   { path: '/profile/bar-crawl/:id', element: <BarCrawlManagementPage /> },
   { path: '/profile/crawlers/:id', element: <CrawlersListPage /> },
   { path: '/profile/recipes', element: <UserRecipesPage /> },
+  { path: '/profile/my-creations', element: <UserRecipesPage /> },
   { path: '/profile/scanner', element: <CheckInScannerPage /> },
   { path: '/profile/settings', element: <SettingsPage /> },
   { path: '/profile/notifications', element: <NotificationsPage /> },
