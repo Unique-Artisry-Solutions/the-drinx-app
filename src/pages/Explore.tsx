@@ -30,6 +30,11 @@ const Explore: React.FC = () => {
     isLoading: recsLoading
   } = usePersonalizedRecommendations();
 
+  // Check if user appears to be new
+  const isNewUser = userStats.totalMocktailsTried === 0 && 
+                   userStats.totalPoints === 0 && 
+                   userStats.currentStreak === 0;
+
   if (loading) {
     return (
       <Layout>
@@ -60,8 +65,25 @@ const Explore: React.FC = () => {
     <Layout>
       <div className="container mx-auto px-4 py-6 space-y-6">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Explore</h1>
-          <p className="text-gray-600">Discover your personalized sober social experience</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                {isNewUser ? 'Welcome to Your Sober Journey!' : 'Explore'}
+              </h1>
+              <p className="text-gray-600">
+                {isNewUser 
+                  ? 'Let\'s get you started with amazing alcohol-free experiences'
+                  : 'Discover your personalized sober social experience'
+                }
+              </p>
+            </div>
+            {isNewUser && (
+              <div className="text-right">
+                <div className="text-sm text-blue-600 font-medium">New Member</div>
+                <div className="text-xs text-gray-500">Complete your first activity!</div>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -79,7 +101,9 @@ const Explore: React.FC = () => {
             {/* Quick Actions */}
             <WidgetErrorBoundary widgetName="Quick Actions">
               <div>
-                <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
+                <h2 className="text-xl font-semibold mb-4">
+                  {isNewUser ? 'Get Started' : 'Quick Actions'}
+                </h2>
                 <QuickActionCards actions={quickActions} />
               </div>
             </WidgetErrorBoundary>
@@ -92,7 +116,9 @@ const Explore: React.FC = () => {
             {/* Activity Feed */}
             <WidgetErrorBoundary widgetName="Activity Feed">
               <div>
-                <h2 className="text-xl font-semibold mb-4">Recent Activity</h2>
+                <h2 className="text-xl font-semibold mb-4">
+                  {isNewUser ? 'Your Journey Starts Here' : 'Recent Activity'}
+                </h2>
                 <ActivityFeedWidget activities={recentActivity} />
               </div>
             </WidgetErrorBoundary>

@@ -196,6 +196,45 @@ export const usePersonalizedData = () => {
     }
   ];
 
+  // New user fallback data
+  const newUserFallbackStats: UserStats = {
+    totalMocktailsTried: 0,
+    totalPoints: 0,
+    currentStreak: 0,
+    establishmentsVisited: 0,
+    favoriteEstablishments: 0
+  };
+
+  const newUserGettingStartedActions: QuickActionData[] = [
+    {
+      id: 'new-1',
+      title: 'Find Nearby Places',
+      description: 'Discover sober-friendly venues around you',
+      iconName: 'MapPin',
+      color: 'bg-blue-500',
+      isEnabled: true,
+      onClick: () => console.log('Find nearby places')
+    },
+    {
+      id: 'new-2',
+      title: 'Browse Events',
+      description: 'Join alcohol-free social events',
+      iconName: 'Search',
+      color: 'bg-green-500',
+      isEnabled: true,
+      onClick: () => console.log('Browse events')
+    },
+    {
+      id: 'new-3',
+      title: 'Learn About Mocktails',
+      description: 'Explore amazing alcohol-free recipes',
+      iconName: 'Plus',
+      color: 'bg-purple-500',
+      isEnabled: true,
+      onClick: () => console.log('Learn mocktails')
+    }
+  ];
+
   useEffect(() => {
     // Simulate loading
     const timer = setTimeout(() => {
@@ -205,14 +244,19 @@ export const usePersonalizedData = () => {
     return () => clearTimeout(timer);
   }, []);
 
+  // Check if user appears to be new (no activity)
+  const isNewUser = mockUserStats.totalMocktailsTried === 0 && 
+                   mockUserStats.totalPoints === 0 && 
+                   mockUserStats.currentStreak === 0;
+
   return {
     loading,
     isAuthenticated,
-    userStats: mockUserStats,
-    recentActivity: mockRecentActivity,
-    recommendations: mockRecommendations,
-    quickActions: mockQuickActions,
-    nearbyEstablishments: mockNearbyEstablishments,
-    upcomingEvents: mockUpcomingEvents
+    userStats: isNewUser ? newUserFallbackStats : mockUserStats,
+    recentActivity: isNewUser ? [] : mockRecentActivity,
+    recommendations: isNewUser ? [] : mockRecommendations,
+    quickActions: isNewUser ? newUserGettingStartedActions : mockQuickActions,
+    nearbyEstablishments: mockNearbyEstablishments, // Always show nearby places
+    upcomingEvents: mockUpcomingEvents // Always show events
   };
 };
