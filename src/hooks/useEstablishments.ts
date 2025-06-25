@@ -22,9 +22,15 @@ interface UseEstablishmentsProps {
   latitude?: number;
   longitude?: number;
   maxDistance?: number;
+  searchTerm?: string;
 }
 
-export const useEstablishments = ({ latitude, longitude, maxDistance = 10 }: UseEstablishmentsProps = {}) => {
+export const useEstablishments = ({ 
+  latitude, 
+  longitude, 
+  maxDistance = 10,
+  searchTerm = ''
+}: UseEstablishmentsProps = {}) => {
   const [establishments, setEstablishments] = useState<Establishment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -35,10 +41,16 @@ export const useEstablishments = ({ latitude, longitude, maxDistance = 10 }: Use
         setIsLoading(true);
         setError(null);
 
-        const { data, error: fetchError } = await supabase
+        let query = supabase
           .from('establishments')
           .select('*')
           .order('name');
+
+        if (searchTerm) {
+          query = query.ilike('name', `%${searchTerm}%`);
+        }
+
+        const { data, error: fetchError } = await query;
 
         if (fetchError) {
           throw fetchError;
@@ -54,7 +66,7 @@ export const useEstablishments = ({ latitude, longitude, maxDistance = 10 }: Use
           image: est.image_url,
           owner_id: est.owner_id,
           created_at: est.created_at,
-          updated_at: est.updated_at
+          updated_at: est.created_at // Fallback since updated_at might not exist
         })) || [];
 
         // If user location is provided, calculate distances and filter
@@ -80,11 +92,20 @@ export const useEstablishments = ({ latitude, longitude, maxDistance = 10 }: Use
     };
 
     fetchEstablishments();
-  }, [latitude, longitude, maxDistance]);
+  }, [latitude, longitude, maxDistance, searchTerm]);
+
+  const filterEstablishments = (term: string) => {
+    if (!term) return establishments;
+    return establishments.filter(est =>
+      est.name.toLowerCase().includes(term.toLowerCase()) ||
+      est.address.toLowerCase().includes(term.toLowerCase())
+    );
+  };
 
   return {
     establishments,
     isLoading,
-    error
+    error,
+    filterEstablishments
   };
 };

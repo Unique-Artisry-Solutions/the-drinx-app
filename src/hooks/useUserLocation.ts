@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from 'react';
+import { calculateDistance, formatDistance } from '@/utils/locationUtils';
 
 interface UserLocation {
   latitude: number;
@@ -80,6 +81,8 @@ export const useUserLocation = () => {
     userLocation,
     isLoading,
     error,
-    refreshLocation
+    refreshLocation,
+    calculateDistance,
+    formatDistance
   };
 };
