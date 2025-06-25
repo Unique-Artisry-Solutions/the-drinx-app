@@ -115,7 +115,7 @@ export function useNearbyCheckIns() {
   };
 
   const isLoading = locationLoading || establishmentsLoading;
-  const hasError = locationError;
+  const hasError = Boolean(locationError); // Fix: Convert to boolean
   const hasNearbyEstablishments = nearbyEstablishments.length > 0;
 
   return {

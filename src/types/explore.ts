@@ -84,6 +84,24 @@ export interface Recommendation {
   location?: string;
 }
 
+// Add missing Promoter interface
+export interface Promoter {
+  id: string;
+  name: string;
+  description: string;
+  avatar_url?: string;
+  is_verified: boolean;
+  category: string;
+  tags: string[];
+  follower_count: number;
+  event_count: number;
+  rating?: number;
+  location?: string;
+}
+
+// Add missing RecommendationCategoryType
+export type RecommendationCategoryType = 'all' | 'establishments' | 'cocktails' | 'events' | 'recipes';
+
 export interface PersonalizedDataReturn {
   quickStats: QuickStats;
   activities: ActivityItem[];
