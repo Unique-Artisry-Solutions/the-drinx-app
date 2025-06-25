@@ -36,6 +36,76 @@ export const safeJsonToNumber = (json: Json): number => {
   return 0;
 };
 
+// Visit Metadata Interface
+export interface VisitMetadata {
+  rating?: number | null;
+  note?: string;
+  visit_date?: string;
+  establishment_id?: string;
+  user_id?: string;
+}
+
+// Type guard for Visit Metadata
+export const isVisitMetadata = (value: Json): value is VisitMetadata => {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    return false;
+  }
+  
+  const obj = value as Record<string, any>;
+  
+  // Check if optional properties have correct types when present
+  if (obj.rating !== undefined && typeof obj.rating !== 'number' && obj.rating !== null) {
+    return false;
+  }
+  if (obj.note !== undefined && typeof obj.note !== 'string') {
+    return false;
+  }
+  if (obj.visit_date !== undefined && typeof obj.visit_date !== 'string') {
+    return false;
+  }
+  if (obj.establishment_id !== undefined && typeof obj.establishment_id !== 'string') {
+    return false;
+  }
+  if (obj.user_id !== undefined && typeof obj.user_id !== 'string') {
+    return false;
+  }
+  
+  return true;
+};
+
+// Safe extractor for Visit Metadata
+export const getVisitMetadata = (metadata: Json): VisitMetadata => {
+  if (isVisitMetadata(metadata)) {
+    return metadata;
+  }
+  
+  // Fallback: try to extract what we can from the Json
+  const record = safeJsonToRecord(metadata);
+  return {
+    rating: typeof record.rating === 'number' ? record.rating : null,
+    note: typeof record.note === 'string' ? record.note : '',
+    visit_date: typeof record.visit_date === 'string' ? record.visit_date : new Date().toISOString(),
+    establishment_id: typeof record.establishment_id === 'string' ? record.establishment_id : undefined,
+    user_id: typeof record.user_id === 'string' ? record.user_id : undefined,
+  };
+};
+
+// Utility functions for safe property access
+export const getMetadataRating = (metadata: Json): number | null => {
+  const visitMeta = getVisitMetadata(metadata);
+  return visitMeta.rating ?? null;
+};
+
+export const getMetadataNote = (metadata: Json): string => {
+  const visitMeta = getVisitMetadata(metadata);
+  return visitMeta.note ?? '';
+};
+
+export const getMetadataVisitDate = (metadata: Json): string => {
+  const visitMeta = getVisitMetadata(metadata);
+  return visitMeta.visit_date ?? new Date().toISOString();
+};
+
 // Generic type-safe JSON to Type converter
 export const safeJsonToType = <T>(json: Json, defaultValue: T): T => {
   if (json === null || json === undefined) {

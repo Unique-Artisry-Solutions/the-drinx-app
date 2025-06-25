@@ -97,3 +97,12 @@ export interface Visit {
     image_url?: string;
   };
 }
+
+// Metadata interface for type safety
+export interface VisitMetadata {
+  rating?: number | null;
+  note?: string;
+  visit_date?: string;
+  establishment_id?: string;
+  user_id?: string;
+}
