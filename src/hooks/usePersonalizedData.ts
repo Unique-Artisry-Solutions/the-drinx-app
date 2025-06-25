@@ -70,7 +70,7 @@ export const usePersonalizedData = () => {
     {
       id: '1',
       title: 'Check In Nearby',
-      description: 'Find and check into nearby establishments',
+      description: 'Find venues and earn points',
       iconName: 'MapPin',
       color: 'bg-blue-500',
       isEnabled: true,
@@ -92,7 +92,7 @@ export const usePersonalizedData = () => {
       iconName: 'Search',
       color: 'bg-purple-500',
       isEnabled: true,
-      onClick: () => console.log('Find events')
+      onClick: () => navigate('/events')
     }
   ];
 
