@@ -1,15 +1,20 @@
 import { useState, useEffect } from 'react';
-import { useDevAuthBypass } from '@/hooks/useDevAuthBypass';
-import { Activity, QuickAction } from '@/types/explore';
-import { Recommendation } from '@/types/explore/recommendations';
 import { useNavigate } from 'react-router-dom';
+import { useNearbyCheckIns } from '@/hooks/useNearbyCheckIns';
 
-// Updated interfaces to match component expectations
-interface QuickActionData extends QuickAction {
-  // This now extends the main QuickAction type
+export interface QuickStats {
+  totalMocktailsTried: number;
+  totalPoints: number;
+  currentStreak: number;
 }
 
-interface ActivityItem extends Activity {
+export interface ActivityItem {
+  id: string;
+  type: string;
+  title: string;
+  description: string;
+  timestamp: string;
+  location?: string;
   user: {
     id: string;
     name: string;
@@ -18,15 +23,6 @@ interface ActivityItem extends Activity {
   likes: number;
   isLiked: boolean;
   imageUrl?: string;
-  metadata?: Record<string, any>;
-}
-
-export interface UserStats {
-  totalMocktailsTried: number;
-  totalPoints: number;
-  currentStreak: number;
-  establishmentsVisited: number;
-  favoriteEstablishments: number;
 }
 
 export interface NearbyEstablishment {
@@ -42,31 +38,119 @@ export interface NearbyEstablishment {
 export interface UpcomingEvent {
   id: string;
   title: string;
-  description: string;
   date: string;
-  time: string;
   location: string;
-  attendees: number;
   imageUrl?: string;
-  promoter_username?: string;
-  promoter_id?: string;
+}
+
+export interface QuickAction {
+  id: string;
+  title: string;
+  description: string;
+  iconName: string; // Changed from icon: React.ReactNode to iconName: string
+  color: string;
+  isEnabled: boolean;
+  requiresAuth?: boolean;
+  badge?: string;
+  shortcut?: string;
+  recentlyUsed?: boolean;
+  onClick: () => void | Promise<void>;
 }
 
 export const usePersonalizedData = () => {
   const navigate = useNavigate();
-  const { isAuthenticated } = useDevAuthBypass();
-  const [loading, setLoading] = useState(true);
+  const { openModal: openNearbyCheckInModal } = useNearbyCheckIns();
+  
+  const [quickStats, setQuickStats] = useState<QuickStats>({
+    totalMocktailsTried: 15,
+    totalPoints: 450,
+    currentStreak: 7
+  });
 
-  // Mock data with updated structure
-  const mockUserStats: UserStats = {
-    totalMocktailsTried: 23,
-    totalPoints: 1250,
-    currentStreak: 7,
-    establishmentsVisited: 12,
-    favoriteEstablishments: 5
-  };
+  const [activities, setActivities] = useState<ActivityItem[]>([
+    {
+      id: '1',
+      type: 'check-in',
+      title: 'Checked in at The Tipsy Alchemist',
+      description: 'Enjoying a fantastic evening with friends.',
+      timestamp: '2024-04-28T19:20:30Z',
+      location: 'New York, NY',
+      user: { id: '101', name: 'Alice', avatar: '/alice-avatar.jpg' },
+      likes: 22,
+      isLiked: true,
+      imageUrl: '/alchemist-mocktail.jpg'
+    },
+    {
+      id: '2',
+      type: 'review',
+      title: 'Reviewed Sober Social Club',
+      description: 'Gave a 5-star rating for their amazing atmosphere.',
+      timestamp: '2024-04-27T14:35:00Z',
+      user: { id: '102', name: 'Bob', avatar: '/bob-avatar.jpg' },
+      likes: 15,
+      isLiked: false
+    },
+    {
+      id: '3',
+      type: 'recipe',
+      title: 'Shared a new recipe: Berry Bliss',
+      description: 'A refreshing mix of berries and sparkling water.',
+      timestamp: '2024-04-26T11:10:45Z',
+      user: { id: '103', name: 'Charlie', avatar: '/charlie-avatar.jpg' },
+      likes: 35,
+      isLiked: true,
+      imageUrl: '/berry-bliss-mocktail.jpg'
+    }
+  ]);
 
-  const mockQuickActions = [
+  const [nearbyEstablishments, setNearbyEstablishments] = useState<NearbyEstablishment[]>([
+    {
+      id: '1',
+      name: 'The Mocktail Lounge',
+      description: 'Creative non-alcoholic cocktails',
+      distance: '0.3 miles',
+      rating: 4.8,
+      isOpen: true,
+      imageUrl: '/mocktail-lounge.jpg'
+    },
+    {
+      id: '2',
+      name: 'Sober Social Club',
+      description: 'Community-focused sober bar',
+      distance: '0.7 miles',
+      rating: 4.5,
+      isOpen: true,
+      imageUrl: '/sober-social-club.jpg'
+    },
+    {
+      id: '3',
+      name: 'Zero Proof Kitchen',
+      description: 'Farm-to-table mocktails',
+      distance: '1.2 miles',
+      rating: 4.6,
+      isOpen: false,
+      imageUrl: '/zero-proof-kitchen.jpg'
+    }
+  ]);
+
+  const [upcomingEvents, setUpcomingEvents] = useState<UpcomingEvent[]>([
+    {
+      id: '1',
+      title: 'Sober Summer Fest',
+      date: '2024-06-15',
+      location: 'Central Park, NY',
+      imageUrl: '/summer-fest.jpg'
+    },
+    {
+      id: '2',
+      title: 'Mocktail Mixology Workshop',
+      date: '2024-05-20',
+      location: 'Online',
+      imageUrl: '/mixology-workshop.jpg'
+    }
+  ]);
+
+  const quickActions: QuickAction[] = [
     {
       id: '1',
       title: 'Check In Nearby',
@@ -74,7 +158,7 @@ export const usePersonalizedData = () => {
       iconName: 'MapPin',
       color: 'bg-blue-500',
       isEnabled: true,
-      onClick: () => console.log('Check in nearby')
+      onClick: openNearbyCheckInModal
     },
     {
       id: '2',
@@ -83,7 +167,7 @@ export const usePersonalizedData = () => {
       iconName: 'Plus',
       color: 'bg-green-500',
       isEnabled: true,
-      onClick: () => navigate('/profile/recipes')
+      onClick: () => navigate('/create-recipe')
     },
     {
       id: '3',
@@ -96,169 +180,11 @@ export const usePersonalizedData = () => {
     }
   ];
 
-  const mockRecentActivity: ActivityItem[] = [
-    {
-      id: '1',
-      type: 'check-in',
-      title: 'Checked into The Sober Lounge',
-      description: 'Great atmosphere and amazing mocktails!',
-      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
-      location: 'Downtown',
-      user: {
-        id: 'user1',
-        name: 'You',
-        avatar: '/placeholder.svg'
-      },
-      likes: 5,
-      isLiked: false,
-      imageUrl: '/placeholder.svg'
-    },
-    {
-      id: '2',
-      type: 'recipe',
-      title: 'Created Virgin Mojito Supreme',
-      description: 'Fresh mint, lime, and a secret ingredient',
-      timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
-      user: {
-        id: 'user1',
-        name: 'You',
-        avatar: '/placeholder.svg'
-      },
-      likes: 12,
-      isLiked: true,
-      imageUrl: '/placeholder.svg'
-    }
-  ];
-
-  const mockRecommendations: Recommendation[] = [
-    {
-      id: '1',
-      title: 'The Mindful Bar',
-      description: 'Award-winning mocktails in a cozy atmosphere',
-      type: 'establishment',
-      rating: 4.8,
-      distance: '0.3 miles',
-      reason: 'Based on your recent check-ins'
-    },
-    {
-      id: '2',
-      title: 'Lavender Lemonade',
-      description: 'Refreshing summer drink with floral notes',
-      type: 'cocktail',
-      rating: 4.6,
-      reason: 'Popular with users like you'
-    }
-  ];
-
-  const mockNearbyEstablishments: NearbyEstablishment[] = [
-    {
-      id: '1',
-      name: 'Zero Proof',
-      description: 'Craft mocktails and alcohol-free wines',
-      distance: '0.2 miles',
-      rating: 4.7,
-      isOpen: true,
-      imageUrl: '/placeholder.svg'
-    },
-    {
-      id: '2',
-      name: 'Sober Social',
-      description: 'Community space for sober socializing',
-      distance: '0.5 miles',
-      rating: 4.5,
-      isOpen: true,
-      imageUrl: '/placeholder.svg'
-    }
-  ];
-
-  const mockUpcomingEvents: UpcomingEvent[] = [
-    {
-      id: '1',
-      title: 'Mocktail Making Workshop',
-      description: 'Learn to craft professional-level mocktails',
-      date: 'Tomorrow',
-      time: '7:00 PM',
-      location: 'The Sober Lounge',
-      attendees: 24,
-      imageUrl: '/placeholder.svg',
-      promoter_username: 'mixology_maven',
-      promoter_id: 'promoter_1'
-    },
-    {
-      id: '2',
-      title: 'Sober Speed Networking',
-      description: 'Meet like-minded professionals in recovery',
-      date: 'This Weekend',
-      time: '6:00 PM',
-      location: 'Downtown Community Center',
-      attendees: 18,
-      imageUrl: '/placeholder.svg',
-      promoter_username: 'sober_social_host',
-      promoter_id: 'promoter_2'
-    }
-  ];
-
-  // New user fallback data
-  const newUserFallbackStats: UserStats = {
-    totalMocktailsTried: 0,
-    totalPoints: 0,
-    currentStreak: 0,
-    establishmentsVisited: 0,
-    favoriteEstablishments: 0
-  };
-
-  const newUserGettingStartedActions = [
-    {
-      id: 'getting-started-1',
-      title: 'Check In Nearby',
-      description: 'Find sober-friendly venues and start earning points',
-      iconName: 'MapPin',
-      color: 'bg-blue-500',
-      isEnabled: true,
-      onClick: () => console.log('Check in nearby - getting started')
-    },
-    {
-      id: 'getting-started-2',
-      title: 'Create Recipe',
-      description: 'Share your first mocktail recipe with the community',
-      iconName: 'Plus',
-      color: 'bg-green-500',
-      isEnabled: true,
-      onClick: () => navigate('/profile/recipes')
-    },
-    {
-      id: 'getting-started-3',
-      title: 'Follow Promoters',
-      description: 'Stay updated on sober events and activities',
-      iconName: 'UserPlus',
-      color: 'bg-purple-500',
-      isEnabled: true,
-      onClick: () => console.log('Follow promoters - getting started')
-    }
-  ];
-
-  useEffect(() => {
-    // Simulate loading
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 1000);
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Check if user appears to be new (no activity)
-  const isNewUser = mockUserStats.totalMocktailsTried === 0 && 
-                   mockUserStats.totalPoints === 0 && 
-                   mockUserStats.currentStreak === 0;
-
   return {
-    loading,
-    isAuthenticated,
-    userStats: isNewUser ? newUserFallbackStats : mockUserStats,
-    recentActivity: isNewUser ? [] : mockRecentActivity,
-    recommendations: isNewUser ? [] : mockRecommendations,
-    quickActions: isNewUser ? newUserGettingStartedActions : mockQuickActions,
-    nearbyEstablishments: mockNearbyEstablishments, // Always show nearby places
-    upcomingEvents: mockUpcomingEvents // Always show events
+    quickStats,
+    activities,
+    nearbyEstablishments,
+    upcomingEvents,
+    quickActions
   };
 };
