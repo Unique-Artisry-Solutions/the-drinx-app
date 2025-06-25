@@ -1,187 +1,85 @@
 
-import { useState, useEffect, useCallback } from 'react';
-import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { useState, useEffect } from 'react';
 
 interface UserLocation {
   latitude: number;
   longitude: number;
 }
 
-interface DistanceOptions {
-  units?: 'miles' | 'kilometers';
-}
-
 export const useUserLocation = () => {
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { toast } = useToast();
 
-  const updateServerLocation = useCallback(async (latitude: number, longitude: number, accuracy?: number) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return false;
-      
-      // Store location in a profile custom field instead
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          // Store as a metadata field in profiles
-          updated_at: new Date().toISOString(),
-          // We need to add the following fields to the profiles table if we want to use them
-          // Since they don't exist, store location in a different way:
-          bio: JSON.stringify({
-            last_location: {
-              latitude,
-              longitude,
-              accuracy,
-              timestamp: new Date().toISOString()
-            },
-            ...JSON.parse(user.user_metadata?.bio || '{}')
-          })
-        })
-        .eq('id', user.id);
-      
-      if (error) {
-        console.error('Error updating location:', error);
-        return false;
+  useEffect(() => {
+    const getCurrentLocation = () => {
+      if (!navigator.geolocation) {
+        setError('Geolocation is not supported by this browser');
+        setIsLoading(false);
+        return;
       }
-      
-      return true;
-    } catch (err) {
-      console.error('Error updating location on server:', err);
-      return false;
-    }
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude
+          });
+          setError(null);
+          setIsLoading(false);
+        },
+        (error) => {
+          console.error('Geolocation error:', error);
+          setError(error.message);
+          setIsLoading(false);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 300000 // 5 minutes
+        }
+      );
+    };
+
+    getCurrentLocation();
   }, []);
 
-  const calculateDistance = useCallback((
-    destLat: number, 
-    destLng: number, 
-    options: DistanceOptions = { units: 'miles' }
-  ): number | null => {
-    if (!userLocation) return null;
-    
-    // Implementation of the Haversine formula for calculating distance between two points on Earth
-    const toRadian = (degree: number) => degree * Math.PI / 180;
-    
-    const earthRadius = options.units === 'kilometers' ? 6371 : 3958.8; // Earth radius in km or miles
-    
-    const latDiff = toRadian(destLat - userLocation.latitude);
-    const lngDiff = toRadian(destLng - userLocation.longitude);
-    
-    const a = 
-      Math.sin(latDiff / 2) * Math.sin(latDiff / 2) +
-      Math.cos(toRadian(userLocation.latitude)) * Math.cos(toRadian(destLat)) * 
-      Math.sin(lngDiff / 2) * Math.sin(lngDiff / 2);
-    
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    const distance = earthRadius * c;
-    
-    return parseFloat(distance.toFixed(1));
-  }, [userLocation]);
-  
-  const formatDistance = useCallback((distance: number | null): string => {
-    if (distance === null) return 'Unknown';
-    return `${distance} miles`;
-  }, []);
-
-  const refreshLocation = useCallback(() => {
+  const refreshLocation = () => {
     setIsLoading(true);
     setError(null);
     
-    // Get user location
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const newLocation = {
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-          };
-          
-          setUserLocation(newLocation);
-          setIsLoading(false);
-          
-          // Update location on the server
-          updateServerLocation(
-            newLocation.latitude, 
-            newLocation.longitude,
-            position.coords.accuracy
-          );
-          
-          // Using a subtle toast without a title and shorter duration
-          toast({
-            description: "Updated location",
-            duration: 2000,
-            className: "bg-opacity-70 text-sm"
-          });
-        },
-        (error) => {
-          console.error('Error getting user location:', error);
-          setError('Location access denied');
-          setIsLoading(false);
-          toast({
-            title: "Location access denied",
-            description: "Enable location services to find nearby events.",
-            variant: "destructive",
-          });
-        }
-      );
-    } else {
-      setError('Geolocation not supported');
+    if (!navigator.geolocation) {
+      setError('Geolocation is not supported by this browser');
       setIsLoading(false);
-      toast({
-        title: "Geolocation not supported",
-        description: "Your browser doesn't support geolocation.",
-        variant: "destructive",
-      });
+      return;
     }
-  }, [toast, updateServerLocation]);
 
-  useEffect(() => {
-    refreshLocation();
-    
-    // Set up a periodic location refresh (every 15 minutes)
-    const intervalId = setInterval(() => {
-      refreshLocation();
-    }, 15 * 60 * 1000);
-    
-    return () => clearInterval(intervalId);
-  }, [refreshLocation]);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setUserLocation({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude
+        });
+        setError(null);
+        setIsLoading(false);
+      },
+      (error) => {
+        console.error('Geolocation error:', error);
+        setError(error.message);
+        setIsLoading(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0 // Force fresh location
+      }
+    );
+  };
 
-  return { 
-    userLocation, 
-    isLoading, 
-    error, 
-    refreshLocation,
-    calculateDistance: useCallback((
-      destLat: number, 
-      destLng: number, 
-      options: DistanceOptions = { units: 'miles' }
-    ): number | null => {
-      if (!userLocation) return null;
-      
-      // Implementation of the Haversine formula for calculating distance between two points on Earth
-      const toRadian = (degree: number) => degree * Math.PI / 180;
-      
-      const earthRadius = options.units === 'kilometers' ? 6371 : 3958.8; // Earth radius in km or miles
-      
-      const latDiff = toRadian(destLat - userLocation.latitude);
-      const lngDiff = toRadian(destLng - userLocation.longitude);
-      
-      const a = 
-        Math.sin(latDiff / 2) * Math.sin(latDiff / 2) +
-        Math.cos(toRadian(userLocation.latitude)) * Math.cos(toRadian(destLat)) * 
-        Math.sin(lngDiff / 2) * Math.sin(lngDiff / 2);
-      
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-      const distance = earthRadius * c;
-      
-      return parseFloat(distance.toFixed(1));
-    }, [userLocation]),
-    formatDistance: useCallback((distance: number | null): string => {
-      if (distance === null) return 'Unknown';
-      return `${distance} miles`;
-    }, [])
+  return {
+    userLocation,
+    isLoading,
+    error,
+    refreshLocation
   };
 };
