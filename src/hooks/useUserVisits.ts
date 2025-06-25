@@ -35,7 +35,7 @@ export const useUserVisits = () => {
       const context: CheckInContext = {
         type: 'establishment',
         entityId: establishmentId,
-        entityName: 'Establishment' // This should be passed from the calling component
+        entityName: options.establishmentName || 'Establishment' // Use provided name or fallback
       };
 
       const result = await checkInService.performCheckIn(user.id, context, options);
@@ -87,7 +87,7 @@ export const useUserVisits = () => {
       const context: CheckInContext = {
         type: 'establishment',
         entityId: establishmentId,
-        entityName: 'Establishment', // This should be passed from the calling component
+        entityName: options.establishmentName || 'Establishment', // Use provided name or fallback
         locationData: {
           latitude: userLatitude,
           longitude: userLongitude

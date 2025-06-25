@@ -31,11 +31,11 @@ const CheckInButton: React.FC<CheckInButtonProps> = ({ establishmentId, establis
           establishmentId,
           userLocation.latitude,
           userLocation.longitude,
-          { rating, note }
+          { rating, note, establishmentName }
         );
       } else {
         // Fallback to regular check-in without location verification
-        result = await recordVisit(establishmentId, { rating, note });
+        result = await recordVisit(establishmentId, { rating, note, establishmentName });
       }
       
       if (result?.success) {
