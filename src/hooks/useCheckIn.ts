@@ -1,8 +1,8 @@
 
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { supabaseClient } from '@/lib/supabaseClient';
-import { useAuth } from '@/contexts/auth';
+import { useAuth } from '@/hooks/useAuth';
+import { checkInService, CheckInContext } from '@/services/checkInService';
 
 interface CheckInOptions {
   barCrawlId: string;
@@ -28,27 +28,37 @@ export function useCheckIn() {
     try {
       setIsCheckingIn(true);
 
-      // Insert record into bar_crawl_check_ins
-      const { error } = await supabaseClient
-        .from('bar_crawl_check_ins')
-        .insert({
-          bar_crawl_id: barCrawlId,
+      const context: CheckInContext = {
+        type: 'bar_crawl',
+        entityId: barCrawlId,
+        entityName: `Bar Crawl at ${establishmentName}`,
+        additionalData: {
           establishment_id: establishmentId,
-          user_id: user.id
+          establishment_name: establishmentName
+        }
+      };
+
+      const result = await checkInService.performCheckIn(user.id, context);
+
+      if (result.success) {
+        // Save last check-in time to local storage for cooldown
+        localStorage.setItem('last_check_in_time', new Date().toISOString());
+        localStorage.setItem('last_checked_in_establishment', establishmentId);
+        
+        toast({
+          title: "Check-in successful!",
+          description: result.message,
         });
-
-      if (error) throw error;
-
-      // Save last check-in time to local storage for cooldown
-      localStorage.setItem('last_check_in_time', new Date().toISOString());
-      localStorage.setItem('last_checked_in_establishment', establishmentId);
-      
-      toast({
-        title: "Check-in successful!",
-        description: `You've checked in at ${establishmentName}`,
-      });
-      
-      return true;
+        
+        return true;
+      } else {
+        toast({
+          title: "Check-in failed",
+          description: result.message,
+          variant: "destructive",
+        });
+        return false;
+      }
     } catch (error: any) {
       console.error('Error checking in:', error);
       toast({

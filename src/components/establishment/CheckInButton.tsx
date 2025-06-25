@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Check, MapPin, X } from 'lucide-react';
 import { useUserVisits } from '@/hooks/useUserVisits';
@@ -16,22 +17,20 @@ const CheckInButton: React.FC<CheckInButtonProps> = ({ establishmentId, establis
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [rating, setRating] = useState<number | null>(null);
   const [note, setNote] = useState('');
-  const [isCheckingIn, setIsCheckingIn] = useState(false);
-  const { recordVisit, verifyLocationAndRecordVisit } = useUserVisits();
-  const { userLocation: location, isLoading: locationLoading, error: locationError } = useUserLocation();
+  const { verifyLocationAndRecordVisit, recordVisit, isLoading } = useUserVisits();
+  const { userLocation, isLoading: locationLoading, error: locationError } = useUserLocation();
   const { toast } = useToast();
 
   const handleCheckIn = async () => {
-    setIsCheckingIn(true);
     try {
       let result;
       
       // If we have location, use location verification
-      if (location && location.latitude && location.longitude) {
+      if (userLocation && userLocation.latitude && userLocation.longitude) {
         result = await verifyLocationAndRecordVisit(
           establishmentId,
-          location.latitude,
-          location.longitude,
+          userLocation.latitude,
+          userLocation.longitude,
           { rating, note }
         );
       } else {
@@ -39,15 +38,18 @@ const CheckInButton: React.FC<CheckInButtonProps> = ({ establishmentId, establis
         result = await recordVisit(establishmentId, { rating, note });
       }
       
-      if (result) {
-        toast({
-          title: 'Check-in successful!',
-          description: `You've checked in to ${establishmentName}.`,
-        });
+      if (result?.success) {
         setIsDialogOpen(false);
+        setRating(null);
+        setNote('');
       }
-    } finally {
-      setIsCheckingIn(false);
+    } catch (error) {
+      console.error('Check-in error:', error);
+      toast({
+        title: "Check-in failed",
+        description: "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -114,15 +116,15 @@ const CheckInButton: React.FC<CheckInButtonProps> = ({ establishmentId, establis
             <Button 
               variant="outline" 
               onClick={() => setIsDialogOpen(false)}
-              disabled={isCheckingIn}
+              disabled={isLoading}
             >
               Cancel
             </Button>
             <Button 
               onClick={handleCheckIn}
-              disabled={isCheckingIn || (locationLoading && !locationError)}
+              disabled={isLoading || (locationLoading && !locationError)}
             >
-              {isCheckingIn ? (
+              {isLoading ? (
                 <><span className="animate-spin mr-1">●</span> Checking In...</>
               ) : (
                 <><Check size={16} className="mr-1" /> Check In</>

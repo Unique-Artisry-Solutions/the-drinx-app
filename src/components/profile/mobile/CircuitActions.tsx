@@ -3,7 +3,9 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Timer } from 'lucide-react';
-import { useCheckIn } from '@/hooks/useCheckIn';
+import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
+import { checkInService, CheckInContext } from '@/services/checkInService';
 
 interface CircuitActionsProps {
   circuitId: string;
@@ -24,19 +26,49 @@ const CircuitActions: React.FC<CircuitActionsProps> = ({
   formatTimeRemaining,
   onCheckIn
 }) => {
-  const { isCheckingIn, performCheckIn } = useCheckIn();
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [isCheckingIn, setIsCheckingIn] = React.useState(false);
   
   const handleCheckIn = async () => {
-    if (!hasNextStop || !canCheckIn || !establishmentId || !establishmentName) return;
+    if (!hasNextStop || !canCheckIn || !establishmentId || !establishmentName || !user) return;
     
-    const success = await performCheckIn({
-      barCrawlId: circuitId,
-      establishmentId,
-      establishmentName
-    });
-    
-    if (success) {
-      onCheckIn();
+    setIsCheckingIn(true);
+    try {
+      const context: CheckInContext = {
+        type: 'swig_circuit',
+        entityId: circuitId,
+        entityName: `Swig Circuit at ${establishmentName}`,
+        additionalData: {
+          establishment_id: establishmentId,
+          establishment_name: establishmentName
+        }
+      };
+
+      const result = await checkInService.performCheckIn(user.id, context);
+      
+      if (result.success) {
+        toast({
+          title: "Check-in successful!",
+          description: result.message,
+        });
+        onCheckIn();
+      } else {
+        toast({
+          title: "Check-in failed",
+          description: result.message,
+          variant: "destructive",
+        });
+      }
+    } catch (error: any) {
+      console.error('Error checking in:', error);
+      toast({
+        title: "Check-in failed",
+        description: error.message || "Failed to check in. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCheckingIn(false);
     }
   };
   
