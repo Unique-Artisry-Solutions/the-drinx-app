@@ -1491,8 +1491,6 @@ export type Database = {
           address: string
           cocktail_count: number | null
           created_at: string | null
-          distance: string | null
-          distance_value: number | null
           hours: Json | null
           id: string
           image_url: string | null
@@ -1507,8 +1505,6 @@ export type Database = {
           address: string
           cocktail_count?: number | null
           created_at?: string | null
-          distance?: string | null
-          distance_value?: number | null
           hours?: Json | null
           id?: string
           image_url?: string | null
@@ -1523,8 +1519,6 @@ export type Database = {
           address?: string
           cocktail_count?: number | null
           created_at?: string | null
-          distance?: string | null
-          distance_value?: number | null
           hours?: Json | null
           id?: string
           image_url?: string | null
@@ -6135,64 +6129,46 @@ export type Database = {
       swig_circuits: {
         Row: {
           created_at: string | null
-          created_by: string | null
-          date: string | null
           description: string | null
           end_date: string
           id: string
           image_url: string | null
-          location_details: Json | null
           max_distance: number | null
-          max_participants: number | null
           name: string
           projected_attendance: number | null
           projected_revenue: number | null
           start_date: string
-          status: string | null
           theme: string
-          time: string | null
           updated_at: string | null
           user_id: string | null
         }
         Insert: {
           created_at?: string | null
-          created_by?: string | null
-          date?: string | null
           description?: string | null
           end_date: string
           id?: string
           image_url?: string | null
-          location_details?: Json | null
           max_distance?: number | null
-          max_participants?: number | null
           name: string
           projected_attendance?: number | null
           projected_revenue?: number | null
           start_date: string
-          status?: string | null
           theme: string
-          time?: string | null
           updated_at?: string | null
           user_id?: string | null
         }
         Update: {
           created_at?: string | null
-          created_by?: string | null
-          date?: string | null
           description?: string | null
           end_date?: string
           id?: string
           image_url?: string | null
-          location_details?: Json | null
           max_distance?: number | null
-          max_participants?: number | null
           name?: string
           projected_attendance?: number | null
           projected_revenue?: number | null
           start_date?: string
-          status?: string | null
           theme?: string
-          time?: string | null
           updated_at?: string | null
           user_id?: string | null
         }

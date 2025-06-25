@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth as useAuthContext } from '@/contexts/auth/AuthProvider';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 import { SwitchableUserRole } from '@/types/userRole';
 
 export interface AuthState {
@@ -41,9 +41,7 @@ export function useAuth(): { state: AuthState; actions: AuthActions } {
     login: useCallback(async (email: string, password: string) => {
       try {
         setError(null);
-        const { error } = await authContext.signIn(email, password);
-        if (error) throw error;
-        
+        await authContext.signIn(email, password);
         toast({
           title: 'Success',
           description: 'Logged in successfully',

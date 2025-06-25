@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Check, MapPin, X } from 'lucide-react';
 import { useUserVisits } from '@/hooks/useUserVisits';
@@ -43,11 +42,9 @@ const CheckInButton: React.FC<CheckInButtonProps> = ({ establishmentId, establis
       if (result) {
         toast({
           title: 'Check-in successful!',
-          description: `You've checked in to ${establishmentName} and earned 10 points!`,
+          description: `You've checked in to ${establishmentName}.`,
         });
         setIsDialogOpen(false);
-        setRating(null);
-        setNote('');
       }
     } finally {
       setIsCheckingIn(false);
@@ -80,7 +77,7 @@ const CheckInButton: React.FC<CheckInButtonProps> = ({ establishmentId, establis
                     key={value}
                     type="button"
                     onClick={() => setRating(value)}
-                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                    className={`w-8 h-8 rounded-full flex items-center justify-center ${
                       rating === value
                         ? 'bg-amber-500 text-white'
                         : 'bg-gray-100 hover:bg-gray-200'

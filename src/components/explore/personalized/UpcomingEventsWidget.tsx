@@ -4,7 +4,19 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Calendar, Clock, MapPin, Users, User } from 'lucide-react';
-import type { UpcomingEvent } from '@/types/explore';
+
+export interface UpcomingEvent {
+  id: string;
+  title: string;
+  description: string;
+  date: string;
+  time: string;
+  location: string;
+  attendees: number;
+  imageUrl?: string;
+  promoter_username?: string;
+  promoter_id?: string;
+}
 
 export interface UpcomingEventsWidgetProps {
   events?: UpcomingEvent[];

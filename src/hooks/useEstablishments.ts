@@ -1,111 +1,138 @@
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { calculateDistance } from '@/utils/locationUtils';
+import { useQuery } from '@tanstack/react-query';
+import { supabaseClient } from '@/lib/supabaseClient';
+import { calculateDistance } from '@/lib/utils';
+import { Establishment } from '@/types/DatabaseTypes';
 
-export interface Establishment {
-  id: string;
-  name: string;
-  address: string;
-  latitude: number;
-  longitude: number;
-  distance?: string;
-  distanceValue?: number;
-  cocktailCount: number;
-  image?: string;
-  owner_id?: string;
-  created_at?: string;
-  updated_at?: string;
-}
-
-interface UseEstablishmentsProps {
+type FetchEstablishmentsOptions = {
   latitude?: number;
   longitude?: number;
-  maxDistance?: number;
   searchTerm?: string;
+  maxDistance?: number;
 }
 
-export const useEstablishments = ({ 
+// Extend the Establishment type to include the distance value for filtering
+type EstablishmentWithDistanceTemp = Establishment & {
+  distanceValue?: number;
+  distance?: string;
+  distance_in_miles?: number;
+};
+
+const fetchEstablishmentsFromSupabase = async ({ 
   latitude, 
   longitude, 
-  maxDistance = 10,
-  searchTerm = ''
-}: UseEstablishmentsProps = {}) => {
-  const [establishments, setEstablishments] = useState<Establishment[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  searchTerm,
+  maxDistance = 20
+}: FetchEstablishmentsOptions): Promise<EstablishmentWithDistanceTemp[]> => {
+  let query = supabaseClient
+    .from('establishments')
+    .select('*');
+  
+  if (searchTerm) {
+    query = query.or(`name.ilike.%${searchTerm}%,address.ilike.%${searchTerm}%`);
+  }
+  
+  const { data, error } = await query;
+  
+  if (error) {
+    console.error('Error fetching establishments:', error);
+    throw new Error(error.message);
+  }
+  
+  // If we have user location, calculate distances and filter by max distance
+  if (latitude && longitude && data) {
+    return data.map(establishment => {
+      const distance = calculateDistance(
+        latitude,
+        longitude,
+        establishment.latitude,
+        establishment.longitude
+      );
+      
+      // Map database fields to our app's format
+      return {
+        ...establishment,
+        cocktailCount: establishment.cocktail_count,
+        image: establishment.image_url,
+        distance: `${distance.toFixed(1)} mi`,
+        distanceValue: distance, // Add raw distance for filtering
+        distance_in_miles: distance, // Include for backward compatibility
+        created_at: establishment.created_at
+      } as EstablishmentWithDistanceTemp;
+    }).filter(est => est.distanceValue! <= maxDistance); // Filter by distance
+  }
+  
+  // Return data without distances if no location
+  return data?.map(establishment => ({
+    ...establishment,
+    cocktailCount: establishment.cocktail_count,
+    image: establishment.image_url,
+  })) as EstablishmentWithDistanceTemp[] || [];
+};
 
+export const useEstablishments = (options: FetchEstablishmentsOptions = {}) => {
+  const [establishments, setEstablishments] = useState<EstablishmentWithDistanceTemp[]>([]);
+  const [filteredEstablishments, setFilteredEstablishments] = useState<EstablishmentWithDistanceTemp[]>([]);
+  const [searchTerm, setSearchTerm] = useState<string>(options.searchTerm || '');
+  const [maxDistance, setMaxDistance] = useState<number>(options.maxDistance || 20);
+  
+  const { 
+    data, 
+    isLoading, 
+    error, 
+    refetch 
+  } = useQuery({
+    queryKey: ['establishments', options, maxDistance],
+    queryFn: () => fetchEstablishmentsFromSupabase({
+      ...options,
+      searchTerm: searchTerm || options.searchTerm,
+      maxDistance
+    }),
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+  
   useEffect(() => {
-    const fetchEstablishments = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-
-        let query = supabase
-          .from('establishments')
-          .select('*')
-          .order('name');
-
-        if (searchTerm) {
-          query = query.ilike('name', `%${searchTerm}%`);
-        }
-
-        const { data, error: fetchError } = await query;
-
-        if (fetchError) {
-          throw fetchError;
-        }
-
-        let processedEstablishments = data?.map(est => ({
-          id: est.id,
-          name: est.name,
-          address: est.address,
-          latitude: est.latitude || 0,
-          longitude: est.longitude || 0,
-          cocktailCount: est.cocktail_count || 0,
-          image: est.image_url,
-          owner_id: est.owner_id,
-          created_at: est.created_at,
-          updated_at: est.created_at // Fallback since updated_at might not exist
-        })) || [];
-
-        // If user location is provided, calculate distances and filter
-        if (latitude && longitude) {
-          processedEstablishments = processedEstablishments.map(est => {
-            const distance = calculateDistance(latitude, longitude, est.latitude, est.longitude);
-            return {
-              ...est,
-              distance: `${distance.toFixed(1)} mi`,
-              distanceValue: distance
-            };
-          }).filter(est => est.distanceValue! <= maxDistance)
-            .sort((a, b) => (a.distanceValue || 0) - (b.distanceValue || 0));
-        }
-
-        setEstablishments(processedEstablishments);
-      } catch (err) {
-        console.error('Error fetching establishments:', err);
-        setError(err instanceof Error ? err.message : 'Failed to fetch establishments');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchEstablishments();
-  }, [latitude, longitude, maxDistance, searchTerm]);
-
+    if (data) {
+      setEstablishments(data);
+      setFilteredEstablishments(data);
+    }
+  }, [data]);
+  
   const filterEstablishments = (term: string) => {
-    if (!term) return establishments;
-    return establishments.filter(est =>
-      est.name.toLowerCase().includes(term.toLowerCase()) ||
-      est.address.toLowerCase().includes(term.toLowerCase())
+    setSearchTerm(term);
+    
+    if (!term.trim()) {
+      setFilteredEstablishments(establishments);
+      return;
+    }
+    
+    const filtered = establishments.filter(place =>
+      place.name.toLowerCase().includes(term.toLowerCase()) ||
+      place.address.toLowerCase().includes(term.toLowerCase())
     );
+    
+    setFilteredEstablishments(filtered);
   };
-
+  
+  const updateMaxDistance = (distance: number) => {
+    setMaxDistance(distance);
+    refetch();
+  };
+  
+  const performSearch = () => {
+    refetch();
+  };
+  
   return {
-    establishments,
+    establishments: filteredEstablishments,
     isLoading,
     error,
-    filterEstablishments
+    refetch,
+    searchTerm,
+    filterEstablishments,
+    performSearch,
+    maxDistance,
+    updateMaxDistance
   };
 };

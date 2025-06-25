@@ -1,237 +1,278 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { MapPin, Calendar, Star, TrendingUp, Award, Target } from 'lucide-react';
+import { Check, MapPin, Award, Bell, Star } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useUserVisits } from '@/hooks/useUserVisits';
-import { Visit } from '@/types/VisitTypes';
+import { useVisitAchievements } from '@/hooks/useVisitAchievements';
+import { VisitWithEstablishment } from '@/types/VisitTypes';
+import VisitItem from './VisitItem';
+import AchievementItem from './AchievementItem';
+import NotificationItem from './NotificationItem';
+import { Badge } from '@/components/ui/badge';
 
-const VisitedTab: React.FC = () => {
-  const { visits, stats, isLoading } = useUserVisits();
+interface VisitedTabProps {
+  visitedEstablishments?: any[]; // Keep existing prop for compatibility
+}
 
-  if (isLoading) {
+const VisitedTab: React.FC<VisitedTabProps> = () => {
+  const { visits, stats, isLoading: visitsLoading } = useUserVisits();
+  const { 
+    achievements, 
+    notifications, 
+    unreadCount,
+    markNotificationAsRead, 
+    markAllNotificationsAsRead 
+  } = useVisitAchievements();
+  
+  const [selectedVisit, setSelectedVisit] = useState<VisitWithEstablishment | null>(null);
+  
+  if (visitsLoading) {
     return (
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {[...Array(4)].map((_, i) => (
-            <Card key={i} className="animate-pulse">
-              <CardContent className="p-6">
-                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                <div className="h-8 bg-gray-200 rounded w-1/2"></div>
-              </CardContent>
-            </Card>
-          ))}
+      <div className="flex justify-center py-8">
+        <div className="animate-pulse text-center">
+          <div className="h-6 w-32 bg-gray-300 rounded mb-4 mx-auto"></div>
+          <div className="h-4 w-48 bg-gray-200 rounded mb-2 mx-auto"></div>
         </div>
       </div>
     );
   }
-
+  
+  if (!visits || visits.length === 0) {
+    return (
+      <Card>
+        <CardContent className="p-6 text-center">
+          <div className="mx-auto w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+            <MapPin className="h-6 w-6 text-gray-400" />
+          </div>
+          <h3 className="font-medium text-lg mb-2">No Visited Places Yet</h3>
+          <p className="text-gray-600 mb-4">
+            Check in to establishments to start building your visit history.
+          </p>
+          <Button asChild>
+            <Link to="/explore">Explore Places</Link>
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+  
   return (
     <div className="space-y-6">
-      {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      {stats && (
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Visits</CardTitle>
-            <Target className="h-4 w-4 text-muted-foreground" />
+          <CardHeader>
+            <CardTitle>Your Visit Stats</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalVisits}</div>
-            <p className="text-xs text-muted-foreground">
-              All time check-ins
-            </p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-blue-50 rounded-lg p-3 text-center">
+                <div className="text-2xl font-bold text-blue-700">{stats.total_visits}</div>
+                <div className="text-xs text-blue-600">Total Visits</div>
+              </div>
+              <div className="bg-green-50 rounded-lg p-3 text-center">
+                <div className="text-2xl font-bold text-green-700">{stats.unique_establishments}</div>
+                <div className="text-xs text-green-600">Places Visited</div>
+              </div>
+              <div className="bg-amber-50 rounded-lg p-3 text-center">
+                <div className="text-2xl font-bold text-amber-700">{stats.average_rating?.toFixed(1) || 0}</div>
+                <div className="text-xs text-amber-600">Avg. Rating</div>
+              </div>
+              <div className="bg-purple-50 rounded-lg p-3 text-center">
+                <div className="text-2xl font-bold text-purple-700">{stats.total_mocktails_tried}</div>
+                <div className="text-xs text-purple-600">Mocktails Tried</div>
+              </div>
+            </div>
           </CardContent>
         </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Unique Places</CardTitle>
-            <MapPin className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.uniqueEstablishments}</div>
-            <p className="text-xs text-muted-foreground">
-              Different establishments
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Average Rating</CardTitle>
-            <Star className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.averageRating.toFixed(1)}</div>
-            <p className="text-xs text-muted-foreground">
-              Out of 5 stars
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Mocktails Tried</CardTitle>
-            <Award className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.total_mocktails_tried || 0}</div>
-            <p className="text-xs text-muted-foreground">
-              Different mocktails
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Recent Visits */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
-            Recent Visits
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {visits.length === 0 ? (
-            <div className="text-center py-8">
-              <MapPin className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-medium mb-2">No visits yet</h3>
-              <p className="text-muted-foreground mb-4">
-                Start exploring establishments to see your visit history here
-              </p>
-              <Button>
-                Explore Nearby
+      )}
+      
+      <Tabs defaultValue="history">
+        <TabsList className="w-full">
+          <TabsTrigger value="history">Visit History</TabsTrigger>
+          <TabsTrigger value="achievements">Achievements</TabsTrigger>
+          <TabsTrigger value="notifications" className="relative">
+            Notifications
+            {unreadCount > 0 && (
+              <Badge className="ml-1 bg-red-500" variant="destructive">
+                {unreadCount}
+              </Badge>
+            )}
+          </TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="history" className="mt-4">
+          {selectedVisit ? (
+            <div>
+              <Button 
+                variant="ghost" 
+                className="mb-3" 
+                onClick={() => setSelectedVisit(null)}
+              >
+                ← Back to all visits
               </Button>
+              
+              <Card>
+                <CardContent className="p-4">
+                  <h2 className="text-xl font-semibold">{selectedVisit.establishment.name}</h2>
+                  <div className="flex items-center text-sm text-gray-600 mt-1 mb-4">
+                    <MapPin size={16} className="mr-1" />
+                    {selectedVisit.establishment.address}
+                  </div>
+                  
+                  {/* Visit details */}
+                  <div className="grid grid-cols-2 gap-3 mb-4">
+                    <div className="bg-gray-50 p-3 rounded">
+                      <div className="text-xs font-medium text-gray-500">Visit Date</div>
+                      <div className="text-sm">
+                        {new Date(selectedVisit.visit_date).toLocaleDateString()} at {' '}
+                        {new Date(selectedVisit.visit_date).toLocaleTimeString()}
+                      </div>
+                    </div>
+                    {selectedVisit.rating && (
+                      <div className="bg-gray-50 p-3 rounded">
+                        <div className="text-xs font-medium text-gray-500">Rating</div>
+                        <div className="flex">
+                          {Array.from({ length: 5 }).map((_, i) => (
+                            <Star
+                              key={i}
+                              size={16}
+                              className={`${
+                                i < selectedVisit.rating! ? 'text-amber-500 fill-amber-500' : 'text-gray-300'
+                              }`}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Notes section */}
+                  <div className="mb-4">
+                    <h3 className="font-medium mb-2">Notes</h3>
+                    {selectedVisit.notes.length > 0 ? (
+                      <div className="space-y-2">
+                        {selectedVisit.notes.map(note => (
+                          <div key={note.id} className="bg-gray-50 p-3 rounded text-sm">
+                            {note.note}
+                            <div className="text-xs text-gray-500 mt-1">
+                              {new Date(note.created_at).toLocaleDateString()}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-sm text-gray-500">No notes for this visit</div>
+                    )}
+                  </div>
+                  
+                  {/* Tried mocktails section */}
+                  <div>
+                    <h3 className="font-medium mb-2">Tried Mocktails</h3>
+                    {selectedVisit.tried_mocktails.length > 0 ? (
+                      <div className="space-y-2">
+                        {selectedVisit.tried_mocktails.map(mocktail => (
+                          <div key={mocktail.id} className="bg-gray-50 p-3 rounded">
+                            <div className="font-medium text-sm">{mocktail.cocktail_id.substring(0, 8)}</div>
+                            {mocktail.rating && (
+                              <div className="flex mt-1">
+                                {Array.from({ length: 5 }).map((_, i) => (
+                                  <Star
+                                    key={i}
+                                    size={14}
+                                    className={`${
+                                      i < mocktail.rating! ? 'text-amber-500 fill-amber-500' : 'text-gray-300'
+                                    }`}
+                                  />
+                                ))}
+                              </div>
+                            )}
+                            {mocktail.notes && (
+                              <div className="text-sm mt-1">{mocktail.notes}</div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-sm text-gray-500">No mocktails recorded for this visit</div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           ) : (
             <div className="space-y-4">
-              {visits.map((visit) => (
-                <VisitItem key={visit.id} visit={visit} />
+              {visits.map(visit => (
+                <VisitItem 
+                  key={visit.id} 
+                  visit={visit} 
+                  onViewDetails={(visit) => setSelectedVisit(visit)}
+                />
               ))}
             </div>
           )}
-        </CardContent>
-      </Card>
-
-      {/* Achievements */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Award className="h-5 w-5" />
-            Achievements
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {stats.totalVisits >= 1 && (
-              <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
-                <Award className="h-6 w-6 text-green-600" />
-                <div>
-                  <h4 className="font-medium text-green-900">First Visit</h4>
-                  <p className="text-sm text-green-700">Completed your first check-in</p>
-                </div>
-              </div>
-            )}
-            
-            {stats.uniqueEstablishments >= 3 && (
-              <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
-                <MapPin className="h-6 w-6 text-blue-600" />
-                <div>
-                  <h4 className="font-medium text-blue-900">Explorer</h4>
-                  <p className="text-sm text-blue-700">Visited 3+ different places</p>
-                </div>
-              </div>
-            )}
-            
-            {stats.totalVisits >= 10 && (
-              <div className="flex items-center gap-3 p-3 bg-purple-50 rounded-lg">
-                <TrendingUp className="h-6 w-6 text-purple-600" />
-                <div>
-                  <h4 className="font-medium text-purple-900">Regular</h4>
-                  <p className="text-sm text-purple-700">Completed 10+ check-ins</p>
-                </div>
-              </div>
-            )}
-            
-            {stats.averageRating >= 4.5 && (
-              <div className="flex items-center gap-3 p-3 bg-yellow-50 rounded-lg">
-                <Star className="h-6 w-6 text-yellow-600" />
-                <div>
-                  <h4 className="font-medium text-yellow-900">High Standards</h4>
-                  <p className="text-sm text-yellow-700">Average rating above 4.5</p>
-                </div>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-};
-
-// Visit Item Component
-interface VisitItemProps {
-  visit: Visit;
-}
-
-const VisitItem: React.FC<VisitItemProps> = ({ visit }) => {
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  };
-
-  return (
-    <div className="flex items-start gap-4 p-4 border rounded-lg hover:bg-gray-50">
-      <div className="flex-shrink-0">
-        <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-500 rounded-lg flex items-center justify-center">
-          <MapPin className="h-6 w-6 text-white" />
-        </div>
-      </div>
-      
-      <div className="flex-1 min-w-0">
-        <div className="flex items-start justify-between">
-          <div>
-            <h4 className="font-medium text-slate-900">
-              {visit.establishment?.name || 'Unknown Establishment'}
-            </h4>
-            <p className="text-sm text-slate-600 mt-1">
-              {visit.establishment?.address || 'Address not available'}
-            </p>
-          </div>
-          
-          <div className="flex items-center gap-2 flex-shrink-0">
-            {visit.rating && (
-              <Badge variant="outline" className="flex items-center gap-1">
-                <Star className="h-3 w-3 fill-current text-yellow-500" />
-                {visit.rating}
-              </Badge>
-            )}
-            <span className="text-sm text-slate-500">
-              {formatDate(visit.visited_at)}
-            </span>
-          </div>
-        </div>
+        </TabsContent>
         
-        {visit.notes && (
-          <p className="text-sm text-slate-600 mt-2">
-            {visit.notes}
-          </p>
-        )}
+        <TabsContent value="achievements" className="mt-4">
+          {achievements.length > 0 ? (
+            <div className="space-y-3">
+              {achievements.map(achievement => (
+                <AchievementItem key={achievement.id} achievement={achievement} />
+              ))}
+            </div>
+          ) : (
+            <Card>
+              <CardContent className="p-6 text-center">
+                <div className="mx-auto w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+                  <Award className="h-6 w-6 text-gray-400" />
+                </div>
+                <h3 className="font-medium text-lg mb-2">No Achievements Yet</h3>
+                <p className="text-gray-600">
+                  Visit places to earn achievements and unlock badges.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
         
-        {visit.tried_mocktails.length > 0 && (
-          <div className="flex flex-wrap gap-1 mt-2">
-            {visit.tried_mocktails.map((mocktail, index) => (
-              <Badge key={index} variant="secondary" className="text-xs">
-                {mocktail.notes || `Mocktail ${index + 1}`}
-              </Badge>
-            ))}
-          </div>
-        )}
-      </div>
+        <TabsContent value="notifications" className="mt-4">
+          {notifications.length > 0 ? (
+            <>
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="font-medium">Your Notifications</h3>
+                {unreadCount > 0 && (
+                  <Button variant="outline" size="sm" onClick={markAllNotificationsAsRead}>
+                    <Check size={14} className="mr-1" /> Mark all as read
+                  </Button>
+                )}
+              </div>
+              <div className="space-y-3">
+                {notifications.map(notification => (
+                  <NotificationItem 
+                    key={notification.id} 
+                    notification={notification}
+                    onMarkAsRead={markNotificationAsRead}
+                  />
+                ))}
+              </div>
+            </>
+          ) : (
+            <Card>
+              <CardContent className="p-6 text-center">
+                <div className="mx-auto w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+                  <Bell className="h-6 w-6 text-gray-400" />
+                </div>
+                <h3 className="font-medium text-lg mb-2">No Notifications</h3>
+                <p className="text-gray-600">
+                  You don't have any notifications at this time.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

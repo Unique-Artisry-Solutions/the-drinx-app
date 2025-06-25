@@ -2,13 +2,13 @@
 import React from 'react';
 import { format } from 'date-fns';
 import { MapPin, Clock, Star, MessageSquare, Coffee } from 'lucide-react';
-import { Visit } from '@/types/VisitTypes';
+import { VisitWithEstablishment } from '@/types/VisitTypes';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 
 interface VisitItemProps {
-  visit: Visit;
-  onViewDetails?: (visit: Visit) => void;
+  visit: VisitWithEstablishment;
+  onViewDetails?: (visit: VisitWithEstablishment) => void;
 }
 
 const VisitItem: React.FC<VisitItemProps> = ({ visit, onViewDetails }) => {
@@ -20,12 +20,10 @@ const VisitItem: React.FC<VisitItemProps> = ({ visit, onViewDetails }) => {
       <CardContent className="p-4">
         <div className="flex justify-between items-start">
           <div className="flex-1">
-            <h3 className="font-medium text-lg">
-              {establishment?.name || 'Unknown Establishment'}
-            </h3>
+            <h3 className="font-medium text-lg">{establishment.name}</h3>
             <div className="flex items-center text-sm text-gray-600 mt-1">
               <MapPin size={14} className="mr-1" />
-              <span>{establishment?.address || 'Address not available'}</span>
+              <span>{establishment.address}</span>
             </div>
           </div>
           {visit.rating && (
@@ -49,19 +47,19 @@ const VisitItem: React.FC<VisitItemProps> = ({ visit, onViewDetails }) => {
             {format(visitDate, 'MMM d, yyyy')} at {format(visitDate, 'h:mm a')}
           </span>
           
-          {visit.notes && (
+          {visit.duration_minutes && (
+            <span className="mr-3">
+              • {visit.duration_minutes} min
+            </span>
+          )}
+          
+          {visit.notes.length > 0 && (
             <div className="flex items-center">
               <MessageSquare size={14} className="mr-1" />
-              <span>Note</span>
+              <span>{visit.notes.length}</span>
             </div>
           )}
         </div>
-        
-        {visit.notes && (
-          <div className="mt-3 p-2 bg-gray-50 rounded text-sm">
-            {visit.notes}
-          </div>
-        )}
         
         {visit.tried_mocktails.length > 0 && (
           <div className="mt-3">
