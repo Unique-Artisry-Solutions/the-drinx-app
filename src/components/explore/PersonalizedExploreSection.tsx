@@ -6,7 +6,7 @@ import { QuickActionCards } from './personalized/QuickActionCards';
 import { NearbyEstablishmentsWidget } from './personalized/NearbyEstablishmentsWidget';
 import { UpcomingEventsWidget } from './personalized/UpcomingEventsWidget';
 import { RewardsHighlightWidget } from './personalized/RewardsHighlightWidget';
-import { StreakMotivationWidget } from './personalized/StreakMotivationWidget';
+import StreakMotivationWidget from './personalized/StreakMotivationWidget';
 import { NearbyCheckInModal } from './NearbyCheckInModal';
 import { usePersonalizedData } from '@/hooks/usePersonalizedData';
 import { useNearbyCheckIns } from '@/hooks/useNearbyCheckIns';

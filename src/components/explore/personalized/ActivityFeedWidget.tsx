@@ -3,25 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Clock, MapPin, Heart, Trophy, Camera, Users } from 'lucide-react';
-
-interface ActivityUser {
-  id: string;
-  name: string;
-  avatar?: string;
-}
-
-interface ActivityItem {
-  id: string;
-  type: 'check-in' | 'review' | 'recipe' | 'achievement' | 'bar-crawl' | 'photo-share' | 'favorite';
-  title: string;
-  description: string;
-  timestamp: string;
-  location?: string;
-  user: ActivityUser;
-  likes: number;
-  isLiked: boolean;
-  imageUrl?: string;
-}
+import type { ActivityItem } from '@/types/explore';
 
 interface ActivityFeedWidgetProps {
   activities?: ActivityItem[];

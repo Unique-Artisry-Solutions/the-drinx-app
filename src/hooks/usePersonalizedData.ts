@@ -1,71 +1,38 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNearbyCheckIns } from '@/hooks/useNearbyCheckIns';
+import type { 
+  PersonalizedDataReturn, 
+  QuickStats, 
+  ActivityItem, 
+  NearbyEstablishment, 
+  UpcomingEvent, 
+  QuickAction,
+  UserStats,
+  Recommendation
+} from '@/types/explore';
 
-export interface QuickStats {
-  totalMocktailsTried: number;
-  totalPoints: number;
-  currentStreak: number;
-}
-
-export interface ActivityItem {
-  id: string;
-  type: string;
-  title: string;
-  description: string;
-  timestamp: string;
-  location?: string;
-  user: {
-    id: string;
-    name: string;
-    avatar?: string;
-  };
-  likes: number;
-  isLiked: boolean;
-  imageUrl?: string;
-}
-
-export interface NearbyEstablishment {
-  id: string;
-  name: string;
-  description: string;
-  distance: string;
-  rating: number;
-  isOpen: boolean;
-  imageUrl?: string;
-}
-
-export interface UpcomingEvent {
-  id: string;
-  title: string;
-  date: string;
-  location: string;
-  imageUrl?: string;
-}
-
-export interface QuickAction {
-  id: string;
-  title: string;
-  description: string;
-  iconName: string; // Changed from icon: React.ReactNode to iconName: string
-  color: string;
-  isEnabled: boolean;
-  requiresAuth?: boolean;
-  badge?: string;
-  shortcut?: string;
-  recentlyUsed?: boolean;
-  onClick: () => void | Promise<void>;
-}
-
-export const usePersonalizedData = () => {
+export const usePersonalizedData = (): PersonalizedDataReturn => {
   const navigate = useNavigate();
   const { openModal: openNearbyCheckInModal } = useNearbyCheckIns();
+  
+  const [loading, setLoading] = useState(false);
+  const [isAuthenticated] = useState(true); // This would come from auth context in real app
   
   const [quickStats, setQuickStats] = useState<QuickStats>({
     totalMocktailsTried: 15,
     totalPoints: 450,
     currentStreak: 7
   });
+
+  const userStats: UserStats = {
+    totalMocktailsTried: quickStats.totalMocktailsTried,
+    totalPoints: quickStats.totalPoints,
+    currentStreak: quickStats.currentStreak,
+    establishmentsVisited: 8,
+    favoriteEstablishments: 3
+  };
 
   const [activities, setActivities] = useState<ActivityItem[]>([
     {
@@ -137,18 +104,46 @@ export const usePersonalizedData = () => {
     {
       id: '1',
       title: 'Sober Summer Fest',
+      description: 'A celebration of alcohol-free living with music, food, and community',
       date: '2024-06-15',
+      time: '2:00 PM',
       location: 'Central Park, NY',
+      attendees: 150,
       imageUrl: '/summer-fest.jpg'
     },
     {
       id: '2',
       title: 'Mocktail Mixology Workshop',
+      description: 'Learn the art of crafting perfect non-alcoholic cocktails',
       date: '2024-05-20',
+      time: '7:00 PM',
       location: 'Online',
+      attendees: 45,
       imageUrl: '/mixology-workshop.jpg'
     }
   ]);
+
+  const recommendations: Recommendation[] = [
+    {
+      id: '1',
+      type: 'establishment',
+      title: 'The Dry Bar',
+      description: 'Highly rated establishment near you',
+      reason: 'Based on your recent check-ins',
+      rating: 4.7,
+      distance: '0.5 miles'
+    },
+    {
+      id: '2',
+      type: 'event',
+      title: 'Sober Trivia Night',
+      description: 'Weekly community event',
+      reason: 'You enjoy social activities',
+      date: '2024-05-18',
+      time: '8:00 PM',
+      attendees: 25
+    }
+  ];
 
   const quickActions: QuickAction[] = [
     {
@@ -185,6 +180,22 @@ export const usePersonalizedData = () => {
     activities,
     nearbyEstablishments,
     upcomingEvents,
-    quickActions
+    quickActions,
+    loading,
+    userStats,
+    isAuthenticated,
+    recentActivity: activities,
+    recommendations
   };
 };
+
+// Export types for backward compatibility
+export type { 
+  QuickStats, 
+  ActivityItem, 
+  NearbyEstablishment, 
+  UpcomingEvent, 
+  QuickAction,
+  UserStats,
+  Recommendation
+} from '@/types/explore';

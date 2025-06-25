@@ -3,8 +3,7 @@ import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { MapPin, Star, Clock, Check, Loader2 } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
+import { MapPin, Star, Clock, Loader2 } from 'lucide-react';
 
 interface NearbyEstablishment {
   id: string;
@@ -27,7 +26,7 @@ interface NearbyCheckInModalProps {
   hasError: boolean;
   isCheckingIn: string | null;
   onCheckIn: (establishment: NearbyEstablishment) => void;
-  onViewMap?: () => void;
+  onViewMap: () => void;
 }
 
 export const NearbyCheckInModal: React.FC<NearbyCheckInModalProps> = ({
@@ -45,11 +44,11 @@ export const NearbyCheckInModal: React.FC<NearbyCheckInModalProps> = ({
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Location Access Required</DialogTitle>
+            <DialogTitle>Location Required</DialogTitle>
           </DialogHeader>
           <div className="py-4">
-            <p className="text-muted-foreground mb-4">
-              To find nearby establishments, please enable location access in your browser.
+            <p className="text-sm text-muted-foreground mb-4">
+              Please enable location access to find nearby establishments for check-in.
             </p>
             <Button onClick={onClose} className="w-full">
               Got it
@@ -62,111 +61,79 @@ export const NearbyCheckInModal: React.FC<NearbyCheckInModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-2xl max-h-[80vh]">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <MapPin className="h-5 w-5" />
-            Nearby Check-ins
+            Check In Nearby
           </DialogTitle>
         </DialogHeader>
         
-        <ScrollArea className="max-h-[60vh]">
-          {isLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin mr-2" />
-              <span>Finding nearby establishments...</span>
-            </div>
-          ) : establishments.length === 0 ? (
-            <div className="text-center py-8">
-              <MapPin className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">
-                No establishments found within 5 miles of your location.
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {establishments.map((establishment) => (
-                <Card key={establishment.id} className="hover:shadow-sm transition-shadow">
-                  <CardContent className="p-4">
-                    <div className="flex items-start gap-3">
-                      <div className="w-16 h-16 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
-                        {establishment.image ? (
-                          <img 
-                            src={establishment.image} 
-                            alt={establishment.name}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground">
-                            No Image
-                          </div>
-                        )}
-                      </div>
-                      
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-medium text-sm leading-tight">{establishment.name}</h3>
-                        <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
-                          {establishment.address}
-                        </p>
-                        
-                        <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
+        {isLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-6 w-6 animate-spin" />
+            <span className="ml-2 text-sm text-muted-foreground">Finding nearby places...</span>
+          </div>
+        ) : establishments.length === 0 ? (
+          <div className="py-8 text-center">
+            <p className="text-sm text-muted-foreground mb-4">
+              No nearby establishments found within 5 miles.
+            </p>
+            <Button onClick={onViewMap} variant="outline">
+              View Map
+            </Button>
+          </div>
+        ) : (
+          <>
+            <ScrollArea className="max-h-80">
+              <div className="space-y-3">
+                {establishments.map((establishment) => (
+                  <div key={establishment.id} className="p-3 rounded-lg border">
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="flex-1">
+                        <h4 className="font-medium text-sm">{establishment.name}</h4>
+                        <p className="text-xs text-muted-foreground">{establishment.address}</p>
+                        <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
                           <div className="flex items-center gap-1">
                             <MapPin className="h-3 w-3" />
                             <span>{establishment.distance}</span>
                           </div>
                           <div className="flex items-center gap-1">
-                            <Star className="h-3 w-3" />
-                            <span>{establishment.cocktailCount} cocktails</span>
+                            <Clock className="h-3 w-3" />
+                            <span>{establishment.cocktailCount} mocktails</span>
                           </div>
                         </div>
                       </div>
-                      
-                      <div className="flex-shrink-0">
-                        {establishment.isCheckedIn ? (
-                          <Button variant="outline" size="sm" disabled className="text-green-600 border-green-200">
-                            <Check className="h-3 w-3 mr-1" />
-                            Checked In
-                          </Button>
-                        ) : (
-                          <Button
-                            size="sm"
-                            onClick={() => onCheckIn(establishment)}
-                            disabled={isCheckingIn === establishment.id}
-                            className="bg-spiritless-pink hover:bg-spiritless-pink/90"
-                          >
-                            {isCheckingIn === establishment.id ? (
-                              <>
-                                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                                Checking In...
-                              </>
-                            ) : (
-                              <>
-                                <Clock className="h-3 w-3 mr-1" />
-                                Check In
-                              </>
-                            )}
-                          </Button>
-                        )}
-                      </div>
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    <Button
+                      size="sm"
+                      className="w-full mt-2"
+                      onClick={() => onCheckIn(establishment)}
+                      disabled={isCheckingIn === establishment.id || establishment.isCheckedIn}
+                    >
+                      {isCheckingIn === establishment.id ? (
+                        <>
+                          <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                          Checking in...
+                        </>
+                      ) : establishment.isCheckedIn ? (
+                        'Checked In'
+                      ) : (
+                        'Check In'
+                      )}
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+            
+            <div className="pt-4 border-t">
+              <Button onClick={onViewMap} variant="outline" className="w-full">
+                View All on Map
+              </Button>
             </div>
-          )}
-        </ScrollArea>
-        
-        <div className="flex gap-2 pt-4 border-t">
-          {onViewMap && (
-            <Button variant="outline" onClick={onViewMap} className="flex-1">
-              <MapPin className="h-4 w-4 mr-2" />
-              View All on Map
-            </Button>
-          )}
-          <Button variant="outline" onClick={onClose}>
-            Close
-          </Button>
-        </div>
+          </>
+        )}
       </DialogContent>
     </Dialog>
   );
