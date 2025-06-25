@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -12,7 +13,7 @@ export const useUserVisits = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Mock stats that match the UserVisitStats interface
+  // Stats based on reward transactions for visits
   const [stats] = useState<UserVisitStats>(() => {
     const currentDate = new Date();
     const currentMonth = currentDate.getMonth() + 1; // 1-12
@@ -40,36 +41,30 @@ export const useUserVisits = () => {
     if (!user) return false;
 
     try {
-      const { data, error } = await supabase
-        .from('user_visits')
+      // Record visit as a reward transaction
+      const { data: visitTransaction, error: transactionError } = await supabase
+        .from('reward_transactions')
         .insert({
           user_id: user.id,
           establishment_id: establishmentId,
-          visit_date: new Date().toISOString(),
-          rating: visitData.rating,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          points: 10, // Default points for check-in
+          transaction_type: 'earn',
+          source: 'check_in',
+          description: `Check-in at establishment`,
+          metadata: {
+            rating: visitData.rating,
+            note: visitData.note,
+            visit_date: new Date().toISOString()
+          }
         })
         .select()
         .single();
 
-      if (error) throw error;
-
-      // Add note if provided
-      if (visitData.note) {
-        await supabase
-          .from('visit_notes')
-          .insert({
-            visit_id: data.id,
-            note: visitData.note,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          });
-      }
+      if (transactionError) throw transactionError;
 
       toast({
         title: "Visit recorded!",
-        description: "Your visit has been successfully recorded.",
+        description: "Your visit has been successfully recorded and you earned 10 points!",
       });
 
       // Refresh visits
@@ -134,9 +129,44 @@ export const useUserVisits = () => {
       setIsLoading(true);
       setError(null);
 
-      // For now, return empty array since we don't have actual visits data
-      // In a real implementation, this would query the user_visits table
-      setVisits([]);
+      // Fetch visits from reward_transactions where source is 'check_in'
+      const { data: visitTransactions, error: transactionError } = await supabase
+        .from('reward_transactions')
+        .select(`
+          *,
+          establishments!reward_transactions_establishment_id_fkey (
+            id,
+            name,
+            address,
+            image_url
+          )
+        `)
+        .eq('user_id', user.id)
+        .eq('source', 'check_in')
+        .order('created_at', { ascending: false });
+
+      if (transactionError) throw transactionError;
+
+      // Transform reward transactions to Visit format
+      const transformedVisits: Visit[] = (visitTransactions || []).map(transaction => ({
+        id: transaction.id,
+        establishment_id: transaction.establishment_id || '',
+        rating: transaction.metadata?.rating || null,
+        notes: transaction.metadata?.note || '',
+        visited_at: transaction.created_at,
+        user_id: transaction.user_id,
+        visit_date: transaction.metadata?.visit_date || transaction.created_at,
+        created_at: transaction.created_at,
+        updated_at: transaction.created_at,
+        tried_mocktails: [], // This would need to be expanded if we track mocktails
+        establishment: transaction.establishments ? {
+          name: transaction.establishments.name,
+          address: transaction.establishments.address,
+          image_url: transaction.establishments.image_url
+        } : undefined
+      }));
+
+      setVisits(transformedVisits);
     } catch (err) {
       console.error('Error fetching visits:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch visits');

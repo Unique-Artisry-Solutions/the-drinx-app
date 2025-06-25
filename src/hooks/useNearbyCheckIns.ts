@@ -27,7 +27,7 @@ export function useNearbyCheckIns() {
     longitude: userLocation?.longitude,
     maxDistance: 5 // 5 miles radius for nearby check-ins
   });
-  const { recordVisit, verifyLocationAndRecordVisit } = useUserVisits();
+  const { verifyLocationAndRecordVisit } = useUserVisits();
   const { toast } = useToast();
 
   const [nearbyEstablishments, setNearbyEstablishments] = useState<NearbyEstablishment[]>([]);
@@ -104,7 +104,7 @@ export function useNearbyCheckIns() {
         
         toast({
           title: "Check-in successful!",
-          description: `You've checked in at ${establishment.name}`,
+          description: `You've checked in at ${establishment.name} and earned 10 points!`,
         });
       }
     } catch (error) {
@@ -115,7 +115,7 @@ export function useNearbyCheckIns() {
   };
 
   const isLoading = locationLoading || establishmentsLoading;
-  const hasError = Boolean(locationError); // Fix: Convert to boolean
+  const hasError = Boolean(locationError);
   const hasNearbyEstablishments = nearbyEstablishments.length > 0;
 
   return {
