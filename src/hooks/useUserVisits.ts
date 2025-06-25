@@ -1,154 +1,88 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/auth/AuthProvider';
+import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { UserVisitStats, Visit, TriedMocktail } from '@/types/VisitTypes';
 import { calculateDistance } from '@/utils/locationUtils';
-import { Visit, UserVisitStats } from '@/types/VisitTypes';
-
-interface VisitData {
-  rating: number | null;
-  note: string;
-}
 
 export const useUserVisits = () => {
-  const [isRecording, setIsRecording] = useState(false);
-  const [visits, setVisits] = useState<Visit[]>([]);
-  const [stats, setStats] = useState<UserVisitStats>({
-    totalVisits: 0,
-    uniqueEstablishments: 0,
-    averageRating: 0,
-    currentMonth: 0,
-    // Database naming for compatibility
-    total_visits: 0,
-    unique_establishments: 0,
-    average_rating: 0,
-    total_mocktails_tried: 0,
-    first_visit_date: '',
-    last_visit_date: '',
-    visited_establishments: []
-  });
-  const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
   const { toast } = useToast();
+  const [visits, setVisits] = useState<Visit[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (user) {
-      fetchVisits();
-    } else {
-      setIsLoading(false);
-    }
-  }, [user]);
+  // Mock stats that match the UserVisitStats interface
+  const [stats] = useState<UserVisitStats>(() => {
+    const currentDate = new Date();
+    const currentMonth = currentDate.getMonth() + 1; // 1-12
+    
+    return {
+      // Database naming (snake_case)
+      total_visits: 0,
+      unique_establishments: 0,
+      average_rating: 0,
+      total_mocktails_tried: 0,
+      first_visit_date: new Date().toISOString(),
+      last_visit_date: new Date().toISOString(),
+      visited_establishments: [],
+      current_month: currentMonth,
+      // Component naming (camelCase) - for backward compatibility
+      totalVisits: 0,
+      uniqueEstablishments: 0,
+      averageRating: 0,
+      totalMocktailsTried: 0,
+      currentMonth: currentMonth
+    };
+  });
 
-  const fetchVisits = async () => {
-    if (!user) return;
-
-    try {
-      setIsLoading(true);
-      
-      // Create mock visits data that matches the expected Visit interface
-      const mockVisits: Visit[] = [
-        {
-          id: '1',
-          establishment_id: 'est-1',
-          rating: 4,
-          notes: 'Great mocktails!',
-          visited_at: new Date().toISOString(),
-          user_id: user.id,
-          visit_date: new Date().toISOString().split('T')[0],
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          tried_mocktails: [],
-          establishment: {
-            name: 'Downtown Mocktail Bar',
-            address: '1200 18th St NW, Washington, DC 20036'
-          }
-        }
-      ];
-
-      setVisits(mockVisits);
-      
-      // Set stats with both naming conventions for compatibility
-      const visitStats: UserVisitStats = {
-        totalVisits: mockVisits.length,
-        uniqueEstablishments: new Set(mockVisits.map(v => v.establishment_id)).size,
-        averageRating: mockVisits.reduce((sum, v) => sum + (v.rating || 0), 0) / mockVisits.length,
-        currentMonth: mockVisits.filter(v => 
-          new Date(v.visited_at).getMonth() === new Date().getMonth()
-        ).length,
-        // Database naming
-        total_visits: mockVisits.length,
-        unique_establishments: new Set(mockVisits.map(v => v.establishment_id)).size,
-        average_rating: mockVisits.reduce((sum, v) => sum + (v.rating || 0), 0) / mockVisits.length,
-        total_mocktails_tried: mockVisits.reduce((sum, v) => sum + v.tried_mocktails.length, 0),
-        first_visit_date: mockVisits[0]?.visit_date || '',
-        last_visit_date: mockVisits[mockVisits.length - 1]?.visit_date || '',
-        visited_establishments: mockVisits.map(v => v.establishment_id)
-      };
-      
-      setStats(visitStats);
-    } catch (error) {
-      console.error('Error fetching visits:', error);
-      toast({
-        title: "Error loading visits",
-        description: "Unable to load your visit history",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const recordVisit = async (establishmentId: string, visitData: VisitData) => {
-    if (!user) {
-      toast({
-        title: "Authentication required",
-        description: "Please sign in to record visits",
-        variant: "destructive",
-      });
-      return false;
-    }
+  const recordVisit = async (establishmentId: string, visitData: { rating: number | null; note: string }) => {
+    if (!user) return false;
 
     try {
-      setIsRecording(true);
-
-      // Use reward_transactions table to record the visit for now
-      const { error } = await supabase
-        .from('reward_transactions')
+      const { data, error } = await supabase
+        .from('user_visits')
         .insert({
           user_id: user.id,
           establishment_id: establishmentId,
-          points: 10,
-          transaction_type: 'earn',
-          source: 'check_in',
-          description: 'Check-in visit',
-          metadata: {
-            rating: visitData.rating,
-            notes: visitData.note
-          }
-        });
+          visit_date: new Date().toISOString(),
+          rating: visitData.rating,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .select()
+        .single();
 
-      if (error) {
-        throw error;
+      if (error) throw error;
+
+      // Add note if provided
+      if (visitData.note) {
+        await supabase
+          .from('visit_notes')
+          .insert({
+            visit_id: data.id,
+            note: visitData.note,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          });
       }
 
       toast({
         title: "Visit recorded!",
-        description: "You've earned 10 points for checking in",
+        description: "Your visit has been successfully recorded.",
       });
 
+      // Refresh visits
       await fetchVisits();
       return true;
-    } catch (error) {
-      console.error('Error recording visit:', error);
+    } catch (err) {
+      console.error('Error recording visit:', err);
       toast({
-        title: "Error recording visit",
-        description: "Please try again later",
+        title: "Error",
+        description: "Failed to record visit. Please try again.",
         variant: "destructive",
       });
       return false;
-    } finally {
-      setIsRecording(false);
     }
   };
 
@@ -156,53 +90,72 @@ export const useUserVisits = () => {
     establishmentId: string,
     userLat: number,
     userLng: number,
-    visitData: VisitData
+    visitData: { rating: number | null; note: string }
   ) => {
     try {
+      // Get establishment location
       const { data: establishment, error } = await supabase
         .from('establishments')
-        .select('latitude, longitude, name')
+        .select('latitude, longitude')
         .eq('id', establishmentId)
         .single();
 
-      if (error || !establishment) {
-        throw new Error('Establishment not found');
-      }
+      if (error) throw error;
 
-      const distance = calculateDistance(
-        userLat,
-        userLng,
-        establishment.latitude,
-        establishment.longitude
-      );
+      // Calculate distance (assuming calculateDistance returns distance in miles)
+      const distance = calculateDistance(userLat, userLng, establishment.latitude, establishment.longitude);
+      const maxDistance = 0.1; // 0.1 miles = ~160 meters
 
-      if (distance > 0.1) {
+      if (distance > maxDistance) {
         toast({
           title: "Too far away",
-          description: "You need to be closer to the establishment to check in",
+          description: "You need to be closer to the establishment to check in.",
           variant: "destructive",
         });
         return false;
       }
 
       return await recordVisit(establishmentId, visitData);
-    } catch (error) {
-      console.error('Error verifying location:', error);
+    } catch (err) {
+      console.error('Error verifying location:', err);
       toast({
-        title: "Location verification failed",
-        description: "Unable to verify your location",
+        title: "Error",
+        description: "Failed to verify location. Please try again.",
         variant: "destructive",
       });
       return false;
     }
   };
 
+  const fetchVisits = async () => {
+    if (!user) return;
+
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      // For now, return empty array since we don't have actual visits data
+      // In a real implementation, this would query the user_visits table
+      setVisits([]);
+    } catch (err) {
+      console.error('Error fetching visits:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch visits');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchVisits();
+  }, [user]);
+
   return {
-    recordVisit,
-    verifyLocationAndRecordVisit,
-    isRecording,
     visits,
     stats,
-    isLoading
+    isLoading,
+    error,
+    recordVisit,
+    verifyLocationAndRecordVisit,
+    refetch: fetchVisits
   };
 };

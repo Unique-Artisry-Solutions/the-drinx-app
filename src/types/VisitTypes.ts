@@ -70,11 +70,13 @@ export interface UserVisitStats {
   first_visit_date: string;
   last_visit_date: string;
   visited_establishments: string[];
+  current_month: number; // Added missing property
   // Component naming (camelCase) - for backward compatibility
   totalVisits: number;
   uniqueEstablishments: number;
   averageRating: number;
   totalMocktailsTried?: number;
+  currentMonth: number; // Added missing property in camelCase too
 }
 
 // Standardized Visit interface that matches component expectations
