@@ -1,70 +1,22 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { RewardTransaction } from '@/types/rewards/api';
-import { Json } from '@/integrations/supabase/types';
+import { safeJsonToRecord } from '@/utils/typeGuards';
 
-// Database types (what comes from Supabase)
+// Database layer types - exactly what Supabase returns
 interface DatabaseRewardTransaction {
   id: string;
   user_id: string;
-  establishment_id: string | null;
+  establishment_id?: string;
   points: number;
-  transaction_type: 'earn' | 'redeem';
+  transaction_type: string; // This is a string from the database
   source: string;
-  description: string | null;
-  metadata: Json;
+  description?: string;
+  metadata?: any; // Json type from Supabase
   created_at: string;
-  version: number;
+  version?: number;
 }
 
-// Transform database result to API type
-function transformDatabaseTransaction(dbTransaction: DatabaseRewardTransaction): RewardTransaction {
-  // Safely parse metadata
-  let parsedMetadata: Record<string, any> = {};
-  if (typeof dbTransaction.metadata === 'object' && dbTransaction.metadata !== null) {
-    parsedMetadata = dbTransaction.metadata as Record<string, any>;
-  } else if (typeof dbTransaction.metadata === 'string') {
-    try {
-      parsedMetadata = JSON.parse(dbTransaction.metadata);
-    } catch {
-      parsedMetadata = {};
-    }
-  }
-
-  return {
-    id: dbTransaction.id,
-    user_id: dbTransaction.user_id,
-    userId: dbTransaction.user_id,
-    establishment_id: dbTransaction.establishment_id,
-    points: dbTransaction.points,
-    pointsAmount: dbTransaction.points,
-    transaction_type: dbTransaction.transaction_type,
-    type: dbTransaction.transaction_type === 'earn' ? 'earned' : 'redeemed',
-    source: dbTransaction.source,
-    description: dbTransaction.description || dbTransaction.source,
-    timestamp: dbTransaction.created_at,
-    date: dbTransaction.created_at,
-    created_at: dbTransaction.created_at,
-    metadata: parsedMetadata
-  };
-}
-
-// Safe metadata access helper
-function getMetadataValue(metadata: Json, key: string): any {
-  if (typeof metadata === 'object' && metadata !== null) {
-    return (metadata as Record<string, any>)[key];
-  }
-  if (typeof metadata === 'string') {
-    try {
-      const parsed = JSON.parse(metadata);
-      return parsed[key];
-    } catch {
-      return undefined;
-    }
-  }
-  return undefined;
-}
-
+// API layer types for the application
 export interface CheckInContext {
   type: 'establishment' | 'bar_crawl' | 'swig_circuit';
   entityId: string;
@@ -77,65 +29,78 @@ export interface CheckInContext {
 }
 
 export interface CheckInOptions {
-  rating?: number;
+  rating?: number | null;
   note?: string;
-  verifyLocation?: boolean;
+  duration?: number;
 }
 
 export interface CheckInResult {
   success: boolean;
   message: string;
   pointsEarned?: number;
-  transaction?: RewardTransaction;
+  achievements?: string[];
+  data?: any;
 }
 
-export interface UserVisitStats {
-  total_visits: number;
-  unique_establishments: number;
-  total_points_earned: number;
-  visited_entities: string[];
+// Transform database result to safe API format
+function transformDatabaseTransaction(dbTransaction: DatabaseRewardTransaction) {
+  return {
+    id: dbTransaction.id,
+    user_id: dbTransaction.user_id,
+    userId: dbTransaction.user_id,
+    establishment_id: dbTransaction.establishment_id,
+    points: dbTransaction.points,
+    pointsAmount: dbTransaction.points,
+    transaction_type: dbTransaction.transaction_type === 'earn' ? 'earn' : 'redeem' as 'earn' | 'redeem',
+    type: dbTransaction.transaction_type === 'earn' ? 'earned' : 'redeemed' as 'earned' | 'redeemed',
+    source: dbTransaction.source,
+    description: dbTransaction.description || dbTransaction.source,
+    timestamp: dbTransaction.created_at,
+    date: dbTransaction.created_at,
+    created_at: dbTransaction.created_at,
+    metadata: safeJsonToRecord(dbTransaction.metadata || {})
+  };
 }
 
 class CheckInService {
-  private readonly LOCATION_VERIFICATION_RADIUS = 100; // meters
-  private readonly COOLDOWN_HOURS = 12;
-
   async performCheckIn(
     userId: string,
     context: CheckInContext,
     options: CheckInOptions = {}
   ): Promise<CheckInResult> {
     try {
-      // Check cooldown
-      if (await this.isInCooldown(userId, context)) {
+      console.log('CheckIn attempt:', { userId, context, options });
+
+      // Validate cooldown period first
+      const canCheckIn = await this.validateCheckInCooldown(userId, context);
+      if (!canCheckIn.allowed) {
         return {
           success: false,
-          message: `Please wait ${this.COOLDOWN_HOURS} hours between check-ins at the same location.`
+          message: canCheckIn.message || 'Check-in not allowed at this time'
         };
       }
 
-      // Verify location if required
-      if (options.verifyLocation && context.locationData) {
+      // Verify location if provided
+      if (context.locationData) {
         const locationValid = await this.verifyLocation(context.entityId, context.locationData);
-        if (!locationValid) {
+        if (!locationValid.valid) {
           return {
             success: false,
-            message: 'You must be at the location to check in.'
+            message: locationValid.message || 'Location verification failed'
           };
         }
       }
 
-      // Calculate points
-      const pointsToEarn = this.calculatePoints(context.type, options);
-
-      // Create reward transaction
+      // Calculate points based on context type
+      const pointsToAward = this.calculatePoints(context);
+      
+      // Create reward transaction with proper metadata
       const metadata = {
-        entity_id: context.entityId,
         entity_name: context.entityName,
         check_in_type: context.type,
         rating: options.rating,
         note: options.note,
-        location_verified: !!options.verifyLocation,
+        duration_minutes: options.duration,
         ...context.additionalData
       };
 
@@ -143,10 +108,10 @@ class CheckInService {
         .from('reward_transactions')
         .insert({
           user_id: userId,
-          establishment_id: context.type === 'establishment' ? context.entityId : null,
-          points: pointsToEarn,
+          establishment_id: context.type === 'establishment' ? context.entityId : context.additionalData?.establishment_id,
+          points: pointsToAward,
           transaction_type: 'earn',
-          source: context.type,
+          source: this.getSourceFromContext(context),
           description: `Check-in at ${context.entityName}`,
           metadata: metadata
         })
@@ -154,78 +119,33 @@ class CheckInService {
         .single();
 
       if (transactionError) {
-        console.error('Transaction error:', transactionError);
+        console.error('Transaction creation error:', transactionError);
         return {
           success: false,
-          message: 'Failed to record check-in. Please try again.'
+          message: 'Failed to record check-in reward'
         };
       }
 
-      // Record type-specific check-in
+      // Record type-specific check-in data
       await this.recordTypeSpecificCheckIn(userId, context, transaction.id);
 
-      const transformedTransaction = transformDatabaseTransaction(transaction);
+      // Update user's total points
+      await this.updateUserPoints(userId, pointsToAward);
 
       return {
         success: true,
-        message: `Check-in successful! You earned ${pointsToEarn} points.`,
-        pointsEarned: pointsToEarn,
-        transaction: transformedTransaction
+        message: `Successfully checked in! You earned ${pointsToAward} points.`,
+        pointsEarned: pointsToAward,
+        data: transformDatabaseTransaction(transaction)
       };
 
     } catch (error) {
-      console.error('Check-in error:', error);
+      console.error('CheckIn service error:', error);
       return {
         success: false,
-        message: 'An unexpected error occurred during check-in.'
+        message: 'An unexpected error occurred during check-in'
       };
     }
-  }
-
-  private async isInCooldown(userId: string, context: CheckInContext): Promise<boolean> {
-    const cooldownTime = new Date();
-    cooldownTime.setHours(cooldownTime.getHours() - this.COOLDOWN_HOURS);
-
-    const { data } = await supabase
-      .from('reward_transactions')
-      .select('created_at')
-      .eq('user_id', userId)
-      .eq('source', context.type)
-      .gte('created_at', cooldownTime.toISOString())
-      .limit(1);
-
-    return data && data.length > 0;
-  }
-
-  private async verifyLocation(
-    entityId: string,
-    userLocation: { latitude: number; longitude: number }
-  ): Promise<boolean> {
-    // For now, return true - location verification would require establishment coordinates
-    return true;
-  }
-
-  private calculatePoints(type: CheckInContext['type'], options: CheckInOptions): number {
-    let basePoints = 10;
-    
-    switch (type) {
-      case 'establishment':
-        basePoints = 10;
-        break;
-      case 'bar_crawl':
-        basePoints = 15;
-        break;
-      case 'swig_circuit':
-        basePoints = 20;
-        break;
-    }
-
-    // Bonus for rating
-    if (options.rating && options.rating >= 4) {
-      basePoints += 5;
-    }
-
-    return basePoints;
   }
 
   private async recordTypeSpecificCheckIn(
@@ -235,76 +155,250 @@ class CheckInService {
   ): Promise<void> {
     try {
       switch (context.type) {
+        case 'establishment':
+          // Record establishment visit
+          await supabase.from('user_visits').insert({
+            user_id: userId,
+            establishment_id: context.entityId,
+            visit_date: new Date().toISOString(),
+            rating: context.additionalData?.rating,
+            duration_minutes: context.additionalData?.duration
+          });
+          break;
+
         case 'bar_crawl':
-          // Get establishment_id from additional data or use a default
+          // Record bar crawl check-in with establishment_id
           const establishmentId = context.additionalData?.establishment_id;
           if (establishmentId) {
-            await supabase
-              .from('bar_crawl_check_ins')
-              .insert({
-                bar_crawl_id: context.entityId,
-                user_id: userId,
-                establishment_id: establishmentId
-              });
+            await supabase.from('bar_crawl_check_ins').insert({
+              user_id: userId,
+              bar_crawl_id: context.entityId,
+              establishment_id: establishmentId,
+              checked_in_at: new Date().toISOString()
+            });
           }
           break;
+
         case 'swig_circuit':
-          // Similar logic for swig circuits
+          // Record swig circuit check-in
+          const swigEstablishmentId = context.additionalData?.establishment_id;
+          if (swigEstablishmentId) {
+            // First find the attendee record
+            const { data: attendee } = await supabase
+              .from('swig_circuit_attendees')
+              .select('id')
+              .eq('swig_circuit_id', context.entityId)
+              .eq('user_id', userId)
+              .single();
+
+            if (attendee) {
+              await supabase.from('swig_circuit_check_ins').insert({
+                swig_circuit_id: context.entityId,
+                attendee_id: attendee.id,
+                establishment_id: swigEstablishmentId,
+                checked_in_by: userId,
+                checked_in_at: new Date().toISOString()
+              });
+            }
+          }
           break;
       }
     } catch (error) {
-      console.error('Failed to record type-specific check-in:', error);
-      // Don't throw - the main transaction was successful
+      console.error('Error recording type-specific check-in:', error);
+      // Don't throw - the main transaction succeeded
+    }
+  }
+
+  private async validateCheckInCooldown(
+    userId: string,
+    context: CheckInContext
+  ): Promise<{ allowed: boolean; message?: string }> {
+    try {
+      const cooldownMinutes = 15; // 15 minute cooldown
+      const cutoffTime = new Date();
+      cutoffTime.setMinutes(cutoffTime.getMinutes() - cooldownMinutes);
+
+      const { data: recentCheckIn } = await supabase
+        .from('reward_transactions')
+        .select('created_at, metadata')
+        .eq('user_id', userId)
+        .eq('transaction_type', 'earn')
+        .gte('created_at', cutoffTime.toISOString())
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (recentCheckIn) {
+        const recentMetadata = safeJsonToRecord(recentCheckIn.metadata);
+        if (recentMetadata.check_in_type === context.type) {
+          const timeRemaining = Math.ceil((new Date(recentCheckIn.created_at).getTime() + (cooldownMinutes * 60000) - Date.now()) / 60000);
+          return {
+            allowed: false,
+            message: `Please wait ${timeRemaining} more minutes before checking in again`
+          };
+        }
+      }
+
+      return { allowed: true };
+    } catch (error) {
+      console.error('Cooldown validation error:', error);
+      return { allowed: true }; // Allow check-in if validation fails
+    }
+  }
+
+  private async verifyLocation(
+    establishmentId: string,
+    userLocation: { latitude: number; longitude: number }
+  ): Promise<{ valid: boolean; message?: string }> {
+    try {
+      // Get establishment location
+      const { data: establishment } = await supabase
+        .from('establishments')
+        .select('latitude, longitude')
+        .eq('id', establishmentId)
+        .single();
+
+      if (!establishment?.latitude || !establishment?.longitude) {
+        return { valid: true }; // Allow if no location data
+      }
+
+      // Calculate distance (simple approximation)
+      const distance = this.calculateDistance(
+        userLocation.latitude,
+        userLocation.longitude,
+        establishment.latitude,
+        establishment.longitude
+      );
+
+      const maxDistance = 0.1; // 0.1 miles
+      if (distance > maxDistance) {
+        return {
+          valid: false,
+          message: 'You must be within the establishment to check in'
+        };
+      }
+
+      return { valid: true };
+    } catch (error) {
+      console.error('Location verification error:', error);
+      return { valid: true }; // Allow if verification fails
+    }
+  }
+
+  private calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+    const R = 3959; // Earth's radius in miles
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  }
+
+  private calculatePoints(context: CheckInContext): number {
+    switch (context.type) {
+      case 'establishment':
+        return 10;
+      case 'bar_crawl':
+        return 25;
+      case 'swig_circuit':
+        return 30;
+      default:
+        return 10;
+    }
+  }
+
+  private getSourceFromContext(context: CheckInContext): string {
+    switch (context.type) {
+      case 'establishment':
+        return 'establishment_check_in';
+      case 'bar_crawl':
+        return 'bar_crawl_check_in';
+      case 'swig_circuit':
+        return 'swig_circuit_check_in';
+      default:
+        return 'check_in';
+    }
+  }
+
+  private async updateUserPoints(userId: string, pointsToAdd: number): Promise<void> {
+    try {
+      // Get or create user reward profile
+      const { data: existingProfile } = await supabase
+        .from('user_rewards')
+        .select('points, lifetime_points')
+        .eq('user_id', userId)
+        .single();
+
+      if (existingProfile) {
+        // Update existing profile
+        await supabase
+          .from('user_rewards')
+          .update({
+            points: existingProfile.points + pointsToAdd,
+            lifetime_points: existingProfile.lifetime_points + pointsToAdd,
+            updated_at: new Date().toISOString()
+          })
+          .eq('user_id', userId);
+      } else {
+        // Create new profile
+        await supabase.from('user_rewards').insert({
+          user_id: userId,
+          points: pointsToAdd,
+          lifetime_points: pointsToAdd
+        });
+      }
+    } catch (error) {
+      console.error('Error updating user points:', error);
     }
   }
 
   async getCheckInHistory(
     userId: string,
-    options: { 
-      type?: CheckInContext['type'];
-      limit?: number;
-      offset?: number;
-    } = {}
-  ): Promise<RewardTransaction[]> {
-    let query = supabase
-      .from('reward_transactions')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('transaction_type', 'earn')
-      .order('created_at', { ascending: false });
+    options: { type?: string; limit?: number; offset?: number } = {}
+  ) {
+    try {
+      let query = supabase
+        .from('reward_transactions')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('transaction_type', 'earn')
+        .order('created_at', { ascending: false });
 
-    if (options.type) {
-      query = query.eq('source', options.type);
-    }
+      if (options.limit) {
+        query = query.limit(options.limit);
+      }
 
-    if (options.limit) {
-      query = query.limit(options.limit);
-    }
+      if (options.offset) {
+        query = query.range(options.offset, options.offset + (options.limit || 10) - 1);
+      }
 
-    if (options.offset) {
-      query = query.range(options.offset, (options.offset + (options.limit || 20)) - 1);
-    }
+      const { data, error } = await query;
 
-    const { data, error } = await query;
+      if (error) {
+        console.error('Error fetching check-in history:', error);
+        return [];
+      }
 
-    if (error) {
-      console.error('Error fetching check-in history:', error);
+      // Transform database results to API format
+      return (data || []).map(transformDatabaseTransaction);
+    } catch (error) {
+      console.error('Check-in history service error:', error);
       return [];
     }
-
-    return (data || []).map(transformDatabaseTransaction);
   }
 
-  async getVisitStats(userId: string): Promise<UserVisitStats> {
+  async getVisitStats(userId: string) {
     try {
-      const { data, error } = await supabase
+      // Get all user transactions
+      const { data: transactions } = await supabase
         .from('reward_transactions')
-        .select('points, metadata')
+        .select('*')
         .eq('user_id', userId)
         .eq('transaction_type', 'earn');
 
-      if (error) {
-        console.error('Error fetching visit stats:', error);
+      if (!transactions) {
         return {
           total_visits: 0,
           unique_establishments: 0,
@@ -313,26 +407,24 @@ class CheckInService {
         };
       }
 
-      const transactions = data || [];
-      const uniqueEntities = new Set<string>();
+      const visitedEntities = new Set<string>();
       let totalPoints = 0;
 
       transactions.forEach(transaction => {
         totalPoints += transaction.points;
-        const entityId = getMetadataValue(transaction.metadata, 'entity_id');
-        if (entityId) {
-          uniqueEntities.add(entityId);
+        if (transaction.establishment_id) {
+          visitedEntities.add(transaction.establishment_id);
         }
       });
 
       return {
         total_visits: transactions.length,
-        unique_establishments: uniqueEntities.size,
+        unique_establishments: visitedEntities.size,
         total_points_earned: totalPoints,
-        visited_entities: Array.from(uniqueEntities)
+        visited_entities: Array.from(visitedEntities)
       };
     } catch (error) {
-      console.error('Error calculating visit stats:', error);
+      console.error('Error fetching visit stats:', error);
       return {
         total_visits: 0,
         unique_establishments: 0,
