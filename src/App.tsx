@@ -8,20 +8,10 @@ import { AuthProvider } from '@/contexts/auth/AuthProvider';
 import { DevelopmentModeProvider } from '@/contexts/DevelopmentModeContext';
 import EmailVerificationHandler from '@/routes/EmailVerificationHandler';
 
-// Lazy load components
-const Index = lazy(() => import('@/pages/Index'));
-const Landing = lazy(() => import('@/pages/Landing'));
-const Explore = lazy(() => import('@/pages/Explore'));
-const Establishments = lazy(() => import('@/pages/Establishments'));
-const EstablishmentDetails = lazy(() => import('@/pages/EstablishmentDetails'));
-const CocktailDetails = lazy(() => import('@/pages/CocktailDetails'));
-const Profile = lazy(() => import('@/pages/Profile'));
-const SwigCircuits = lazy(() => import('@/pages/SwigCircuits'));
-const SwigCircuitDetails = lazy(() => import('@/pages/SwigCircuitDetails'));
-const Events = lazy(() => import('@/pages/Events'));
-const EventDetails = lazy(() => import('@/pages/EventDetails'));
-const VerifyEmail = lazy(() => import('@/pages/VerifyEmail'));
-const AdminDashboard = lazy(() => import('@/pages/admin/AdminDashboard'));
+// Import existing pages directly - no lazy loading for core pages to avoid import errors
+import LandingPage from '@/pages/LandingPage';
+// Use AppRoutes for all other routing to avoid duplication
+import AppRoutes from '@/routes/AppRoutes';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -43,19 +33,8 @@ function App() {
                 <EmailVerificationHandler />
                 <Suspense fallback={<div>Loading...</div>}>
                   <Routes>
-                    <Route path="/" element={<Index />} />
-                    <Route path="/landing" element={<Landing />} />
-                    <Route path="/explore" element={<Explore />} />
-                    <Route path="/establishments" element={<Establishments />} />
-                    <Route path="/establishment/:id" element={<EstablishmentDetails />} />
-                    <Route path="/cocktail/:id" element={<CocktailDetails />} />
-                    <Route path="/profile" element={<Profile />} />
-                    <Route path="/swig-circuits" element={<SwigCircuits />} />
-                    <Route path="/swig-circuit/:id" element={<SwigCircuitDetails />} />
-                    <Route path="/events" element={<Events />} />
-                    <Route path="/event/:id" element={<EventDetails />} />
-                    <Route path="/verify-email" element={<VerifyEmail />} />
-                    <Route path="/admin/*" element={<AdminDashboard />} />
+                    <Route path="/landing" element={<LandingPage />} />
+                    <Route path="/*" element={<AppRoutes />} />
                   </Routes>
                 </Suspense>
               </div>

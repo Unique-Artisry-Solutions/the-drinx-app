@@ -60,12 +60,38 @@ export interface VisitWithEstablishment extends UserVisit {
   tried_mocktails: TriedMocktail[];
 }
 
+// Updated VisitStats interface to match both database and component usage
 export interface UserVisitStats {
+  // Database naming (snake_case)
   total_visits: number;
   unique_establishments: number;
   average_rating: number;
+  total_mocktails_tried: number;
   first_visit_date: string;
   last_visit_date: string;
-  total_mocktails_tried: number;
   visited_establishments: string[];
+  // Component naming (camelCase) - for backward compatibility
+  totalVisits: number;
+  uniqueEstablishments: number;
+  averageRating: number;
+  totalMocktailsTried?: number;
+}
+
+// Standardized Visit interface that matches component expectations
+export interface Visit {
+  id: string;
+  establishment_id: string;
+  rating: number | null;
+  notes: string;
+  visited_at: string;
+  user_id: string;
+  visit_date: string;
+  created_at: string;
+  updated_at: string;
+  tried_mocktails: TriedMocktail[];
+  establishment?: {
+    name: string;
+    address: string;
+    image_url?: string;
+  };
 }

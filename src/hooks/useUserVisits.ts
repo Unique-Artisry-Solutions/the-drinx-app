@@ -4,40 +4,29 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth/AuthProvider';
 import { useToast } from '@/hooks/use-toast';
 import { calculateDistance } from '@/utils/locationUtils';
+import { Visit, UserVisitStats } from '@/types/VisitTypes';
 
 interface VisitData {
   rating: number | null;
   note: string;
 }
 
-interface Visit {
-  id: string;
-  establishment_id: string;
-  rating: number | null;
-  notes: string;
-  visited_at: string;
-  establishment?: {
-    name: string;
-    address: string;
-    image_url?: string;
-  };
-}
-
-interface VisitStats {
-  totalVisits: number;
-  uniqueEstablishments: number;
-  averageRating: number;
-  currentMonth: number;
-}
-
 export const useUserVisits = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [visits, setVisits] = useState<Visit[]>([]);
-  const [stats, setStats] = useState<VisitStats>({
+  const [stats, setStats] = useState<UserVisitStats>({
     totalVisits: 0,
     uniqueEstablishments: 0,
     averageRating: 0,
-    currentMonth: 0
+    currentMonth: 0,
+    // Database naming for compatibility
+    total_visits: 0,
+    unique_establishments: 0,
+    average_rating: 0,
+    total_mocktails_tried: 0,
+    first_visit_date: '',
+    last_visit_date: '',
+    visited_establishments: []
   });
   const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
@@ -57,8 +46,7 @@ export const useUserVisits = () => {
     try {
       setIsLoading(true);
       
-      // For now, return mock data since user_visits table doesn't exist
-      // TODO: Replace with actual database query once user_visits table is created
+      // Create mock visits data that matches the expected Visit interface
       const mockVisits: Visit[] = [
         {
           id: '1',
@@ -66,6 +54,11 @@ export const useUserVisits = () => {
           rating: 4,
           notes: 'Great mocktails!',
           visited_at: new Date().toISOString(),
+          user_id: user.id,
+          visit_date: new Date().toISOString().split('T')[0],
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          tried_mocktails: [],
           establishment: {
             name: 'Downtown Mocktail Bar',
             address: '1200 18th St NW, Washington, DC 20036'
@@ -74,14 +67,26 @@ export const useUserVisits = () => {
       ];
 
       setVisits(mockVisits);
-      setStats({
+      
+      // Set stats with both naming conventions for compatibility
+      const visitStats: UserVisitStats = {
         totalVisits: mockVisits.length,
         uniqueEstablishments: new Set(mockVisits.map(v => v.establishment_id)).size,
         averageRating: mockVisits.reduce((sum, v) => sum + (v.rating || 0), 0) / mockVisits.length,
         currentMonth: mockVisits.filter(v => 
           new Date(v.visited_at).getMonth() === new Date().getMonth()
-        ).length
-      });
+        ).length,
+        // Database naming
+        total_visits: mockVisits.length,
+        unique_establishments: new Set(mockVisits.map(v => v.establishment_id)).size,
+        average_rating: mockVisits.reduce((sum, v) => sum + (v.rating || 0), 0) / mockVisits.length,
+        total_mocktails_tried: mockVisits.reduce((sum, v) => sum + v.tried_mocktails.length, 0),
+        first_visit_date: mockVisits[0]?.visit_date || '',
+        last_visit_date: mockVisits[mockVisits.length - 1]?.visit_date || '',
+        visited_establishments: mockVisits.map(v => v.establishment_id)
+      };
+      
+      setStats(visitStats);
     } catch (error) {
       console.error('Error fetching visits:', error);
       toast({
@@ -107,14 +112,13 @@ export const useUserVisits = () => {
     try {
       setIsRecording(true);
 
-      // TODO: Replace with actual database insert once user_visits table is created
-      // For now, use reward_transactions table to record the visit
+      // Use reward_transactions table to record the visit for now
       const { error } = await supabase
         .from('reward_transactions')
         .insert({
           user_id: user.id,
           establishment_id: establishmentId,
-          points: 10, // Base points for check-in
+          points: 10,
           transaction_type: 'earn',
           source: 'check_in',
           description: 'Check-in visit',
@@ -133,7 +137,6 @@ export const useUserVisits = () => {
         description: "You've earned 10 points for checking in",
       });
 
-      // Refresh visits
       await fetchVisits();
       return true;
     } catch (error) {
@@ -156,7 +159,6 @@ export const useUserVisits = () => {
     visitData: VisitData
   ) => {
     try {
-      // Get establishment location
       const { data: establishment, error } = await supabase
         .from('establishments')
         .select('latitude, longitude, name')
@@ -167,7 +169,6 @@ export const useUserVisits = () => {
         throw new Error('Establishment not found');
       }
 
-      // Calculate distance
       const distance = calculateDistance(
         userLat,
         userLng,
@@ -175,7 +176,6 @@ export const useUserVisits = () => {
         establishment.longitude
       );
 
-      // Check if user is within 0.1 miles (approximately 500 feet)
       if (distance > 0.1) {
         toast({
           title: "Too far away",
