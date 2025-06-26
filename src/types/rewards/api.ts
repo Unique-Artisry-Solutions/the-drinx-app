@@ -1,4 +1,3 @@
-
 // API layer types - normalized for business logic
 export interface RewardTier {
   id: string;
@@ -49,6 +48,7 @@ export interface RewardTransaction {
   timestamp: string;
   date: string; // Backward compatibility
   created_at: string;
+  version?: number; // Added to fix transformer error
   metadata?: Record<string, any>;
 }
 

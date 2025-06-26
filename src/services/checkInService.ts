@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { RewardTransaction } from '@/types/rewards/api';
 
@@ -14,9 +13,9 @@ export interface CheckInContext {
 }
 
 export interface CheckInOptions {
-  rating?: number | null;
+  rating?: number;
   note?: string;
-  duration?: number;
+  establishmentName?: string;
 }
 
 export interface CheckInResult {
@@ -51,7 +50,7 @@ class CheckInService {
       }
 
       // Step 2: Record type-specific check-in data
-      await this.recordTypeSpecificCheckIn(userId, context);
+      await this.recordTypeSpecificCheckIn(userId, context, options);
 
       return {
         success: true,
@@ -78,19 +77,24 @@ class CheckInService {
     try {
       const transactionData = {
         user_id: userId,
-        establishment_id: context.type === 'establishment' ? context.entityId : null,
+        userId: userId, // Backward compatibility
+        establishment_id: context.additionalData?.establishment_id || context.entityId,
         points: points,
+        pointsAmount: points, // Backward compatibility
         transaction_type: 'earn' as const,
+        type: 'earned' as const, // Component-expected format
         source: context.type,
         description: `Check-in at ${context.entityName}`,
+        timestamp: new Date().toISOString(),
+        date: new Date().toISOString(), // Backward compatibility
+        created_at: new Date().toISOString(),
         metadata: {
-          entity_id: context.entityId,
           entity_name: context.entityName,
           check_in_type: context.type,
-          timestamp: new Date().toISOString(),
-          ...options,
-          ...(context.locationData && { location: context.locationData }),
-          ...(context.additionalData && context.additionalData)
+          rating: options.rating,
+          note: options.note,
+          location_data: context.locationData,
+          ...context.additionalData
         }
       };
 
@@ -119,7 +123,11 @@ class CheckInService {
     }
   }
 
-  private async recordTypeSpecificCheckIn(userId: string, context: CheckInContext): Promise<void> {
+  private async recordTypeSpecificCheckIn(
+    userId: string,
+    context: CheckInContext,
+    options: CheckInOptions = {}
+  ): Promise<void> {
     try {
       switch (context.type) {
         case 'bar_crawl':
