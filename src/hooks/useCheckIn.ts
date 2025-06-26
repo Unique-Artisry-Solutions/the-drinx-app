@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
-import { checkInService, CheckInContext } from '@/services/checkInService';
+import { checkInService, BarCrawlCheckIn } from '@/services/checkInService';
 
 interface CheckInOptions {
   barCrawlId: string;
@@ -28,7 +28,7 @@ export function useCheckIn() {
     try {
       setIsCheckingIn(true);
 
-      const context: CheckInContext = {
+      const context: BarCrawlCheckIn = {
         type: 'bar_crawl',
         entityId: barCrawlId,
         entityName: `Bar Crawl at ${establishmentName}`,

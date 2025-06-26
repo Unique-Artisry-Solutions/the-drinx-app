@@ -39,7 +39,16 @@ export interface SwigCircuitCheckIn extends BaseCheckInContext {
   establishmentName: string;
 }
 
-export type CheckInContext = EstablishmentCheckIn | SwigCircuitCheckIn;
+// Extended type for backward compatibility
+export interface BarCrawlCheckIn extends BaseCheckInContext {
+  type: 'bar_crawl';
+  additionalData?: {
+    establishment_id: string;
+    establishment_name: string;
+  };
+}
+
+export type CheckInContext = EstablishmentCheckIn | SwigCircuitCheckIn | BarCrawlCheckIn;
 
 // History query options
 export interface CheckInHistoryOptions {
@@ -56,6 +65,41 @@ export interface UserVisitStats {
   visited_entities: string[];
 }
 
+// Database row type (what comes from Supabase)
+interface RewardTransactionRow {
+  id: string;
+  user_id: string;
+  establishment_id?: string;
+  points: number;
+  transaction_type: string;
+  source: string;
+  description?: string;
+  metadata?: any;
+  created_at: string;
+  version?: number;
+}
+
+// Transform database row to API type
+function transformRewardTransaction(row: RewardTransactionRow): RewardTransaction {
+  return {
+    id: row.id,
+    user_id: row.user_id,
+    userId: row.user_id, // Backward compatibility
+    establishment_id: row.establishment_id,
+    points: row.points,
+    pointsAmount: row.points, // Backward compatibility
+    transaction_type: row.transaction_type as 'earn' | 'redeem',
+    type: row.transaction_type === 'earn' ? 'earned' : 'redeemed', // Component-expected format
+    source: row.source,
+    description: row.description,
+    timestamp: row.created_at,
+    date: row.created_at, // Backward compatibility
+    created_at: row.created_at,
+    version: row.version || 1,
+    metadata: row.metadata || {}
+  };
+}
+
 class CheckInService {
   async performCheckIn(
     userId: string,
@@ -65,15 +109,35 @@ class CheckInService {
     try {
       console.log('Performing check-in:', { userId, context, options });
 
-      // Create reward transaction record
+      // Map context types to database-compatible values
+      let sourceType: string;
+      let establishmentId: string | undefined;
+      
+      if (context.type === 'establishment') {
+        sourceType = 'check_in';
+        establishmentId = context.entityId;
+      } else if (context.type === 'swig_circuit') {
+        sourceType = 'swig_circuit_check_in';
+        establishmentId = (context as SwigCircuitCheckIn).establishmentId;
+      } else if (context.type === 'bar_crawl') {
+        sourceType = 'bar_crawl_check_in';
+        establishmentId = (context as BarCrawlCheckIn).additionalData?.establishment_id;
+      } else {
+        sourceType = 'check_in';
+      }
+
+      // Create reward transaction record with database-compatible structure
       const transactionData = {
         user_id: userId,
-        entity_type: context.type,
-        entity_id: context.entityId,
-        entity_name: context.entityName,
+        establishment_id: establishmentId,
         points: 10, // Base points for check-in
-        transaction_type: 'check_in',
+        transaction_type: 'earn',
+        source: sourceType,
+        description: `Check-in at ${context.entityName}`,
         metadata: {
+          entity_type: context.type,
+          entity_id: context.entityId,
+          entity_name: context.entityName,
           rating: options.rating,
           note: options.note,
           establishment_name: options.establishmentName,
@@ -81,6 +145,10 @@ class CheckInService {
           ...(context.type === 'swig_circuit' && {
             establishment_id: (context as SwigCircuitCheckIn).establishmentId,
             establishment_name: (context as SwigCircuitCheckIn).establishmentName
+          }),
+          ...(context.type === 'bar_crawl' && {
+            establishment_id: (context as BarCrawlCheckIn).additionalData?.establishment_id,
+            establishment_name: (context as BarCrawlCheckIn).additionalData?.establishment_name
           })
         }
       };
@@ -99,11 +167,13 @@ class CheckInService {
         };
       }
 
+      const transformedTransaction = transformRewardTransaction(data);
+
       return {
         success: true,
         message: 'Check-in successful!',
         points: 10,
-        transaction: data
+        transaction: transformedTransaction
       };
     } catch (error: any) {
       console.error('Check-in service error:', error);
@@ -123,11 +193,22 @@ class CheckInService {
         .from('reward_transactions')
         .select('*')
         .eq('user_id', userId)
-        .eq('transaction_type', 'check_in')
+        .eq('transaction_type', 'earn')
         .order('created_at', { ascending: false });
 
       if (options.type) {
-        query = query.eq('entity_type', options.type);
+        // Map type to source for filtering
+        let sourceFilter: string;
+        if (options.type === 'establishment') {
+          sourceFilter = 'check_in';
+        } else if (options.type === 'swig_circuit') {
+          sourceFilter = 'swig_circuit_check_in';
+        } else if (options.type === 'bar_crawl') {
+          sourceFilter = 'bar_crawl_check_in';
+        } else {
+          sourceFilter = options.type;
+        }
+        query = query.eq('source', sourceFilter);
       }
 
       if (options.limit) {
@@ -145,7 +226,7 @@ class CheckInService {
         return [];
       }
 
-      return data || [];
+      return (data || []).map(transformRewardTransaction);
     } catch (error) {
       console.error('Check-in history service error:', error);
       return [];
@@ -158,7 +239,8 @@ class CheckInService {
         .from('reward_transactions')
         .select('*')
         .eq('user_id', userId)
-        .eq('transaction_type', 'check_in');
+        .eq('transaction_type', 'earn')
+        .in('source', ['check_in', 'swig_circuit_check_in', 'bar_crawl_check_in']);
 
       if (error) {
         console.error('Error fetching visit stats:', error);
@@ -171,7 +253,21 @@ class CheckInService {
       }
 
       const visits = data || [];
-      const uniqueEntities = new Set(visits.map(visit => visit.entity_id));
+      const uniqueEntities = new Set();
+      
+      visits.forEach(visit => {
+        if (visit.establishment_id) {
+          uniqueEntities.add(visit.establishment_id);
+        }
+        // Also try to get entity from metadata
+        if (visit.metadata && typeof visit.metadata === 'object') {
+          const metadata = visit.metadata as any;
+          if (metadata.entity_id) {
+            uniqueEntities.add(metadata.entity_id);
+          }
+        }
+      });
+
       const totalPoints = visits.reduce((sum, visit) => {
         const points = typeof visit.points === 'number' ? visit.points : 0;
         return sum + points;
@@ -181,7 +277,7 @@ class CheckInService {
         total_visits: visits.length,
         unique_establishments: uniqueEntities.size,
         total_points_earned: totalPoints,
-        visited_entities: Array.from(uniqueEntities)
+        visited_entities: Array.from(uniqueEntities) as string[]
       };
     } catch (error) {
       console.error('Visit stats service error:', error);
