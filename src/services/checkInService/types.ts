@@ -1,5 +1,6 @@
+
 /**
- * Core check-in context types with proper separation of concerns
+ * Consolidated check-in types - single source of truth
  */
 
 // Base context interface
@@ -32,13 +33,13 @@ export interface SwigCircuitCheckInContext extends BaseCheckInContext {
   };
 }
 
-// Union type for all check-in contexts
+// Union type for all check-in contexts - FIXED to include all types
 export type CheckInContext = 
   | EstablishmentCheckInContext 
   | BarCrawlCheckInContext 
   | SwigCircuitCheckInContext;
 
-// Check-in options remain the same
+// Check-in options
 export interface CheckInOptions {
   rating?: number | null;
   note?: string;
@@ -58,4 +59,17 @@ export interface HistoryFilterOptions {
   type?: 'establishment' | 'bar_crawl' | 'swig_circuit';
   limit?: number;
   offset?: number;
+}
+
+// Type guards for runtime validation
+export function isEstablishmentContext(context: CheckInContext): context is EstablishmentCheckInContext {
+  return context.type === 'establishment';
+}
+
+export function isBarCrawlContext(context: CheckInContext): context is BarCrawlCheckInContext {
+  return context.type === 'bar_crawl';
+}
+
+export function isSwigCircuitContext(context: CheckInContext): context is SwigCircuitCheckInContext {
+  return context.type === 'swig_circuit';
 }

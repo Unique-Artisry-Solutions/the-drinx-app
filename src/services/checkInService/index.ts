@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { 
   CheckInContext, 
@@ -6,46 +5,25 @@ import {
   CheckInResult, 
   HistoryFilterOptions 
 } from './types';
-import { 
-  EstablishmentCheckInHandler, 
-  BarCrawlCheckInHandler, 
-  SwigCircuitCheckInHandler 
-} from './contextHandlers';
+import { CheckInFactory } from './checkInFactory';
 import { transformDatabaseTransactionRow } from './databaseTransformers';
 import { RewardTransaction } from '@/types/rewards/api';
 
 /**
- * Unified Check-In Service with proper context handling
+ * Unified Check-In Service using factory pattern
  */
 class CheckInService {
-  private establishmentHandler = new EstablishmentCheckInHandler();
-  private barCrawlHandler = new BarCrawlCheckInHandler();
-  private swigCircuitHandler = new SwigCircuitCheckInHandler();
+  private factory = new CheckInFactory();
 
   /**
-   * Main check-in method that routes to appropriate handler based on context type
+   * Main check-in method using factory pattern
    */
   async performCheckIn(
     userId: string, 
     context: CheckInContext, 
     options: CheckInOptions = {}
   ): Promise<CheckInResult> {
-    switch (context.type) {
-      case 'establishment':
-        return this.establishmentHandler.performCheckIn(userId, context, options);
-      
-      case 'bar_crawl':
-        return this.barCrawlHandler.performCheckIn(userId, context, options);
-      
-      case 'swig_circuit':
-        return this.swigCircuitHandler.performCheckIn(userId, context, options);
-      
-      default:
-        return {
-          success: false,
-          message: 'Invalid check-in context type'
-        };
-    }
+    return this.factory.processCheckIn(userId, context, options);
   }
 
   /**
@@ -63,7 +41,6 @@ class CheckInService {
         .eq('transaction_type', 'earn')
         .order('created_at', { ascending: false });
 
-      // Apply type filter if specified
       if (options.type) {
         const sourceMap = {
           'establishment': 'establishment_checkin',
@@ -73,7 +50,6 @@ class CheckInService {
         query = query.eq('source', sourceMap[options.type]);
       }
 
-      // Apply pagination
       if (options.limit) {
         query = query.limit(options.limit);
       }

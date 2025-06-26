@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Check, MapPin, X } from 'lucide-react';
 import { useUserVisits } from '@/hooks/useUserVisits';
@@ -25,7 +24,6 @@ const CheckInButton: React.FC<CheckInButtonProps> = ({ establishmentId, establis
     try {
       let result;
       
-      // If we have location, use location verification
       if (userLocation && userLocation.latitude && userLocation.longitude) {
         result = await verifyLocationAndRecordVisit(
           establishmentId,
@@ -34,7 +32,6 @@ const CheckInButton: React.FC<CheckInButtonProps> = ({ establishmentId, establis
           { rating, note, establishmentName }
         );
       } else {
-        // Fallback to regular check-in without location verification
         result = await recordVisit(establishmentId, { rating, note, establishmentName });
       }
       
