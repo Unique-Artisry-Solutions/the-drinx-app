@@ -1,8 +1,8 @@
+
 import { useState, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
-import { checkInService } from '@/services/checkInService';
-import type { CheckInOptions, CheckInResult, EstablishmentCheckInContext } from '@/services/checkInService/types';
+import { checkInService, CheckInOptions, CheckInResult, EstablishmentCheckIn } from '@/services/checkInService';
 import { RewardTransaction } from '@/types/rewards/api';
 
 export interface UserVisitStats {
@@ -32,7 +32,7 @@ export const useUserVisits = () => {
 
     setIsLoading(true);
     try {
-      const context: EstablishmentCheckInContext = {
+      const context: EstablishmentCheckIn = {
         type: 'establishment',
         entityId: establishmentId,
         entityName: options.establishmentName || 'Establishment'
@@ -84,7 +84,7 @@ export const useUserVisits = () => {
 
     setIsLoading(true);
     try {
-      const context: EstablishmentCheckInContext = {
+      const context: EstablishmentCheckIn = {
         type: 'establishment',
         entityId: establishmentId,
         entityName: options.establishmentName || 'Establishment',

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Check, MapPin, X } from 'lucide-react';
 import { useUserVisits } from '@/hooks/useUserVisits';

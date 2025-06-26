@@ -1,11 +1,11 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Timer } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
-import { checkInService } from '@/services/checkInService';
-import type { SwigCircuitCheckInContext } from '@/services/checkInService/types';
+import { checkInService, SwigCircuitCheckIn } from '@/services/checkInService';
 
 interface CircuitActionsProps {
   circuitId: string;
@@ -35,14 +35,12 @@ const CircuitActions: React.FC<CircuitActionsProps> = ({
     
     setIsCheckingIn(true);
     try {
-      const context: SwigCircuitCheckInContext = {
+      const context: SwigCircuitCheckIn = {
         type: 'swig_circuit',
         entityId: circuitId,
         entityName: `Swig Circuit at ${establishmentName}`,
-        additionalData: {
-          establishment_id: establishmentId,
-          establishment_name: establishmentName
-        }
+        establishmentId: establishmentId,
+        establishmentName: establishmentName
       };
 
       const result = await checkInService.performCheckIn(user.id, context);
