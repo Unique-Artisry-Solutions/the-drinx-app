@@ -1,208 +1,218 @@
-import { supabase } from '@/integrations/supabase/client';
-import { toJsonCompatible } from '@/utils/typeGuards';
-import type { RewardTransaction } from '@/types/rewards/api';
-import type { UserVisitStats } from '@/hooks/useUserVisits';
+import { supabase } from '@/lib/typedSupabase';
+import { RewardTransaction } from '@/types/rewards/api';
+import { Database } from '@/lib/typedSupabase';
 
-export interface CheckInOptions {
-  rating?: number;
-  note?: string;
-  establishmentName?: string;
-}
-
-export interface CheckInResult {
-  success: boolean;
-  message: string;
-  pointsEarned?: number;
-  newBalance?: number;
-  error?: string;
-}
-
-export interface BaseCheckInContext {
-  type: 'establishment' | 'bar_crawl' | 'swig_circuit';
+// Base check-in context interface
+interface BaseCheckInContext {
+  type: string;
   entityId: string;
   entityName: string;
-}
-
-export interface EstablishmentCheckIn extends BaseCheckInContext {
-  type: 'establishment';
   locationData?: {
     latitude: number;
     longitude: number;
   };
 }
 
-export interface BarCrawlCheckIn extends BaseCheckInContext {
+// Bar crawl specific check-in context
+interface BarCrawlCheckIn extends BaseCheckInContext {
   type: 'bar_crawl';
-  additionalData?: {
+  additionalData: {
     establishment_id: string;
     establishment_name: string;
   };
 }
 
-export interface SwigCircuitCheckIn extends BaseCheckInContext {
+// Establishment specific check-in context  
+interface EstablishmentCheckIn extends BaseCheckInContext {
+  type: 'establishment';
+}
+
+// Swig circuit specific check-in context
+interface SwigCircuitCheckIn extends BaseCheckInContext {
   type: 'swig_circuit';
   establishmentId: string;
   establishmentName: string;
 }
 
-export type CheckInContext = EstablishmentCheckIn | BarCrawlCheckIn | SwigCircuitCheckIn;
+// Union type for all check-in contexts
+type CheckInContext = BarCrawlCheckIn | EstablishmentCheckIn | SwigCircuitCheckIn;
 
-// Type guard for database transaction type
-function isValidTransactionType(value: string): value is 'earn' | 'redeem' {
-  return value === 'earn' || value === 'redeem';
+// Options for check-in operations
+interface CheckInOptions {
+  rating?: number | null;
+  note?: string;
+  establishmentName?: string;
 }
 
-// Type guard for database reward transaction
-function isDatabaseRewardTransaction(obj: any): obj is DatabaseRewardTransaction {
-  return obj && 
-    typeof obj.id === 'string' &&
-    typeof obj.user_id === 'string' &&
-    typeof obj.points === 'number' &&
-    typeof obj.source === 'string' &&
-    isValidTransactionType(obj.transaction_type) &&
-    typeof obj.created_at === 'string';
+// Result of check-in operations
+interface CheckInResult {
+  success: boolean;
+  message: string;
+  points?: number;
+  transaction?: RewardTransaction;
 }
 
-// Simplified metadata builder
-function buildCheckInMetadata(context: CheckInContext, options: CheckInOptions = {}): Record<string, any> {
-  const baseMetadata = {
-    entity_type: context.type,
-    entity_id: context.entityId,
-    entity_name: context.entityName,
-    rating: options.rating || 0,
-    note: options.note || ''
+// Database transaction type (what comes from Supabase)
+interface DatabaseRewardTransaction {
+  id: string;
+  user_id: string;
+  establishment_id?: string;
+  points: number;
+  transaction_type: 'earn' | 'redeem';
+  source: string;
+  description?: string;
+  metadata?: Record<string, any> | string | null;
+  created_at: string;
+  version?: number;
+}
+
+// Type guard to check if a database record is a valid reward transaction
+function isDatabaseRewardTransaction(record: any): record is DatabaseRewardTransaction {
+  return (
+    record &&
+    typeof record.id === 'string' &&
+    typeof record.user_id === 'string' &&
+    typeof record.points === 'number' &&
+    (record.transaction_type === 'earn' || record.transaction_type === 'redeem') &&
+    typeof record.source === 'string' &&
+    typeof record.created_at === 'string'
+  );
+}
+
+// Transform database record to RewardTransaction
+function transformRewardTransaction(dbRecord: any): RewardTransaction {
+  // Ensure transaction_type is properly cast
+  const transaction_type = (dbRecord.transaction_type === 'redeem') ? 'redeem' : 'earn';
+  
+  return {
+    id: dbRecord.id,
+    user_id: dbRecord.user_id,
+    establishment_id: dbRecord.establishment_id || undefined,
+    points: dbRecord.points,
+    transaction_type,
+    source: dbRecord.source,
+    description: dbRecord.description || undefined,
+    metadata: typeof dbRecord.metadata === 'string' 
+      ? JSON.parse(dbRecord.metadata) 
+      : dbRecord.metadata || {},
+    created_at: dbRecord.created_at,
+    version: dbRecord.version || 1
   };
-
-  // Add location data for establishment check-ins
-  if (context.type === 'establishment' && context.locationData) {
-    return {
-      ...baseMetadata,
-      location_data: {
-        latitude: context.locationData.latitude,
-        longitude: context.locationData.longitude
-      }
-    };
-  }
-
-  // Add establishment data for bar crawl check-ins
-  if (context.type === 'bar_crawl' && context.additionalData) {
-    return {
-      ...baseMetadata,
-      establishment_id: context.additionalData.establishment_id,
-      establishment_name: context.additionalData.establishment_name
-    };
-  }
-
-  // Add establishment data for swig circuit check-ins
-  if (context.type === 'swig_circuit') {
-    return {
-      ...baseMetadata,
-      establishment_id: context.establishmentId,
-      establishment_name: context.establishmentName
-    };
-  }
-
-  return baseMetadata;
 }
+
+// Function to calculate the time remaining until the cooldown expires
+const getTimeRemaining = (lastCheckInTime: string, cooldownMinutes: number): number => {
+  const lastCheckIn = new Date(lastCheckInTime).getTime();
+  const now = Date.now();
+  const cooldownExpiration = lastCheckIn + cooldownMinutes * 60 * 1000;
+  return Math.max(0, cooldownExpiration - now);
+};
+
+// Function to format the time remaining into a human-readable string
+const formatTimeRemaining = (timeRemaining: number): string => {
+  const minutes = Math.floor((timeRemaining / (1000 * 60)) % 60);
+  const seconds = Math.floor((timeRemaining / 1000) % 60);
+  return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+};
 
 class CheckInService {
+  private readonly CHECK_IN_COOLDOWN_MINUTES = 1;
+
   async performCheckIn(
     userId: string,
     context: CheckInContext,
     options: CheckInOptions = {}
   ): Promise<CheckInResult> {
     try {
-      console.log('Performing check-in:', { userId, context, options });
-
-      // Build metadata safely
-      const metadata = buildCheckInMetadata(context, options);
-      const jsonCompatibleMetadata = toJsonCompatible(metadata);
-
-      // Determine points to award based on context type
-      let pointsToAward = 10; // Default points
-      let source = 'check_in';
-
-      switch (context.type) {
-        case 'establishment':
-          pointsToAward = 10;
-          source = 'establishment_check_in';
-          break;
-        case 'bar_crawl':
-          pointsToAward = 25;
-          source = 'bar_crawl_check_in';
-          break;
-        case 'swig_circuit':
-          pointsToAward = 30;
-          source = 'swig_circuit_check_in';
-          break;
+      // Check if the user is on cooldown for this establishment
+      const lastCheckInTime = localStorage.getItem('last_check_in_time');
+      const lastCheckedInEstablishment = localStorage.getItem('last_checked_in_establishment');
+      const now = new Date();
+  
+      if (lastCheckInTime && lastCheckedInEstablishment === context.entityId) {
+        const timeRemaining = getTimeRemaining(lastCheckInTime, this.CHECK_IN_COOLDOWN_MINUTES);
+        if (timeRemaining > 0) {
+          const formattedTime = formatTimeRemaining(timeRemaining);
+          return {
+            success: false,
+            message: `You're on cooldown. Please wait ${formattedTime} before checking in again.`,
+          };
+        }
       }
 
-      // Insert the reward transaction
-      const { data: transactionData, error: transactionError } = await supabase
+      // Define points earned for the check-in
+      let points = 10;
+      if (context.type === 'swig_circuit') {
+        points = 25;
+      }
+
+      // Prepare metadata for the reward transaction
+      const metadata = {
+        context: context,
+        options: options
+      };
+
+      // Create the reward transaction
+      const { data, error } = await supabase
         .from('reward_transactions')
-        .insert({
-          user_id: userId,
-          establishment_id: context.type === 'establishment' ? context.entityId : undefined,
-          points: pointsToAward,
-          transaction_type: 'earn',
-          source: source,
-          description: `Check-in at ${context.entityName}`,
-          metadata: jsonCompatibleMetadata
-        })
-        .select()
-        .single();
+        .insert([
+          {
+            user_id: userId,
+            points: points,
+            transaction_type: 'earn',
+            source: context.type,
+            description: `Check-in at ${context.entityName}`,
+            metadata: metadata,
+          },
+        ])
+        .select('*')
 
-      if (transactionError) {
-        console.error('Transaction error:', transactionError);
-        throw new Error(transactionError.message);
+      if (error) {
+        console.error('Error during check-in:', error);
+        return { success: false, message: 'Failed to record check-in.' };
+      }
+      
+      if (!data || data.length === 0) {
+        return { success: false, message: 'No data returned from check-in.' };
       }
 
-      // Update user points
-      const { error: updateError } = await supabase.rpc('update_user_points', {
-        p_user_id: userId,
-        p_points: pointsToAward
-      });
+      // Transform the database record to a RewardTransaction
+      const transaction = transformRewardTransaction(data[0]);
 
-      if (updateError) {
-        console.error('Points update error:', updateError);
-        throw new Error(updateError.message);
-      }
-
-      // Get updated balance
-      const { data: userReward } = await supabase
-        .from('user_rewards')
-        .select('points')
-        .eq('user_id', userId)
-        .single();
-
+      // Return success with the reward transaction
       return {
         success: true,
-        message: `Check-in successful! You earned ${pointsToAward} points.`,
-        pointsEarned: pointsToAward,
-        newBalance: userReward?.points || 0
+        message: `Successfully checked in at ${context.entityName}!`,
+        points: points,
+        transaction: transaction
       };
-
     } catch (error: any) {
-      console.error('Check-in error:', error);
-      return {
-        success: false,
-        message: error.message || 'Check-in failed',
-        error: error.message
-      };
+      console.error('Error during check-in:', error);
+      return { success: false, message: error.message || 'Failed to record check-in.' };
     }
   }
 
   async getCheckInHistory(
-    userId: string,
-    options: { type?: string; limit?: number; offset?: number } = {}
+    userId: string, 
+    options: { 
+      type?: string; 
+      limit?: number; 
+      offset?: number; 
+    } = {}
   ): Promise<RewardTransaction[]> {
     try {
+      console.log('Fetching check-in history for user:', userId, 'with options:', options);
+      
       let query = supabase
         .from('reward_transactions')
         .select('*')
         .eq('user_id', userId)
         .eq('transaction_type', 'earn')
         .order('created_at', { ascending: false });
+
+      if (options.type === 'establishment') {
+        query = query.not('establishment_id', 'is', null);
+      }
 
       if (options.limit) {
         query = query.limit(options.limit);
@@ -215,58 +225,85 @@ class CheckInService {
       const { data, error } = await query;
 
       if (error) {
-        console.error('History fetch error:', error);
-        return [];
+        console.error('Error fetching check-in history:', error);
+        throw error;
       }
 
-      // Safely transform the data with type guards
-      return (data || [])
+      if (!data) return [];
+
+      // Cast the transaction_type properly and transform the data
+      return data
+        .map(record => ({
+          ...record,
+          transaction_type: (record.transaction_type === 'redeem') ? 'redeem' as const : 'earn' as const
+        }))
         .filter(isDatabaseRewardTransaction)
-        .map((dbTransaction) => transformRewardTransaction(dbTransaction));
+        .map(transformRewardTransaction);
 
     } catch (error) {
-      console.error('Error fetching check-in history:', error);
+      console.error('Error in getCheckInHistory:', error);
       return [];
     }
   }
 
-  async getVisitStats(userId: string): Promise<UserVisitStats> {
+  async getVisitStats(userId: string): Promise<{
+    total_visits: number;
+    unique_establishments: number;
+    total_points_earned: number;
+    visited_entities: string[];
+  }> {
     try {
-      const { data, error } = await supabase
+      // Fetch total visits and points earned
+      const { data: transactions, error: transactionError } = await supabase
         .from('reward_transactions')
-        .select('*')
+        .select('points')
         .eq('user_id', userId)
         .eq('transaction_type', 'earn');
 
-      if (error) {
-        console.error('Stats fetch error:', error);
-        return {
-          total_visits: 0,
-          unique_establishments: 0,
-          total_points_earned: 0,
-          visited_entities: []
-        };
+      if (transactionError) {
+        console.error('Error fetching transactions:', transactionError);
+        throw transactionError;
       }
 
-      const visits = data || [];
-      const establishmentIds = new Set<string>();
-      let totalPoints = 0;
+      const total_visits = transactions ? transactions.length : 0;
+      const total_points_earned = transactions ? transactions.reduce((sum, transaction) => sum + transaction.points, 0) : 0;
 
-      visits.forEach(visit => {
-        totalPoints += visit.points;
-        if (visit.establishment_id) {
-          establishmentIds.add(visit.establishment_id);
-        }
-      });
+      // Fetch unique establishments visited
+      const { data: uniqueEstablishments, error: uniqueError } = await supabase
+        .from('reward_transactions')
+        .select('establishment_id')
+        .eq('user_id', userId)
+        .neq('establishment_id', null)
+        .eq('transaction_type', 'earn');
+
+      if (uniqueError) {
+        console.error('Error fetching unique establishments:', uniqueError);
+        throw uniqueError;
+      }
+
+      const unique_establishments = uniqueEstablishments ? new Set(uniqueEstablishments.map(e => e.establishment_id)).size : 0;
+    
+      // Fetch visited entities
+      const { data: visitedEntitiesData, error: visitedEntitiesError } = await supabase
+        .from('reward_transactions')
+        .select('source')
+        .eq('user_id', userId)
+        .eq('transaction_type', 'earn');
+
+      if (visitedEntitiesError) {
+        console.error('Error fetching visited entities:', visitedEntitiesError);
+        throw visitedEntitiesError;
+      }
+
+      const visited_entities = visitedEntitiesData ? visitedEntitiesData.map(e => e.source) : [];
 
       return {
-        total_visits: visits.length,
-        unique_establishments: establishmentIds.size,
-        total_points_earned: totalPoints,
-        visited_entities: Array.from(establishmentIds)
+        total_visits,
+        unique_establishments,
+        total_points_earned,
+        visited_entities
       };
-
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching visit stats:', error);
       return {
         total_visits: 0,
@@ -278,47 +315,13 @@ class CheckInService {
   }
 }
 
-// Database transaction type with proper typing
-interface DatabaseRewardTransaction {
-  id: string;
-  user_id: string;
-  establishment_id?: string;
-  points: number;
-  transaction_type: 'earn' | 'redeem';
-  source: string;
-  description?: string;
-  created_at: string;
-  metadata?: any;
-  version?: number;
-}
-
-// Transform database transaction to API format
-function transformRewardTransaction(dbTransaction: DatabaseRewardTransaction): RewardTransaction {
-  return {
-    id: dbTransaction.id,
-    user_id: dbTransaction.user_id,
-    userId: dbTransaction.user_id,
-    establishment_id: dbTransaction.establishment_id,
-    points: dbTransaction.points,
-    pointsAmount: dbTransaction.points,
-    transaction_type: dbTransaction.transaction_type,
-    type: dbTransaction.transaction_type === 'earn' ? 'earned' : 'redeemed',
-    source: dbTransaction.source,
-    description: dbTransaction.description || dbTransaction.source,
-    timestamp: dbTransaction.created_at,
-    date: dbTransaction.created_at,
-    created_at: dbTransaction.created_at,
-    version: dbTransaction.version,
-    metadata: typeof dbTransaction.metadata === 'object' ? dbTransaction.metadata as Record<string, any> : {}
-  };
-}
-
+// Export the service instance
 export const checkInService = new CheckInService();
 
-// Re-export types for backward compatibility
+// Export types for external use
 export type {
   BarCrawlCheckIn,
-  EstablishmentCheckIn,
+  EstablishmentCheckIn, 
   SwigCircuitCheckIn,
   CheckInContext,
   CheckInOptions,
