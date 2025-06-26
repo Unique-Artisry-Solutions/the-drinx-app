@@ -2,7 +2,8 @@
 import { useState, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
-import { checkInService, CheckInContext, CheckInOptions, CheckInResult } from '@/services/checkInService';
+import { checkInService } from '@/services/checkInService';
+import type { CheckInOptions, CheckInResult, EstablishmentCheckInContext } from '@/services/checkInService/types';
 import { RewardTransaction } from '@/types/rewards/api';
 
 export interface UserVisitStats {
@@ -32,10 +33,10 @@ export const useUserVisits = () => {
 
     setIsLoading(true);
     try {
-      const context: CheckInContext = {
+      const context: EstablishmentCheckInContext = {
         type: 'establishment',
         entityId: establishmentId,
-        entityName: options.establishmentName || 'Establishment' // Use provided name or fallback
+        entityName: options.establishmentName || 'Establishment'
       };
 
       const result = await checkInService.performCheckIn(user.id, context, options);
@@ -84,10 +85,10 @@ export const useUserVisits = () => {
 
     setIsLoading(true);
     try {
-      const context: CheckInContext = {
+      const context: EstablishmentCheckInContext = {
         type: 'establishment',
         entityId: establishmentId,
-        entityName: options.establishmentName || 'Establishment', // Use provided name or fallback
+        entityName: options.establishmentName || 'Establishment',
         locationData: {
           latitude: userLatitude,
           longitude: userLongitude
