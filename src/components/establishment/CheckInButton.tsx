@@ -30,10 +30,10 @@ const CheckInButton: React.FC<CheckInButtonProps> = ({ establishmentId, establis
           establishmentId,
           userLocation.latitude,
           userLocation.longitude,
-          { rating, note, establishmentName }
+          { rating: rating || undefined, note, establishmentName }
         );
       } else {
-        result = await recordVisit(establishmentId, { rating, note, establishmentName });
+        result = await recordVisit(establishmentId, { rating: rating || undefined, note, establishmentName });
       }
       
       if (result?.success) {

@@ -1,251 +1,227 @@
+
 import { supabase } from '@/integrations/supabase/client';
-import { toJsonCompatible } from '@/utils/databaseSerialization';
+import { RewardTransaction } from '@/types/rewards/api';
 
-// Define CheckInContext, CheckInOptions, and CheckInResult interfaces
-export interface CheckInContext {
-  type: 'bar_crawl' | 'establishment' | 'swig_circuit';
-  entityId: string;
-  entityName: string;
-  additionalData?: Record<string, any>;
-}
-
+// Enhanced check-in options interface
 export interface CheckInOptions {
   userId: string;
-  establishmentId?: string;
+  rating?: number;
+  note?: string;
   establishmentName?: string;
-  points?: number;
 }
+
+// Base check-in context interface
+export interface CheckInContext {
+  type: string;
+  entityId: string;
+  entityName: string;
+}
+
+// Establishment check-in context
+export interface EstablishmentCheckIn extends CheckInContext {
+  type: 'establishment';
+  locationData?: {
+    latitude: number;
+    longitude: number;
+  };
+}
+
+// Bar crawl check-in context
+export interface BarCrawlCheckIn extends CheckInContext {
+  type: 'bar_crawl';
+  additionalData?: {
+    establishment_id: string;
+    establishment_name: string;
+  };
+}
+
+// Swig circuit check-in context
+export interface SwigCircuitCheckIn extends CheckInContext {
+  type: 'swig_circuit';
+  entityId: string;
+  entityName: string;
+  establishmentId: string;
+  establishmentName: string;
+}
+
+export type AnyCheckInContext = EstablishmentCheckIn | BarCrawlCheckIn | SwigCircuitCheckIn;
 
 export interface CheckInResult {
   success: boolean;
   message: string;
-  points?: number;
-  streakInfo?: {
-    current: number;
-    longest: number;
-    milestone?: boolean;
-  };
+  pointsEarned?: number;
+  transaction?: RewardTransaction;
 }
 
-// Define BarCrawlCheckIn, EstablishmentCheckIn, and SwigCircuitCheckIn interfaces
-export interface BarCrawlCheckIn extends CheckInContext {
-  type: 'bar_crawl';
-  additionalData: {
-    establishment_id: string;
-    establishment_name: string;
-  };
+// User visit stats interface
+export interface UserVisitStats {
+  total_visits: number;
+  unique_establishments: number;
+  total_points_earned: number;
+  visited_entities: string[];
 }
 
-export interface EstablishmentCheckIn extends CheckInContext {
-  type: 'establishment';
-  additionalData?: {
-    visit_type?: string;
-    special_event?: string;
-  };
+// Check-in history query options
+export interface CheckInHistoryOptions {
+  type?: string;
+  limit?: number;
+  offset?: number;
 }
 
-export interface SwigCircuitCheckIn extends CheckInContext {
-  type: 'swig_circuit';
-  additionalData: {
-    establishment_id: string;
-    establishment_name: string;
-    position_in_circuit: number;
-  };
-}
-
-// Phase 1: Create proper transformation between database and TypeScript types
-function createDatabaseTransaction(userId: string, context: CheckInContext, options: CheckInOptions) {
-  const points = options.points || getPointsForCheckIn(context);
-  
-  // Convert complex objects to JSON-compatible format (Phase 2)
-  const jsonMetadata = toJsonCompatible({
-    context: {
-      type: context.type,
-      entityId: context.entityId,
-      entityName: context.entityName,
-      additionalData: context.additionalData || {}
-    },
-    options: {
-      userId: options.userId,
-      establishmentId: options.establishmentId,
-      establishmentName: options.establishmentName,
-      points: options.points
-    }
-  });
-
-  return {
-    user_id: userId,
-    establishment_id: options.establishmentId || null,
-    points,
-    transaction_type: 'earn' as const,
-    source: context.type,
-    description: `Check-in at ${context.entityName}`,
-    metadata: jsonMetadata
-  };
-}
-
-// Phase 1: Create proper transformation from database to TypeScript interface
-function transformDatabaseToRewardTransaction(dbRecord: any): RewardTransaction {
-  return {
-    id: dbRecord.id,
-    user_id: dbRecord.user_id,
-    userId: dbRecord.user_id, // Backward compatibility
-    establishment_id: dbRecord.establishment_id,
-    points: dbRecord.points,
-    pointsAmount: dbRecord.points, // Backward compatibility
-    transaction_type: dbRecord.transaction_type,
-    type: dbRecord.transaction_type === 'earn' ? 'earned' : 'redeemed', // Component-expected format
-    source: dbRecord.source,
-    description: dbRecord.description || dbRecord.source,
-    timestamp: dbRecord.created_at,
-    date: dbRecord.created_at, // Backward compatibility
-    created_at: dbRecord.created_at,
-    version: dbRecord.version,
-    metadata: dbRecord.metadata || {}
-  };
-}
-
-// Define getPointsForCheckIn function
-function getPointsForCheckIn(context: CheckInContext): number {
-  switch (context.type) {
-    case 'bar_crawl':
-      return 25;
-    case 'establishment':
-      return 10;
-    case 'swig_circuit':
-      return 15;
-    default:
-      return 5;
-  }
-}
-
-// Phase 4: Strengthen type guards
-function isDatabaseRewardTransaction(record: any): record is any {
-  return (
-    record &&
-    typeof record.id === 'string' &&
-    typeof record.user_id === 'string' &&
-    typeof record.points === 'number' &&
-    ['earn', 'redeem'].includes(record.transaction_type) &&
-    typeof record.source === 'string' &&
-    typeof record.created_at === 'string'
-  );
-}
-
-export class CheckInService {
-  async performCheckIn(userId: string, context: CheckInContext, options: CheckInOptions = { userId }): Promise<CheckInResult> {
+class CheckInService {
+  async performCheckIn(
+    userId: string,
+    context: AnyCheckInContext,
+    options: CheckInOptions = { userId }
+  ): Promise<CheckInResult> {
     try {
       console.log('Performing check-in:', { userId, context, options });
 
-      // Create database-compatible transaction record
-      const transactionData = createDatabaseTransaction(userId, context, options);
-      
-      // Phase 3: Fix database insert method - insert single object, not array
-      const { data: transactionResult, error: transactionError } = await supabase
+      // Create reward transaction record
+      const transactionData = {
+        user_id: userId,
+        points: 50, // Base points for check-in
+        transaction_type: 'earned',
+        description: `Check-in at ${context.entityName}`,
+        metadata: this.toJsonCompatible({
+          checkInType: context.type,
+          entityId: context.entityId,
+          entityName: context.entityName,
+          rating: options.rating,
+          note: options.note,
+          timestamp: new Date().toISOString()
+        }),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
+      const { data: transaction, error } = await supabase
         .from('reward_transactions')
         .insert(transactionData)
         .select()
         .single();
 
-      if (transactionError) {
-        console.error('Transaction insert error:', transactionError);
-        throw new Error(`Failed to record transaction: ${transactionError.message}`);
+      if (error) {
+        console.error('Database insert error:', error);
+        return {
+          success: false,
+          message: 'Failed to record check-in'
+        };
       }
 
-      console.log('Transaction recorded:', transactionResult);
-
-      // Transform the database result to RewardTransaction interface
-      const transformedTransaction = transformDatabaseToRewardTransaction(transactionResult);
+      console.log('Check-in recorded successfully:', transaction);
 
       return {
         success: true,
-        message: `Successfully checked in at ${context.entityName}! You earned ${transactionData.points} points.`,
-        points: transactionData.points,
-        streakInfo: {
-          current: 1,
-          longest: 1,
-          milestone: false
-        }
+        message: 'Check-in successful! You earned 50 points.',
+        pointsEarned: 50,
+        transaction: this.transformToRewardTransaction(transaction)
       };
-
     } catch (error: any) {
       console.error('Check-in service error:', error);
       return {
         success: false,
-        message: error.message || 'Failed to process check-in. Please try again.'
+        message: error.message || 'An unexpected error occurred'
       };
     }
   }
 
-  async getCheckInHistory(userId: string, limit: number = 10): Promise<RewardTransaction[]> {
+  async getCheckInHistory(userId: string, options: CheckInHistoryOptions = {}): Promise<RewardTransaction[]> {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('reward_transactions')
         .select('*')
         .eq('user_id', userId)
-        .eq('transaction_type', 'earn')
-        .order('created_at', { ascending: false })
-        .limit(limit);
+        .eq('transaction_type', 'earned')
+        .order('created_at', { ascending: false });
+
+      if (options.limit) {
+        query = query.limit(options.limit);
+      }
+
+      if (options.offset) {
+        query = query.range(options.offset, options.offset + (options.limit || 10) - 1);
+      }
+
+      const { data, error } = await query;
 
       if (error) {
         console.error('Error fetching check-in history:', error);
         return [];
       }
 
-      // Phase 4: Apply type guards and transformations
-      return (data || [])
-        .filter(isDatabaseRewardTransaction)
-        .map(transformDatabaseToRewardTransaction);
-
+      return data?.map(record => this.transformToRewardTransaction(record)) || [];
     } catch (error) {
       console.error('Error in getCheckInHistory:', error);
       return [];
     }
   }
 
-  async canCheckIn(userId: string, context: CheckInContext): Promise<boolean> {
+  async getVisitStats(userId: string): Promise<UserVisitStats> {
     try {
-      const cutoffTime = new Date();
-      cutoffTime.setHours(cutoffTime.getHours() - 1);
-
       const { data, error } = await supabase
         .from('reward_transactions')
-        .select('id')
+        .select('*')
         .eq('user_id', userId)
-        .eq('source', context.type)
-        .gte('created_at', cutoffTime.toISOString())
-        .limit(1);
+        .eq('transaction_type', 'earned');
 
       if (error) {
-        console.error('Error checking check-in eligibility:', error);
-        return true;
+        console.error('Error fetching visit stats:', error);
+        return {
+          total_visits: 0,
+          unique_establishments: 0,
+          total_points_earned: 0,
+          visited_entities: []
+        };
       }
 
-      return !data || data.length === 0;
+      const transactions = data || [];
+      const uniqueEntities = new Set();
+      let totalPoints = 0;
+
+      transactions.forEach(transaction => {
+        if (transaction.metadata && typeof transaction.metadata === 'object') {
+          const metadata = transaction.metadata as any;
+          if (metadata.entityId) {
+            uniqueEntities.add(metadata.entityId);
+          }
+        }
+        totalPoints += transaction.points || 0;
+      });
+
+      return {
+        total_visits: transactions.length,
+        unique_establishments: uniqueEntities.size,
+        total_points_earned: totalPoints,
+        visited_entities: Array.from(uniqueEntities) as string[]
+      };
     } catch (error) {
-      console.error('Error in canCheckIn:', error);
-      return true;
+      console.error('Error in getVisitStats:', error);
+      return {
+        total_visits: 0,
+        unique_establishments: 0,
+        total_points_earned: 0,
+        visited_entities: []
+      };
     }
   }
-}
 
-// Phase 4: Verify data flow - ensure RewardTransaction interface is properly defined
-interface RewardTransaction {
-  id: string;
-  user_id: string;
-  userId: string; // Backward compatibility  
-  establishment_id?: string;
-  points: number;
-  pointsAmount: number; // Backward compatibility
-  transaction_type: 'earn' | 'redeem';
-  type: 'earned' | 'redeemed'; // Component-expected format
-  source: string;
-  description?: string;
-  timestamp: string;
-  date: string; // Backward compatibility
-  created_at: string;
-  version?: number;
-  metadata?: Record<string, any>;
+  private transformToRewardTransaction(dbRecord: any): RewardTransaction {
+    return {
+      id: dbRecord.id,
+      userId: dbRecord.user_id,
+      points: dbRecord.points,
+      transactionType: dbRecord.transaction_type,
+      description: dbRecord.description,
+      metadata: dbRecord.metadata,
+      createdAt: dbRecord.created_at,
+      updatedAt: dbRecord.updated_at
+    };
+  }
+
+  private toJsonCompatible(obj: any): Record<string, any> {
+    return JSON.parse(JSON.stringify(obj));
+  }
 }
 
 export const checkInService = new CheckInService();

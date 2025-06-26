@@ -2,15 +2,10 @@
 import { useState, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
-import { checkInService, CheckInOptions, CheckInResult, EstablishmentCheckIn } from '@/services/checkInService';
+import { checkInService, CheckInOptions, CheckInResult, EstablishmentCheckIn, UserVisitStats } from '@/services/checkInService';
 import { RewardTransaction } from '@/types/rewards/api';
 
-export interface UserVisitStats {
-  total_visits: number;
-  unique_establishments: number;
-  total_points_earned: number;
-  visited_entities: string[];
-}
+export { UserVisitStats } from '@/services/checkInService';
 
 export const useUserVisits = () => {
   const { user } = useAuth();
@@ -19,7 +14,7 @@ export const useUserVisits = () => {
 
   const recordVisit = useCallback(async (
     establishmentId: string,
-    options: CheckInOptions = {}
+    options: Omit<CheckInOptions, 'userId'> = {}
   ): Promise<CheckInResult | null> => {
     if (!user) {
       toast({
@@ -38,7 +33,10 @@ export const useUserVisits = () => {
         entityName: options.establishmentName || 'Establishment'
       };
 
-      const result = await checkInService.performCheckIn(user.id, context, options);
+      const result = await checkInService.performCheckIn(user.id, context, {
+        userId: user.id,
+        ...options
+      });
       
       if (result.success) {
         toast({
@@ -71,7 +69,7 @@ export const useUserVisits = () => {
     establishmentId: string,
     userLatitude: number,
     userLongitude: number,
-    options: CheckInOptions = {}
+    options: Omit<CheckInOptions, 'userId'> = {}
   ): Promise<CheckInResult | null> => {
     if (!user) {
       toast({
@@ -94,7 +92,10 @@ export const useUserVisits = () => {
         }
       };
 
-      const result = await checkInService.performCheckIn(user.id, context, options);
+      const result = await checkInService.performCheckIn(user.id, context, {
+        userId: user.id,
+        ...options
+      });
       
       if (result.success) {
         toast({
