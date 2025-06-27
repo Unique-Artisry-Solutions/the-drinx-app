@@ -3187,6 +3187,20 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_message_read_status_thread_id"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "promoter_venue_threads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_message_read_status_user_id"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "message_read_status_thread_id_fkey"
             columns: ["thread_id"]
             isOneToOne: false
@@ -4677,6 +4691,20 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_promoter_venue_messages_sender_id"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_promoter_venue_messages_thread_id"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "promoter_venue_threads"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "promoter_venue_messages_thread_id_fkey"
             columns: ["thread_id"]
             isOneToOne: false
@@ -4717,6 +4745,20 @@ export type Database = {
           venue_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_promoter_venue_threads_promoter_id"
+            columns: ["promoter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_promoter_venue_threads_venue_id"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "establishments"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "promoter_venue_threads_venue_id_fkey"
             columns: ["venue_id"]

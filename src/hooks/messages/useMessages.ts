@@ -14,43 +14,30 @@ export const useMessages = (userType: UserType) => {
       const { data: messagesData, error: messagesError } = await executeWithRetry(async () =>
         supabase
           .from('promoter_venue_messages')
-          .select('*')
+          .select(`
+            *,
+            profiles!fk_promoter_venue_messages_sender_id(id, display_name, username)
+          `)
           .eq('thread_id', threadId)
           .order('sent_at', { ascending: true })
       );
 
       if (messagesError) throw messagesError;
 
-      const messages: Message[] = [];
-      
-      for (const msg of messagesData || []) {
-        try {
-          const { data: senderData } = await executeWithRetry(async () =>
-            supabase
-              .from('profiles')
-              .select('id, display_name, username')
-              .eq('id', msg.sender_id)
-              .maybeSingle()
-          );
-
-          messages.push({
-            id: msg.id,
-            thread_id: msg.thread_id,
-            content: msg.content,
-            sent_at: msg.sent_at,
-            created_at: msg.sent_at, // Map sent_at to created_at for compatibility
-            sender_id: msg.sender_id,
-            is_from_promoter: msg.is_from_promoter,
-            is_read: false, // Default to false, will be updated by read status logic
-            sender: senderData || {
-              display_name: 'Unknown',
-              username: 'user'
-            }
-          });
-        } catch (err) {
-          console.error('Error processing message sender:', err);
+      const messages: Message[] = (messagesData || []).map(msg => ({
+        id: msg.id,
+        thread_id: msg.thread_id,
+        content: msg.content,
+        sent_at: msg.sent_at,
+        created_at: msg.sent_at, // Map sent_at to created_at for compatibility
+        sender_id: msg.sender_id,
+        is_from_promoter: msg.is_from_promoter,
+        is_read: false, // Default to false, will be updated by read status logic
+        sender: msg.profiles || {
+          display_name: 'Unknown',
+          username: 'user'
         }
-      }
+      }));
 
       return messages;
     } catch (err: any) {

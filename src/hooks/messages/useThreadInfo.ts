@@ -22,8 +22,8 @@ export const useThreadInfo = (threadId: string | null) => {
           subject,
           venue_id,
           promoter_id,
-          venues:establishments(id, name),
-          promoters:profiles!promoter_id(id, display_name, username)
+          establishments!fk_promoter_venue_threads_venue_id(id, name),
+          profiles!fk_promoter_venue_threads_promoter_id(id, display_name, username)
         `)
         .eq('id', threadId)
         .single();
@@ -31,8 +31,8 @@ export const useThreadInfo = (threadId: string | null) => {
       if (threadError) throw threadError;
 
       setThreadInfo({
-        venueName: threadData.venues?.name || 'Unknown Venue',
-        promoterName: threadData.promoters?.display_name || threadData.promoters?.username || 'Unknown Promoter',
+        venueName: threadData.establishments?.name || 'Unknown Venue',
+        promoterName: threadData.profiles?.display_name || threadData.profiles?.username || 'Unknown Promoter',
         subject: threadData.subject || '',
         venueId: threadData.venue_id || ''
       });

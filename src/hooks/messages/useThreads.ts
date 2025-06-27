@@ -34,8 +34,8 @@ export const useThreads = (userType: UserType, userId: string | undefined) => {
             last_message_at,
             created_at,
             updated_at,
-            venues:establishments(id, name),
-            promoters:profiles!promoter_id(id, display_name, username)
+            establishments!fk_promoter_venue_threads_venue_id(id, name),
+            profiles!fk_promoter_venue_threads_promoter_id(id, display_name, username)
           `)
           .eq(filterColumn, userId)
           .order('last_message_at', { ascending: false })
@@ -63,7 +63,7 @@ export const useThreads = (userType: UserType, userId: string | undefined) => {
               timestamp: thread.last_message_at || thread.created_at,
               isRead: false, // Will be updated by read status logic
               isArchived: thread.is_archived,
-              venueName: thread.venues?.name || 'Unknown Venue',
+              venueName: thread.establishments?.name || 'Unknown Venue',
               lastMessage: lastMessageData?.content || 'No messages yet',
             };
           } catch (err) {
@@ -76,7 +76,7 @@ export const useThreads = (userType: UserType, userId: string | undefined) => {
               timestamp: thread.last_message_at || thread.created_at,
               isRead: false,
               isArchived: thread.is_archived,
-              venueName: thread.venues?.name || 'Unknown Venue',
+              venueName: thread.establishments?.name || 'Unknown Venue',
               lastMessage: 'No messages yet',
             };
           }
