@@ -25,7 +25,7 @@ export const usePromoterMessages = (userId: string | undefined) => {
           subject,
           is_archived,
           last_message_at,
-          venues:establishments(name)
+          establishments!venue_id(name)
         `)
         .eq('promoter_id', userId)
         .order('last_message_at', { ascending: false });
@@ -40,7 +40,7 @@ export const usePromoterMessages = (userId: string | undefined) => {
         timestamp: thread.last_message_at,
         isRead: false,
         isArchived: thread.is_archived,
-        venueName: thread.venues?.name,
+        venueName: thread.establishments?.name,
         lastMessage: ''
       }));
 

@@ -34,8 +34,8 @@ export const useThreads = (userType: UserType, userId: string | undefined) => {
             last_message_at,
             created_at,
             updated_at,
-            establishments!fk_promoter_venue_threads_venue_id(id, name),
-            profiles!fk_promoter_venue_threads_promoter_id(id, display_name, username)
+            establishments!venue_id(id, name),
+            profiles!promoter_id(id, display_name, username)
           `)
           .eq(filterColumn, userId)
           .order('last_message_at', { ascending: false })
