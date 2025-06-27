@@ -19,6 +19,9 @@ export const useThreads = (userType: UserType, userId: string | undefined) => {
     setError(null);
 
     try {
+      // Determine the column to filter by based on user type
+      const filterColumn = userType === 'promoter' ? 'promoter_id' : 'venue_id';
+      
       const { data: threadsData, error: threadsError } = await executeWithRetry(async () =>
         supabase
           .from('promoter_venue_threads')
@@ -31,9 +34,10 @@ export const useThreads = (userType: UserType, userId: string | undefined) => {
             last_message_at,
             created_at,
             updated_at,
-            venues:establishments(id, name)
+            venues:establishments(id, name),
+            promoters:profiles(id, full_name)
           `)
-          .eq(userType === 'promoter' ? 'promoter_id' : 'venue_id', userId)
+          .eq(filterColumn, userId)
           .order('last_message_at', { ascending: false })
       );
 
@@ -42,12 +46,13 @@ export const useThreads = (userType: UserType, userId: string | undefined) => {
       const processedThreads: MessageThread[] = threadsData?.map(thread => ({
         id: thread.id,
         venue_id: thread.venue_id,
-        promoter_id: thread.promoter_id, // Ensure this is always defined
+        promoter_id: thread.promoter_id,
         subject: thread.subject,
         timestamp: thread.last_message_at,
         isRead: false, // Will be updated by useThreadReadStatus
         isArchived: thread.is_archived,
-        venueName: thread.venues?.name,
+        venueName: thread.venues?.name || 'Unknown Venue',
+        lastMessage: '', // Will be populated by actual message fetching
       })) || [];
 
       setThreads(processedThreads);

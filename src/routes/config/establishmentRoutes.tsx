@@ -7,6 +7,7 @@ import RouteProtectionWrapper from '@/hoc/RouteProtectionWrapper';
 const EstablishmentDashboardPage = lazy(() => import('@/pages/establishment/EstablishmentDashboardPage'));
 const EstablishmentProfile = lazy(() => import('@/pages/establishment/EstablishmentProfile'));
 const EstablishmentEvents = lazy(() => import('@/pages/establishment/EstablishmentEvents'));
+const EstablishmentCommunicationPage = lazy(() => import('@/pages/establishment/CommunicationPage'));
 
 export const establishmentRoutes: RouteObject[] = [
   {
@@ -54,6 +55,18 @@ export const establishmentRoutes: RouteObject[] = [
         redirectTo="/login"
       >
         <EstablishmentEvents />
+      </RouteProtectionWrapper>
+    )
+  },
+  {
+    path: '/establishment/communication',
+    element: (
+      <RouteProtectionWrapper 
+        requireAuth={true} 
+        allowedUserTypes={['establishment']}
+        redirectTo="/login"
+      >
+        <EstablishmentCommunicationPage />
       </RouteProtectionWrapper>
     )
   }

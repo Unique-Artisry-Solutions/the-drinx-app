@@ -1,159 +1,131 @@
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import MessageThreadList from '@/components/promoter/communication/MessageThreadList';
-import MessageThread from '@/components/promoter/communication/MessageThread';
-import { useMessageSystem } from '@/hooks/messages/useMessageSystem';
-import { AlertCircle } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Search, MessageSquarePlus, RefreshCw, AlertCircle } from 'lucide-react';
+import { useAuth } from '@/contexts/auth';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useMessageSystem } from '@/hooks/messages/useMessageSystem';
+import MessageThreadList from '@/components/promoter/communication/MessageThreadList';
 
-const EstablishmentInbox = () => {
-  const [activeTab, setActiveTab] = useState('all');
-  const [error, setError] = useState<string | null>(null);
-  
+interface EstablishmentInboxProps {
+  onSelectThread?: (threadId: string) => void;
+}
+
+const EstablishmentInbox: React.FC<EstablishmentInboxProps> = ({ onSelectThread }) => {
+  const [searchQuery, setSearchQuery] = useState('');
+  const { user } = useAuth();
   const {
     threads,
     loading,
-    selectedThreadId,
-    setSelectedThreadId,
-    markThreadAsRead
+    error,
+    markThreadAsRead,
+    refetchThreads
   } = useMessageSystem('establishment');
 
+  // Check authentication status
   useEffect(() => {
-    // Clear error when tab changes
-    setError(null);
-  }, [activeTab]);
+    if (!user) {
+      console.log('User not authenticated');
+    }
+  }, [user]);
 
-  const handleSelectThread = (threadId: string) => {
-    try {
-      console.log(`Selecting thread: ${threadId}`);
-      markThreadAsRead(threadId);
-      setSelectedThreadId(threadId);
-    } catch (err) {
-      console.error("Error selecting thread:", err);
-      setError("Failed to mark thread as read. Please try again.");
+  const filteredThreads = threads.filter(
+    conv => 
+      conv.venueName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      conv.lastMessage?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      false
+  );
+
+  const handleSelectConversation = (threadId: string) => {
+    markThreadAsRead(threadId);
+    if (onSelectThread) {
+      onSelectThread(threadId);
     }
   };
 
-  // Logging for debugging
-  useEffect(() => {
-    console.log("Establishment Inbox rendered with threads:", threads);
-    console.log("Loading state:", loading);
-  }, [threads, loading]);
+  const handleRefresh = () => {
+    refetchThreads();
+  };
+
+  if (!user) {
+    return (
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">Authentication Required</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Alert>
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>You must be logged in</AlertTitle>
+            <AlertDescription>
+              Please log in to view your messages and communicate with promoters.
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
-    <Card>
-      <CardContent className="p-4 md:p-6">
-        {error && (
-          <Alert variant="destructive" className="mb-4">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Error</AlertTitle>
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-        
-        <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="mb-4">
-            <TabsTrigger value="all">All Messages</TabsTrigger>
+    <Card className="w-full">
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <MessageSquarePlus className="h-5 w-5" />
+            <span>Promoter Communications</span>
+          </CardTitle>
+          <Button variant="ghost" size="sm" onClick={handleRefresh} disabled={loading}>
+            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            <span className="sr-only">Refresh</span>
+          </Button>
+        </div>
+        <div className="relative">
+          <Search className="absolute left-2 top-3 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search conversations..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-8"
+          />
+        </div>
+      </CardHeader>
+      
+      <CardContent>
+        <Tabs defaultValue="all" className="w-full">
+          <TabsList className="grid grid-cols-3 mb-4">
+            <TabsTrigger value="all">All</TabsTrigger>
             <TabsTrigger value="unread">Unread</TabsTrigger>
             <TabsTrigger value="archived">Archived</TabsTrigger>
           </TabsList>
-
-          <TabsContent value="all" className="space-y-4">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              <div className="lg:col-span-1">
-                {loading ? (
-                  <div className="text-center py-6">Loading messages...</div>
-                ) : threads.filter(t => !t.isArchived).length > 0 ? (
-                  <MessageThreadList 
-                    conversations={threads.filter(t => !t.isArchived)} 
-                    onSelectConversation={handleSelectThread} 
-                  />
-                ) : (
-                  <div className="text-center py-6 text-gray-500">
-                    <p>No messages found</p>
-                  </div>
-                )}
-              </div>
-              
-              <div className="lg:col-span-2">
-                {selectedThreadId ? (
-                  <MessageThread 
-                    threadId={selectedThreadId} 
-                    userType="establishment"
-                  />
-                ) : (
-                  <div className="text-center py-6 text-gray-500">
-                    <p>Select a conversation to view messages</p>
-                  </div>
-                )}
-              </div>
-            </div>
+          
+          <TabsContent value="all">
+            <MessageThreadList 
+              conversations={filteredThreads} 
+              onSelectConversation={handleSelectConversation}
+              isLoading={loading}
+              error={error}
+            />
           </TabsContent>
 
           <TabsContent value="unread">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              <div className="lg:col-span-1">
-                {loading ? (
-                  <div className="text-center py-6">Loading messages...</div>
-                ) : threads.filter(t => !t.isRead && !t.isArchived).length > 0 ? (
-                  <MessageThreadList 
-                    conversations={threads.filter(t => !t.isRead && !t.isArchived)} 
-                    onSelectConversation={handleSelectThread} 
-                  />
-                ) : (
-                  <div className="text-center py-6 text-gray-500">
-                    <p>No unread messages</p>
-                  </div>
-                )}
-              </div>
-              
-              <div className="lg:col-span-2">
-                {selectedThreadId ? (
-                  <MessageThread 
-                    threadId={selectedThreadId} 
-                    userType="establishment"
-                  />
-                ) : (
-                  <div className="text-center py-6 text-gray-500">
-                    <p>Select a conversation to view messages</p>
-                  </div>
-                )}
-              </div>
-            </div>
+            <MessageThreadList 
+              conversations={filteredThreads.filter(c => !c.isRead)} 
+              onSelectConversation={handleSelectConversation}
+              isLoading={loading}
+              error={error}
+            />
           </TabsContent>
 
           <TabsContent value="archived">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              <div className="lg:col-span-1">
-                {loading ? (
-                  <div className="text-center py-6">Loading messages...</div>
-                ) : threads.filter(t => t.isArchived).length > 0 ? (
-                  <MessageThreadList 
-                    conversations={threads.filter(t => t.isArchived)} 
-                    onSelectConversation={handleSelectThread} 
-                  />
-                ) : (
-                  <div className="text-center py-6 text-gray-500">
-                    <p>No archived messages</p>
-                  </div>
-                )}
-              </div>
-              
-              <div className="lg:col-span-2">
-                {selectedThreadId ? (
-                  <MessageThread 
-                    threadId={selectedThreadId} 
-                    userType="establishment"
-                  />
-                ) : (
-                  <div className="text-center py-6 text-gray-500">
-                    <p>Select a conversation to view messages</p>
-                  </div>
-                )}
-              </div>
-            </div>
+            <MessageThreadList 
+              conversations={filteredThreads.filter(c => c.isArchived)} 
+              onSelectConversation={handleSelectConversation}
+              isLoading={loading}
+              error={error}
+            />
           </TabsContent>
         </Tabs>
       </CardContent>
