@@ -38,7 +38,9 @@ export function useCheckIn() {
         }
       };
 
-      const result = await checkInService.performCheckIn(user.id, context);
+      const result = await checkInService.performCheckIn(user.id, context, {
+        userId: user.id
+      });
 
       if (result.success) {
         // Save last check-in time to local storage for cooldown

@@ -43,7 +43,9 @@ const CircuitActions: React.FC<CircuitActionsProps> = ({
         establishmentName: establishmentName
       };
 
-      const result = await checkInService.performCheckIn(user.id, context);
+      const result = await checkInService.performCheckIn(user.id, context, {
+        userId: user.id
+      });
       
       if (result.success) {
         toast({
