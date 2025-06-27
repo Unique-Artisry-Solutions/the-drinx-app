@@ -1,3 +1,4 @@
+
 import { RewardTransaction } from '@/types/rewards/api';
 
 export interface CheckInOptions {
@@ -68,23 +69,27 @@ class CheckInService {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // **Phase 2: Fix LocationData Property Access**
       // Only access locationData when context is EstablishmentCheckIn
       let locationInfo = '';
       if (context.type === 'establishment' && context.locationData) {
         locationInfo = ` at coordinates ${context.locationData.latitude}, ${context.locationData.longitude}`;
       }
       
-      // Mock success response based on context type
-      const contextMessages = {
-        'establishment': `Successfully checked in to ${context.entityName}${locationInfo}!`,
-        'bar_crawl': `Successfully checked in to ${context.entityName}!`,
-        'swig_circuit': `Successfully checked in to ${context.entityName} at ${context.establishmentName}!`
-      };
+      // Generate success message based on context type using proper type narrowing
+      let message: string;
+      if (context.type === 'establishment') {
+        message = `Successfully checked in to ${context.entityName}${locationInfo}!`;
+      } else if (context.type === 'bar_crawl') {
+        message = `Successfully checked in to ${context.entityName}!`;
+      } else if (context.type === 'swig_circuit') {
+        message = `Successfully checked in to ${context.entityName} at ${context.establishmentName}!`;
+      } else {
+        message = `Successfully checked in to ${context.entityName}!`;
+      }
       
       return {
         success: true,
-        message: contextMessages[context.type],
+        message,
         points: 10
       };
     } catch (error) {
