@@ -73,9 +73,8 @@ const MessageThread: React.FC<MessageThreadProps> = ({
 
       <MessageInput
         onSendMessage={async (content) => {
-          if (!threadId) return;
-          // Adding threadInfo.venueId as the third argument
-          await sendMessage(threadId, content, threadInfo.venueId);
+          if (!threadId || !user?.id) return;
+          await sendMessage(threadId, content, user.id);
           setTimeout(() => fetchMessages(), 500);
         }}
         disabled={loading}

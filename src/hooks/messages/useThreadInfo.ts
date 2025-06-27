@@ -8,7 +8,7 @@ export const useThreadInfo = (threadId: string | null) => {
     venueName: '',
     promoterName: '',
     subject: '',
-    venueId: '' // Initialize venueId
+    venueId: ''
   });
 
   const fetchThreadInfo = useCallback(async () => {
@@ -21,41 +21,30 @@ export const useThreadInfo = (threadId: string | null) => {
           id,
           subject,
           venue_id,
-          promoter_id
+          promoter_id,
+          venues:establishments(id, name),
+          promoters:profiles!promoter_id(id, display_name, username)
         `)
         .eq('id', threadId)
         .single();
 
       if (threadError) throw threadError;
 
-      const { data: venueData, error: venueError } = await supabase
-        .from('establishments')
-        .select('name')
-        .eq('id', threadData.venue_id)
-        .single();
-
-      if (venueError && venueError.code !== 'PGRST116') {
-        console.error('Error fetching venue info:', venueError);
-      }
-
-      const { data: promoterData, error: promoterError } = await supabase
-        .from('profiles')
-        .select('display_name, username')
-        .eq('id', threadData.promoter_id)
-        .single();
-
-      if (promoterError && promoterError.code !== 'PGRST116') {
-        console.error('Error fetching promoter info:', promoterError);
-      }
-
       setThreadInfo({
-        venueName: venueData?.name || 'Unknown Venue',
-        promoterName: promoterData?.display_name || promoterData?.username || 'Unknown Promoter',
-        subject: threadData?.subject || '',
-        venueId: threadData?.venue_id || '' // Set venueId from thread data
+        venueName: threadData.venues?.name || 'Unknown Venue',
+        promoterName: threadData.promoters?.display_name || threadData.promoters?.username || 'Unknown Promoter',
+        subject: threadData.subject || '',
+        venueId: threadData.venue_id || ''
       });
     } catch (err: any) {
       console.error('Error fetching thread info:', err);
+      // Set fallback values to prevent UI issues
+      setThreadInfo({
+        venueName: 'Unknown Venue',
+        promoterName: 'Unknown Promoter',
+        subject: '',
+        venueId: ''
+      });
     }
   }, [threadId]);
 
@@ -64,4 +53,3 @@ export const useThreadInfo = (threadId: string | null) => {
     fetchThreadInfo
   };
 };
-

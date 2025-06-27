@@ -35,7 +35,7 @@ export const useThreads = (userType: UserType, userId: string | undefined) => {
             created_at,
             updated_at,
             venues:establishments(id, name),
-            promoters:profiles(id, full_name)
+            promoters:profiles!promoter_id(id, display_name, username)
           `)
           .eq(filterColumn, userId)
           .order('last_message_at', { ascending: false })
@@ -43,19 +43,47 @@ export const useThreads = (userType: UserType, userId: string | undefined) => {
 
       if (threadsError) throw threadsError;
 
-      const processedThreads: MessageThread[] = threadsData?.map(thread => ({
-        id: thread.id,
-        venue_id: thread.venue_id,
-        promoter_id: thread.promoter_id,
-        subject: thread.subject,
-        timestamp: thread.last_message_at,
-        isRead: false, // Will be updated by useThreadReadStatus
-        isArchived: thread.is_archived,
-        venueName: thread.venues?.name || 'Unknown Venue',
-        lastMessage: '', // Will be populated by actual message fetching
-      })) || [];
+      // Fetch last message for each thread
+      const threadsWithLastMessage = await Promise.all(
+        (threadsData || []).map(async (thread) => {
+          try {
+            const { data: lastMessageData } = await supabase
+              .from('promoter_venue_messages')
+              .select('content, sent_at')
+              .eq('thread_id', thread.id)
+              .order('sent_at', { ascending: false })
+              .limit(1)
+              .maybeSingle();
 
-      setThreads(processedThreads);
+            return {
+              id: thread.id,
+              venue_id: thread.venue_id,
+              promoter_id: thread.promoter_id,
+              subject: thread.subject,
+              timestamp: thread.last_message_at || thread.created_at,
+              isRead: false, // Will be updated by read status logic
+              isArchived: thread.is_archived,
+              venueName: thread.venues?.name || 'Unknown Venue',
+              lastMessage: lastMessageData?.content || 'No messages yet',
+            };
+          } catch (err) {
+            console.error('Error fetching last message for thread:', thread.id, err);
+            return {
+              id: thread.id,
+              venue_id: thread.venue_id,
+              promoter_id: thread.promoter_id,
+              subject: thread.subject,
+              timestamp: thread.last_message_at || thread.created_at,
+              isRead: false,
+              isArchived: thread.is_archived,
+              venueName: thread.venues?.name || 'Unknown Venue',
+              lastMessage: 'No messages yet',
+            };
+          }
+        })
+      );
+
+      setThreads(threadsWithLastMessage);
     } catch (err: any) {
       console.error('Error fetching threads:', err);
       setError(err.message || 'Failed to load conversations');
