@@ -1,11 +1,10 @@
-
 import { useState, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { checkInService, CheckInOptions, CheckInResult, EstablishmentCheckIn, UserVisitStats } from '@/services/checkInService';
 import { RewardTransaction } from '@/types/rewards/api';
 
-export { UserVisitStats } from '@/services/checkInService';
+export type { UserVisitStats } from '@/services/checkInService';
 
 export const useUserVisits = () => {
   const { user } = useAuth();

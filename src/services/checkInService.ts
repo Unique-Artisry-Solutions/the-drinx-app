@@ -1,8 +1,6 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { RewardTransaction } from '@/types/rewards/api';
 
-// Enhanced check-in options interface
 export interface CheckInOptions {
   userId: string;
   rating?: number;
@@ -10,87 +8,79 @@ export interface CheckInOptions {
   establishmentName?: string;
 }
 
-// Base check-in context interface
-export interface CheckInContext {
-  type: string;
-  entityId: string;
-  entityName: string;
+export interface CheckInResult {
+  success: boolean;
+  message: string;
+  points?: number;
+  transaction?: RewardTransaction;
 }
 
-// Establishment check-in context
-export interface EstablishmentCheckIn extends CheckInContext {
-  type: 'establishment';
+export interface SwigCircuitCheckIn {
+  type: 'swig_circuit';
+  entityId: string;
+  entityName: string;
+  establishmentId?: string;
+  establishmentName?: string;
+  stopNumber?: number;
   locationData?: {
     latitude: number;
     longitude: number;
   };
 }
 
-// Bar crawl check-in context
-export interface BarCrawlCheckIn extends CheckInContext {
-  type: 'bar_crawl';
-  additionalData?: {
-    establishment_id: string;
-    establishment_name: string;
+export interface EstablishmentCheckIn {
+  type: 'establishment';
+  entityId: string;
+  entityName: string;
+  locationData?: {
+    latitude: number;
+    longitude: number;
   };
 }
 
-// Swig circuit check-in context
-export interface SwigCircuitCheckIn extends CheckInContext {
-  type: 'swig_circuit';
-  entityId: string;
-  entityName: string;
-  establishmentId: string;
-  establishmentName: string;
-}
+export type CheckInContext = SwigCircuitCheckIn | EstablishmentCheckIn;
 
-export type AnyCheckInContext = EstablishmentCheckIn | BarCrawlCheckIn | SwigCircuitCheckIn;
-
-export interface CheckInResult {
-  success: boolean;
-  message: string;
-  pointsEarned?: number;
-  transaction?: RewardTransaction;
-}
-
-// User visit stats interface
 export interface UserVisitStats {
   total_visits: number;
   unique_establishments: number;
   total_points_earned: number;
-  visited_entities: string[];
-}
-
-// Check-in history query options
-export interface CheckInHistoryOptions {
-  type?: string;
-  limit?: number;
-  offset?: number;
+  visited_entities: Array<{
+    entity_id: string;
+    entity_name: string;
+    visit_count: number;
+    last_visit: string;
+  }>;
 }
 
 class CheckInService {
   async performCheckIn(
     userId: string,
-    context: AnyCheckInContext,
-    options: CheckInOptions = { userId }
+    context: CheckInContext,
+    options: CheckInOptions
   ): Promise<CheckInResult> {
     try {
       console.log('Performing check-in:', { userId, context, options });
 
-      // Create reward transaction record
+      // Simulate check-in logic
+      const points = Math.floor(Math.random() * 50) + 10;
+      
+      // Create reward transaction with all required fields
       const transactionData = {
         user_id: userId,
-        points: 50, // Base points for check-in
-        transaction_type: 'earned',
+        establishment_id: context.type === 'establishment' ? context.entityId : 
+                         (context.type === 'swig_circuit' && context.establishmentId ? context.establishmentId : null),
+        points,
+        transaction_type: 'earn',
+        source: 'check_in', // Required field
         description: `Check-in at ${context.entityName}`,
-        metadata: this.toJsonCompatible({
-          checkInType: context.type,
-          entityId: context.entityId,
-          entityName: context.entityName,
+        metadata: {
+          context_type: context.type,
+          entity_id: context.entityId,
+          entity_name: context.entityName,
           rating: options.rating,
           note: options.note,
-          timestamp: new Date().toISOString()
-        }),
+          location_data: context.locationData
+        },
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
@@ -102,37 +92,42 @@ class CheckInService {
         .single();
 
       if (error) {
-        console.error('Database insert error:', error);
+        console.error('Error creating reward transaction:', error);
         return {
           success: false,
           message: 'Failed to record check-in'
         };
       }
 
-      console.log('Check-in recorded successfully:', transaction);
-
       return {
         success: true,
-        message: 'Check-in successful! You earned 50 points.',
-        pointsEarned: 50,
-        transaction: this.transformToRewardTransaction(transaction)
+        message: `Check-in successful! You earned ${points} points.`,
+        points,
+        transaction: this.transformTransaction(transaction)
       };
-    } catch (error: any) {
-      console.error('Check-in service error:', error);
+    } catch (error) {
+      console.error('Check-in error:', error);
       return {
         success: false,
-        message: error.message || 'An unexpected error occurred'
+        message: 'An error occurred during check-in'
       };
     }
   }
 
-  async getCheckInHistory(userId: string, options: CheckInHistoryOptions = {}): Promise<RewardTransaction[]> {
+  async getCheckInHistory(
+    userId: string,
+    options: {
+      type?: 'establishment' | 'swig_circuit';
+      limit?: number;
+      offset?: number;
+    } = {}
+  ): Promise<RewardTransaction[]> {
     try {
       let query = supabase
         .from('reward_transactions')
         .select('*')
         .eq('user_id', userId)
-        .eq('transaction_type', 'earned')
+        .eq('transaction_type', 'earn')
         .order('created_at', { ascending: false });
 
       if (options.limit) {
@@ -140,7 +135,7 @@ class CheckInService {
       }
 
       if (options.offset) {
-        query = query.range(options.offset, options.offset + (options.limit || 10) - 1);
+        query = query.range(options.offset, options.offset + (options.limit || 50) - 1);
       }
 
       const { data, error } = await query;
@@ -150,7 +145,7 @@ class CheckInService {
         return [];
       }
 
-      return data?.map(record => this.transformToRewardTransaction(record)) || [];
+      return (data || []).map(transaction => this.transformTransaction(transaction));
     } catch (error) {
       console.error('Error in getCheckInHistory:', error);
       return [];
@@ -163,7 +158,7 @@ class CheckInService {
         .from('reward_transactions')
         .select('*')
         .eq('user_id', userId)
-        .eq('transaction_type', 'earned');
+        .eq('transaction_type', 'earn');
 
       if (error) {
         console.error('Error fetching visit stats:', error);
@@ -176,24 +171,43 @@ class CheckInService {
       }
 
       const transactions = data || [];
-      const uniqueEntities = new Set();
-      let totalPoints = 0;
+      const totalPoints = transactions.reduce((sum, t) => sum + (t.points || 0), 0);
+      const totalVisits = transactions.length;
+
+      // Group by entity
+      const entityMap = new Map<string, {
+        entity_id: string;
+        entity_name: string;
+        visit_count: number;
+        last_visit: string;
+      }>();
 
       transactions.forEach(transaction => {
-        if (transaction.metadata && typeof transaction.metadata === 'object') {
-          const metadata = transaction.metadata as any;
-          if (metadata.entityId) {
-            uniqueEntities.add(metadata.entityId);
+        const metadata = transaction.metadata as any;
+        const entityId = metadata?.entity_id || transaction.establishment_id || 'unknown';
+        const entityName = metadata?.entity_name || 'Unknown Location';
+
+        if (entityMap.has(entityId)) {
+          const existing = entityMap.get(entityId)!;
+          existing.visit_count++;
+          if (transaction.created_at > existing.last_visit) {
+            existing.last_visit = transaction.created_at;
           }
+        } else {
+          entityMap.set(entityId, {
+            entity_id: entityId,
+            entity_name: entityName,
+            visit_count: 1,
+            last_visit: transaction.created_at
+          });
         }
-        totalPoints += transaction.points || 0;
       });
 
       return {
-        total_visits: transactions.length,
-        unique_establishments: uniqueEntities.size,
+        total_visits: totalVisits,
+        unique_establishments: entityMap.size,
         total_points_earned: totalPoints,
-        visited_entities: Array.from(uniqueEntities) as string[]
+        visited_entities: Array.from(entityMap.values())
       };
     } catch (error) {
       console.error('Error in getVisitStats:', error);
@@ -206,21 +220,23 @@ class CheckInService {
     }
   }
 
-  private transformToRewardTransaction(dbRecord: any): RewardTransaction {
+  private transformTransaction(dbTransaction: any): RewardTransaction {
     return {
-      id: dbRecord.id,
-      userId: dbRecord.user_id,
-      points: dbRecord.points,
-      transactionType: dbRecord.transaction_type,
-      description: dbRecord.description,
-      metadata: dbRecord.metadata,
-      createdAt: dbRecord.created_at,
-      updatedAt: dbRecord.updated_at
+      id: dbTransaction.id,
+      user_id: dbTransaction.user_id,
+      userId: dbTransaction.user_id,
+      establishment_id: dbTransaction.establishment_id,
+      points: dbTransaction.points,
+      pointsAmount: dbTransaction.points,
+      transaction_type: dbTransaction.transaction_type, // Use correct property name
+      type: dbTransaction.transaction_type === 'earn' ? 'earned' : 'redeemed',
+      source: dbTransaction.source,
+      description: dbTransaction.description || dbTransaction.source,
+      timestamp: dbTransaction.created_at,
+      date: dbTransaction.created_at,
+      created_at: dbTransaction.created_at,
+      metadata: typeof dbTransaction.metadata === 'object' ? dbTransaction.metadata as Record<string, any> : {}
     };
-  }
-
-  private toJsonCompatible(obj: any): Record<string, any> {
-    return JSON.parse(JSON.stringify(obj));
   }
 }
 
