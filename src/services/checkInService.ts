@@ -1,4 +1,5 @@
 
+
 import { RewardTransaction } from '@/types/rewards/api';
 
 export interface CheckInOptions {
@@ -83,8 +84,6 @@ class CheckInService {
         message = `Successfully checked in to ${context.entityName}!`;
       } else if (context.type === 'swig_circuit') {
         message = `Successfully checked in to ${context.entityName} at ${context.establishmentName}!`;
-      } else {
-        message = `Successfully checked in to ${context.entityName}!`;
       }
       
       return {
@@ -121,3 +120,4 @@ class CheckInService {
 }
 
 export const checkInService = new CheckInService();
+
