@@ -6,6 +6,13 @@ export interface Message {
   content: string;
   created_at: string;
   is_read: boolean;
+  sent_at: string;
+  is_from_promoter?: boolean;
+  sender?: {
+    id?: string;
+    display_name: string;
+    username: string;
+  };
 }
 
 export interface MessageThread {
@@ -18,6 +25,13 @@ export interface MessageThread {
   isArchived: boolean;
   venueName?: string;
   lastMessage?: string;
+}
+
+export interface ThreadInfo {
+  venueName: string;
+  promoterName: string;
+  subject: string;
+  venueId: string;
 }
 
 export type UserType = 'promoter' | 'establishment';

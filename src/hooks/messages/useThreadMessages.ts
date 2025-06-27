@@ -42,19 +42,40 @@ export const useThreadMessages = (threadId: string | null) => {
           
           if (senderError) {
             return {
-              ...msg,
+              id: msg.id,
+              thread_id: msg.thread_id,
+              content: msg.content,
+              sent_at: msg.sent_at,
+              created_at: msg.sent_at,
+              sender_id: msg.sender_id,
+              is_from_promoter: msg.is_from_promoter,
+              is_read: false,
               sender: { display_name: "Unknown", username: "user" }
             };
           }
 
           return {
-            ...msg,
+            id: msg.id,
+            thread_id: msg.thread_id,
+            content: msg.content,
+            sent_at: msg.sent_at,
+            created_at: msg.sent_at,
+            sender_id: msg.sender_id,
+            is_from_promoter: msg.is_from_promoter,
+            is_read: false,
             sender: senderData
           };
         } catch (err) {
           console.error('Error processing sender:', err);
           return {
-            ...msg,
+            id: msg.id,
+            thread_id: msg.thread_id,
+            content: msg.content,
+            sent_at: msg.sent_at,
+            created_at: msg.sent_at,
+            sender_id: msg.sender_id,
+            is_from_promoter: msg.is_from_promoter,
+            is_read: false,
             sender: { display_name: "Unknown", username: "user" }
           };
         }

@@ -28,17 +28,20 @@ export const useMessages = (userType: UserType) => {
           const { data: senderData } = await executeWithRetry(async () =>
             supabase
               .from('profiles')
-              .select('display_name, username')
+              .select('id, display_name, username')
               .eq('id', msg.sender_id)
               .maybeSingle()
           );
 
           messages.push({
             id: msg.id,
+            thread_id: msg.thread_id,
             content: msg.content,
             sent_at: msg.sent_at,
+            created_at: msg.sent_at, // Map sent_at to created_at for compatibility
             sender_id: msg.sender_id,
             is_from_promoter: msg.is_from_promoter,
+            is_read: false, // Default to false, will be updated by read status logic
             sender: senderData || {
               display_name: 'Unknown',
               username: 'user'
