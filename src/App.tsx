@@ -1,19 +1,29 @@
+
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
-import { QueryClient } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { DevelopmentModeProvider } from '@/contexts/DevelopmentModeContext';
 import { AuthProvider } from '@/contexts/auth/AuthProvider';
 import { useAuthenticatedUser } from '@/hooks/useAuthenticatedUser';
-import { DevRoleSwitcher } from '@/components/development';
-import { AuthTestPanel } from '@/components/development';
-import { landingRoutes } from '@/routes/landingRoutes';
-import { exploreRoutes } from '@/routes/exploreRoutes';
-import { authRoutes } from '@/routes/authRoutes';
-import { adminRoutes } from '@/routes/adminRoutes';
-import { promoterRoutes } from '@/routes/promoterRoutes';
-import { establishmentRoutes } from '@/routes/establishmentRoutes';
+import { DevRoleSwitcher, AuthTestPanel } from '@/components/development';
+import { publicRoutes } from '@/routes/config/publicRoutes';
+import { individualRoutes } from '@/routes/config/individualRoutes';
+import { profileRoutes } from '@/routes/config/profileRoutes';
+import { adminRoutes } from '@/routes/config/adminRoutes';
+import { promoterRoutes } from '@/routes/config/promoterRoutes';
+import { establishmentRoutes } from '@/routes/config/establishmentRoutes';
 import { testingRoutes } from '@/routes/testingRoutes';
 import TestingAccess from '@/components/development/TestingAccess';
+
+// Create QueryClient instance
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      retry: 3,
+    },
+  },
+});
 
 function App() {
   const { isReady, isAuthenticated, userType } = useAuthenticatedUser();
@@ -37,25 +47,41 @@ function App() {
   }
 
   return (
-    <QueryClient>
+    <QueryClientProvider client={queryClient}>
       <DevelopmentModeProvider>
         <AuthProvider>
           <Router>
             <div className="min-h-screen bg-white">
               <Routes>
                 {/* Public Routes */}
-                {landingRoutes}
-                {exploreRoutes}
-                {authRoutes}
+                {publicRoutes.map((route, index) => (
+                  <Route key={index} path={route.path} element={route.element} />
+                ))}
+
+                {/* Individual User Routes */}
+                {individualRoutes.map((route, index) => (
+                  <Route key={index} path={route.path} element={route.element} />
+                ))}
+
+                {/* Profile Routes */}
+                {profileRoutes.map((route, index) => (
+                  <Route key={index} path={route.path} element={route.element} />
+                ))}
 
                 {/* Admin Routes */}
-                {adminRoutes}
+                {adminRoutes.map((route, index) => (
+                  <Route key={index} path={route.path} element={route.element} />
+                ))}
 
                 {/* Promoter Routes */}
-                {promoterRoutes}
+                {promoterRoutes.map((route, index) => (
+                  <Route key={index} path={route.path} element={route.element} />
+                ))}
 
                 {/* Establishment Routes */}
-                {establishmentRoutes}
+                {establishmentRoutes.map((route, index) => (
+                  <Route key={index} path={route.path} element={route.element} />
+                ))}
                 
                 {/* Testing Routes */}
                 {testingRoutes}
@@ -77,7 +103,7 @@ function App() {
           </Router>
         </AuthProvider>
       </DevelopmentModeProvider>
-    </QueryClient>
+    </QueryClientProvider>
   );
 }
 
