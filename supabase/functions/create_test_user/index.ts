@@ -34,7 +34,7 @@ serve(async (req) => {
       }
     });
 
-    const { email, password, name, username, userType } = await req.json();
+    const { email, password, name, username, userType, phone, additionalData } = await req.json();
     console.log('Creating test user with details:', { email, name, username, userType });
     
     // Check for existing user using listUsers
@@ -72,7 +72,8 @@ serve(async (req) => {
       user_metadata: {
         name,
         username,
-        user_type: userType
+        user_type: userType,
+        phone
       }
     });
 
@@ -93,7 +94,8 @@ serve(async (req) => {
           id: userId,
           username,
           display_name: name,
-          user_type: userType
+          user_type: userType,
+          phone
         });
 
       if (profileError) {
@@ -126,20 +128,21 @@ serve(async (req) => {
     }
 
     // If it's an establishment, create a test establishment
-    if (userType === 'establishment') {
+    if (userType === 'establishment' && additionalData) {
       try {
         console.log('Creating establishment record...');
         const { error: establishmentError } = await supabase
           .from('establishments')
           .insert({
-            name: "Test Bar",
+            name: additionalData.establishmentName || name,
             owner_id: userId,
-            address: "123 Test Street",
-            latitude: 40.7128,
-            longitude: -74.0060,
+            address: additionalData.address || "123 Test Street",
+            latitude: 40.7128 + (Math.random() - 0.5) * 0.1, // Add some variation
+            longitude: -74.0060 + (Math.random() - 0.5) * 0.1,
             cocktail_count: 0,
-            phone: "555-0123",
-            website: "https://testbar.com"
+            phone: phone,
+            website: `https://${username}.com`,
+            capacity: additionalData.capacity || 100
           });
 
         if (establishmentError) {
@@ -152,9 +155,58 @@ serve(async (req) => {
       }
     }
 
+    // If it's a promoter, create sample events and circuits
+    if (userType === 'promoter') {
+      try {
+        console.log('Creating sample promoter data...');
+        
+        // Create a sample event
+        const { data: eventData, error: eventError } = await supabase
+          .from('events')
+          .insert({
+            name: `Sample Event by ${name}`,
+            description: 'A test event for MVP validation',
+            date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 7 days from now
+            time: '20:00',
+            created_by: userId,
+            status: 'draft',
+            capacity: 100,
+            is_public: true
+          })
+          .select()
+          .single();
+
+        if (!eventError && eventData) {
+          // Create ticket types for the event
+          await supabase
+            .from('event_ticket_types')
+            .insert([
+              {
+                event_id: eventData.id,
+                name: 'General Admission',
+                description: 'Standard entry ticket',
+                price: 25.00,
+                quantity: 80
+              },
+              {
+                event_id: eventData.id,
+                name: 'VIP',
+                description: 'VIP experience with perks',
+                price: 50.00,
+                quantity: 20
+              }
+            ]);
+        }
+
+      } catch (promoterError) {
+        console.error('Exception creating promoter data:', promoterError);
+        // Continue execution
+      }
+    }
+
     return new Response(JSON.stringify({
       user: userData.user,
-      message: 'Test user created successfully'
+      message: 'Test user created successfully with sample data'
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
