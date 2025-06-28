@@ -14,6 +14,7 @@ import './index.css';
 
 // Context providers
 import { DevelopmentModeProvider } from './contexts/DevelopmentModeContext';
+import { AuthProvider } from './contexts/auth/AuthProvider';
 import { Toaster } from './components/ui/toaster';
 
 // Phase 9E: Import enhanced validation system
@@ -65,8 +66,10 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       <BrowserRouter>
         <QueryClientProvider client={queryClient}>
           <DevelopmentModeProvider>
-            <App />
-            <Toaster />
+            <AuthProvider>
+              <App />
+              <Toaster />
+            </AuthProvider>
           </DevelopmentModeProvider>
         </QueryClientProvider>
       </BrowserRouter>
