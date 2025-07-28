@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ChevronDown, ChevronUp, Settings, User, Store, Megaphone, Shield, Move, Bug } from 'lucide-react';
+import { ChevronDown, ChevronUp, Settings, User, Store, Megaphone, Shield, Move, Bug, TestTube, ExternalLink } from 'lucide-react';
 import { useDevelopmentMode } from '@/contexts/DevelopmentModeContext';
 import { useAuth } from '@/contexts/auth/AuthProvider';
 import { useDevAuthBypass } from '@/hooks/useDevAuthBypass';
@@ -134,9 +134,10 @@ const DevRoleSwitcher: React.FC = () => {
           </CardHeader>
           <CardContent className="pt-0">
             <Tabs defaultValue="roles" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 bg-orange-100">
+              <TabsList className="grid w-full grid-cols-3 bg-orange-100">
                 <TabsTrigger value="roles" className="text-xs">Roles</TabsTrigger>
                 <TabsTrigger value="auth" className="text-xs">Auth & Routes</TabsTrigger>
+                <TabsTrigger value="testing" className="text-xs">Testing</TabsTrigger>
               </TabsList>
               
               <TabsContent value="roles" className="mt-3">
@@ -227,6 +228,30 @@ const DevRoleSwitcher: React.FC = () => {
                         </Button>
                       ))}
                     </div>
+                  </div>
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="testing" className="mt-3">
+                <div className="space-y-3">
+                  <div className="text-sm font-medium text-orange-800 flex items-center gap-1">
+                    <TestTube className="h-3 w-3" />
+                    Testing Suite
+                  </div>
+                  <div className="flex items-center gap-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <TestTube className="h-5 w-5 text-blue-600" />
+                    <div className="flex-1">
+                      <p className="font-medium text-blue-800 text-sm">MVP Testing Suite</p>
+                      <p className="text-xs text-blue-600">Comprehensive testing environment</p>
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={() => navigate('/testing')}
+                      className="bg-blue-600 hover:bg-blue-700 text-white text-xs"
+                    >
+                      <ExternalLink className="h-3 w-3 mr-1" />
+                      Open
+                    </Button>
                   </div>
                 </div>
               </TabsContent>

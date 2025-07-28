@@ -10,7 +10,7 @@ import { adminRoutes } from '@/routes/config/adminRoutes';
 import { promoterRoutes } from '@/routes/config/promoterRoutes';
 import { establishmentRoutes } from '@/routes/config/establishmentRoutes';
 import { testingRoutes } from '@/routes/testingRoutes';
-import TestingAccess from '@/components/development/TestingAccess';
+
 
 const App: React.FC = () => {
   const { isReady, isAuthenticated, userType } = useAuthenticatedUser();
@@ -73,7 +73,6 @@ const App: React.FC = () => {
       
       {/* Development Tools */}
       <DevRoleSwitcher />
-      <TestingAccess />
     </div>
   );
 };
