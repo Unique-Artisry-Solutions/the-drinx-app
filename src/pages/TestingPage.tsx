@@ -3,10 +3,13 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { TestTube, Users, Database, Settings } from 'lucide-react';
+import TopNavigation from '@/components/TopNavigation';
 
 const TestingPage: React.FC = () => {
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-white">
+      <TopNavigation />
+      <div className="pt-20 container mx-auto px-4 py-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">MVP Testing Suite</h1>
         <p className="text-gray-600">Comprehensive testing environment for all application features</p>
@@ -80,6 +83,7 @@ const TestingPage: React.FC = () => {
             </Button>
           </CardContent>
         </Card>
+      </div>
       </div>
     </div>
   );
