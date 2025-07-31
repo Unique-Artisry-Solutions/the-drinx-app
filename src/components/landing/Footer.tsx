@@ -11,7 +11,7 @@ const Footer = () => {
         <div className="flex flex-col md:flex-row justify-between">
           <div className="mb-8 md:mb-0">
             <h3 className="text-2xl font-medium mb-4">
-              the Drinx <span className="text-material-primary">app</span>
+              the Myxxit <span className="text-material-primary">app</span>
             </h3>
             <p className="text-muted-foreground max-w-xs">
               The premier platform for discovering and sharing non-alcoholic cocktail experiences.
@@ -49,7 +49,7 @@ const Footer = () => {
         </div>
         
         <div className="border-t border-border mt-12 pt-8 text-muted-foreground text-sm text-center">
-          <p>© {new Date().getFullYear()} the Drinx app. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} the Myxxit app. All rights reserved.</p>
         </div>
       </div>
     </footer>

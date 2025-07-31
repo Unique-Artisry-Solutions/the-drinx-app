@@ -11,13 +11,13 @@ const Hero = () => {
     backgroundSize: "cover",
     backgroundPosition: "center",
     backgroundBlendMode: "overlay"
-  }} role="banner" aria-label="Welcome to the Drinx app - Find non-alcoholic cocktails near you">
+  }} role="banner" aria-label="Welcome to the Myxxit app - Find non-alcoholic cocktails near you">
       <div className="absolute inset-0 bg-black/50" aria-hidden="true"></div>
       
       <div className="container mx-auto px-4 relative z-10">
         <header className="flex justify-between items-center mb-16">
           <h1 className="text-3xl font-medium text-white">
-            the Drinx <span className="text-drinx-pink">app</span>
+            the Myxxit <span className="text-drinx-pink">app</span>
           </h1>
         </header>
 

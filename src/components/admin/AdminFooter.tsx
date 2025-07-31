@@ -14,7 +14,7 @@ const AdminFooter: React.FC = () => {
           <div className="flex items-center mb-4 md:mb-0">
             <Shield className="h-4 w-4 mr-2 text-material-primary" />
             <span className="font-medium text-sm">
-              the Drinx app Admin
+              the Myxxit app Admin
             </span>
           </div>
           
@@ -34,7 +34,7 @@ const AdminFooter: React.FC = () => {
         <Separator className="my-3 bg-slate-700" />
         
         <div className="text-xs text-center text-slate-500">
-          <p>© {currentYear} Spiritless Admin Portal. All rights reserved.</p>
+          <p>© {currentYear} Myxxit Admin Portal. All rights reserved.</p>
         </div>
       </div>
     </footer>
