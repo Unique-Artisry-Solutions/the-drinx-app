@@ -12,7 +12,7 @@ const AppFooter: React.FC = () => {
           <div className="flex items-center mb-4 md:mb-0">
             <Sparkles className="h-5 w-5 mr-2 text-material-primary" />
             <span className="font-medium">
-              the Myxxit <span className="font-light italic">app</span>
+              Myxxit
             </span>
           </div>
           
@@ -35,7 +35,7 @@ const AppFooter: React.FC = () => {
         <Separator className="my-4" />
         
         <div className="text-xs text-center text-gray-500">
-          <p>© {currentYear} the Myxxit app. All rights reserved.</p>
+          <p>© {currentYear} Myxxit. All rights reserved.</p>
           <p className="mt-1">Drink responsibly. Not suitable for individuals under the legal drinking age.</p>
         </div>
       </div>

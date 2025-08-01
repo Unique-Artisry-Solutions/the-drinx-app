@@ -29,8 +29,7 @@ const GuestTopNavigation: React.FC = () => {
           <div className="guest-nav-left flex items-center">
             <Link to="/" className="guest-nav-logo flex items-center text-xl font-semibold text-white mr-6">
               <Sparkles className="h-6 w-6 mr-2 text-white" />
-              <span className="font-bold tracking-tight">the Myxxit</span>
-              <span className="font-light italic">App</span>
+              <span className="font-bold tracking-tight">Myxxit</span>
             </Link>
             
             <div className="guest-nav-links hidden md:flex space-x-1">
