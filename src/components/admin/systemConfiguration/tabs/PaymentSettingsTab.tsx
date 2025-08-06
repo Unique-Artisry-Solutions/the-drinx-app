@@ -35,6 +35,14 @@ const PaymentSettingsTab: React.FC<SettingsTabProps> = ({
               size="sm" 
               variant="outline" 
               className="gap-1"
+              onClick={() => navigate('/admin-system-test')}
+            >
+              <TestTube className="h-4 w-4" /> System Test
+            </Button>
+            <Button 
+              size="sm" 
+              variant="outline" 
+              className="gap-1"
               onClick={() => navigate('/service-fee-test')}
             >
               <TestTube className="h-4 w-4" /> Test Service Fee
