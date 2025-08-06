@@ -1,9 +1,11 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { SystemSetting } from '@/types/SupabaseTables';
+import { useDebouncedToast } from '@/hooks/useDebouncedToast';
 
 interface SystemSettingsTableProps {
   settings: SystemSetting[];
@@ -30,6 +32,54 @@ const SystemSettingsTable: React.FC<SystemSettingsTableProps> = ({
   setEditValue,
   setChangeReason,
 }) => {
+  const [validationError, setValidationError] = useState<string | null>(null);
+  const { showError } = useDebouncedToast();
+
+  // Validate service fee percentage
+  const validateServiceFee = (value: string): string | null => {
+    const numericValue = parseFloat(value);
+    
+    if (isNaN(numericValue)) {
+      return 'Service fee must be a valid number';
+    }
+    
+    if (numericValue < 0) {
+      return 'Service fee cannot be negative';
+    }
+    
+    if (numericValue > 10) {
+      return 'Service fee cannot exceed 10%';
+    }
+    
+    return null;
+  };
+
+  // Handle input value change with validation
+  const handleValueChange = (value: string, settingKey: string) => {
+    setEditValue(value);
+    
+    if (settingKey === 'payment.service_fee_percentage') {
+      const error = validateServiceFee(value);
+      setValidationError(error);
+    } else {
+      setValidationError(null);
+    }
+  };
+
+  // Enhanced save handler with validation
+  const handleSave = (settingId: string, isProtected: boolean) => {
+    const setting = settings.find(s => s.id === settingId);
+    
+    if (setting?.key === 'payment.service_fee_percentage') {
+      const error = validateServiceFee(editValue);
+      if (error) {
+        showError('Validation Error', error);
+        return;
+      }
+    }
+    
+    onSaveClick(settingId, isProtected);
+  };
   const renderSettingValue = (value: any) => {
     if (value === null || value === undefined) return 'null';
     
@@ -73,9 +123,20 @@ const SystemSettingsTable: React.FC<SystemSettingsTableProps> = ({
                   <div className="space-y-2">
                     <Input
                       value={editValue}
-                      onChange={(e) => setEditValue(e.target.value)}
+                      onChange={(e) => handleValueChange(e.target.value, setting.key)}
                       className="w-full"
+                      placeholder={setting.key === 'payment.service_fee_percentage' ? 'Enter percentage (0-10)' : undefined}
                     />
+                    {validationError && (
+                      <Alert variant="destructive">
+                        <AlertDescription>{validationError}</AlertDescription>
+                      </Alert>
+                    )}
+                    {setting.key === 'payment.service_fee_percentage' && !validationError && editValue && (
+                      <div className="text-sm text-muted-foreground">
+                        Preview: {editValue}% service fee on transactions
+                      </div>
+                    )}
                     {setting.is_protected && (
                       <div>
                         <Label htmlFor="changeReason">Reason for change (required):</Label>
@@ -90,9 +151,16 @@ const SystemSettingsTable: React.FC<SystemSettingsTableProps> = ({
                     )}
                   </div>
                 ) : (
-                  <pre className="whitespace-pre-wrap break-all bg-muted p-2 rounded text-sm max-h-24 overflow-auto">
-                    {renderSettingValue(setting.value)}
-                  </pre>
+                  <div>
+                    <pre className="whitespace-pre-wrap break-all bg-muted p-2 rounded text-sm max-h-24 overflow-auto">
+                      {renderSettingValue(setting.value)}
+                    </pre>
+                    {setting.key === 'payment.service_fee_percentage' && (
+                      <div className="text-xs text-muted-foreground mt-1">
+                        Current service fee: {setting.value}%
+                      </div>
+                    )}
+                  </div>
                 )}
               </td>
               <td className="p-2">
@@ -101,8 +169,11 @@ const SystemSettingsTable: React.FC<SystemSettingsTableProps> = ({
                     <Button 
                       size="sm" 
                       className="w-full"
-                      onClick={() => onSaveClick(setting.id, setting.is_protected)}
-                      disabled={setting.is_protected && !changeReason}
+                      onClick={() => handleSave(setting.id, setting.is_protected)}
+                      disabled={
+                        (setting.is_protected && !changeReason) || 
+                        validationError !== null
+                      }
                     >
                       Save
                     </Button>
@@ -110,7 +181,10 @@ const SystemSettingsTable: React.FC<SystemSettingsTableProps> = ({
                       size="sm" 
                       variant="outline" 
                       className="w-full"
-                      onClick={onCancelClick}
+                      onClick={() => {
+                        onCancelClick();
+                        setValidationError(null);
+                      }}
                     >
                       Cancel
                     </Button>
