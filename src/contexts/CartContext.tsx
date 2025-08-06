@@ -45,18 +45,28 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
           .from('system_settings')
           .select('value')
           .eq('key', 'payment.service_fee_percentage')
-          .single();
+          .maybeSingle();
         
         if (error) {
           console.error('Error fetching service fee percentage:', error);
+          // Keep default value of 1.5% on error
           return;
         }
         
-        if (data) {
-          setServiceFeePercentage(parseFloat(data.value as string));
+        if (data?.value) {
+          const parsedValue = parseFloat(data.value as string);
+          // Validate the parsed value is a valid percentage
+          if (!isNaN(parsedValue) && parsedValue >= 0 && parsedValue <= 100) {
+            setServiceFeePercentage(parsedValue);
+          } else {
+            console.warn('Invalid service fee percentage value:', data.value, 'Using default 1.5%');
+          }
+        } else {
+          console.info('No service fee percentage setting found, using default 1.5%');
         }
       } catch (error) {
         console.error('Failed to fetch service fee percentage', error);
+        // Keep default value of 1.5% on error
       }
     }
     
