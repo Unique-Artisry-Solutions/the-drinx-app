@@ -11,6 +11,7 @@ import { ImplementationStats } from './components/dashboard/ImplementationStats'
 import { DashboardHeader } from './components/dashboard/DashboardHeader';
 import { CategoryMetrics } from './components/dashboard/CategoryMetrics';
 import { calculateFeatureStatistics } from './utils/featureStatistics';
+import ErrorBoundary from './components/ErrorBoundary';
 
 const SystemBreakdownContent: React.FC = () => {
   const systemData = useSystemBreakdown();
@@ -36,7 +37,8 @@ const SystemBreakdownContent: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <ErrorBoundary>
+      <div className="space-y-6">
       <SystemHeader
         onAnalyzeFeatures={systemData.handleAnalyzeFeatures}
         onExportCSV={systemData.handleExportCSV}
@@ -184,7 +186,8 @@ const SystemBreakdownContent: React.FC = () => {
           />
         </TabsContent>
       </Tabs>
-    </div>
+      </div>
+    </ErrorBoundary>
   );
 };
 
