@@ -42,7 +42,7 @@ export const migrateEstablishments = async () => {
 
 export const migrateCocktails = async () => {
   // Check if cocktails already exist
-  const { data: existingCocktails } = await supabaseClient
+  const { data: existingCocktails } = await supabase
     .from('cocktails')
     .select('id')
     .limit(1);
@@ -53,7 +53,7 @@ export const migrateCocktails = async () => {
   }
   
   // Get establishments to map IDs
-  const { data: establishments } = await supabaseClient
+  const { data: establishments } = await supabase
     .from('establishments')
     .select('id, name');
   
@@ -89,7 +89,7 @@ export const migrateCocktails = async () => {
       };
     });
   
-  const { data: cocktails, error } = await supabaseClient
+  const { data: cocktails, error } = await supabase
     .from('cocktails')
     .insert(cocktailsToInsert)
     .select();
@@ -105,7 +105,7 @@ export const migrateCocktails = async () => {
 
 export const migrateThemes = async () => {
   // Check if themes already exist
-  const { data: existingThemes } = await supabaseClient
+  const { data: existingThemes } = await supabase
     .from('bar_crawl_themes')
     .select('id')
     .limit(1);
@@ -124,7 +124,7 @@ export const migrateThemes = async () => {
     { name: 'Wellness Tour', description: 'Health-focused drinks with functional ingredients' }
   ];
   
-  const { data: insertedThemes, error } = await supabaseClient
+  const { data: insertedThemes, error } = await supabase
     .from('bar_crawl_themes')
     .insert(themes)
     .select();
@@ -140,7 +140,7 @@ export const migrateThemes = async () => {
 
 export const migrateBarCrawls = async () => {
   // Check if bar crawls already exist
-  const { data: existingBarCrawls } = await supabaseClient
+  const { data: existingBarCrawls } = await supabase
     .from('bar_crawls')
     .select('id')
     .limit(1);
@@ -151,11 +151,11 @@ export const migrateBarCrawls = async () => {
   }
   
   // Get themes and establishments for reference
-  const { data: themes } = await supabaseClient
+  const { data: themes } = await supabase
     .from('bar_crawl_themes')
     .select('id, name');
   
-  const { data: establishments } = await supabaseClient
+  const { data: establishments } = await supabase
     .from('establishments')
     .select('id, name');
   
@@ -190,7 +190,7 @@ export const migrateBarCrawls = async () => {
     };
   });
   
-  const { data: barCrawls, error } = await supabaseClient
+  const { data: barCrawls, error } = await supabase
     .from('bar_crawls')
     .insert(barCrawlsToInsert)
     .select();
@@ -224,7 +224,7 @@ export const migrateBarCrawls = async () => {
     }
     
     // Insert bar crawl establishments
-    const { error: estError } = await supabaseClient
+    const { error: estError } = await supabase
       .from('bar_crawl_establishments')
       .insert(barCrawlEstablishments);
     
