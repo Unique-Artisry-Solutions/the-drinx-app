@@ -1,5 +1,5 @@
 
-import { supabaseClient } from '@/lib/supabaseClient';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface AnalyticsDateRange {
   startDate: Date;

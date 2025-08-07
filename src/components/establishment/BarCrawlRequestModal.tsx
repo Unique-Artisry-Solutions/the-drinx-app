@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { supabaseClient } from '@/lib/supabaseClient';
+import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
@@ -87,7 +87,7 @@ const BarCrawlRequestModal: React.FC<BarCrawlRequestModalProps> = ({
         }
         
         // If Supabase is available, try fetching from there
-        const { data, error } = await supabaseClient
+        const { data, error } = await supabase
           .from('bar_crawls')
           .select('*')
           .eq('organizer_id', user.id)

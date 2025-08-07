@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabaseClient } from '@/lib/supabaseClient';
+import { supabase } from '@/integrations/supabase/client';
 import { User } from '@supabase/supabase-js';
 import { UserRecipe } from '@/types/DatabaseTypes';
 import { useToast } from '@/hooks/use-toast';
@@ -40,7 +40,7 @@ export const useDeleteRecipe = (user: User | null) => {
         }
       }
       
-      const { error } = await supabaseClient
+      const { error } = await supabase
         .from('user_recipes')
         .delete()
         .eq('id', recipeId)

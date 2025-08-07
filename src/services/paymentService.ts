@@ -9,7 +9,6 @@ import {
   ProcessRefundRequest,
   ProcessRefundResponse
 } from '@/types/PaymentTypes';
-import { fromTable } from '@/lib/supabaseClient';
 
 export async function processPayment(request: ProcessPaymentRequest): Promise<ProcessPaymentResponse> {
   // Get the current user's ID
@@ -67,7 +66,7 @@ export async function processRefund(request: ProcessRefundRequest): Promise<Proc
 
 export async function getUserTransactions(): Promise<PaymentTransaction[]> {
   // Use the fromTable helper with the correct table name
-  const { data, error } = await fromTable('payment_transactions')
+  const { data, error } = await supabase.from('payment_transactions')
     .select('*')
     .order('created_at', { ascending: false });
     
@@ -81,7 +80,7 @@ export async function getUserTransactions(): Promise<PaymentTransaction[]> {
 
 export async function getTransactionById(transactionId: string): Promise<PaymentTransaction> {
   // Use the fromTable helper with the correct table name
-  const { data, error } = await fromTable('payment_transactions')
+  const { data, error } = await supabase.from('payment_transactions')
     .select('*')
     .eq('id', transactionId)
     .single();
@@ -96,7 +95,7 @@ export async function getTransactionById(transactionId: string): Promise<Payment
 
 export async function getTransactionRefunds(transactionId: string): Promise<PaymentRefund[]> {
   // Use the fromTable helper with the correct table name
-  const { data, error } = await fromTable('payment_refunds')
+  const { data, error } = await supabase.from('payment_refunds')
     .select('*')
     .eq('transaction_id', transactionId)
     .order('created_at', { ascending: false });
@@ -111,7 +110,7 @@ export async function getTransactionRefunds(transactionId: string): Promise<Paym
 
 export async function getReceipt(transactionId: string): Promise<PaymentReceipt | null> {
   // Use the fromTable helper with the correct table name
-  const { data, error } = await fromTable('payment_receipts')
+  const { data, error } = await supabase.from('payment_receipts')
     .select('*')
     .eq('transaction_id', transactionId)
     .single();

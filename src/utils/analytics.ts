@@ -1,5 +1,5 @@
 
-import { supabaseClient } from '@/lib/supabaseClient';
+import { supabase } from '@/integrations/supabase/client';
 
 export type AnalyticsEvent = {
   eventType: string;
@@ -12,7 +12,7 @@ export type AnalyticsEvent = {
  */
 export async function trackEvent(event: AnalyticsEvent): Promise<string | null> {
   try {
-    const { data: session } = await supabaseClient.auth.getSession();
+    const { data: session } = await supabase.auth.getSession();
     const userId = session?.session?.user?.id;
     
     if (!userId) {
@@ -20,7 +20,7 @@ export async function trackEvent(event: AnalyticsEvent): Promise<string | null> 
       return null;
     }
     
-    const { data, error } = await supabaseClient.rpc('track_analytics_event', {
+    const { data, error } = await supabase.rpc('track_analytics_event', {
       p_user_id: userId,
       p_event_type: event.eventType,
       p_event_data: event.eventData || {},
@@ -49,7 +49,7 @@ export async function getAnalyticsData(period: 'daily' | 'weekly' | 'monthly', s
     // Use type assertion to tell TypeScript this is a valid table name
     const tableName = `analytics_${period}_rollup` as const;
     
-    const { data, error } = await supabaseClient
+    const { data, error } = await supabase
       .from(tableName)
       .select('*')
       .gte(period === 'daily' ? 'date' : 'year', period === 'daily' ? startDate.toISOString().split('T')[0] : startDate.getFullYear())
@@ -72,7 +72,7 @@ export async function getAnalyticsData(period: 'daily' | 'weekly' | 'monthly', s
  */
 export async function getUserRetention(startDate: Date, endDate: Date) {
   try {
-    const { data, error } = await supabaseClient.rpc('get_user_retention', {
+    const { data, error } = await supabase.rpc('get_user_retention', {
       p_start_date: startDate.toISOString().split('T')[0],
       p_end_date: endDate.toISOString().split('T')[0]
     });
@@ -96,7 +96,7 @@ export async function getEventSummary(startDate: Date, endDate: Date) {
   try {
     // Use a raw SQL query with select() to get grouped data
     // The newer Supabase client versions don't support .group() directly
-    const { data, error } = await supabaseClient
+    const { data, error } = await supabase
       .from('analytics_events')
       .select('event_type, count')
       .gte('timestamp', startDate.toISOString())
@@ -133,7 +133,7 @@ export async function getEventSummary(startDate: Date, endDate: Date) {
 export async function getPopularPages(startDate: Date, endDate: Date, limit: number = 10) {
   try {
     // Use a simpler query approach without group
-    const { data, error } = await supabaseClient
+    const { data, error } = await supabase
       .from('analytics_events')
       .select('page_url, count')
       .eq('event_type', 'page_view')
@@ -174,7 +174,7 @@ export async function getPopularPages(startDate: Date, endDate: Date, limit: num
  */
 export async function getSegmentAnalytics(segmentId: string, startDate: Date, endDate: Date) {
   try {
-    const { data, error } = await supabaseClient
+    const { data, error } = await supabase
       .from('audience_segment_analytics')
       .select('*')
       .eq('segment_id', segmentId)
@@ -202,7 +202,7 @@ export async function getSegmentGrowthData(segmentId: string, timeframe: 'weekly
     // We'll use a different approach based on the timeframe
     const groupBy = timeframe === 'weekly' ? 'week' : 'month';
     
-    const { data, error } = await supabaseClient.rpc('get_segment_growth', {
+    const { data, error } = await supabase.rpc('get_segment_growth', {
       p_segment_id: segmentId,
       p_timeframe: groupBy
     });
@@ -229,7 +229,7 @@ export async function getSegmentOverlap(segmentIds: string[]) {
       return []; // Need at least 2 segments to compare
     }
     
-    const { data, error } = await supabaseClient.rpc('analyze_segment_overlap', {
+    const { data, error } = await supabase.rpc('analyze_segment_overlap', {
       p_segment_ids: segmentIds
     });
     
@@ -250,7 +250,7 @@ export async function getSegmentOverlap(segmentIds: string[]) {
  */
 export async function getSegmentMovementAnalytics(segmentId: string, startDate: Date, endDate: Date) {
   try {
-    const { data, error } = await supabaseClient.rpc('analyze_segment_movement', {
+    const { data, error } = await supabase.rpc('analyze_segment_movement', {
       p_segment_id: segmentId,
       p_start_date: startDate.toISOString().split('T')[0],
       p_end_date: endDate.toISOString().split('T')[0]
@@ -278,7 +278,7 @@ export async function scheduleReport(
   parameters: Record<string, any>
 ) {
   try {
-    const { data, error } = await supabaseClient.rpc('schedule_analytics_report', {
+    const { data, error } = await supabase.rpc('schedule_analytics_report', {
       p_report_type: reportType,
       p_frequency: frequency,
       p_recipients: recipients,
@@ -302,7 +302,7 @@ export async function scheduleReport(
  */
 export async function calculateAudienceSize(criteria: any[]) {
   try {
-    const { data, error } = await supabaseClient.rpc('estimate_audience_size', {
+    const { data, error } = await supabase.rpc('estimate_audience_size', {
       p_criteria: JSON.stringify(criteria)
     });
     
@@ -324,7 +324,7 @@ export async function calculateAudienceSize(criteria: any[]) {
  */
 export async function analyzeSegmentRelationships(segmentId: string, relationshipType: 'influence' | 'interaction' | 'similarity' = 'interaction') {
   try {
-    const { data, error } = await supabaseClient.rpc('analyze_segment_relationships', {
+    const { data, error } = await supabase.rpc('analyze_segment_relationships', {
       p_segment_id: segmentId,
       p_relationship_type: relationshipType
     });
@@ -347,7 +347,7 @@ export async function analyzeSegmentRelationships(segmentId: string, relationshi
  */
 export async function findInfluentialUsers(segmentId: string, limit: number = 20) {
   try {
-    const { data, error } = await supabaseClient.rpc('find_segment_influencers', {
+    const { data, error } = await supabase.rpc('find_segment_influencers', {
       p_segment_id: segmentId,
       p_limit: limit
     });
@@ -374,7 +374,7 @@ export async function analyzeSegmentConnectionStrength(
   connectionMetric: 'interaction' | 'conversion' | 'similarity' = 'interaction'
 ) {
   try {
-    const { data, error } = await supabaseClient.rpc('analyze_segment_connection_strength', {
+    const { data, error } = await supabase.rpc('analyze_segment_connection_strength', {
       p_source_segment_id: sourceSegmentId,
       p_target_segment_id: targetSegmentId,
       p_connection_metric: connectionMetric
@@ -402,7 +402,7 @@ export async function mapAudienceNetwork(
   minStrength: number = 0.3
 ) {
   try {
-    const { data, error } = await supabaseClient.rpc('map_audience_network', {
+    const { data, error } = await supabase.rpc('map_audience_network', {
       p_segment_ids: segmentIds,
       p_depth: depth,
       p_min_strength: minStrength
@@ -426,7 +426,7 @@ export async function mapAudienceNetwork(
  */
 export async function getCrossSegmentEngagement(segmentIds: string[], timeframe: 'week' | 'month' | 'quarter' = 'month') {
   try {
-    const { data, error } = await supabaseClient.rpc('get_cross_segment_engagement', {
+    const { data, error } = await supabase.rpc('get_cross_segment_engagement', {
       p_segment_ids: segmentIds,
       p_timeframe: timeframe
     });

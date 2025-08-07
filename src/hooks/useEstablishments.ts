@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { supabaseClient } from '@/lib/supabaseClient';
+import { supabase } from '@/integrations/supabase/client';
 import { calculateDistance } from '@/lib/utils';
 import { Establishment } from '@/types/DatabaseTypes';
 
@@ -25,7 +25,7 @@ const fetchEstablishmentsFromSupabase = async ({
   searchTerm,
   maxDistance = 20
 }: FetchEstablishmentsOptions): Promise<EstablishmentWithDistanceTemp[]> => {
-  let query = supabaseClient
+  let query = supabase
     .from('establishments')
     .select('*');
   

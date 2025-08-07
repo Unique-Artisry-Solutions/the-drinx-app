@@ -8,7 +8,7 @@ import { ArrowLeft, QrCode, CheckCircle, XCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import BackButton from '@/components/navigation/BackButton';
 import { useAuth } from '@/contexts/auth';
-import { supabaseClient } from '@/lib/supabaseClient';
+import { supabase } from '@/integrations/supabase/client';
 
 interface CheckInScannerProps {}
 

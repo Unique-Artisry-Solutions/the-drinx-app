@@ -1,10 +1,12 @@
 
-import { supabaseClient } from '@/lib/supabaseClient';
+import { supabase } from '@/integrations/supabase/client';
+
+// Replace all supabaseClient references with supabase
 import { sampleEstablishments, sampleCocktails, sampleBarCrawls } from '@/data/sampleData';
 
 export const migrateEstablishments = async () => {
   // Check if establishments already exist
-  const { data: existingEstablishments } = await supabaseClient
+  const { data: existingEstablishments } = await supabase
     .from('establishments')
     .select('id')
     .limit(1);
@@ -15,7 +17,7 @@ export const migrateEstablishments = async () => {
   }
   
   // Insert establishments
-  const { data: establishments, error } = await supabaseClient
+  const { data: establishments, error } = await supabase
     .from('establishments')
     .insert(sampleEstablishments.map(est => ({
       name: est.name,

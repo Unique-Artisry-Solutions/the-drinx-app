@@ -1,6 +1,6 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabaseClient } from '@/lib/supabaseClient';
+import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth';
 import { MocktailSuggestion, Ingredient } from '@/types/DatabaseTypes';
 import { useToast } from '@/hooks/use-toast';
@@ -16,7 +16,7 @@ export const useMocktailSuggestions = () => {
       return [];
     }
     
-    const { data, error } = await supabaseClient
+    const { data, error } = await supabase
       .from('mocktail_suggestions')
       .select('*, establishments(name)')
       .eq('user_id', user.id)
@@ -37,7 +37,7 @@ export const useMocktailSuggestions = () => {
   const fetchEstablishmentSuggestions = async (establishmentId: string) => {
     if (!establishmentId) return [];
     
-    const { data, error } = await supabaseClient
+    const { data, error } = await supabase
       .from('mocktail_suggestions')
       .select('*, profiles(username, display_name)')
       .eq('establishment_id', establishmentId)
@@ -84,7 +84,7 @@ export const useMocktailSuggestions = () => {
         throw new Error('User not authenticated');
       }
       
-      const { data, error } = await supabaseClient
+      const { data, error } = await supabase
         .from('mocktail_suggestions')
         .insert({
           ...suggestion,
@@ -119,7 +119,7 @@ export const useMocktailSuggestions = () => {
   // Mutation to update a suggestion status (for establishment owners)
   const updateSuggestionStatus = useMutation({
     mutationFn: async ({ id, status, feedback }: { id: string, status: 'approved' | 'rejected', feedback?: string }) => {
-      const { data, error } = await supabaseClient
+      const { data, error } = await supabase
         .from('mocktail_suggestions')
         .update({
           status,

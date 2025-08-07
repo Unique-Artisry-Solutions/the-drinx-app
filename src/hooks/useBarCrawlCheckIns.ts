@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { supabaseClient } from '@/lib/supabaseClient';
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from './use-toast';
 
 export function useBarCrawlCheckIns() {
@@ -22,7 +22,7 @@ export function useBarCrawlCheckIns() {
     try {
       setIsLoading(true);
       
-      const { data, error } = await supabaseClient
+      const { data, error } = await supabase
         .from('bar_crawl_check_ins')
         .insert({
           bar_crawl_id: barCrawlId,
@@ -62,7 +62,7 @@ export function useBarCrawlCheckIns() {
     try {
       setIsLoading(true);
       
-      const { data, error } = await supabaseClient
+      const { data, error } = await supabase
         .from('bar_crawl_check_ins')
         .select(`
           id,
@@ -98,7 +98,7 @@ export function useBarCrawlCheckIns() {
     try {
       setIsLoading(true);
       
-      let query = supabaseClient
+      let query = supabase
         .from('bar_crawl_check_ins')
         .select(`
           id,
