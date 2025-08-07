@@ -3695,6 +3695,60 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_audit_logs: {
+        Row: {
+          amount: number | null
+          created_at: string
+          currency: string | null
+          error_code: string | null
+          error_message: string | null
+          id: string
+          ip_address: string
+          payment_method_id: string | null
+          processing_time_ms: number | null
+          request_id: string
+          security_flags: string[] | null
+          status: string
+          stripe_payment_intent_id: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string
+          currency?: string | null
+          error_code?: string | null
+          error_message?: string | null
+          id?: string
+          ip_address: string
+          payment_method_id?: string | null
+          processing_time_ms?: number | null
+          request_id: string
+          security_flags?: string[] | null
+          status: string
+          stripe_payment_intent_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string
+          currency?: string | null
+          error_code?: string | null
+          error_message?: string | null
+          id?: string
+          ip_address?: string
+          payment_method_id?: string | null
+          processing_time_ms?: number | null
+          request_id?: string
+          security_flags?: string[] | null
+          status?: string
+          stripe_payment_intent_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       payment_failure_logs: {
         Row: {
           amount: number | null
@@ -5729,6 +5783,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      security_event_logs: {
+        Row: {
+          created_at: string
+          details: Json | null
+          event_type: string
+          id: string
+          ip_address: string
+          severity: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          details?: Json | null
+          event_type: string
+          id?: string
+          ip_address: string
+          severity: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          details?: Json | null
+          event_type?: string
+          id?: string
+          ip_address?: string
+          severity?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
       streak_settings: {
         Row: {

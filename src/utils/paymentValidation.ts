@@ -196,6 +196,198 @@ export class PaymentValidator {
 
 export const paymentValidator = new PaymentValidator();
 
+// Enhanced security validation functions
+export function sanitizePaymentInput(input: any): any {
+  if (typeof input === 'string') {
+    return input
+      .replace(/[<>]/g, '') // Remove potential HTML tags
+      .replace(/javascript:/gi, '') // Remove javascript: protocol
+      .replace(/on\w+=/gi, '') // Remove event handlers
+      .replace(/[\x00-\x1f\x7f-\x9f]/g, '') // Remove control characters
+      .trim()
+      .slice(0, 1000); // Limit string length
+  }
+  
+  if (typeof input === 'number') {
+    if (!isFinite(input) || isNaN(input)) {
+      throw new Error('Invalid numeric input');
+    }
+    return input;
+  }
+  
+  if (Array.isArray(input)) {
+    return input.slice(0, 10).map(sanitizePaymentInput); // Limit array size
+  }
+  
+  if (input && typeof input === 'object') {
+    const sanitized: any = {};
+    const allowedKeys = [
+      'paymentMethodId', 'amount', 'currency', 'description', 
+      'userId', 'eventId', 'ticketType', 'quantity', 'metadata'
+    ];
+    
+    for (const [key, value] of Object.entries(input)) {
+      if (allowedKeys.includes(key) && key.length < 50) {
+        sanitized[key] = sanitizePaymentInput(value);
+      }
+    }
+    return sanitized;
+  }
+  
+  return input;
+}
+
+export function validateNoSQLInjection(input: string): boolean {
+  const sqlPatterns = [
+    /(\b(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|EXEC|UNION)\b)/gi,
+    /('|('')|;|--|\/\*|\*\/)/g,
+    /(0x[0-9a-f]+)/gi,
+    /(\bOR\s+\d+\s*=\s*\d+)/gi,
+    /(\bAND\s+\d+\s*=\s*\d+)/gi
+  ];
+  
+  return !sqlPatterns.some(pattern => pattern.test(input));
+}
+
+export function validateNoXSS(input: string): boolean {
+  const xssPatterns = [
+    /<script[^>]*>.*?<\/script>/gi,
+    /<iframe[^>]*>.*?<\/iframe>/gi,
+    /javascript:/gi,
+    /on\w+\s*=/gi,
+    /<img[^>]*src\s*=\s*["']?javascript:/gi,
+    /data:text\/html/gi
+  ];
+  
+  return !xssPatterns.some(pattern => pattern.test(input));
+}
+
+export function validatePaymentAmount(amount: number): { isValid: boolean; error?: string } {
+  if (typeof amount !== 'number' || !isFinite(amount) || isNaN(amount)) {
+    return { isValid: false, error: 'Amount must be a valid number' };
+  }
+  
+  if (amount <= 0) {
+    return { isValid: false, error: 'Amount must be greater than zero' };
+  }
+  
+  if (amount < 0.50) {
+    return { isValid: false, error: 'Amount must be at least $0.50' };
+  }
+  
+  if (amount > 999999.99) {
+    return { isValid: false, error: 'Amount cannot exceed $999,999.99' };
+  }
+  
+  // Check for suspicious amounts (very precise decimals might indicate manipulation)
+  const decimalPlaces = (amount.toString().split('.')[1] || '').length;
+  if (decimalPlaces > 2) {
+    return { isValid: false, error: 'Amount cannot have more than 2 decimal places' };
+  }
+  
+  return { isValid: true };
+}
+
+export function validateCurrencyCode(currency: string): { isValid: boolean; error?: string } {
+  if (!currency || typeof currency !== 'string') {
+    return { isValid: false, error: 'Currency code is required' };
+  }
+  
+  if (!validateNoSQLInjection(currency) || !validateNoXSS(currency)) {
+    return { isValid: false, error: 'Currency code contains invalid characters' };
+  }
+  
+  const normalizedCurrency = currency.toLowerCase().trim();
+  const allowedCurrencies = ['usd', 'eur', 'gbp', 'cad', 'aud'];
+  
+  if (!allowedCurrencies.includes(normalizedCurrency)) {
+    return { isValid: false, error: `Currency '${currency}' is not supported` };
+  }
+  
+  return { isValid: true };
+}
+
+export function validatePaymentMethodId(paymentMethodId: string): { isValid: boolean; error?: string } {
+  if (!paymentMethodId || typeof paymentMethodId !== 'string') {
+    return { isValid: false, error: 'Payment method ID is required' };
+  }
+  
+  if (!validateNoSQLInjection(paymentMethodId) || !validateNoXSS(paymentMethodId)) {
+    return { isValid: false, error: 'Payment method ID contains invalid characters' };
+  }
+  
+  // Stripe payment method IDs should start with 'pm_'
+  if (!paymentMethodId.startsWith('pm_')) {
+    return { isValid: false, error: 'Invalid payment method ID format' };
+  }
+  
+  // Basic length validation
+  if (paymentMethodId.length < 10 || paymentMethodId.length > 50) {
+    return { isValid: false, error: 'Payment method ID has invalid length' };
+  }
+  
+  return { isValid: true };
+}
+
+export function validatePaymentDescription(description?: string): { isValid: boolean; error?: string } {
+  if (!description) {
+    return { isValid: true }; // Description is optional
+  }
+  
+  if (typeof description !== 'string') {
+    return { isValid: false, error: 'Description must be a string' };
+  }
+  
+  if (!validateNoSQLInjection(description) || !validateNoXSS(description)) {
+    return { isValid: false, error: 'Description contains invalid characters' };
+  }
+  
+  if (description.length > 500) {
+    return { isValid: false, error: 'Description cannot exceed 500 characters' };
+  }
+  
+  return { isValid: true };
+}
+
+export function validateCompletePaymentRequest(request: {
+  paymentMethodId: string;
+  amount: number;
+  currency?: string;
+  description?: string;
+}): { isValid: boolean; errors: string[] } {
+  const errors: string[] = [];
+  
+  // Validate amount
+  const amountValidation = validatePaymentAmount(request.amount);
+  if (!amountValidation.isValid) {
+    errors.push(amountValidation.error!);
+  }
+  
+  // Validate currency
+  const currency = request.currency || 'usd';
+  const currencyValidation = validateCurrencyCode(currency);
+  if (!currencyValidation.isValid) {
+    errors.push(currencyValidation.error!);
+  }
+  
+  // Validate payment method
+  const paymentMethodValidation = validatePaymentMethodId(request.paymentMethodId);
+  if (!paymentMethodValidation.isValid) {
+    errors.push(paymentMethodValidation.error!);
+  }
+  
+  // Validate description
+  const descriptionValidation = validatePaymentDescription(request.description);
+  if (!descriptionValidation.isValid) {
+    errors.push(descriptionValidation.error!);
+  }
+  
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
+}
+
 export function categorizeError(error: any): PaymentError {
   const errorMessage = error?.message || error || 'Unknown error';
   const errorCode = error?.code || error?.type || '';

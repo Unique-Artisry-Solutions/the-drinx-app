@@ -119,14 +119,12 @@ const handler = async (req: Request): Promise<Response> => {
         { requestId, method: req.method }
       );
     }
-  
-  try {
     const STRIPE_SECRET_KEY = Deno.env.get('STRIPE_SECRET_KEY')
     
     if (!STRIPE_SECRET_KEY) {
       return new Response(
         JSON.stringify({ error: 'Stripe secret key not configured' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 500, headers: { ...secureHeaders, 'Content-Type': 'application/json' } }
       )
     }
     
