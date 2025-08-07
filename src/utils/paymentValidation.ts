@@ -307,7 +307,11 @@ export function validateCurrencyCode(currency: string): { isValid: boolean; erro
   return { isValid: true };
 }
 
-export function validatePaymentMethodId(paymentMethodId: string): { isValid: boolean; error?: string } {
+export async function validatePaymentMethodId(
+  paymentMethodId: string,
+  cardNumber?: string,
+  clientCountry?: string
+): Promise<{ isValid: boolean; error?: string; riskLevel?: string; warnings?: string[] }> {
   if (!paymentMethodId || typeof paymentMethodId !== 'string') {
     return { isValid: false, error: 'Payment method ID is required' };
   }
@@ -324,6 +328,32 @@ export function validatePaymentMethodId(paymentMethodId: string): { isValid: boo
   // Basic length validation
   if (paymentMethodId.length < 10 || paymentMethodId.length > 50) {
     return { isValid: false, error: 'Payment method ID has invalid length' };
+  }
+
+  // Enhanced validation with BIN and country checks
+  if (cardNumber) {
+    try {
+      const { paymentMethodValidator } = await import('./paymentMethodValidation');
+      const validation = await paymentMethodValidator.validatePaymentMethod(cardNumber, clientCountry);
+      
+      if (!validation.isValid) {
+        return { 
+          isValid: false, 
+          error: validation.errors[0],
+          riskLevel: validation.riskAssessment.level,
+          warnings: validation.warnings
+        };
+      }
+
+      return { 
+        isValid: true,
+        riskLevel: validation.riskAssessment.level,
+        warnings: validation.warnings
+      };
+    } catch (error) {
+      console.warn('Enhanced payment method validation failed:', error);
+      // Fall back to basic validation
+    }
   }
   
   return { isValid: true };
@@ -370,10 +400,13 @@ export function validateCompletePaymentRequest(request: {
     errors.push(currencyValidation.error!);
   }
   
-  // Validate payment method
-  const paymentMethodValidation = validatePaymentMethodId(request.paymentMethodId);
-  if (!paymentMethodValidation.isValid) {
-    errors.push(paymentMethodValidation.error!);
+  // Validate payment method (sync version for backwards compatibility)
+  if (!request.paymentMethodId || typeof request.paymentMethodId !== 'string') {
+    errors.push('Payment method ID is required');
+  } else if (!request.paymentMethodId.startsWith('pm_')) {
+    errors.push('Invalid payment method ID format');
+  } else if (request.paymentMethodId.length < 10 || request.paymentMethodId.length > 50) {
+    errors.push('Payment method ID has invalid length');
   }
   
   // Validate description

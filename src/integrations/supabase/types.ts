@@ -490,6 +490,45 @@ export type Database = {
         }
         Relationships: []
       }
+      api_key_rotations: {
+        Row: {
+          id: string
+          metadata: Json | null
+          new_key_hash: string
+          next_rotation_date: string | null
+          old_key_hash: string | null
+          rotated_by: string | null
+          rotation_date: string
+          rotation_reason: string | null
+          service_name: string
+          status: string
+        }
+        Insert: {
+          id?: string
+          metadata?: Json | null
+          new_key_hash: string
+          next_rotation_date?: string | null
+          old_key_hash?: string | null
+          rotated_by?: string | null
+          rotation_date?: string
+          rotation_reason?: string | null
+          service_name: string
+          status?: string
+        }
+        Update: {
+          id?: string
+          metadata?: Json | null
+          new_key_hash?: string
+          next_rotation_date?: string | null
+          old_key_hash?: string | null
+          rotated_by?: string | null
+          rotation_date?: string
+          rotation_reason?: string | null
+          service_name?: string
+          status?: string
+        }
+        Relationships: []
+      }
       app_subscriptions: {
         Row: {
           created_at: string
@@ -857,6 +896,51 @@ export type Database = {
           },
         ]
       }
+      bin_database: {
+        Row: {
+          bin_range: string
+          card_brand: string | null
+          card_type: string | null
+          country_code: string | null
+          country_name: string | null
+          created_at: string
+          id: string
+          is_restricted: boolean | null
+          issuing_bank: string | null
+          metadata: Json | null
+          risk_level: string | null
+          updated_at: string
+        }
+        Insert: {
+          bin_range: string
+          card_brand?: string | null
+          card_type?: string | null
+          country_code?: string | null
+          country_name?: string | null
+          created_at?: string
+          id?: string
+          is_restricted?: boolean | null
+          issuing_bank?: string | null
+          metadata?: Json | null
+          risk_level?: string | null
+          updated_at?: string
+        }
+        Update: {
+          bin_range?: string
+          card_brand?: string | null
+          card_type?: string | null
+          country_code?: string | null
+          country_name?: string | null
+          created_at?: string
+          id?: string
+          is_restricted?: boolean | null
+          issuing_bank?: string | null
+          metadata?: Json | null
+          risk_level?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       campaign_segment_mappings: {
         Row: {
           allocation_percentage: number
@@ -1198,6 +1282,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      device_fingerprints: {
+        Row: {
+          created_at: string
+          device_data: Json
+          fingerprint_hash: string
+          first_seen_at: string
+          id: string
+          is_trusted: boolean | null
+          last_seen_at: string
+          risk_score: number | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          device_data?: Json
+          fingerprint_hash: string
+          first_seen_at?: string
+          id?: string
+          is_trusted?: boolean | null
+          last_seen_at?: string
+          risk_score?: number | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          device_data?: Json
+          fingerprint_hash?: string
+          first_seen_at?: string
+          id?: string
+          is_trusted?: boolean | null
+          last_seen_at?: string
+          risk_score?: number | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
       }
       email_templates: {
         Row: {
@@ -2979,6 +3102,45 @@ export type Database = {
           },
         ]
       }
+      fraud_detection_rules: {
+        Row: {
+          action: string
+          conditions: Json
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean | null
+          rule_name: string
+          rule_type: string
+          severity: string
+          updated_at: string
+        }
+        Insert: {
+          action: string
+          conditions: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          rule_name: string
+          rule_type: string
+          severity?: string
+          updated_at?: string
+        }
+        Update: {
+          action?: string
+          conditions?: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          rule_name?: string
+          rule_type?: string
+          severity?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       gamification_rewards: {
         Row: {
           availability_end: string | null
@@ -3701,6 +3863,7 @@ export type Database = {
           created_at: string
           currency: string | null
           device_fingerprint: string | null
+          device_fingerprint_id: string | null
           error_code: string | null
           error_message: string | null
           geolocation_data: Json | null
@@ -3723,6 +3886,7 @@ export type Database = {
           created_at?: string
           currency?: string | null
           device_fingerprint?: string | null
+          device_fingerprint_id?: string | null
           error_code?: string | null
           error_message?: string | null
           geolocation_data?: Json | null
@@ -3745,6 +3909,7 @@ export type Database = {
           created_at?: string
           currency?: string | null
           device_fingerprint?: string | null
+          device_fingerprint_id?: string | null
           error_code?: string | null
           error_message?: string | null
           geolocation_data?: Json | null
@@ -3761,6 +3926,56 @@ export type Database = {
           stripe_payment_intent_id?: string | null
           user_agent?: string | null
           user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_audit_logs_device_fingerprint_id_fkey"
+            columns: ["device_fingerprint_id"]
+            isOneToOne: false
+            referencedRelation: "device_fingerprints"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_country_restrictions: {
+        Row: {
+          country_code: string
+          country_name: string
+          created_at: string
+          created_by: string | null
+          effective_date: string
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          restriction_reason: string | null
+          restriction_type: string
+          updated_at: string
+        }
+        Insert: {
+          country_code: string
+          country_name: string
+          created_at?: string
+          created_by?: string | null
+          effective_date?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          restriction_reason?: string | null
+          restriction_type: string
+          updated_at?: string
+        }
+        Update: {
+          country_code?: string
+          country_name?: string
+          created_at?: string
+          created_by?: string | null
+          effective_date?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          restriction_reason?: string | null
+          restriction_type?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -3826,6 +4041,50 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      payment_patterns: {
+        Row: {
+          anomaly_score: number | null
+          created_at: string
+          detection_rules: Json | null
+          device_fingerprint_id: string | null
+          id: string
+          is_flagged: boolean | null
+          pattern_data: Json
+          pattern_type: string
+          user_id: string | null
+        }
+        Insert: {
+          anomaly_score?: number | null
+          created_at?: string
+          detection_rules?: Json | null
+          device_fingerprint_id?: string | null
+          id?: string
+          is_flagged?: boolean | null
+          pattern_data?: Json
+          pattern_type: string
+          user_id?: string | null
+        }
+        Update: {
+          anomaly_score?: number | null
+          created_at?: string
+          detection_rules?: Json | null
+          device_fingerprint_id?: string | null
+          id?: string
+          is_flagged?: boolean | null
+          pattern_data?: Json
+          pattern_type?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_patterns_device_fingerprint_id_fkey"
+            columns: ["device_fingerprint_id"]
+            isOneToOne: false
+            referencedRelation: "device_fingerprints"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       payment_receipts: {
         Row: {
@@ -7854,6 +8113,10 @@ export type Database = {
           recommended_tier: string
           score_breakdown: Json
         }[]
+      }
+      calculate_device_risk_score: {
+        Args: { fingerprint_data: Json; user_history?: Json }
+        Returns: number
       }
       calculate_engagement_score: {
         Args: { p_follower_id: string }
