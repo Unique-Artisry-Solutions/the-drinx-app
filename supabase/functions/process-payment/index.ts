@@ -2,6 +2,14 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { corsHeaders } from '../_shared/cors.ts'
 import Stripe from 'https://esm.sh/stripe@12.6.0?target=deno'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+
+// Create a Supabase client
+const supabaseClient = createClient(
+  Deno.env.get('SUPABASE_URL') ?? '',
+  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+  { auth: { persistSession: false } }
+)
 
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
@@ -26,6 +34,11 @@ const handler = async (req: Request): Promise<Response> => {
     
     const { paymentMethodId, amount, currency, description, metadata } = await req.json()
     
+    console.log('Processing payment:', { paymentMethodId, amount, currency, description })
+    
+    // Get the origin for dynamic return URL
+    const origin = req.headers.get('origin') || req.headers.get('referer')?.split('/').slice(0, 3).join('/') || 'http://localhost:3000'
+    
     // Create a payment intent
     const paymentIntent = await stripe.paymentIntents.create({
       amount,
@@ -34,8 +47,10 @@ const handler = async (req: Request): Promise<Response> => {
       confirm: true,
       description,
       metadata,
-      return_url: 'https://yoursite.com/payment-confirmation',
+      return_url: `${origin}/payment-confirmation`,
     })
+    
+    console.log('Payment intent created:', { id: paymentIntent.id, status: paymentIntent.status })
     
     // Record the payment in our database
     const { data: paymentData, error: paymentError } = await supabaseClient
@@ -58,8 +73,39 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (paymentError) {
       console.error('Error recording payment:', paymentError)
-      // Payment was processed by Stripe but we failed to record it
-      // This should trigger an alert for manual reconciliation
+      
+      // If payment succeeded but we can't record it, we need to handle this carefully
+      if (paymentIntent.status === 'succeeded') {
+        // Log critical error for manual reconciliation
+        console.error('CRITICAL: Payment succeeded but database insert failed', {
+          paymentIntentId: paymentIntent.id,
+          amount,
+          currency,
+          error: paymentError.message
+        })
+        
+        // Still return success since payment went through, but flag the issue
+        return new Response(
+          JSON.stringify({ 
+            success: true,
+            status: paymentIntent.status,
+            paymentIntentId: paymentIntent.id,
+            transactionId: null,
+            warning: 'Payment processed but record creation failed'
+          }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+      
+      // If payment failed and we can't record it, try to cancel the payment intent
+      try {
+        await stripe.paymentIntents.cancel(paymentIntent.id)
+        console.log('Cancelled payment intent due to database error:', paymentIntent.id)
+      } catch (cancelError) {
+        console.error('Failed to cancel payment intent:', cancelError)
+      }
+      
+      throw new Error('Failed to process payment: ' + paymentError.message)
     }
     
     // Create a receipt if payment was successful
@@ -99,15 +145,5 @@ const handler = async (req: Request): Promise<Response> => {
     )
   }
 }
-
-// Import the Supabase client
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-
-// Create a Supabase client
-const supabaseClient = createClient(
-  Deno.env.get('SUPABASE_URL') ?? '',
-  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-  { auth: { persistSession: false } }
-)
 
 serve(handler)
