@@ -1,13 +1,17 @@
 // Audit logging utilities for security compliance
 
 export interface SecurityEvent {
-  event_type: 'payment_attempt' | 'rate_limit_exceeded' | 'suspicious_activity' | 'authentication_failed' | 'cors_violation';
+  event_type: 'payment_attempt' | 'rate_limit_exceeded' | 'suspicious_activity' | 'authentication_failed' | 'cors_violation' | 'failed_authentication' | 'invalid_token_usage';
   severity: 'low' | 'medium' | 'high' | 'critical';
   ip_address: string;
   user_agent: string;
   user_id?: string;
   details: Record<string, any>;
   timestamp: string;
+  request_headers?: Record<string, any>;
+  session_id?: string;
+  response_time_ms?: number;
+  endpoint?: string;
 }
 
 export interface PaymentAuditLog {
@@ -25,6 +29,11 @@ export interface PaymentAuditLog {
   processing_time_ms?: number;
   timestamp: string;
   security_flags: string[];
+  request_headers?: Record<string, any>;
+  geolocation_data?: Record<string, any>;
+  session_id?: string;
+  referrer_url?: string;
+  device_fingerprint?: string;
 }
 
 export class AuditLogger {
@@ -41,7 +50,9 @@ export class AuditLogger {
         ip: event.ip_address,
         userAgent: event.user_agent.slice(0, 100),
         userId: event.user_id,
-        details: event.details
+        details: event.details,
+        endpoint: event.endpoint,
+        responseTime: event.response_time_ms
       });
 
       // Store in database for compliance
@@ -54,6 +65,10 @@ export class AuditLogger {
           user_agent: event.user_agent.slice(0, 500),
           user_id: event.user_id,
           details: event.details,
+          request_headers: event.request_headers,
+          session_id: event.session_id,
+          response_time_ms: event.response_time_ms,
+          endpoint: event.endpoint,
           created_at: event.timestamp
         });
     } catch (error) {
@@ -74,7 +89,9 @@ export class AuditLogger {
         processingTime: auditLog.processing_time_ms,
         securityFlags: auditLog.security_flags,
         paymentMethodId: auditLog.payment_method_id ? 'pm_***' : undefined,
-        stripeIntentId: auditLog.stripe_payment_intent_id ? 'pi_***' : undefined
+        stripeIntentId: auditLog.stripe_payment_intent_id ? 'pi_***' : undefined,
+        sessionId: auditLog.session_id,
+        deviceFingerprint: auditLog.device_fingerprint ? 'fp_***' : undefined
       });
 
       // Store detailed audit log
@@ -94,6 +111,11 @@ export class AuditLogger {
           stripe_payment_intent_id: auditLog.stripe_payment_intent_id,
           processing_time_ms: auditLog.processing_time_ms,
           security_flags: auditLog.security_flags,
+          request_headers: auditLog.request_headers,
+          geolocation_data: auditLog.geolocation_data,
+          session_id: auditLog.session_id,
+          referrer_url: auditLog.referrer_url,
+          device_fingerprint: auditLog.device_fingerprint,
           created_at: auditLog.timestamp
         });
     } catch (error) {
@@ -168,7 +190,8 @@ export function sanitizeForAudit(data: any): any {
   if (!data) return data;
   
   const sensitiveFields = [
-    'card', 'cardNumber', 'cvc', 'cvv', 'password', 'token', 'secret'
+    'card', 'cardNumber', 'cvc', 'cvv', 'password', 'token', 'secret',
+    'authorization', 'cookie', 'session', 'key', 'auth'
   ];
   
   const sanitized = JSON.parse(JSON.stringify(data));
@@ -188,4 +211,50 @@ export function sanitizeForAudit(data: any): any {
   }
   
   return sanitized;
+}
+
+export function extractGeoLocation(request: Request): Record<string, any> {
+  const headers = request.headers;
+  return {
+    country: headers.get('cf-ipcountry') || headers.get('cloudfront-viewer-country') || null,
+    region: headers.get('cf-region') || headers.get('cloudfront-viewer-country-region') || null,
+    city: headers.get('cf-ipcity') || null,
+    timezone: headers.get('cf-timezone') || null,
+    asn: headers.get('cf-connecting-ip') || null
+  };
+}
+
+export function sanitizeHeaders(headers: Headers): Record<string, any> {
+  const sanitized: Record<string, any> = {};
+  const allowedHeaders = [
+    'user-agent', 'accept', 'accept-language', 'accept-encoding',
+    'content-type', 'content-length', 'origin', 'referer',
+    'x-forwarded-for', 'x-real-ip', 'cf-ray', 'cf-connecting-ip'
+  ];
+  
+  for (const [key, value] of headers.entries()) {
+    if (allowedHeaders.includes(key.toLowerCase())) {
+      sanitized[key] = value;
+    }
+  }
+  
+  return sanitized;
+}
+
+export function generateDeviceFingerprint(request: Request): string {
+  const fingerprint = [
+    request.headers.get('user-agent') || '',
+    request.headers.get('accept-language') || '',
+    request.headers.get('accept-encoding') || ''
+  ].join('|');
+  
+  // Create a simple hash of the fingerprint data
+  let hash = 0;
+  for (let i = 0; i < fingerprint.length; i++) {
+    const char = fingerprint.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  
+  return `fp_${Math.abs(hash).toString(36)}`;
 }

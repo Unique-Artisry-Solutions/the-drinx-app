@@ -3700,14 +3700,19 @@ export type Database = {
           amount: number | null
           created_at: string
           currency: string | null
+          device_fingerprint: string | null
           error_code: string | null
           error_message: string | null
+          geolocation_data: Json | null
           id: string
           ip_address: string
           payment_method_id: string | null
           processing_time_ms: number | null
+          referrer_url: string | null
+          request_headers: Json | null
           request_id: string
           security_flags: string[] | null
+          session_id: string | null
           status: string
           stripe_payment_intent_id: string | null
           user_agent: string | null
@@ -3717,14 +3722,19 @@ export type Database = {
           amount?: number | null
           created_at?: string
           currency?: string | null
+          device_fingerprint?: string | null
           error_code?: string | null
           error_message?: string | null
+          geolocation_data?: Json | null
           id?: string
           ip_address: string
           payment_method_id?: string | null
           processing_time_ms?: number | null
+          referrer_url?: string | null
+          request_headers?: Json | null
           request_id: string
           security_flags?: string[] | null
+          session_id?: string | null
           status: string
           stripe_payment_intent_id?: string | null
           user_agent?: string | null
@@ -3734,14 +3744,19 @@ export type Database = {
           amount?: number | null
           created_at?: string
           currency?: string | null
+          device_fingerprint?: string | null
           error_code?: string | null
           error_message?: string | null
+          geolocation_data?: Json | null
           id?: string
           ip_address?: string
           payment_method_id?: string | null
           processing_time_ms?: number | null
+          referrer_url?: string | null
+          request_headers?: Json | null
           request_id?: string
           security_flags?: string[] | null
+          session_id?: string | null
           status?: string
           stripe_payment_intent_id?: string | null
           user_agent?: string | null
@@ -5788,9 +5803,13 @@ export type Database = {
         Row: {
           created_at: string
           details: Json | null
+          endpoint: string | null
           event_type: string
           id: string
           ip_address: string
+          request_headers: Json | null
+          response_time_ms: number | null
+          session_id: string | null
           severity: string
           user_agent: string | null
           user_id: string | null
@@ -5798,9 +5817,13 @@ export type Database = {
         Insert: {
           created_at?: string
           details?: Json | null
+          endpoint?: string | null
           event_type: string
           id?: string
           ip_address: string
+          request_headers?: Json | null
+          response_time_ms?: number | null
+          session_id?: string | null
           severity: string
           user_agent?: string | null
           user_id?: string | null
@@ -5808,9 +5831,13 @@ export type Database = {
         Update: {
           created_at?: string
           details?: Json | null
+          endpoint?: string | null
           event_type?: string
           id?: string
           ip_address?: string
+          request_headers?: Json | null
+          response_time_ms?: number | null
+          session_id?: string | null
           severity?: string
           user_agent?: string | null
           user_id?: string | null
@@ -7528,6 +7555,81 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_audit_analysis: {
+        Row: {
+          amount: number | null
+          anonymized_ip: string | null
+          created_at: string | null
+          currency: string | null
+          device_fingerprint: string | null
+          error_code: string | null
+          error_message: string | null
+          geolocation_data: Json | null
+          id: string | null
+          ip_address: string | null
+          payment_method_id: string | null
+          processing_time_ms: number | null
+          referrer_url: string | null
+          request_headers: Json | null
+          request_id: string | null
+          risk_score: number | null
+          security_flags: string[] | null
+          session_id: string | null
+          status: string | null
+          stripe_payment_intent_id: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          amount?: number | null
+          anonymized_ip?: never
+          created_at?: string | null
+          currency?: string | null
+          device_fingerprint?: string | null
+          error_code?: string | null
+          error_message?: string | null
+          geolocation_data?: Json | null
+          id?: string | null
+          ip_address?: string | null
+          payment_method_id?: string | null
+          processing_time_ms?: number | null
+          referrer_url?: string | null
+          request_headers?: Json | null
+          request_id?: string | null
+          risk_score?: never
+          security_flags?: string[] | null
+          session_id?: string | null
+          status?: string | null
+          stripe_payment_intent_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number | null
+          anonymized_ip?: never
+          created_at?: string | null
+          currency?: string | null
+          device_fingerprint?: string | null
+          error_code?: string | null
+          error_message?: string | null
+          geolocation_data?: Json | null
+          id?: string | null
+          ip_address?: string | null
+          payment_method_id?: string | null
+          processing_time_ms?: number | null
+          referrer_url?: string | null
+          request_headers?: Json | null
+          request_id?: string | null
+          risk_score?: never
+          security_flags?: string[] | null
+          session_id?: string | null
+          status?: string | null
+          stripe_payment_intent_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       promoter_audience_segments_view: {
         Row: {
           data_points: number | null
@@ -7678,6 +7780,25 @@ export type Database = {
           suggestion_count: number | null
           trend_score: number | null
           year: number | null
+        }
+        Relationships: []
+      }
+      security_event_analysis: {
+        Row: {
+          anonymized_ip: string | null
+          created_at: string | null
+          details: Json | null
+          endpoint: string | null
+          event_type: string | null
+          events_last_hour: number | null
+          id: string | null
+          ip_address: string | null
+          request_headers: Json | null
+          response_time_ms: number | null
+          session_id: string | null
+          severity: string | null
+          user_agent: string | null
+          user_id: string | null
         }
         Relationships: []
       }

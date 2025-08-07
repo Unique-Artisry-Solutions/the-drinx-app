@@ -10,7 +10,14 @@ import {
   generateRequestFingerprint,
   detectSuspiciousActivity
 } from '../_shared/security.ts'
-import { AuditLogger, generateRequestId, sanitizeForAudit } from '../_shared/audit.ts'
+import { 
+  AuditLogger, 
+  generateRequestId, 
+  sanitizeForAudit,
+  extractGeoLocation,
+  sanitizeHeaders,
+  generateDeviceFingerprint
+} from '../_shared/audit.ts'
 import Stripe from 'https://esm.sh/stripe@12.6.0?target=deno'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -155,7 +162,7 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error('Invalid payment method ID');
     }
 
-    // Log payment attempt
+    // Log payment attempt with comprehensive audit data
     await auditLogger.logPaymentAttempt({
       request_id: requestId,
       user_id: metadata?.userId,
@@ -166,7 +173,12 @@ const handler = async (req: Request): Promise<Response> => {
       currency: currency || 'usd',
       status: 'initiated',
       timestamp: new Date().toISOString(),
-      security_flags: detectSuspiciousActivity(fingerprint) ? ['suspicious_activity'] : []
+      security_flags: detectSuspiciousActivity(fingerprint) ? ['suspicious_activity'] : [],
+      request_headers: sanitizeHeaders(req.headers),
+      geolocation_data: extractGeoLocation(req),
+      session_id: req.headers.get('x-session-id') || undefined,
+      referrer_url: req.headers.get('referer') || undefined,
+      device_fingerprint: generateDeviceFingerprint(req)
     });
     
     console.log('Processing payment:', sanitizeForAudit({ 
@@ -193,7 +205,7 @@ const handler = async (req: Request): Promise<Response> => {
     
     console.log('Payment intent created:', { id: 'pi_***', status: paymentIntent.status, requestId });
     
-    // Log successful payment processing
+    // Log successful payment processing with comprehensive data
     await auditLogger.logPaymentAttempt({
       request_id: requestId,
       user_id: metadata?.userId,
@@ -206,7 +218,12 @@ const handler = async (req: Request): Promise<Response> => {
       stripe_payment_intent_id: paymentIntent.id,
       processing_time_ms: Date.now() - startTime,
       timestamp: new Date().toISOString(),
-      security_flags: detectSuspiciousActivity(fingerprint) ? ['suspicious_activity'] : []
+      security_flags: detectSuspiciousActivity(fingerprint) ? ['suspicious_activity'] : [],
+      request_headers: sanitizeHeaders(req.headers),
+      geolocation_data: extractGeoLocation(req),
+      session_id: req.headers.get('x-session-id') || undefined,
+      referrer_url: req.headers.get('referer') || undefined,
+      device_fingerprint: generateDeviceFingerprint(req)
     });
     
     // Record the payment in our database
@@ -297,7 +314,7 @@ const handler = async (req: Request): Promise<Response> => {
   } catch (error) {
     console.error('Error processing payment:', error);
     
-    // Log failed payment attempt
+    // Log failed payment attempt with comprehensive audit data
     try {
       await auditLogger.logPaymentAttempt({
         request_id: requestId,
@@ -309,7 +326,12 @@ const handler = async (req: Request): Promise<Response> => {
         error_message: error.message,
         processing_time_ms: Date.now() - startTime,
         timestamp: new Date().toISOString(),
-        security_flags: detectSuspiciousActivity(fingerprint) ? ['suspicious_activity'] : []
+        security_flags: detectSuspiciousActivity(fingerprint) ? ['suspicious_activity'] : [],
+        request_headers: sanitizeHeaders(req.headers),
+        geolocation_data: extractGeoLocation(req),
+        session_id: req.headers.get('x-session-id') || undefined,
+        referrer_url: req.headers.get('referer') || undefined,
+        device_fingerprint: generateDeviceFingerprint(req)
       });
     } catch (auditError) {
       console.error('Failed to log audit event:', auditError);
