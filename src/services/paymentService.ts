@@ -9,59 +9,139 @@ import {
   ProcessRefundRequest,
   ProcessRefundResponse
 } from '@/types/PaymentTypes';
+import { paymentValidator, categorizeError } from '@/utils/paymentValidation';
+import { PaymentError, PaymentErrorType } from '@/types/PaymentErrors';
 
 export async function processPayment(request: ProcessPaymentRequest): Promise<ProcessPaymentResponse> {
-  // Get the current user's ID
-  const { data: { user } } = await supabase.auth.getUser();
-  
-  if (!user) {
-    throw new Error('User must be logged in to process payments');
-  }
-  
-  // Add the user ID to the metadata
-  const metadata = {
-    ...request.metadata,
-    userId: user.id
-  };
-  
-  // Call the process-payment edge function
-  const { data, error } = await supabase.functions.invoke('process-payment', {
-    body: {
-      ...request,
-      metadata
+  try {
+    // Validate payment request
+    const validationResult = paymentValidator.validatePaymentRequest({
+      paymentMethodId: request.paymentMethodId,
+      amount: request.amount,
+      currency: request.currency || 'usd',
+      description: request.description
+    });
+
+    if (!validationResult.isValid) {
+      const validationError = validationResult.errors[0];
+      console.error('Payment validation failed:', validationError);
+      throw validationError;
     }
-  });
-  
-  if (error) {
-    console.error('Payment processing error:', error);
-    throw new Error(error.message || 'Payment processing failed');
+
+    // Get the current user's ID
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      const authError: PaymentError = {
+        type: PaymentErrorType.AUTHENTICATION,
+        code: 'unauthorized',
+        message: 'User must be logged in to process payments',
+        retryable: false,
+        recoveryAction: 'login_required' as any
+      };
+      throw authError;
+    }
+    
+    // Add the user ID to the metadata
+    const metadata = {
+      ...request.metadata,
+      userId: user.id,
+      validationPassed: true,
+      timestamp: new Date().toISOString()
+    };
+    
+    // Call the process-payment edge function with enhanced error context
+    const { data, error } = await supabase.functions.invoke('process-payment', {
+      body: {
+        ...request,
+        metadata
+      }
+    });
+    
+    if (error) {
+      console.error('Payment processing error:', error);
+      const categorizedError = categorizeError(error);
+      categorizedError.context = {
+        ...categorizedError.context,
+        paymentMethodId: request.paymentMethodId,
+        amount: request.amount,
+        currency: request.currency
+      };
+      throw categorizedError;
+    }
+    
+    return data as ProcessPaymentResponse;
+  } catch (error) {
+    // If it's already a PaymentError, re-throw it
+    if (error && typeof error === 'object' && 'type' in error) {
+      throw error;
+    }
+    
+    // Otherwise, categorize the error
+    const categorizedError = categorizeError(error);
+    categorizedError.context = {
+      ...categorizedError.context,
+      paymentMethodId: request.paymentMethodId,
+      amount: request.amount,
+      operation: 'processPayment'
+    };
+    throw categorizedError;
   }
-  
-  return data as ProcessPaymentResponse;
 }
 
 export async function processRefund(request: ProcessRefundRequest): Promise<ProcessRefundResponse> {
-  // Get the current user's ID
-  const { data: { user } } = await supabase.auth.getUser();
-  
-  if (!user) {
-    throw new Error('User must be logged in to process refunds');
-  }
-  
-  // Call the process-refund edge function
-  const { data, error } = await supabase.functions.invoke('process-refund', {
-    body: {
-      ...request,
-      refundedBy: user.id
+  try {
+    // Get the current user's ID
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      const authError: PaymentError = {
+        type: PaymentErrorType.AUTHENTICATION,
+        code: 'unauthorized',
+        message: 'User must be logged in to process refunds',
+        retryable: false,
+        recoveryAction: 'login_required' as any
+      };
+      throw authError;
     }
-  });
-  
-  if (error) {
-    console.error('Refund processing error:', error);
-    throw new Error(error.message || 'Refund processing failed');
+    
+    // Call the process-refund edge function
+    const { data, error } = await supabase.functions.invoke('process-refund', {
+      body: {
+        ...request,
+        refundedBy: user.id,
+        timestamp: new Date().toISOString()
+      }
+    });
+    
+    if (error) {
+      console.error('Refund processing error:', error);
+      const categorizedError = categorizeError(error);
+      categorizedError.context = {
+        ...categorizedError.context,
+        transactionId: request.transactionId,
+        amount: request.amount,
+        operation: 'processRefund'
+      };
+      throw categorizedError;
+    }
+    
+    return data as ProcessRefundResponse;
+  } catch (error) {
+    // If it's already a PaymentError, re-throw it
+    if (error && typeof error === 'object' && 'type' in error) {
+      throw error;
+    }
+    
+    // Otherwise, categorize the error
+    const categorizedError = categorizeError(error);
+    categorizedError.context = {
+      ...categorizedError.context,
+      transactionId: request.transactionId,
+      operation: 'processRefund'
+    };
+    throw categorizedError;
   }
-  
-  return data as ProcessRefundResponse;
 }
 
 export async function getUserTransactions(): Promise<PaymentTransaction[]> {

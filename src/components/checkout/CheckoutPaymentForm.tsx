@@ -6,15 +6,22 @@ import { FormMessage } from '@/components/ui/form';
 import { Card } from '@/components/ui/card';
 import { useStripe as useStripeContext } from '@/contexts/StripeContext';
 import { Skeleton } from '@/components/ui/skeleton';
+import PaymentErrorDisplay from '@/components/common/PaymentErrorDisplay';
+import { categorizeError } from '@/utils/paymentValidation';
+import { PaymentError } from '@/types/PaymentErrors';
 
 interface CheckoutPaymentFormProps {
   onPaymentMethodChange: (paymentMethod: any) => void;
   error?: string;
+  onRetry?: () => void;
+  isProcessing?: boolean;
 }
 
 const CheckoutPaymentForm: React.FC<CheckoutPaymentFormProps> = ({ 
   onPaymentMethodChange,
-  error 
+  error,
+  onRetry,
+  isProcessing = false
 }) => {
   // Ensure Stripe is enabled
   const { enableStripe, isStripeLoading } = useStripeContext();
@@ -26,8 +33,9 @@ const CheckoutPaymentForm: React.FC<CheckoutPaymentFormProps> = ({
   
   const stripe = useStripe();
   const elements = useElements();
-  const [cardError, setCardError] = useState<string | undefined>();
+  const [cardError, setCardError] = useState<PaymentError | undefined>();
   const [isCardComplete, setIsCardComplete] = useState(false);
+  const [isCreatingPaymentMethod, setIsCreatingPaymentMethod] = useState(false);
   
   const cardElementOptions = {
     style: {
@@ -47,10 +55,18 @@ const CheckoutPaymentForm: React.FC<CheckoutPaymentFormProps> = ({
 
   const handleCardChange = async (event: any) => {
     setIsCardComplete(event.complete);
-    setCardError(event.error ? event.error.message : undefined);
     
-    if (event.complete && stripe && elements) {
+    // Handle Stripe card validation errors
+    if (event.error) {
+      const stripeError = categorizeError(event.error);
+      setCardError(stripeError);
+    } else {
+      setCardError(undefined);
+    }
+    
+    if (event.complete && stripe && elements && !isCreatingPaymentMethod) {
       try {
+        setIsCreatingPaymentMethod(true);
         const cardElement = elements.getElement(CardElement);
         if (cardElement) {
           const result = await stripe.createPaymentMethod({
@@ -59,14 +75,19 @@ const CheckoutPaymentForm: React.FC<CheckoutPaymentFormProps> = ({
           });
           
           if (result.error) {
-            setCardError(result.error.message);
+            const paymentMethodError = categorizeError(result.error);
+            setCardError(paymentMethodError);
           } else if (result.paymentMethod) {
+            setCardError(undefined);
             onPaymentMethodChange(result.paymentMethod);
           }
         }
       } catch (err) {
         console.error("Error creating payment method:", err);
-        setCardError('An unexpected error occurred while processing your payment method.');
+        const categorizedError = categorizeError(err);
+        setCardError(categorizedError);
+      } finally {
+        setIsCreatingPaymentMethod(false);
       }
     }
   };
@@ -95,21 +116,49 @@ const CheckoutPaymentForm: React.FC<CheckoutPaymentFormProps> = ({
       <div className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="card-element">Card Details</Label>
-          <div className="p-3 border rounded-md bg-white">
+          <div className={`p-3 border rounded-md bg-white ${
+            isProcessing || isCreatingPaymentMethod ? 'opacity-50 pointer-events-none' : ''
+          }`}>
             <CardElement 
               id="card-element" 
               options={cardElementOptions}
               onChange={handleCardChange}
             />
           </div>
+          {isCreatingPaymentMethod && (
+            <div className="text-sm text-muted-foreground">
+              Creating payment method...
+            </div>
+          )}
         </div>
         
-        {(cardError || error) && (
-          <FormMessage>{cardError || error}</FormMessage>
+        {/* Enhanced error display */}
+        {cardError && (
+          <PaymentErrorDisplay 
+            error={cardError}
+            onRetry={onRetry}
+            onUpdateCard={() => {
+              setCardError(undefined);
+              // Clear the card element to allow re-entry
+              const cardElement = elements?.getElement(CardElement);
+              if (cardElement) {
+                cardElement.clear();
+              }
+            }}
+            className="mt-4"
+          />
+        )}
+        
+        {/* Legacy error support */}
+        {error && !cardError && (
+          <FormMessage>{error}</FormMessage>
         )}
         
         <div className="text-sm text-gray-500">
           <p>Your card information is processed securely by Stripe.</p>
+          {isProcessing && (
+            <p className="mt-1 text-blue-600">Processing payment...</p>
+          )}
         </div>
       </div>
     </div>
