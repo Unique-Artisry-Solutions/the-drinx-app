@@ -79,7 +79,7 @@ export const exportUserData = async (
         export_date: new Date().toISOString(),
         export_format: format,
         user_id: userId,
-        tables_included: ['profiles', 'user_consent_tracking', 'payment_audit_logs', 'security_audit_logs', 'device_fingerprints']
+        tables_included: ['profiles', 'user_consent_tracking', 'payment_audit_logs', 'compliance_audit_trail', 'device_fingerprints']
       }
     };
 
@@ -201,9 +201,9 @@ export const deleteAllUserData = async (userId: string): Promise<void> => {
     if (paymentError) throw paymentError;
     deletedRecords.payment_logs_anonymized = paymentData?.length || 0;
 
-    // Delete security audit logs
+    // Delete compliance audit logs
     const { data: auditData, error: auditError } = await supabase
-      .from('security_audit_logs')
+      .from('compliance_audit_trail')
       .delete()
       .eq('user_id', userId)
       .select('id');
