@@ -1093,6 +1093,51 @@ export type Database = {
           },
         ]
       }
+      compliance_audit_trail: {
+        Row: {
+          action_details: Json
+          action_type: string
+          affected_data_type: string
+          compliance_status: string
+          compliance_type: string
+          created_at: string
+          id: string
+          ip_address: unknown | null
+          metadata: Json | null
+          performed_by: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action_details: Json
+          action_type: string
+          affected_data_type: string
+          compliance_status?: string
+          compliance_type: string
+          created_at?: string
+          id?: string
+          ip_address?: unknown | null
+          metadata?: Json | null
+          performed_by?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action_details?: Json
+          action_type?: string
+          affected_data_type?: string
+          compliance_status?: string
+          compliance_type?: string
+          created_at?: string
+          id?: string
+          ip_address?: unknown | null
+          metadata?: Json | null
+          performed_by?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       content_flags: {
         Row: {
           content_id: string
@@ -1205,6 +1250,93 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      data_anonymization_requests: {
+        Row: {
+          anonymization_method: Json
+          completed_at: string | null
+          created_at: string
+          executed_by: string | null
+          id: string
+          metadata: Json | null
+          request_type: string
+          requested_by: string | null
+          status: string
+          tables_affected: string[]
+          updated_at: string
+          user_id: string | null
+          verification_hash: string | null
+        }
+        Insert: {
+          anonymization_method: Json
+          completed_at?: string | null
+          created_at?: string
+          executed_by?: string | null
+          id?: string
+          metadata?: Json | null
+          request_type: string
+          requested_by?: string | null
+          status?: string
+          tables_affected: string[]
+          updated_at?: string
+          user_id?: string | null
+          verification_hash?: string | null
+        }
+        Update: {
+          anonymization_method?: Json
+          completed_at?: string | null
+          created_at?: string
+          executed_by?: string | null
+          id?: string
+          metadata?: Json | null
+          request_type?: string
+          requested_by?: string | null
+          status?: string
+          tables_affected?: string[]
+          updated_at?: string
+          user_id?: string | null
+          verification_hash?: string | null
+        }
+        Relationships: []
+      }
+      data_retention_policies: {
+        Row: {
+          auto_deletion_enabled: boolean
+          created_at: string
+          created_by: string | null
+          data_type: string
+          deletion_method: string
+          id: string
+          is_active: boolean
+          last_cleanup_at: string | null
+          retention_period_days: number
+          updated_at: string
+        }
+        Insert: {
+          auto_deletion_enabled?: boolean
+          created_at?: string
+          created_by?: string | null
+          data_type: string
+          deletion_method?: string
+          id?: string
+          is_active?: boolean
+          last_cleanup_at?: string | null
+          retention_period_days: number
+          updated_at?: string
+        }
+        Update: {
+          auto_deletion_enabled?: boolean
+          created_at?: string
+          created_by?: string | null
+          data_type?: string
+          deletion_method?: string
+          id?: string
+          is_active?: boolean
+          last_cleanup_at?: string | null
+          retention_period_days?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
       demand_metrics: {
         Row: {
@@ -3202,6 +3334,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      gdpr_data_exports: {
+        Row: {
+          completed_at: string | null
+          download_url: string | null
+          downloaded_at: string | null
+          expires_at: string | null
+          export_format: string
+          file_size_bytes: number | null
+          id: string
+          metadata: Json | null
+          requested_at: string
+          status: string
+          tables_included: string[]
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          download_url?: string | null
+          downloaded_at?: string | null
+          expires_at?: string | null
+          export_format?: string
+          file_size_bytes?: number | null
+          id?: string
+          metadata?: Json | null
+          requested_at?: string
+          status?: string
+          tables_included: string[]
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          download_url?: string | null
+          downloaded_at?: string | null
+          expires_at?: string | null
+          export_format?: string
+          file_size_bytes?: number | null
+          id?: string
+          metadata?: Json | null
+          requested_at?: string
+          status?: string
+          tables_included?: string[]
+          user_id?: string
+        }
+        Relationships: []
       }
       ingredient_pairing_scores: {
         Row: {
@@ -6058,6 +6235,48 @@ export type Database = {
           },
         ]
       }
+      secure_deletion_logs: {
+        Row: {
+          deletion_method: string
+          deletion_type: string
+          executed_at: string
+          executed_by: string | null
+          id: string
+          metadata: Json | null
+          reason: string | null
+          record_ids: Json
+          records_count: number
+          table_name: string
+          verification_hash: string | null
+        }
+        Insert: {
+          deletion_method: string
+          deletion_type: string
+          executed_at?: string
+          executed_by?: string | null
+          id?: string
+          metadata?: Json | null
+          reason?: string | null
+          record_ids: Json
+          records_count?: number
+          table_name: string
+          verification_hash?: string | null
+        }
+        Update: {
+          deletion_method?: string
+          deletion_type?: string
+          executed_at?: string
+          executed_by?: string | null
+          id?: string
+          metadata?: Json | null
+          reason?: string | null
+          record_ids?: Json
+          records_count?: number
+          table_name?: string
+          verification_hash?: string | null
+        }
+        Relationships: []
+      }
       security_event_logs: {
         Row: {
           created_at: string
@@ -7388,6 +7607,51 @@ export type Database = {
           },
         ]
       }
+      user_consent_tracking: {
+        Row: {
+          consent_given: boolean
+          consent_source: string
+          consent_type: string
+          consent_version: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          ip_address: unknown | null
+          updated_at: string
+          user_agent: string | null
+          user_id: string
+          withdrawn_at: string | null
+        }
+        Insert: {
+          consent_given: boolean
+          consent_source: string
+          consent_type: string
+          consent_version?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          ip_address?: unknown | null
+          updated_at?: string
+          user_agent?: string | null
+          user_id: string
+          withdrawn_at?: string | null
+        }
+        Update: {
+          consent_given?: boolean
+          consent_source?: string
+          consent_type?: string
+          consent_version?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          ip_address?: unknown | null
+          updated_at?: string
+          user_agent?: string | null
+          user_id?: string
+          withdrawn_at?: string | null
+        }
+        Relationships: []
+      }
       user_recipes: {
         Row: {
           created_at: string
@@ -8091,6 +8355,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      anonymize_user_data: {
+        Args: { p_user_id: string; p_tables?: string[] }
+        Returns: string
+      }
       batch_update_user_points: {
         Args: { p_operations: Json }
         Returns: {
@@ -8147,6 +8415,10 @@ export type Database = {
       }
       check_feature_access: {
         Args: { p_feature_name: string; p_user_id?: string }
+        Returns: boolean
+      }
+      check_user_consent: {
+        Args: { p_user_id: string; p_consent_type: string }
         Returns: boolean
       }
       generate_event_access_token: {
