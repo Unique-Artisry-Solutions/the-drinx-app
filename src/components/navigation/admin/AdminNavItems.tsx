@@ -46,7 +46,7 @@ export const adminNavItems: UnifiedNavItem[] = [
   },
   {
     label: 'Content Moderation',
-    path: '/admin/photo-moderation',
+    path: '/admin/content-moderation',
     icon: Image,
     showInNav: true,
   },

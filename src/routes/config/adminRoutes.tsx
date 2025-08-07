@@ -14,6 +14,9 @@ import RouteProtectionWrapper from '@/hoc/RouteProtectionWrapper';
 import AdminEstablishmentsPage from '@/pages/admin/AdminEstablishmentsPage';
 import PhotoModerationPage from '@/pages/admin/PhotoModerationPage';
 import TestingDashboard from '@/pages/admin/TestingDashboard';
+import AdminSystemOverviewPage from '@/pages/admin/AdminSystemOverviewPage';
+import AdminToolsPage from '@/pages/admin/AdminToolsPage';
+import AdminRewardsPage from '@/pages/admin/AdminRewardsPage';
 
 // Lazy loaded components
 const AdminDashboard = lazy(() => import('@/pages/admin/AdminDashboard'));
@@ -49,9 +52,9 @@ export const adminRoutes: RouteObject[] = [
     ),
     children: [
       // Dashboard & System
-      { index: true, element: <SystemFunctionalityBreakdown /> },
+      { index: true, element: <AdminSystemOverviewPage /> },
       { path: 'dashboard', element: <AdminDashboard /> },
-      { path: 'system-breakdown', element: <SystemFunctionalityBreakdown /> },
+      { path: 'system-breakdown', element: <AdminSystemOverviewPage /> },
       { path: 'analytics', element: <SystemAnalyticsPage /> },
       { path: 'system-configuration', element: <SystemConfigurationPage /> },
       
@@ -66,7 +69,7 @@ export const adminRoutes: RouteObject[] = [
       { path: 'content-moderation', element: <ContentModerationPage /> },
       
       // System Tools
-      { path: 'component-catalog', element: <ComponentCatalogPage /> },
+      { path: 'component-catalog', element: <AdminToolsPage /> },
       { path: 'theme-customization', element: <ThemeCustomizationPage /> },
       { path: 'testing', element: <TestingInterfacePage /> },
       { path: 'testing-dashboard', element: <TestingDashboard /> },
@@ -77,7 +80,7 @@ export const adminRoutes: RouteObject[] = [
       
       // Rewards & Commerce
       { path: 'reward-system-monitor', element: <RewardSystemMonitorPage /> },
-      { path: 'rewards', element: <RewardsAdminPage /> },
+      { path: 'rewards', element: <AdminRewardsPage /> },
       
       // Documentation
       { path: 'documentation', element: <AdminDocumentationPage /> },
