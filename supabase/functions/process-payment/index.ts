@@ -1,6 +1,16 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { corsHeaders } from '../_shared/cors.ts'
+import { 
+  getSecurityConfig, 
+  getCorsHeaders, 
+  sanitizeInput, 
+  validateSQLSafety,
+  checkRateLimit,
+  generateRequestFingerprint,
+  detectSuspiciousActivity
+} from '../_shared/security.ts'
+import { AuditLogger, generateRequestId, sanitizeForAudit } from '../_shared/audit.ts'
 import Stripe from 'https://esm.sh/stripe@12.6.0?target=deno'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -12,10 +22,103 @@ const supabaseClient = createClient(
 )
 
 const handler = async (req: Request): Promise<Response> => {
-  // Handle CORS preflight requests
+  const requestId = generateRequestId();
+  const startTime = Date.now();
+  const securityConfig = getSecurityConfig();
+  const fingerprint = generateRequestFingerprint(req);
+  const auditLogger = new AuditLogger(supabaseClient);
+  
+  // Enhanced CORS handling
+  const origin = req.headers.get('origin');
+  const secureHeaders = getCorsHeaders(origin, securityConfig);
+  
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response('ok', { headers: secureHeaders });
   }
+  
+  try {
+    // Log CORS violation if origin not allowed
+    if (origin && !secureHeaders['Access-Control-Allow-Origin']?.includes(origin)) {
+      await auditLogger.logCorsViolation(origin, fingerprint.ip, fingerprint.userAgent);
+      return new Response(
+        JSON.stringify({ error: 'Origin not allowed' }),
+        { status: 403, headers: secureHeaders }
+      );
+    }
+
+    // Rate limiting checks
+    const ipRateLimit = checkRateLimit(
+      `ip:${fingerprint.ip}`, 
+      1, // 1 minute window
+      securityConfig.maxRequestsPerMinute
+    );
+    
+    if (!ipRateLimit.allowed) {
+      await auditLogger.logRateLimitViolation(
+        fingerprint.ip, 
+        fingerprint.userAgent, 
+        fingerprint.userId,
+        { type: 'ip_rate_limit', resetTime: ipRateLimit.resetTime }
+      );
+      
+      return new Response(
+        JSON.stringify({ 
+          error: 'Rate limit exceeded', 
+          resetTime: ipRateLimit.resetTime 
+        }),
+        { 
+          status: 429, 
+          headers: { 
+            ...secureHeaders, 
+            'Content-Type': 'application/json',
+            'Retry-After': Math.ceil((ipRateLimit.resetTime - Date.now()) / 1000).toString()
+          } 
+        }
+      );
+    }
+
+    // User-based rate limiting if user ID provided
+    if (fingerprint.userId) {
+      const userRateLimit = checkRateLimit(
+        `user:${fingerprint.userId}`, 
+        60, // 60 minute window
+        securityConfig.maxRequestsPerHour
+      );
+      
+      if (!userRateLimit.allowed) {
+        await auditLogger.logRateLimitViolation(
+          fingerprint.ip, 
+          fingerprint.userAgent, 
+          fingerprint.userId,
+          { type: 'user_rate_limit', resetTime: userRateLimit.resetTime }
+        );
+        
+        return new Response(
+          JSON.stringify({ 
+            error: 'User rate limit exceeded', 
+            resetTime: userRateLimit.resetTime 
+          }),
+          { 
+            status: 429, 
+            headers: { 
+              ...secureHeaders, 
+              'Content-Type': 'application/json',
+              'Retry-After': Math.ceil((userRateLimit.resetTime - Date.now()) / 1000).toString()
+            } 
+          }
+        );
+      }
+    }
+
+    // Detect suspicious activity
+    if (detectSuspiciousActivity(fingerprint)) {
+      await auditLogger.logSuspiciousActivity(
+        fingerprint.ip,
+        fingerprint.userAgent,
+        'Suspicious user agent detected',
+        { requestId, method: req.method }
+      );
+    }
   
   try {
     const STRIPE_SECRET_KEY = Deno.env.get('STRIPE_SECRET_KEY')
@@ -32,9 +135,49 @@ const handler = async (req: Request): Promise<Response> => {
       httpClient: Stripe.createFetchHttpClient(),
     })
     
-    const { paymentMethodId, amount, currency, description, metadata } = await req.json()
+    // Parse and sanitize input
+    const rawBody = await req.json();
+    const sanitizedBody = sanitizeInput(rawBody);
+    const { paymentMethodId, amount, currency, description, metadata } = sanitizedBody;
     
-    console.log('Processing payment:', { paymentMethodId, amount, currency, description })
+    // Enhanced input validation
+    if (typeof amount !== 'number' || !isFinite(amount) || amount <= 0) {
+      throw new Error('Invalid amount provided');
+    }
+    
+    if (currency && !validateSQLSafety(currency)) {
+      throw new Error('Invalid currency format');
+    }
+    
+    if (description && (!validateSQLSafety(description) || description.length > 500)) {
+      throw new Error('Invalid description format or length');
+    }
+    
+    if (!paymentMethodId || typeof paymentMethodId !== 'string' || !paymentMethodId.startsWith('pm_')) {
+      throw new Error('Invalid payment method ID');
+    }
+
+    // Log payment attempt
+    await auditLogger.logPaymentAttempt({
+      request_id: requestId,
+      user_id: metadata?.userId,
+      ip_address: fingerprint.ip,
+      user_agent: fingerprint.userAgent,
+      payment_method_id: paymentMethodId,
+      amount,
+      currency: currency || 'usd',
+      status: 'initiated',
+      timestamp: new Date().toISOString(),
+      security_flags: detectSuspiciousActivity(fingerprint) ? ['suspicious_activity'] : []
+    });
+    
+    console.log('Processing payment:', sanitizeForAudit({ 
+      requestId, 
+      paymentMethodId: 'pm_***', 
+      amount, 
+      currency, 
+      description 
+    }));
     
     // Get the origin for dynamic return URL
     const origin = req.headers.get('origin') || req.headers.get('referer')?.split('/').slice(0, 3).join('/') || 'http://localhost:3000'
@@ -50,7 +193,23 @@ const handler = async (req: Request): Promise<Response> => {
       return_url: `${origin}/payment-confirmation`,
     })
     
-    console.log('Payment intent created:', { id: paymentIntent.id, status: paymentIntent.status })
+    console.log('Payment intent created:', { id: 'pi_***', status: paymentIntent.status, requestId });
+    
+    // Log successful payment processing
+    await auditLogger.logPaymentAttempt({
+      request_id: requestId,
+      user_id: metadata?.userId,
+      ip_address: fingerprint.ip,
+      user_agent: fingerprint.userAgent,
+      payment_method_id: paymentMethodId,
+      amount,
+      currency: currency || 'usd',
+      status: paymentIntent.status === 'succeeded' ? 'succeeded' : 'processing',
+      stripe_payment_intent_id: paymentIntent.id,
+      processing_time_ms: Date.now() - startTime,
+      timestamp: new Date().toISOString(),
+      security_flags: detectSuspiciousActivity(fingerprint) ? ['suspicious_activity'] : []
+    });
     
     // Record the payment in our database
     const { data: paymentData, error: paymentError } = await supabaseClient
@@ -93,7 +252,7 @@ const handler = async (req: Request): Promise<Response> => {
             transactionId: null,
             warning: 'Payment processed but record creation failed'
           }),
-          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 200, headers: { ...secureHeaders, 'Content-Type': 'application/json' } }
         )
       }
       
@@ -135,14 +294,34 @@ const handler = async (req: Request): Promise<Response> => {
         paymentIntentId: paymentIntent.id,
         transactionId: paymentData?.id || null
       }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 200, headers: { ...secureHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error) {
-    console.error('Error processing payment:', error)
+    console.error('Error processing payment:', error);
+    
+    // Log failed payment attempt
+    try {
+      await auditLogger.logPaymentAttempt({
+        request_id: requestId,
+        user_id: fingerprint.userId,
+        ip_address: fingerprint.ip,
+        user_agent: fingerprint.userAgent,
+        status: 'failed',
+        error_code: error.code || 'unknown',
+        error_message: error.message,
+        processing_time_ms: Date.now() - startTime,
+        timestamp: new Date().toISOString(),
+        security_flags: detectSuspiciousActivity(fingerprint) ? ['suspicious_activity'] : []
+      });
+    } catch (auditError) {
+      console.error('Failed to log audit event:', auditError);
+    }
+    
+    const secureHeaders = getCorsHeaders(req.headers.get('origin'), securityConfig);
     return new Response(
       JSON.stringify({ error: error.message }),
-      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
+      { status: 400, headers: { ...secureHeaders, 'Content-Type': 'application/json' } }
+    );
   }
 }
 
