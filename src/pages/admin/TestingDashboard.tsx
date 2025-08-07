@@ -1,10 +1,10 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { AdminPageLayout } from '@/components/admin/layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Play, RotateCcw, CheckCircle, XCircle, Clock, AlertCircle } from 'lucide-react';
+import { Play, RotateCcw, CheckCircle, XCircle, Clock, AlertCircle, TestTube } from 'lucide-react';
 
 // Simple internal types for the testing dashboard
 interface SimpleTestResult {
@@ -26,6 +26,13 @@ const TestingDashboard: React.FC = () => {
   const [isRunning, setIsRunning] = useState(false);
   const [progress, setProgress] = useState(0);
   const [currentTest, setCurrentTest] = useState<string>('');
+
+  const pageConfig = {
+    title: 'Testing Dashboard',
+    description: 'Automated testing suite and quality assurance tools',
+    showBreadcrumbs: true,
+    maxWidth: 'full' as const
+  };
 
   // Mock test suites data
   const [testSuites, setTestSuites] = useState<TestSuite[]>([
@@ -72,34 +79,6 @@ const TestingDashboard: React.FC = () => {
     sum + suite.tests.filter(test => test.status === 'failed').length, 0);
   const runningTests = testSuites.reduce((sum, suite) => 
     sum + suite.tests.filter(test => test.status === 'running').length, 0);
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'passed':
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case 'failed':
-        return <XCircle className="h-4 w-4 text-red-500" />;
-      case 'running':
-        return <Clock className="h-4 w-4 text-blue-500 animate-spin" />;
-      default:
-        return <AlertCircle className="h-4 w-4 text-gray-400" />;
-    }
-  };
-
-  const getStatusBadge = (status: string) => {
-    const variants = {
-      passed: 'bg-green-100 text-green-800',
-      failed: 'bg-red-100 text-red-800',
-      running: 'bg-blue-100 text-blue-800',
-      pending: 'bg-gray-100 text-gray-800'
-    };
-    
-    return (
-      <Badge className={variants[status as keyof typeof variants] || variants.pending}>
-        {status}
-      </Badge>
-    );
-  };
 
   const runAllTests = async () => {
     setIsRunning(true);
@@ -155,7 +134,7 @@ const TestingDashboard: React.FC = () => {
     await runAllTests();
   };
 
-  const clearResults = () => {
+  const resetAllTests = () => {
     const clearedSuites = testSuites.map(suite => ({
       ...suite,
       tests: suite.tests.map(test => ({
@@ -171,78 +150,93 @@ const TestingDashboard: React.FC = () => {
     setCurrentTest('');
   };
 
-  return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Testing Dashboard</h1>
-          <p className="text-gray-600 mt-2">Monitor and execute system tests</p>
-        </div>
-        
-        <div className="flex gap-2">
-          <Button 
-            onClick={runAllTests} 
-            disabled={isRunning}
-            className="gap-2"
-          >
-            <Play className="h-4 w-4" />
-            {isRunning ? 'Running...' : 'Run All Tests'}
-          </Button>
-          
-          <Button 
-            onClick={retryFailedTests} 
-            disabled={isRunning || failedTests === 0}
-            variant="outline"
-            className="gap-2"
-          >
-            <RotateCcw className="h-4 w-4" />
-            Retry Failed
-          </Button>
-          
-          <Button 
-            onClick={clearResults} 
-            disabled={isRunning}
-            variant="outline"
-          >
-            Clear Results
-          </Button>
-        </div>
-      </div>
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'passed':
+        return <CheckCircle className="h-4 w-4 text-green-500" />;
+      case 'failed':
+        return <XCircle className="h-4 w-4 text-red-500" />;
+      case 'running':
+        return <Clock className="h-4 w-4 text-blue-500 animate-spin" />;
+      default:
+        return <AlertCircle className="h-4 w-4 text-gray-400" />;
+    }
+  };
 
+  const getStatusBadge = (status: string) => {
+    const variants = {
+      passed: 'bg-green-100 text-green-800',
+      failed: 'bg-red-100 text-red-800',
+      running: 'bg-blue-100 text-blue-800',
+      pending: 'bg-gray-100 text-gray-800'
+    };
+    
+    return (
+      <Badge className={variants[status as keyof typeof variants] || variants.pending}>
+        {status}
+      </Badge>
+    );
+  };
+
+  const pageActions = [
+    {
+      label: 'Run All Tests',
+      icon: Play,
+      onClick: () => runAllTests(),
+      variant: 'default' as const,
+      disabled: isRunning
+    },
+    {
+      label: 'Retry Failed',
+      icon: RotateCcw,
+      onClick: () => retryFailedTests(),
+      variant: 'outline' as const,
+      disabled: isRunning || failedTests === 0
+    },
+    {
+      label: 'Reset Tests',
+      onClick: () => resetAllTests(),
+      variant: 'outline' as const,
+      disabled: isRunning
+    }
+  ];
+
+  return (
+    <AdminPageLayout config={pageConfig} actions={pageActions}>
       {/* Overall Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <Card>
           <CardContent className="pt-6">
             <div className="text-2xl font-bold">{totalTests}</div>
-            <p className="text-gray-600">Total Tests</p>
+            <p className="text-muted-foreground">Total Tests</p>
           </CardContent>
         </Card>
         
         <Card>
           <CardContent className="pt-6">
             <div className="text-2xl font-bold text-green-600">{passedTests}</div>
-            <p className="text-gray-600">Passed</p>
+            <p className="text-muted-foreground">Passed</p>
           </CardContent>
         </Card>
         
         <Card>
           <CardContent className="pt-6">
             <div className="text-2xl font-bold text-red-600">{failedTests}</div>
-            <p className="text-gray-600">Failed</p>
+            <p className="text-muted-foreground">Failed</p>
           </CardContent>
         </Card>
         
         <Card>
           <CardContent className="pt-6">
             <div className="text-2xl font-bold text-blue-600">{runningTests}</div>
-            <p className="text-gray-600">Running</p>
+            <p className="text-muted-foreground">Running</p>
           </CardContent>
         </Card>
       </div>
 
       {/* Progress Section */}
       {isRunning && (
-        <Card>
+        <Card className="mb-6">
           <CardContent className="pt-6">
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
@@ -251,7 +245,7 @@ const TestingDashboard: React.FC = () => {
               </div>
               <Progress value={progress} className="w-full" />
               {currentTest && (
-                <p className="text-sm text-gray-600">Currently running: {currentTest}</p>
+                <p className="text-sm text-muted-foreground">Currently running: {currentTest}</p>
               )}
             </div>
           </CardContent>
@@ -276,7 +270,7 @@ const TestingDashboard: React.FC = () => {
                     </div>
                     <div className="flex items-center gap-2">
                       {test.duration && (
-                        <span className="text-xs text-gray-500">{test.duration}ms</span>
+                        <span className="text-xs text-muted-foreground">{test.duration}ms</span>
                       )}
                       {getStatusBadge(test.status)}
                     </div>
@@ -296,7 +290,7 @@ const TestingDashboard: React.FC = () => {
           </Card>
         ))}
       </div>
-    </div>
+    </AdminPageLayout>
   );
 };
 
