@@ -39,6 +39,7 @@ const OptimizedAdminSidebar: React.FC = () => {
   };
 
   const handleNavigation = (path: string) => {
+    console.log('Navigating to:', path);
     navigate(path);
   };
   
@@ -85,6 +86,7 @@ const OptimizedAdminSidebar: React.FC = () => {
                   } else if (item.children && item.children.length > 0) {
                     toggleSidebarCategory(item.path);
                   } else {
+                    // Always navigate for items without children
                     handleNavigation(item.path);
                   }
                 }}
