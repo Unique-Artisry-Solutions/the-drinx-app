@@ -15,8 +15,8 @@ const AdminNotFound: React.FC = () => {
   ];
 
   return (
-    <AdminLayout>
-      <div className="flex items-center justify-center min-h-[60vh]">
+    <div className="flex h-screen bg-gray-50">
+      <div className="flex-1 flex items-center justify-center">
         <div className="text-center max-w-md">
           <h1 className="text-6xl font-bold mb-4 text-spiritless-pink">404</h1>
           <h2 className="text-2xl font-semibold text-gray-800 mb-4">
@@ -55,7 +55,7 @@ const AdminNotFound: React.FC = () => {
           </div>
         </div>
       </div>
-    </AdminLayout>
+    </div>
   );
 };
 

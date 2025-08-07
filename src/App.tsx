@@ -46,7 +46,20 @@ const App: React.FC = () => {
 
         {/* Admin Routes */}
         {adminRoutes.map((route, index) => (
-          <Route key={index} path={route.path} element={route.element} />
+          <Route 
+            key={index} 
+            path={route.path} 
+            element={route.element}
+          >
+            {route.children?.map((childRoute, childIndex) => (
+              <Route 
+                key={childIndex}
+                path={childRoute.path}
+                index={childRoute.index}
+                element={childRoute.element}
+              />
+            ))}
+          </Route>
         ))}
 
         {/* Promoter Routes */}

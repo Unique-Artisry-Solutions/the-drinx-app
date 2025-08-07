@@ -15,11 +15,16 @@ const AdminSidebar: React.FC = () => {
   };
   
   const isActive = (path: string) => {
-    return location.pathname === path || 
-      (path !== '/admin/dashboard' && location.pathname.startsWith(path));
+    // Exact match for home/dashboard paths
+    if (path === '/admin' || path === '/admin/dashboard' || path === '/admin/system-breakdown') {
+      return location.pathname === path;
+    }
+    // Prefix match for other paths
+    return location.pathname.startsWith(path);
   };
 
   const handleNavigation = (path: string) => {
+    console.log('Navigating to:', path);
     navigate(path);
   };
   
