@@ -19,11 +19,11 @@ const OptimizedAdminSidebar: React.FC = () => {
   
   // Auto-expand categories that contain the current active page
   useEffect(() => {
-    adminNavItems.forEach(category => {
-      if (category.children) {
-        const hasActiveChild = category.children.some(child => isActive(child.path));
-        if (hasActiveChild && !sidebarExpandedCategories.includes(category.path)) {
-          toggleSidebarCategory(category.path);
+    adminNavItems.forEach(item => {
+      if (item.children && item.children.length > 0) {
+        const hasActiveChild = item.children.some(child => isActive(child.path));
+        if (hasActiveChild && !sidebarExpandedCategories.includes(item.path)) {
+          toggleSidebarCategory(item.path);
         }
       }
     });
@@ -34,8 +34,8 @@ const OptimizedAdminSidebar: React.FC = () => {
       (path !== '/admin/dashboard' && location.pathname.startsWith(path));
   };
   
-  const hasActiveChild = (category: any) => {
-    return category.children?.some((child: any) => isActive(child.path)) || false;
+  const hasActiveChild = (item: any) => {
+    return item.children?.some((child: any) => isActive(child.path)) || false;
   };
 
   const handleNavigation = (path: string) => {
@@ -62,58 +62,71 @@ const OptimizedAdminSidebar: React.FC = () => {
       </div>
       
       <nav className={cn("px-2 py-2", sidebarCollapsed && "flex flex-col items-center")}>
-        {adminNavItems.map(category => {
-          const isExpanded = sidebarExpandedCategories.includes(category.path);
-          const categoryHasActiveChild = hasActiveChild(category);
+        {adminNavItems.map(item => {
+          const itemIsActive = isActive(item.path);
+          const isExpanded = sidebarExpandedCategories.includes(item.path);
+          const itemHasActiveChild = hasActiveChild(item);
           
           return (
-            <div key={category.path} className={cn("mb-1", sidebarCollapsed && "w-full flex justify-center")}>
+            <div key={item.path} className={cn("mb-1", sidebarCollapsed && "w-full flex justify-center")}>
               <button
                 className={cn(
                   "flex items-center w-full px-3 py-2 text-sm font-medium rounded-md transition-colors",
-                  (categoryHasActiveChild || isExpanded) 
+                  itemIsActive 
+                    ? "bg-white/25 text-white font-medium" 
+                    : itemHasActiveChild || isExpanded
                     ? "bg-white/15 text-white" 
-                    : "hover:bg-white/5 text-white/90",
+                    : "hover:bg-white/10 text-white/90",
                   sidebarCollapsed && "justify-center p-2"
                 )}
-                onClick={() => sidebarCollapsed ? setSidebarCollapsed(false) : toggleSidebarCategory(category.path)}
-                title={sidebarCollapsed ? category.label : undefined}
+                onClick={() => {
+                  if (sidebarCollapsed) {
+                    setSidebarCollapsed(false);
+                  } else if (item.children && item.children.length > 0) {
+                    toggleSidebarCategory(item.path);
+                  } else {
+                    handleNavigation(item.path);
+                  }
+                }}
+                title={sidebarCollapsed ? item.label : undefined}
               >
-                {React.createElement(category.icon, { 
+                {React.createElement(item.icon, { 
                   className: cn("h-5 w-5", !sidebarCollapsed && "mr-2 opacity-70") 
                 })}
                 {!sidebarCollapsed && (
                   <>
-                    <span className="flex-1 truncate">{category.label}</span>
-                    <div className="ml-auto">
-                      {isExpanded ? (
-                        <ChevronDown className="h-4 w-4 opacity-70" />
-                      ) : (
-                        <ChevronRight className="h-4 w-4 opacity-70" />
-                      )}
-                    </div>
+                    <span className="flex-1 truncate">{item.label}</span>
+                    {item.children && item.children.length > 0 && (
+                      <div className="ml-auto">
+                        {isExpanded ? (
+                          <ChevronDown className="h-4 w-4 opacity-70" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4 opacity-70" />
+                        )}
+                      </div>
+                    )}
                   </>
                 )}
               </button>
               
-              {!sidebarCollapsed && isExpanded && category.children && (
+              {!sidebarCollapsed && isExpanded && item.children && item.children.length > 0 && (
                 <div className="mt-1 ml-4 space-y-1 border-l border-white/10 pl-2">
-                  {category.children.map(item => (
+                  {item.children.map(childItem => (
                     <button
-                      key={item.path}
-                      onClick={() => handleNavigation(item.path)}
+                      key={childItem.path}
+                      onClick={() => handleNavigation(childItem.path)}
                       className={cn(
                         "flex items-center w-full px-3 py-2 text-sm rounded-md transition-colors text-left",
-                        isActive(item.path)
+                        isActive(childItem.path)
                           ? "bg-white/25 text-white font-medium border-l-2 border-white"
                           : "text-white/70 hover:text-white hover:bg-white/10"
                       )}
-                      title={sidebarCollapsed ? item.label : undefined}
+                      title={sidebarCollapsed ? childItem.label : undefined}
                     >
-                      {React.createElement(item.icon, { 
+                      {React.createElement(childItem.icon, { 
                         className: "h-4 w-4 mr-2" 
                       })}
-                      <span className="truncate">{item.label}</span>
+                      <span className="truncate">{childItem.label}</span>
                     </button>
                   ))}
                 </div>
