@@ -25,28 +25,20 @@ const AdminSidebar: React.FC = () => {
       }
     }
     
-    // Auto-expand categories that contain the current active page
+    // Auto-expand items that have children and contain the current active page
     const activeCategories: string[] = [];
-    adminNavItems.forEach(category => {
-      if (category.children) {
-        const hasActiveChild = category.children.some(child => isActive(child.path));
+    adminNavItems.forEach(item => {
+      if (item.children && item.children.length > 0) {
+        const hasActiveChild = item.children.some(child => isActive(child.path));
         if (hasActiveChild) {
-          activeCategories.push(category.path);
+          activeCategories.push(item.path);
         }
       }
     });
     
-    // Default expanded categories for better UX
-    const defaultExpanded = [
-      '/admin/dashboard',
-      '/admin/content',
-      '/admin/system-tools',
-    ];
-    
     const combinedExpanded = Array.from(new Set([
       ...activeCategories,
-      ...initialExpanded,
-      ...defaultExpanded
+      ...initialExpanded
     ]));
     
     setExpandedCategories(combinedExpanded);
@@ -74,8 +66,8 @@ const AdminSidebar: React.FC = () => {
       (path !== '/admin/dashboard' && location.pathname.startsWith(path));
   };
   
-  const hasActiveChild = (category: any) => {
-    return category.children?.some((child: any) => isActive(child.path)) || false;
+  const hasActiveChild = (item: any) => {
+    return item.children?.some((child: any) => isActive(child.path)) || false;
   };
 
   const handleNavigation = (path: string) => {
@@ -102,58 +94,69 @@ const AdminSidebar: React.FC = () => {
       </div>
       
       <nav className={cn("px-2 py-2", collapsed && "flex flex-col items-center")}>
-        {adminNavItems.map(category => {
-          const isExpanded = expandedCategories.includes(category.path);
-          const categoryHasActiveChild = hasActiveChild(category);
+        {adminNavItems.map(item => {
+          const itemIsActive = isActive(item.path);
+          const hasChildren = item.children && item.children.length > 0;
+          const isExpanded = expandedCategories.includes(item.path);
           
           return (
-            <div key={category.path} className={cn("mb-1", collapsed && "w-full flex justify-center")}>
+            <div key={item.path} className={cn("mb-1", collapsed && "w-full flex justify-center")}>
               <button
                 className={cn(
                   "flex items-center w-full px-3 py-2 text-sm font-medium rounded-md transition-colors",
-                  (categoryHasActiveChild || isExpanded) 
-                    ? "bg-white/15 text-white" 
-                    : "hover:bg-white/5 text-white/90",
+                  itemIsActive 
+                    ? "bg-white/25 text-white font-medium" 
+                    : "hover:bg-white/10 text-white/90",
                   collapsed && "justify-center p-2"
                 )}
-                onClick={() => collapsed ? toggleCollapse() : toggleCategory(category.path)}
-                title={collapsed ? category.label : undefined}
+                onClick={() => {
+                  if (collapsed) {
+                    toggleCollapse();
+                  } else if (hasChildren) {
+                    toggleCategory(item.path);
+                  } else {
+                    handleNavigation(item.path);
+                  }
+                }}
+                title={collapsed ? item.label : undefined}
               >
-                {React.createElement(category.icon, { 
+                {React.createElement(item.icon, { 
                   className: cn("h-5 w-5", !collapsed && "mr-2 opacity-70") 
                 })}
                 {!collapsed && (
                   <>
-                    <span className="flex-1 truncate">{category.label}</span>
-                    <div className="ml-auto">
-                      {isExpanded ? (
-                        <ChevronDown className="h-4 w-4 opacity-70" />
-                      ) : (
-                        <ChevronRight className="h-4 w-4 opacity-70" />
-                      )}
-                    </div>
+                    <span className="flex-1 truncate">{item.label}</span>
+                    {hasChildren && (
+                      <div className="ml-auto">
+                        {isExpanded ? (
+                          <ChevronDown className="h-4 w-4 opacity-70" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4 opacity-70" />
+                        )}
+                      </div>
+                    )}
                   </>
                 )}
               </button>
               
-              {!collapsed && isExpanded && category.children && (
+              {!collapsed && isExpanded && hasChildren && (
                 <div className="mt-1 ml-4 space-y-1 border-l border-white/10 pl-2">
-                  {category.children.map(item => (
+                  {item.children.map(child => (
                     <button
-                      key={item.path}
-                      onClick={() => handleNavigation(item.path)}
+                      key={child.path}
+                      onClick={() => handleNavigation(child.path)}
                       className={cn(
                         "flex items-center w-full px-3 py-2 text-sm rounded-md transition-colors text-left",
-                        isActive(item.path)
+                        isActive(child.path)
                           ? "bg-white/25 text-white font-medium border-l-2 border-white"
                           : "text-white/70 hover:text-white hover:bg-white/10"
                       )}
-                      title={collapsed ? item.label : undefined}
+                      title={collapsed ? child.label : undefined}
                     >
-                      {React.createElement(item.icon, { 
+                      {React.createElement(child.icon, { 
                         className: "h-4 w-4 mr-2" 
                       })}
-                      <span className="truncate">{item.label}</span>
+                      <span className="truncate">{child.label}</span>
                     </button>
                   ))}
                 </div>
