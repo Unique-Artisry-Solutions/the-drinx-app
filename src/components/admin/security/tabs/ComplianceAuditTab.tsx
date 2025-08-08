@@ -86,8 +86,16 @@ export const ComplianceAuditTab: React.FC = () => {
       if (error) throw error;
 
       const events: ComplianceEvent[] = (auditTrail || []).map(event => ({
-        ...event,
-        action_details: event.action_details as Record<string, any>
+        id: event.id,
+        compliance_type: event.compliance_type,
+        action_type: event.action_type,
+        user_id: event.user_id || undefined,
+        affected_data_type: event.affected_data_type,
+        action_details: event.action_details as Record<string, any>,
+        performed_by: event.performed_by || undefined,
+        created_at: event.created_at,
+        compliance_status: event.compliance_status,
+        ip_address: event.ip_address ? String(event.ip_address) : undefined
       }));
 
       // Calculate metrics
