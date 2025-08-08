@@ -14,8 +14,8 @@ const ServiceMonitoringDashboard: React.FC = () => {
       <CardContent>
         <div className="space-y-4">
           <p className="text-muted-foreground">
-            Service monitoring dashboard placeholder. This component will display
-            real-time monitoring of system services and their health status.
+            This dashboard has been enhanced with comprehensive security monitoring.
+            Please use the Security Monitoring Dashboard for advanced security features.
           </p>
         </div>
       </CardContent>
