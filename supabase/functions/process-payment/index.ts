@@ -212,7 +212,97 @@ const handler = async (req: Request): Promise<Response> => {
     
     // Get the origin for dynamic return URL
     const originForReturn = req.headers.get('origin') || req.headers.get('referer')?.split('/').slice(0, 3).join('/') || 'http://localhost:3000'
-    
+
+    // Security: BIN validation, device fingerprint upsert, and anomaly detection
+    let riskFlags: string[] = []
+
+    // Try to retrieve payment method details to check card metadata
+    let pm: any = null
+    try {
+      pm = await stripe.paymentMethods.retrieve(paymentMethodId)
+    } catch (e) {
+      console.warn('Failed to retrieve payment method details', e)
+    }
+    const cardInfo = pm?.card || null
+    let bin: string | null = (cardInfo as any)?.iin || null
+    if (!bin && (metadata as any)?.bin) {
+      bin = String((metadata as any).bin).slice(0, 6)
+    }
+    if (bin) {
+      try {
+        const { data: binRow } = await supabaseClient
+          .from('bin_database')
+          .select('bin_range, card_brand, country_code, is_restricted, risk_level, issuing_bank')
+          .eq('bin_range', bin)
+          .maybeSingle()
+        if (binRow) {
+          if (binRow.is_restricted) {
+            await supabaseClient.from('security_event_logs').insert({
+              event_type: 'bin_validation_block',
+              severity: 'high',
+              ip_address: fingerprint.ip,
+              user_agent: fingerprint.userAgent,
+              endpoint: 'process-payment',
+              details: { bin, amount, currency, issuing_bank: binRow.issuing_bank }
+            })
+            return new Response(
+              JSON.stringify({ error: 'This card is not accepted. Please use a different payment method.' }),
+              { status: 403, headers: { ...secureHeaders, 'Content-Type': 'application/json' } }
+            )
+          }
+          if (binRow.risk_level && binRow.risk_level !== 'low') {
+            riskFlags.push(`bin_risk_${binRow.risk_level}`)
+          }
+        }
+      } catch (e) {
+        console.warn('BIN lookup failed', e)
+      }
+    }
+
+    // Persist/request device fingerprint
+    const deviceFp = generateDeviceFingerprint(req)
+    try {
+      await supabaseClient.from('device_fingerprints').insert({
+        user_id: (metadata as any)?.userId || null,
+        device_data: { user_agent: fingerprint.userAgent, accept_language: req.headers.get('accept-language') },
+        fingerprint_hash: deviceFp,
+        is_trusted: false,
+        risk_score: 0
+      })
+    } catch (_) { /* ignore unique/rls issues */ }
+
+    // Basic anomaly detection on user history
+    if ((metadata as any)?.userId) {
+      try {
+        const { data: recent } = await supabaseClient
+          .from('payment_transactions')
+          .select('amount, created_at, status')
+          .eq('user_id', (metadata as any).userId)
+          .eq('status', 'completed')
+          .order('created_at', { ascending: false })
+          .limit(10)
+        const amounts = (recent || []).map(r => Number(r.amount) || 0)
+        const avg = amounts.length ? amounts.reduce((a, b) => a + b, 0) / amounts.length : 0
+        if (avg > 0 && amount > avg * 3) riskFlags.push('amount_spike')
+        if (amount >= 200000) riskFlags.push('absolute_high_amount') // >= $2000 assuming cents
+      } catch (e) {
+        console.warn('Anomaly detection failed', e)
+      }
+    }
+
+    if (riskFlags.length) {
+      try {
+        await supabaseClient.from('security_event_logs').insert({
+          event_type: 'payment_anomaly',
+          severity: riskFlags.includes('absolute_high_amount') ? 'high' : 'medium',
+          ip_address: fingerprint.ip,
+          user_agent: fingerprint.userAgent,
+          endpoint: 'process-payment',
+          details: { amount, currency, payment_method_id: paymentMethodId, bin: bin || undefined, card_brand: cardInfo?.brand, issuing_country: cardInfo?.country, flags: riskFlags }
+        })
+      } catch (_) { /* ignore */ }
+    }
+
     // Create a payment intent
     const paymentIntent = await stripe.paymentIntents.create({
       amount,
@@ -261,6 +351,7 @@ const handler = async (req: Request): Promise<Response> => {
         metadata: {
           ...(metadata as any),
           stripe_payment_intent: paymentIntent.id,
+          risk_flags: riskFlags
         }
       })
       .select('id')

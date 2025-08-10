@@ -1,5 +1,4 @@
-
-project_id = "your-project-id"
+project_id = "dvifibvzwunnpcsihpxq"
 
 [api]
 enabled = true
@@ -47,4 +46,10 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.cancel-subscription]
+verify_jwt = true
+
+[functions.security-healthcheck]
+verify_jwt = false
+
+[functions.rotate-stripe-key]
 verify_jwt = true
