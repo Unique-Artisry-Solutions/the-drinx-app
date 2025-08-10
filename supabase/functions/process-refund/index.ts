@@ -4,6 +4,7 @@ import { getSecurityConfig, getCorsHeaders, isOriginAllowed } from '../_shared/s
 import { enforceRateLimit } from '../_shared/rateLimit.ts'
 import { sanitizeObject, validateBasicPayload } from '../_shared/sanitize.ts'
 import Stripe from 'https://esm.sh/stripe@12.6.0?target=deno'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { logHttpStart, logHttpEnd, logPaymentAudit, logSecurityEvent } from '../_shared/logging.ts'
 
 const handler = async (req: Request): Promise<Response> => {
@@ -64,8 +65,7 @@ const handler = async (req: Request): Promise<Response> => {
       return new Response(JSON.stringify({ error: basic.error }), { status: 400, headers: { ...secureHeaders, 'Content-Type': 'application/json' } })
     }
     
-    // Import the Supabase client
-    import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+    // Using Supabase client imported at module top
 
     // Create a Supabase client
     const supabaseClient = createClient(
