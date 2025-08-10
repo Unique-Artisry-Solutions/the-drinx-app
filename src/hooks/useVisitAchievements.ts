@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth';
+import { rewardsApi } from '@/lib/rewards/api';
+import type { Achievement } from '@/types/rewards';
 
 export const useVisitAchievements = () => {
   const { user } = useAuth();
-  const [achievements, setAchievements] = useState<any[]>([]);
+  const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -12,17 +13,18 @@ export const useVisitAchievements = () => {
 
   const fetchAchievements = async () => {
     if (!user?.id) return;
-    
+
     setIsLoading(true);
     setError(null);
-    
+
     try {
-      // Since these tables don't exist yet, return empty data
-      setAchievements([]);
+      const userAchievements = await rewardsApi.getUserAchievements(user.id);
+      setAchievements(userAchievements);
+      // TODO: Hook up real notifications when API is available
       setNotifications([]);
       setUnreadCount(0);
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || 'Failed to load achievements');
       console.error('Error fetching achievements:', err);
     } finally {
       setIsLoading(false);
@@ -30,12 +32,12 @@ export const useVisitAchievements = () => {
   };
 
   const markNotificationAsRead = async (notificationId: string) => {
-    // Placeholder - will be implemented when tables exist
+    // Placeholder - wire to API when available
     console.log('markNotificationAsRead:', notificationId);
   };
 
   const markAllNotificationsAsRead = async () => {
-    // Placeholder - will be implemented when tables exist
+    // Placeholder - wire to API when available
     console.log('markAllNotificationsAsRead called');
   };
 
