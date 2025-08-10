@@ -7844,6 +7844,39 @@ export type Database = {
         }
         Relationships: []
       }
+      user_consents: {
+        Row: {
+          consent_type: string
+          created_at: string
+          id: string
+          metadata: Json
+          status: string
+          updated_at: string
+          user_id: string
+          version: string | null
+        }
+        Insert: {
+          consent_type: string
+          created_at?: string
+          id?: string
+          metadata?: Json
+          status: string
+          updated_at?: string
+          user_id: string
+          version?: string | null
+        }
+        Update: {
+          consent_type?: string
+          created_at?: string
+          id?: string
+          metadata?: Json
+          status?: string
+          updated_at?: string
+          user_id?: string
+          version?: string | null
+        }
+        Relationships: []
+      }
       user_recipes: {
         Row: {
           created_at: string
@@ -8217,6 +8250,16 @@ export type Database = {
           source: string | null
           text: string | null
           user_name: string | null
+        }
+        Relationships: []
+      }
+      compliance_audit_report: {
+        Row: {
+          action_type: string | null
+          compliance_status: string | null
+          compliance_type: string | null
+          day: string | null
+          event_count: number | null
         }
         Relationships: []
       }
@@ -8766,6 +8809,10 @@ export type Database = {
       refresh_reward_profile_cache: {
         Args: { p_user_id: string; p_establishment_id?: string }
         Returns: undefined
+      }
+      run_retention_cleanup: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
       }
       start_follower_onboarding: {
         Args: { p_follower_id: string }
