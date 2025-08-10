@@ -4,6 +4,9 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.8";
 import { createHmac } from "https://deno.land/std@0.220.1/crypto/mod.ts";
 import { getSecurityConfig, getCorsHeaders, isOriginAllowed } from '../_shared/security.ts';
 import { enforceRateLimit } from '../_shared/rateLimit.ts';
+import { sanitizeObject } from '../_shared/sanitize.ts';
+import { z } from "npm:zod@3.23.8";
+import { enforceRateLimit } from '../_shared/rateLimit.ts';
 
 
 // Twitter/X API configuration
@@ -108,6 +111,14 @@ interface SocialShareRequest {
   eventId: string;
 }
 
+const SocialShareSchema = z.object({
+  platform: z.enum(['twitter','facebook','linkedin','instagram']),
+  content: z.string().min(1),
+  url: z.string().url(),
+  campaignId: z.string().uuid(),
+  eventId: z.string().uuid()
+}).strict();
+
 const handler = async (req: Request): Promise<Response> => {
   const origin = req.headers.get('origin');
   const config = getSecurityConfig();
@@ -127,8 +138,9 @@ const handler = async (req: Request): Promise<Response> => {
       return new Response(JSON.stringify({ error: 'Rate limit exceeded' }), { status: 429, headers: { ...cors, 'Content-Type': 'application/json', 'Retry-After': String(rate.retryAfter ?? 60) } });
     }
 
-    const { platform, content, url, campaignId, eventId } = 
-      await req.json() as SocialShareRequest;
+    const raw = await req.json();
+    const clean = sanitizeObject(raw);
+    const { platform, content, url, campaignId, eventId } = SocialShareSchema.parse(clean);
 
     let response;
     let success = false;

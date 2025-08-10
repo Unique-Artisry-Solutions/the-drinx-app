@@ -4,6 +4,8 @@ import { Resend } from "npm:resend@2.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.8";
 import { getSecurityConfig, getCorsHeaders, isOriginAllowed } from '../_shared/security.ts';
 import { enforceRateLimit } from '../_shared/rateLimit.ts';
+import { sanitizeObject } from '../_shared/sanitize.ts';
+import { z } from "npm:zod@3.23.8";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 const supabaseUrl = Deno.env.get('SUPABASE_URL') as string;
@@ -11,15 +13,14 @@ const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') as string;
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 
-interface MarketingEmailRequest {
-  subject: string;
-  htmlContent: string;
-  recipients: string[];
-  campaignId: string;
-  eventId: string;
-  trackingPixel?: boolean;
-}
-
+const MarketingEmailSchema = z.object({
+  subject: z.string().min(1),
+  htmlContent: z.string().min(1),
+  recipients: z.array(z.string().email()).min(1),
+  campaignId: z.string().uuid(),
+  eventId: z.string().uuid(),
+  trackingPixel: z.boolean().optional()
+}).strict();
 async function getAuthenticatedUser(req: Request): Promise<{ user: any | null; error?: string }> {
   const authHeader = req.headers.get('Authorization') || '';
   const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : (authHeader.split(' ')[1] || '');
@@ -63,11 +64,10 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    const { subject, htmlContent, recipients, campaignId, eventId, trackingPixel = true } = await req.json() as MarketingEmailRequest;
+    const raw = await req.json();
+    const clean = sanitizeObject(raw);
+    const { subject, htmlContent, recipients, campaignId, eventId, trackingPixel = true } = MarketingEmailSchema.parse(clean);
 
-    if (!subject || !htmlContent || !recipients || recipients.length === 0) {
-      throw new Error('Missing required fields');
-    }
 
     // Add tracking pixel if requested
     let finalHtml = htmlContent;

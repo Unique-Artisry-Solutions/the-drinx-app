@@ -6,6 +6,7 @@ import { sanitizeObject, validateBasicPayload } from '../_shared/sanitize.ts'
 import Stripe from 'https://esm.sh/stripe@12.6.0?target=deno'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { logHttpStart, logHttpEnd, logPaymentAudit } from '../_shared/logging.ts'
+import { z } from "npm:zod@3.23.8"
 
 const handler = async (req: Request): Promise<Response> => {
   const origin = req.headers.get('origin');
@@ -25,16 +26,16 @@ const handler = async (req: Request): Promise<Response> => {
     // Persistent rate limiting
     const rate = await enforceRateLimit(req, 'update-subscription', { userLimit: 30, ipLimit: 90, windowSeconds: 60 })
     if (!rate.allowed) {
-      await logHttpEnd(http, 429, corsHeaders)
-      return new Response(JSON.stringify({ error: 'Rate limit exceeded' }), { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Retry-After': String(rate.retryAfter ?? 60) } })
+      await logHttpEnd(http, 429, cors)
+      return new Response(JSON.stringify({ error: 'Rate limit exceeded' }), { status: 429, headers: { ...cors, 'Content-Type': 'application/json', 'Retry-After': String(rate.retryAfter ?? 60) } })
     }
 
     const STRIPE_SECRET_KEY = Deno.env.get('STRIPE_SECRET_KEY')
     if (!STRIPE_SECRET_KEY) {
-      await logHttpEnd(http, 500, corsHeaders)
+      await logHttpEnd(http, 500, cors)
       return new Response(
         JSON.stringify({ error: 'Stripe secret key not configured' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 500, headers: { ...cors, 'Content-Type': 'application/json' } }
       )
     }
 
@@ -62,11 +63,18 @@ const handler = async (req: Request): Promise<Response> => {
         status: 'failed',
         errorMessage: basic.error ?? 'Invalid payload'
       })
-      await logHttpEnd(http, 400, corsHeaders)
-      return new Response(JSON.stringify({ error: basic.error }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+      await logHttpEnd(http, 400, cors)
+      return new Response(JSON.stringify({ error: basic.error }), { status: 400, headers: { ...cors, 'Content-Type': 'application/json' } })
     }
 
-    const { subscriptionId, priceId, metadata } = body
+    const Schema = z.object({
+      subscriptionId: z.string().min(1),
+      priceId: z.string().min(1),
+      metadata: z.record(z.any()).optional()
+    }).strict()
+
+    const { subscriptionId, priceId, metadata } = Schema.parse(body)
+
 
     // Audit: initiated
     await logPaymentAudit({
@@ -111,14 +119,14 @@ const handler = async (req: Request): Promise<Response> => {
       status: 'succeeded'
     })
 
-    await logHttpEnd(http, 200, corsHeaders)
+    await logHttpEnd(http, 200, cors)
     return new Response(
       JSON.stringify({
         subscription_id: subscription.id,
         status: subscription.status,
         updated: true
       }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 200, headers: { ...cors, 'Content-Type': 'application/json' } }
     )
   } catch (error) {
     console.error('Error updating subscription:', error)
@@ -130,10 +138,10 @@ const handler = async (req: Request): Promise<Response> => {
       status: 'failed',
       errorMessage: (error as any)?.message ?? 'Unknown error'
     })
-    await logHttpEnd(http, 400, corsHeaders)
+    await logHttpEnd(http, 400, cors)
     return new Response(
       JSON.stringify({ error: (error as any).message }),
-      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 400, headers: { ...cors, 'Content-Type': 'application/json' } }
     )
   }
 }

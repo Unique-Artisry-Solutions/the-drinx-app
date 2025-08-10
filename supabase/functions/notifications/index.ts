@@ -2,6 +2,9 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.0"
 import { getSecurityConfig, getCorsHeaders, isOriginAllowed } from '../_shared/security.ts'
 import { enforceRateLimit } from '../_shared/rateLimit.ts'
+import { sanitizeObject } from '../_shared/sanitize.ts'
+import { z } from "npm:zod@3.23.8"
+import { enforceRateLimit } from '../_shared/rateLimit.ts'
 
 
 // Helper function to create consistent error responses
@@ -15,6 +18,31 @@ const createErrorResponse = (message: string, status = 400, cors: Record<string,
     }
   );
 };
+
+// Zod schemas for request validation
+const ActionSchema = z.object({
+  action: z.enum([
+    'getVapidKey','getNotifications','updateNotification','markAllAsRead','createNotification',
+    'saveVapidKeys','testPushNotification','getPromoterNotifications','updatePromoterPreferences',
+    'getEstablishmentNotifications','updateEstablishmentPreferences','healthCheck'
+  ]),
+  params: z.unknown().optional()
+}).strict();
+
+const GetNotificationsSchema = z.object({ userId: z.string().uuid() }).strict();
+const UpdateNotificationSchema = z.object({ notificationId: z.string().uuid(), isRead: z.boolean() }).strict();
+const MarkAllAsReadSchema = z.object({ userId: z.string().uuid() }).strict();
+const CreateNotificationSchema = z.object({
+  recipientId: z.string().uuid(),
+  title: z.string().min(1),
+  content: z.string().min(1),
+  priority: z.enum(['low','medium','high']).optional(),
+  categoryId: z.string().uuid().optional(),
+  metadata: z.record(z.any()).optional()
+}).strict();
+const SaveVapidKeysSchema = z.object({ publicKey: z.string().min(1), privateKey: z.string().min(1), mailto: z.string().email() }).strict();
+const IdOnlySchema = z.object({ promoterId: z.string().uuid().optional(), establishmentId: z.string().uuid().optional(), userId: z.string().uuid().optional() }).strict();
+const PreferencesSchema = z.object({ promoterId: z.string().uuid().optional(), establishmentId: z.string().uuid().optional(), preferences: z.record(z.any()) }).strict();
 
 serve(async (req) => {
   const origin = req.headers.get('origin');
@@ -35,9 +63,11 @@ serve(async (req) => {
     // Persistent rate limiting
     const rate = await enforceRateLimit(req, 'notifications', { userLimit: 20, ipLimit: 60, windowSeconds: 60 });
     if (!rate.allowed) {
-      return new Response(JSON.stringify({ error: 'Rate limit exceeded' }), { status: 429, headers: { ...cors, 'Content-Type': 'application/json', 'Retry-After': String(rate.retryAfter ?? 60) } });
+      return createErrorResponse('Rate limit exceeded', 429, cors);
     }
-    const { action, params } = await req.json()
+    const raw = await req.json();
+    const clean = sanitizeObject(raw);
+    const { action, params } = ActionSchema.parse(clean);
     
     switch (action) {
       case 'getVapidKey':
@@ -53,30 +83,23 @@ serve(async (req) => {
         );
 
       case 'getNotifications':
-        if (!params?.userId) {
-          return createErrorResponse('User ID is required', 400, cors);
-        }
-        return await handleGetNotifications(params, cors);
+        const pGet = GetNotificationsSchema.parse(params ?? {});
+        return await handleGetNotifications(pGet, cors);
 
       case 'updateNotification':
-        if (!params?.notificationId) {
-          return createErrorResponse('Notification ID is required', 400, cors);
-        }
-        return await handleUpdateNotification(params, cors);
+        const pUpdate = UpdateNotificationSchema.parse(params ?? {});
+        return await handleUpdateNotification(pUpdate, cors);
 
       case 'markAllAsRead':
-        if (!params?.userId) {
-          return createErrorResponse('User ID is required', 400, cors);
-        }
-        return await handleMarkAllAsRead(params, cors);
+        const pMark = MarkAllAsReadSchema.parse(params ?? {});
+        return await handleMarkAllAsRead(pMark, cors);
 
       case 'createNotification':
-        return await handleCreateNotification(params, req.headers.get('Authorization') || '', cors);
+        const pCreate = CreateNotificationSchema.parse(params ?? {});
+        return await handleCreateNotification(pCreate, req.headers.get('Authorization') || '', cors);
 
       case 'saveVapidKeys':
-        if (!params.publicKey || !params.privateKey || !params.mailto) {
-          return createErrorResponse('Missing required VAPID parameters', 400, cors);
-        }
+        const pVapid = SaveVapidKeysSchema.parse(params ?? {});
         return new Response(
           JSON.stringify({ 
             success: true,
@@ -86,12 +109,9 @@ serve(async (req) => {
         );
 
       case 'testPushNotification':
-        // Simple test endpoint that doesn't rely on web-push
-        const userId = params?.userId;
-        if (!userId) {
-          return createErrorResponse('User ID is required', 400, cors);
-        }
-
+        const pTest = GetNotificationsSchema.parse(params ?? {});
+        const userId = pTest.userId;
+        
         const testResponse = {
           success: true,
           message: "Test notification processed",
@@ -120,16 +140,15 @@ serve(async (req) => {
         );
 
       case 'getPromoterNotifications':
-        if (!params?.promoterId) {
-          return createErrorResponse('Promoter ID is required', 400, cors);
-        }
-        return await handleGetPromoterNotifications(params, cors);
+        const pProm = z.object({ promoterId: z.string().uuid() }).strict().parse(params ?? {});
+        return await handleGetPromoterNotifications(pProm, cors);
 
       case 'updatePromoterPreferences':
-        if (!params?.promoterId || !params?.preferences) {
+        const pPromPref = PreferencesSchema.parse(params ?? {});
+        if (!pPromPref.promoterId || !pPromPref.preferences) {
           return createErrorResponse('Promoter ID and preferences are required', 400, cors);
         }
-        return await handleUpdatePromoterPreferences(params, cors);
+        return await handleUpdatePromoterPreferences(pPromPref, cors);
 
       case 'getEstablishmentNotifications':
         if (!params?.establishmentId) {
@@ -138,10 +157,11 @@ serve(async (req) => {
         return await handleGetEstablishmentNotifications(params);
 
       case 'updateEstablishmentPreferences':
-        if (!params?.establishmentId || !params?.preferences) {
-          return createErrorResponse('Establishment ID and preferences are required');
+        const pEstPref = PreferencesSchema.parse(params ?? {});
+        if (!pEstPref.establishmentId || !pEstPref.preferences) {
+          return createErrorResponse('Establishment ID and preferences are required', 400, cors);
         }
-        return await handleUpdateEstablishmentPreferences(params);
+        return await handleUpdateEstablishmentPreferences(pEstPref, cors);
 
       default:
         return createErrorResponse('Invalid action');
@@ -232,12 +252,12 @@ async function handleGetNotifications(params: any, cors: Record<string, string>)
     if (error) throw error;
 
     if (!notifications || notifications.length === 0) {
-      return new Response(
-        JSON.stringify({ data: [], message: 'No notifications found' }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
+        return new Response(
+          JSON.stringify({ data: [], message: 'No notifications found' }),
+          {
+            headers: { ...cors, 'Content-Type': 'application/json' },
+          }
+        );
     }
 
     return new Response(
