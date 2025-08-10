@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.0"
 import { getSecurityConfig, getCorsHeaders, isOriginAllowed } from '../_shared/security.ts'
+import { enforceRateLimit } from '../_shared/rateLimit.ts'
 
 
 // Helper function to create consistent error responses
@@ -31,6 +32,11 @@ serve(async (req) => {
   }
 
   try {
+    // Persistent rate limiting
+    const rate = await enforceRateLimit(req, 'notifications', { userLimit: 20, ipLimit: 60, windowSeconds: 60 });
+    if (!rate.allowed) {
+      return new Response(JSON.stringify({ error: 'Rate limit exceeded' }), { status: 429, headers: { ...cors, 'Content-Type': 'application/json', 'Retry-After': String(rate.retryAfter ?? 60) } });
+    }
     const { action, params } = await req.json()
     
     switch (action) {

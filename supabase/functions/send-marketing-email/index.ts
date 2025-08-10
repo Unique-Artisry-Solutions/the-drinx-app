@@ -3,6 +3,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.8";
 import { getSecurityConfig, getCorsHeaders, isOriginAllowed } from '../_shared/security.ts';
+import { enforceRateLimit } from '../_shared/rateLimit.ts';
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 const supabaseUrl = Deno.env.get('SUPABASE_URL') as string;
@@ -50,6 +51,15 @@ const handler = async (req: Request): Promise<Response> => {
       return new Response(
         JSON.stringify({ error: authError || 'Unauthorized' }),
         { status: 401, headers: { 'Content-Type': 'application/json', ...cors } }
+      );
+    }
+
+    // Persistent rate limiting
+    const rate = await enforceRateLimit(req, 'send-marketing-email', { userLimit: 20, ipLimit: 60, windowSeconds: 60 });
+    if (!rate.allowed) {
+      return new Response(
+        JSON.stringify({ error: 'Rate limit exceeded' }),
+        { status: 429, headers: { 'Content-Type': 'application/json', ...cors, 'Retry-After': String(rate.retryAfter ?? 60) } }
       );
     }
 

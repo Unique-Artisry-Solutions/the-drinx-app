@@ -3,6 +3,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.8";
 import { createHmac } from "https://deno.land/std@0.220.1/crypto/mod.ts";
 import { getSecurityConfig, getCorsHeaders, isOriginAllowed } from '../_shared/security.ts';
+import { enforceRateLimit } from '../_shared/rateLimit.ts';
 
 
 // Twitter/X API configuration
@@ -120,6 +121,12 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    // Persistent rate limiting
+    const rate = await enforceRateLimit(req, 'share-to-social', { userLimit: 20, ipLimit: 60, windowSeconds: 60 });
+    if (!rate.allowed) {
+      return new Response(JSON.stringify({ error: 'Rate limit exceeded' }), { status: 429, headers: { ...cors, 'Content-Type': 'application/json', 'Retry-After': String(rate.retryAfter ?? 60) } });
+    }
+
     const { platform, content, url, campaignId, eventId } = 
       await req.json() as SocialShareRequest;
 
