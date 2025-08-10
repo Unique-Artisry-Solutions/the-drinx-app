@@ -1,32 +1,33 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.0"
+import { getSecurityConfig, getCorsHeaders, isOriginAllowed } from '../_shared/security.ts'
 
-// Define proper CORS headers to be used consistently across all responses
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
-}
 
 // Helper function to create consistent error responses
-const createErrorResponse = (message: string, status = 400) => {
+const createErrorResponse = (message: string, status = 400, cors: Record<string, string>) => {
   console.error('Error:', message);
   return new Response(
     JSON.stringify({ error: message }),
     {
       status,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { ...cors, 'Content-Type': 'application/json' },
     }
   );
 };
 
 serve(async (req) => {
+  const origin = req.headers.get('origin');
+  const config = getSecurityConfig();
+  const cors = getCorsHeaders(origin, config);
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { 
       status: 204, 
-      headers: corsHeaders 
+      headers: cors 
     });
+  }
+  if (!isOriginAllowed(origin, config)) {
+    return createErrorResponse('Origin not allowed', 403, cors);
   }
 
   try {
@@ -37,52 +38,52 @@ serve(async (req) => {
         const publicKey = Deno.env.get('VAPID_PUBLIC_KEY');
         if (!publicKey) {
           console.error('VAPID public key not configured in environment variables');
-          return createErrorResponse('VAPID public key not configured');
+          return createErrorResponse('VAPID public key not configured', 400, cors);
         }
         console.log('Returning VAPID public key successfully');
         return new Response(
           JSON.stringify({ publicKey }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { headers: { ...cors, 'Content-Type': 'application/json' } }
         );
 
       case 'getNotifications':
         if (!params?.userId) {
-          return createErrorResponse('User ID is required');
+          return createErrorResponse('User ID is required', 400, cors);
         }
-        return await handleGetNotifications(params);
+        return await handleGetNotifications(params, cors);
 
       case 'updateNotification':
         if (!params?.notificationId) {
-          return createErrorResponse('Notification ID is required');
+          return createErrorResponse('Notification ID is required', 400, cors);
         }
-        return await handleUpdateNotification(params);
+        return await handleUpdateNotification(params, cors);
 
       case 'markAllAsRead':
         if (!params?.userId) {
-          return createErrorResponse('User ID is required');
+          return createErrorResponse('User ID is required', 400, cors);
         }
-        return await handleMarkAllAsRead(params);
+        return await handleMarkAllAsRead(params, cors);
 
       case 'createNotification':
-        return await handleCreateNotification(params, req.headers.get('Authorization') || '');
+        return await handleCreateNotification(params, req.headers.get('Authorization') || '', cors);
 
       case 'saveVapidKeys':
         if (!params.publicKey || !params.privateKey || !params.mailto) {
-          return createErrorResponse('Missing required VAPID parameters');
+          return createErrorResponse('Missing required VAPID parameters', 400, cors);
         }
         return new Response(
           JSON.stringify({ 
             success: true,
             message: 'Please set these keys in your Supabase dashboard secrets'
           }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { headers: { ...cors, 'Content-Type': 'application/json' } }
         );
 
       case 'testPushNotification':
         // Simple test endpoint that doesn't rely on web-push
         const userId = params?.userId;
         if (!userId) {
-          return createErrorResponse('User ID is required');
+          return createErrorResponse('User ID is required', 400, cors);
         }
 
         const testResponse = {
@@ -98,7 +99,7 @@ serve(async (req) => {
         console.log('Test notification processed successfully');
         return new Response(
           JSON.stringify(testResponse),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { headers: { ...cors, 'Content-Type': 'application/json' } }
         );
 
       case 'healthCheck':
@@ -109,20 +110,20 @@ serve(async (req) => {
             timestamp: new Date().toISOString(),
             version: '1.0.0',
           }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { headers: { ...cors, 'Content-Type': 'application/json' } }
         );
 
       case 'getPromoterNotifications':
         if (!params?.promoterId) {
-          return createErrorResponse('Promoter ID is required');
+          return createErrorResponse('Promoter ID is required', 400, cors);
         }
-        return await handleGetPromoterNotifications(params);
+        return await handleGetPromoterNotifications(params, cors);
 
       case 'updatePromoterPreferences':
         if (!params?.promoterId || !params?.preferences) {
-          return createErrorResponse('Promoter ID and preferences are required');
+          return createErrorResponse('Promoter ID and preferences are required', 400, cors);
         }
-        return await handleUpdatePromoterPreferences(params);
+        return await handleUpdatePromoterPreferences(params, cors);
 
       case 'getEstablishmentNotifications':
         if (!params?.establishmentId) {
@@ -148,7 +149,7 @@ serve(async (req) => {
   }
 });
 
-async function handleMarkAllAsRead(params: any) {
+async function handleMarkAllAsRead(params: any, cors: Record<string, string>) {
   try {
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -171,7 +172,7 @@ async function handleMarkAllAsRead(params: any) {
         message: `Marked ${data ? data.length : 0} notifications as read` 
       }),
       {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...cors, 'Content-Type': 'application/json' },
       }
     );
   } catch (error) {
@@ -179,7 +180,7 @@ async function handleMarkAllAsRead(params: any) {
   }
 }
 
-async function handleUpdateNotification(params: any) {
+async function handleUpdateNotification(params: any, cors: Record<string, string>) {
   try {
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -197,7 +198,7 @@ async function handleUpdateNotification(params: any) {
     return new Response(
       JSON.stringify({ data }),
       {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...cors, 'Content-Type': 'application/json' },
       }
     );
   } catch (error) {
@@ -205,7 +206,7 @@ async function handleUpdateNotification(params: any) {
   }
 }
 
-async function handleGetNotifications(params: any) {
+async function handleGetNotifications(params: any, cors: Record<string, string>) {
   if (!params.userId) {
     return createErrorResponse('User ID is required to fetch notifications');
   }
@@ -236,7 +237,7 @@ async function handleGetNotifications(params: any) {
     return new Response(
       JSON.stringify({ data: notifications }),
       {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...cors, 'Content-Type': 'application/json' },
       }
     );
   } catch (error) {
@@ -244,7 +245,7 @@ async function handleGetNotifications(params: any) {
   }
 }
 
-async function handleCreateNotification(params: any, authHeader: string) {
+async function handleCreateNotification(params: any, authHeader: string, cors: Record<string, string>) {
   if (!params.recipientId) {
     throw new Error('Recipient ID is required');
   }
@@ -314,12 +315,12 @@ async function handleCreateNotification(params: any, authHeader: string) {
       }
     }),
     {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { ...cors, 'Content-Type': 'application/json' },
     }
   )
 }
 
-async function handleGetEstablishmentNotifications(params: any) {
+async function handleGetEstablishmentNotifications(params: any, cors: Record<string, string>) {
   try {
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -341,7 +342,7 @@ async function handleGetEstablishmentNotifications(params: any) {
     return new Response(
       JSON.stringify({ data }),
       {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...cors, 'Content-Type': 'application/json' },
       }
     );
   } catch (error) {
@@ -349,7 +350,7 @@ async function handleGetEstablishmentNotifications(params: any) {
   }
 }
 
-async function handleUpdateEstablishmentPreferences(params: any) {
+async function handleUpdateEstablishmentPreferences(params: any, cors: Record<string, string>) {
   try {
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -370,7 +371,7 @@ async function handleUpdateEstablishmentPreferences(params: any) {
         message: 'Establishment preferences updated successfully' 
       }),
       {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...cors, 'Content-Type': 'application/json' },
       }
     );
   } catch (error) {

@@ -2,17 +2,13 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.8";
+import { getSecurityConfig, getCorsHeaders, isOriginAllowed } from '../_shared/security.ts';
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 const supabaseUrl = Deno.env.get('SUPABASE_URL') as string;
 const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') as string;
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-};
 
 interface MarketingEmailRequest {
   subject: string;
@@ -37,9 +33,15 @@ async function getAuthenticatedUser(req: Request): Promise<{ user: any | null; e
 }
 
 const handler = async (req: Request): Promise<Response> => {
+  const origin = req.headers.get('origin');
+  const config = getSecurityConfig();
+  const cors = getCorsHeaders(origin, config);
   // Handle CORS preflight requests
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: cors });
+  }
+  if (!isOriginAllowed(origin, config)) {
+    return new Response(JSON.stringify({ error: 'Origin not allowed' }), { status: 403, headers: { ...cors, 'Content-Type': 'application/json' } });
   }
 
   try {
@@ -47,7 +49,7 @@ const handler = async (req: Request): Promise<Response> => {
     if (!user) {
       return new Response(
         JSON.stringify({ error: authError || 'Unauthorized' }),
-        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        { status: 401, headers: { 'Content-Type': 'application/json', ...cors } }
       );
     }
 
@@ -91,7 +93,7 @@ const handler = async (req: Request): Promise<Response> => {
       status: 200,
       headers: {
         "Content-Type": "application/json",
-        ...corsHeaders,
+        ...cors,
       },
     });
   } catch (error: any) {
@@ -100,7 +102,7 @@ const handler = async (req: Request): Promise<Response> => {
       JSON.stringify({ error: error.message }),
       {
         status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
+        headers: { "Content-Type": "application/json", ...cors },
       }
     );
   }

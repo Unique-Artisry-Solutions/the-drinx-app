@@ -2,12 +2,8 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.8";
 import { createHmac } from "https://deno.land/std@0.220.1/crypto/mod.ts";
+import { getSecurityConfig, getCorsHeaders, isOriginAllowed } from '../_shared/security.ts';
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-};
 
 // Twitter/X API configuration
 const API_KEY = Deno.env.get("TWITTER_CONSUMER_KEY")?.trim();
@@ -112,9 +108,15 @@ interface SocialShareRequest {
 }
 
 const handler = async (req: Request): Promise<Response> => {
+  const origin = req.headers.get('origin');
+  const config = getSecurityConfig();
+  const cors = getCorsHeaders(origin, config);
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: cors });
+  }
+  if (!isOriginAllowed(origin, config)) {
+    return new Response(JSON.stringify({ error: 'Origin not allowed' }), { status: 403, headers: { ...cors, 'Content-Type': 'application/json' } });
   }
 
   try {
@@ -205,7 +207,7 @@ const handler = async (req: Request): Promise<Response> => {
       status: 200,
       headers: {
         "Content-Type": "application/json",
-        ...corsHeaders,
+        ...cors,
       },
     });
   } catch (error: any) {
@@ -217,7 +219,7 @@ const handler = async (req: Request): Promise<Response> => {
       }),
       {
         status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
+        headers: { "Content-Type": "application/json", ...cors },
       }
     );
   }

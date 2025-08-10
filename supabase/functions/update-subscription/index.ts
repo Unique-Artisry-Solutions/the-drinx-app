@@ -1,6 +1,6 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { corsHeaders } from '../_shared/cors.ts'
+import { getSecurityConfig, getCorsHeaders, isOriginAllowed } from '../_shared/security.ts'
 import { enforceRateLimit } from '../_shared/rateLimit.ts'
 import { sanitizeObject, validateBasicPayload } from '../_shared/sanitize.ts'
 import Stripe from 'https://esm.sh/stripe@12.6.0?target=deno'
@@ -8,8 +8,14 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { logHttpStart, logHttpEnd, logPaymentAudit } from '../_shared/logging.ts'
 
 const handler = async (req: Request): Promise<Response> => {
+  const origin = req.headers.get('origin');
+  const config = getSecurityConfig();
+  const cors = getCorsHeaders(origin, config);
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response('ok', { headers: cors })
+  }
+  if (!isOriginAllowed(origin, config)) {
+    return new Response(JSON.stringify({ error: 'Origin not allowed' }), { status: 403, headers: { ...cors, 'Content-Type': 'application/json' } });
   }
 
   // Start request logging

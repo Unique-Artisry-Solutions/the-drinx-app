@@ -1,13 +1,16 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { corsHeaders } from '../_shared/cors.ts'
+import { getSecurityConfig, getCorsHeaders } from '../_shared/security.ts'
 import Stripe from 'https://esm.sh/stripe@12.6.0?target=deno'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const handler = async (req: Request): Promise<Response> => {
-  // Handle CORS preflight requests
+  // Server-to-server: build CORS but do not enforce origin checks
+  const origin = req.headers.get('origin');
+  const config = getSecurityConfig();
+  const cors = getCorsHeaders(origin, config);
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response('ok', { headers: cors })
   }
 
   try {
@@ -18,7 +21,7 @@ const handler = async (req: Request): Promise<Response> => {
       console.error('Missing Stripe configuration')
       return new Response(
         JSON.stringify({ error: 'Stripe configuration incomplete' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 500, headers: { ...cors, 'Content-Type': 'application/json' } }
       )
     }
 
@@ -40,7 +43,7 @@ const handler = async (req: Request): Promise<Response> => {
       console.error('Missing Stripe signature')
       return new Response(
         JSON.stringify({ error: 'Missing signature' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...cors, 'Content-Type': 'application/json' } }
       )
     }
 
@@ -51,7 +54,7 @@ const handler = async (req: Request): Promise<Response> => {
       console.error('Webhook signature verification failed:', err)
       return new Response(
         JSON.stringify({ error: 'Invalid signature' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...cors, 'Content-Type': 'application/json' } }
       )
     }
 
@@ -92,13 +95,13 @@ const handler = async (req: Request): Promise<Response> => {
 
     return new Response(
       JSON.stringify({ received: true }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 200, headers: { ...cors, 'Content-Type': 'application/json' } }
     )
   } catch (error) {
     console.error('Webhook handler error:', error)
     return new Response(
       JSON.stringify({ error: 'Webhook processing failed' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 500, headers: { ...cors, 'Content-Type': 'application/json' } }
     )
   }
 }
