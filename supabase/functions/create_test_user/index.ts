@@ -2,14 +2,20 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+import { getSecurityConfig, getCorsHeaders, isOriginAllowed } from '../_shared/security.ts'
 
 serve(async (req) => {
+  const origin = req.headers.get('origin');
+  const env = origin && (origin.includes('localhost') || origin.includes('127.0.0.1')) ? 'development' : 'production';
+  const securityConfig = getSecurityConfig(env);
+  const secureHeaders = getCorsHeaders(origin, securityConfig);
+
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response('ok', { headers: secureHeaders })
+  }
+
+  if (!isOriginAllowed(origin, securityConfig)) {
+    return new Response(JSON.stringify({ error: 'Origin not allowed' }), { status: 403, headers: { ...secureHeaders, 'Content-Type': 'application/json' } })
   }
 
   try {
@@ -78,7 +84,7 @@ serve(async (req) => {
         message: `Test ${userType} user created successfully` 
       }),
       { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        headers: { ...secureHeaders, 'Content-Type': 'application/json' } 
       }
     )
 
@@ -91,7 +97,7 @@ serve(async (req) => {
       }),
       { 
         status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: { ...secureHeaders, 'Content-Type': 'application/json' }
       }
     )
   }

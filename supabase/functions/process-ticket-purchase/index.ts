@@ -1,7 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.1";
-import { corsHeaders } from "../_shared/cors.ts";
+import { getSecurityConfig, getCorsHeaders, isOriginAllowed } from "../_shared/security.ts";
 
 interface User {
   id: string;
@@ -39,8 +39,15 @@ const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 
 serve(async (req) => {
   // Handle CORS preflight requests
+  const origin = req.headers.get("origin");
+  const env = origin && (origin.includes('localhost') || origin.includes('127.0.0.1')) ? 'development' : 'production';
+  const securityConfig = getSecurityConfig(env);
+  const secureHeaders = getCorsHeaders(origin, securityConfig);
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return new Response("ok", { headers: secureHeaders });
+  }
+  if (!isOriginAllowed(origin, securityConfig)) {
+    return new Response(JSON.stringify({ error: 'Origin not allowed' }), { status: 403, headers: { ...secureHeaders, 'Content-Type': 'application/json' } })
   }
 
   try {
@@ -53,7 +60,7 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ success: false, error: "No items provided" }),
         { 
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...secureHeaders, "Content-Type": "application/json" },
           status: 400 
         }
       );
@@ -124,7 +131,7 @@ serve(async (req) => {
           return new Response(
             JSON.stringify({ success: false, error: `Failed to process ticket: ${error.message}` }),
             { 
-              headers: { ...corsHeaders, "Content-Type": "application/json" },
+              headers: { ...secureHeaders, "Content-Type": "application/json" },
               status: 500 
             }
           );
@@ -197,7 +204,7 @@ serve(async (req) => {
         }
       }),
       { 
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...secureHeaders, "Content-Type": "application/json" },
         status: 200 
       }
     );
@@ -207,7 +214,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ success: false, error: error.message }),
       { 
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...secureHeaders, "Content-Type": "application/json" },
         status: 500 
       }
     );

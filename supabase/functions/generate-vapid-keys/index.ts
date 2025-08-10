@@ -1,14 +1,14 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+import { getSecurityConfig, getCorsHeaders, isOriginAllowed } from '../_shared/security.ts'
 
 serve(async (req) => {
+  const origin = req.headers.get('origin');
+  const env = origin && (origin.includes('localhost') || origin.includes('127.0.0.1')) ? 'development' : 'production';
+  const securityConfig = getSecurityConfig(env);
+  const secureHeaders = getCorsHeaders(origin, securityConfig);
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: secureHeaders });
   }
 
   try {
@@ -54,7 +54,7 @@ serve(async (req) => {
         privateKey 
       }), 
       { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...secureHeaders, 'Content-Type': 'application/json' },
         status: 200 
       }
     );
@@ -63,7 +63,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ error: error.message }), 
       { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...secureHeaders, 'Content-Type': 'application/json' },
         status: 500 
       }
     );

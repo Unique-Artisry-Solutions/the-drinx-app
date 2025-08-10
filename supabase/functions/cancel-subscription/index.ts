@@ -1,12 +1,21 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { corsHeaders } from '../_shared/cors.ts'
+import { getSecurityConfig, getCorsHeaders, isOriginAllowed } from '../_shared/security.ts'
 import Stripe from 'https://esm.sh/stripe@12.6.0?target=deno'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const handler = async (req: Request): Promise<Response> => {
+  const origin = req.headers.get('origin');
+  const env = origin && (origin.includes('localhost') || origin.includes('127.0.0.1')) ? 'development' : 'production';
+  const securityConfig = getSecurityConfig(env);
+  const secureHeaders = getCorsHeaders(origin, securityConfig);
+
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response('ok', { headers: secureHeaders })
+  }
+
+  if (!isOriginAllowed(origin, securityConfig)) {
+    return new Response(JSON.stringify({ error: 'Origin not allowed' }), { status: 403, headers: { ...secureHeaders, 'Content-Type': 'application/json' } })
   }
 
   try {
@@ -14,7 +23,7 @@ const handler = async (req: Request): Promise<Response> => {
     if (!STRIPE_SECRET_KEY) {
       return new Response(
         JSON.stringify({ error: 'Stripe secret key not configured' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 500, headers: { ...secureHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
@@ -61,13 +70,13 @@ const handler = async (req: Request): Promise<Response> => {
         cancelled: true,
         cancel_at_period_end: subscription.cancel_at_period_end
       }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 200, headers: { ...secureHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error) {
     console.error('Error cancelling subscription:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
-      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 400, headers: { ...secureHeaders, 'Content-Type': 'application/json' } }
     )
   }
 }

@@ -29,12 +29,13 @@ export function getSecurityConfig(environment: string = 'production'): SecurityC
   return {
     allowedOrigins: isProduction 
       ? [
+          'https://*.lovableproject.com',
           'https://dvifibvzwunnpcsihpxq.lovableproject.com',
-          'https://localhost:3000', // For local development
+          'https://localhost:3000',
           'https://127.0.0.1:3000'
         ]
       : [
-          'https://dvifibvzwunnpcsihpxq.lovableproject.com',
+          'https://*.lovableproject.com',
           'http://localhost:3000',
           'http://127.0.0.1:3000',
           'https://localhost:3000'
@@ -47,20 +48,39 @@ export function getSecurityConfig(environment: string = 'production'): SecurityC
 }
 
 export function getCorsHeaders(origin: string | null, config: SecurityConfig) {
-  const isOriginAllowed = origin && config.allowedOrigins.some(allowed => 
-    allowed === origin || 
-    (allowed.includes('localhost') && origin.includes('localhost'))
-  );
+  const isAllowed = isOriginAllowed(origin, config);
 
   return {
-    'Access-Control-Allow-Origin': isOriginAllowed ? origin : 'null',
+    'Access-Control-Allow-Origin': isAllowed && origin ? origin : 'null',
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-user-id',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
     'Access-Control-Allow-Credentials': 'true',
+    'Vary': 'Origin',
     'X-Content-Type-Options': 'nosniff',
     'X-Frame-Options': 'DENY',
     'X-XSS-Protection': '1; mode=block'
   };
+}
+
+export function isOriginAllowed(origin: string | null, config: SecurityConfig): boolean {
+  if (!origin) return false;
+  try {
+    const url = new URL(origin);
+    const hostname = url.hostname;
+    return config.allowedOrigins.some((allowed) => {
+      if (allowed.includes('localhost') || allowed.includes('127.0.0.1')) {
+        // Allow any scheme for localhost variants
+        return origin.includes('localhost') || origin.includes('127.0.0.1');
+      }
+      if (allowed.startsWith('https://*.')) {
+        const allowedDomain = allowed.replace('https://*.', '');
+        return hostname === allowedDomain || hostname.endsWith('.' + allowedDomain);
+      }
+      return allowed === origin;
+    });
+  } catch {
+    return false;
+  }
 }
 
 export function sanitizeInput(input: any): any {

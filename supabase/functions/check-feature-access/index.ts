@@ -2,16 +2,21 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-// Set up CORS headers for browser clients
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+import { getSecurityConfig, getCorsHeaders, isOriginAllowed } from '../_shared/security.ts'
 
 serve(async (req) => {
+  const origin = req.headers.get('origin');
+  const env = origin && (origin.includes('localhost') || origin.includes('127.0.0.1')) ? 'development' : 'production';
+  const securityConfig = getSecurityConfig(env);
+  const secureHeaders = getCorsHeaders(origin, securityConfig);
+
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response(null, { headers: secureHeaders })
+  }
+
+  if (!isOriginAllowed(origin, securityConfig)) {
+    return new Response(JSON.stringify({ error: 'Origin not allowed' }), { status: 403, headers: { ...secureHeaders, 'Content-Type': 'application/json' } })
   }
 
   // Get the request body
@@ -21,7 +26,7 @@ serve(async (req) => {
   } catch (error) {
     return new Response(JSON.stringify({ error: 'Invalid request body' }), {
       status: 400,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { ...secureHeaders, 'Content-Type': 'application/json' },
     })
   }
 
@@ -31,7 +36,7 @@ serve(async (req) => {
   if (!featureName) {
     return new Response(JSON.stringify({ error: 'Feature name is required' }), {
       status: 400,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { ...secureHeaders, 'Content-Type': 'application/json' },
     })
   }
 
@@ -63,7 +68,7 @@ serve(async (req) => {
     if (!targetUserId) {
       return new Response(JSON.stringify({ hasAccess: false }), {
         status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...secureHeaders, 'Content-Type': 'application/json' },
       })
     }
 
@@ -77,7 +82,7 @@ serve(async (req) => {
       console.error('Error checking feature access:', error)
       return new Response(JSON.stringify({ error: error.message }), {
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...secureHeaders, 'Content-Type': 'application/json' },
       })
     }
 
@@ -110,13 +115,13 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({ hasAccess: !!data }), {
       status: 200,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { ...secureHeaders, 'Content-Type': 'application/json' },
     })
   } catch (error) {
     console.error('Error:', error)
     return new Response(JSON.stringify({ error: 'Server error' }), {
       status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { ...secureHeaders, 'Content-Type': 'application/json' },
     })
   }
 })
