@@ -1,11 +1,13 @@
 
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import SystemSettingsTable from '../SystemSettingsTable';
 import { SettingsTabProps } from '../types';
 import { Button } from '@/components/ui/button';
-import { Plus, Info } from 'lucide-react';
+import { Plus, Info, ShieldCheck, ShieldAlert, Loader2 } from 'lucide-react';
 import EmptyState from '../EmptyState';
+import { supabase } from '@/lib/supabase';
+import { debouncedToast } from '@/utils/debouncedToast';
 
 const GeneralSettingsTab: React.FC<SettingsTabProps> = ({
   settings,
@@ -19,6 +21,36 @@ const GeneralSettingsTab: React.FC<SettingsTabProps> = ({
   setEditValue,
   setChangeReason,
 }) => {
+  const [healthStatus, setHealthStatus] = useState<'idle' | 'checking' | 'healthy' | 'unhealthy'>('idle');
+  const [healthDetails, setHealthDetails] = useState<string | null>(null);
+  const [lastCheck, setLastCheck] = useState<Date | null>(null);
+
+  const runHealthCheck = useCallback(async () => {
+    try {
+      setHealthStatus('checking');
+      setHealthDetails(null);
+      const { data, error } = await supabase.functions.invoke('security-healthcheck');
+      if (error) throw new Error(error.message || 'Health check failed');
+
+      if (data?.ok) {
+        setHealthStatus('healthy');
+        setHealthDetails(`Env: ${data.environment}${data?.stripe?.email ? ` • Stripe: ${data.stripe.email}` : ''}`);
+        debouncedToast.success('Security health', 'All checks passed');
+      } else {
+        setHealthStatus('unhealthy');
+        setHealthDetails(data?.error || 'Unknown error');
+        debouncedToast.error('Security health', data?.error || 'Failed');
+      }
+      setLastCheck(new Date());
+    } catch (e) {
+      setHealthStatus('unhealthy');
+      const msg = e instanceof Error ? e.message : 'Health check failed';
+      setHealthDetails(msg);
+      setLastCheck(new Date());
+      debouncedToast.error('Security health', msg);
+    }
+  }, []);
+
   const hasSettings = settings && settings.length > 0;
 
   return (
@@ -35,6 +67,42 @@ const GeneralSettingsTab: React.FC<SettingsTabProps> = ({
         </div>
       </CardHeader>
       <CardContent>
+        <div className="mb-6 border border-blue-200 rounded-md p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              {healthStatus === 'healthy' ? (
+                <ShieldCheck className="h-5 w-5 text-green-600" />
+              ) : healthStatus === 'unhealthy' ? (
+                <ShieldAlert className="h-5 w-5 text-red-600" />
+              ) : (
+                <Info className="h-5 w-5 text-blue-500" />
+              )}
+              <div>
+                <p className="text-sm font-medium">Security Health Check</p>
+                <p className="text-sm text-muted-foreground">
+                  {healthStatus === 'idle' && 'Run the check to validate Stripe and environment'}
+                  {healthStatus === 'checking' && 'Checking...'}
+                  {healthStatus === 'healthy' && 'All systems operational'}
+                  {healthStatus === 'unhealthy' && (healthDetails ? `Issues: ${healthDetails}` : 'Issues detected')}
+                </p>
+                {lastCheck && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Last checked: {lastCheck.toLocaleString()}
+                  </p>
+                )}
+              </div>
+            </div>
+            <Button size="sm" onClick={runHealthCheck} disabled={healthStatus === 'checking'}>
+              {healthStatus === 'checking' ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Checking
+                </>
+              ) : (
+                'Run health check'
+              )}
+            </Button>
+          </div>
+        </div>
         {hasSettings ? (
           <>
             <div className="bg-blue-50 border border-blue-200 rounded-md p-4 mb-6">
