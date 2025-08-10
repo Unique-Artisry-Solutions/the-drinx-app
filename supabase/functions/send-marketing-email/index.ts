@@ -1,8 +1,12 @@
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.8";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+const supabaseUrl = Deno.env.get('SUPABASE_URL') as string;
+const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') as string;
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -19,6 +23,19 @@ interface MarketingEmailRequest {
   trackingPixel?: boolean;
 }
 
+async function getAuthenticatedUser(req: Request): Promise<{ user: any | null; error?: string }> {
+  const authHeader = req.headers.get('Authorization') || '';
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : (authHeader.split(' ')[1] || '');
+  if (!token) {
+    return { user: null, error: 'Missing Authorization header' };
+  }
+  const { data, error } = await supabase.auth.getUser(token);
+  if (error || !data?.user) {
+    return { user: null, error: 'Invalid or expired token' };
+  }
+  return { user: data.user };
+}
+
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -26,11 +43,18 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { subject, htmlContent, recipients, campaignId, eventId, trackingPixel = true } = 
-      await req.json() as MarketingEmailRequest;
+    const { user, error: authError } = await getAuthenticatedUser(req);
+    if (!user) {
+      return new Response(
+        JSON.stringify({ error: authError || 'Unauthorized' }),
+        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    const { subject, htmlContent, recipients, campaignId, eventId, trackingPixel = true } = await req.json() as MarketingEmailRequest;
 
     if (!subject || !htmlContent || !recipients || recipients.length === 0) {
-      throw new Error("Missing required fields");
+      throw new Error('Missing required fields');
     }
 
     // Add tracking pixel if requested
