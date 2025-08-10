@@ -29,6 +29,7 @@ const SystemAnalyticsPage = lazy(() => import('@/pages/admin/SystemAnalyticsPage
 const ContentModerationPage = lazy(() => import('@/pages/admin/ContentModerationPage'));
 const ThemeCustomizationPage = lazy(() => import('@/pages/admin/ThemeCustomizationPage'));
 const TestingInterfacePage = lazy(() => import('@/pages/admin/TestingInterfacePage'));
+const AdminLogsPage = lazy(() => import('@/pages/admin/AdminLogsPage'));
 
 // Simplified admin routes - removed duplicate simplified routes
 export const adminRoutes: RouteObject[] = [
@@ -73,6 +74,9 @@ export const adminRoutes: RouteObject[] = [
       { path: 'theme-customization', element: <ThemeCustomizationPage /> },
       { path: 'testing', element: <TestingInterfacePage /> },
       { path: 'testing-dashboard', element: <TestingDashboard /> },
+      
+      // Logs & Alerts
+      { path: 'logs', element: <AdminLogsPage /> },
       
       // Communication
       { path: 'notifications', element: <AdminNotificationsPage /> },

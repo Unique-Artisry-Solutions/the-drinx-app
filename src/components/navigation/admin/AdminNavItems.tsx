@@ -39,6 +39,12 @@ export const adminNavItems: UnifiedNavItem[] = [
     showInNav: true,
   },
   {
+    label: 'Logs & Alerts',
+    path: '/admin/logs',
+    icon: Activity,
+    showInNav: true,
+  },
+  {
     label: 'Notifications',
     path: '/admin/notifications',
     icon: Bell,

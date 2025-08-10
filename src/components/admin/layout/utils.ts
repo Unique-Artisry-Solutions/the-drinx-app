@@ -39,6 +39,11 @@ export const COMMON_PAGE_CONFIGS = {
     maxWidth: 'full'
   }),
   
+  logs: createPageConfig('Logs & Alerts', {
+    description: 'HTTP requests, payment audits, security events and alerts',
+    maxWidth: 'full'
+  }),
+  
   contentModeration: createPageConfig('Content Moderation', {
     description: 'Review and moderate user-generated content',
     maxWidth: '2xl'
@@ -52,6 +57,7 @@ export const getPageConfigByPath = (pathname: string): AdminPageConfig => {
     '/admin/establishments': COMMON_PAGE_CONFIGS.establishments,
     '/admin/system-configuration': COMMON_PAGE_CONFIGS.settings,
     '/admin/analytics': COMMON_PAGE_CONFIGS.analytics,
+    '/admin/logs': COMMON_PAGE_CONFIGS.logs,
     '/admin/content-moderation': COMMON_PAGE_CONFIGS.contentModeration,
     '/admin/photo-moderation': COMMON_PAGE_CONFIGS.contentModeration,
   };
