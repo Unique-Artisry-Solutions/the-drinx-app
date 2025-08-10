@@ -11,8 +11,9 @@ export const useDevAuthBypass = () => {
   const { isDevelopment, isDevModeActive, devMode } = useDevelopmentMode();
   const { userType: authUserType, isAuthenticated: authIsAuthenticated, user, isLoading } = useAuthenticatedUser();
 
-  // In development mode with dev mode active, use dev settings
-  if (isDevelopment && isDevModeActive && devMode) {
+  // In development mode with dev mode active, use dev settings (localhost only)
+  const isLocalhost = typeof window !== 'undefined' && /^(localhost|127\.0\.0\.1)$/i.test(window.location.hostname);
+  if (isDevelopment && isDevModeActive && devMode && isLocalhost) {
     return {
       userType: devMode as UserType,
       isAuthenticated: true,
