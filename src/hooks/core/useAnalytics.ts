@@ -1,6 +1,7 @@
 
 import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { redactSensitive } from '@/lib/logging/redact';
 
 export interface AnalyticsData {
   [key: string]: any;
@@ -60,7 +61,8 @@ export function useAnalytics(): { state: AnalyticsState; actions: AnalyticsActio
     trackEvent: useCallback(async (event: string, properties?: any) => {
       try {
         // Mock event tracking - replace with actual tracking service
-        console.log('Tracking event:', event, properties);
+        const safeProps = redactSensitive(properties);
+        console.log('Tracking event:', event, safeProps);
         await new Promise(resolve => setTimeout(resolve, 100));
       } catch (err) {
         console.error('Failed to track event:', err);

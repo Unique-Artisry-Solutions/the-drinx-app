@@ -1,5 +1,8 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import { sanitizeAnalyticsData } from '@/utils/databaseSerialization';
+import { redactSensitive } from '@/lib/logging/redact';
+
 
 export type AnalyticsEvent = {
   eventType: string;
@@ -20,10 +23,11 @@ export async function trackEvent(event: AnalyticsEvent): Promise<string | null> 
       return null;
     }
     
+    const cleaned = sanitizeAnalyticsData(redactSensitive(event.eventData || {}));
     const { data, error } = await supabase.rpc('track_analytics_event', {
       p_user_id: userId,
       p_event_type: event.eventType,
-      p_event_data: event.eventData || {},
+      p_event_data: cleaned,
       p_page_url: event.pageUrl || window.location.pathname,
       p_user_agent: navigator.userAgent,
       p_ip_address: null // IP is collected server-side
