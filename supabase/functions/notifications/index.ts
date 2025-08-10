@@ -65,6 +65,17 @@ serve(async (req) => {
     // Persistent rate limiting
     const rate = await enforceRateLimit(req, 'notifications', { userLimit: 20, ipLimit: 60, windowSeconds: 60 });
     if (!rate.allowed) {
+      const ip = (req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || '')
+        .split(',')[0].trim() || null;
+      await admin.from('security_event_logs').insert({
+        event_type: 'rate_limit_exceeded',
+        severity: 'medium',
+        ip_address: ip,
+        user_agent: req.headers.get('user-agent'),
+        user_id: null,
+        endpoint: 'notifications',
+        details: { retry_after: rate.retryAfter, reason: rate.reason }
+      });
       return createErrorResponse('Rate limit exceeded', 429, cors);
     }
     const raw = await req.json();

@@ -6,7 +6,6 @@ import { getSecurityConfig, getCorsHeaders, isOriginAllowed } from '../_shared/s
 import { enforceRateLimit } from '../_shared/rateLimit.ts';
 import { sanitizeObject } from '../_shared/sanitize.ts';
 import { z } from "npm:zod@3.23.8";
-import { enforceRateLimit } from '../_shared/rateLimit.ts';
 
 
 // Twitter/X API configuration
@@ -100,8 +99,10 @@ async function tweetPost(content: string): Promise<any> {
 }
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') as string;
+const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') as string;
+const supabaseAnon = createClient(supabaseUrl, supabaseAnonKey);
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') as string;
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
+const admin = createClient(supabaseUrl, supabaseServiceKey, { auth: { persistSession: false } });
 
 interface SocialShareRequest {
   platform: 'twitter' | 'facebook' | 'linkedin' | 'instagram';
@@ -119,6 +120,19 @@ const SocialShareSchema = z.object({
   eventId: z.string().uuid()
 }).strict();
 
+async function getAuthenticatedUser(req: Request): Promise<{ user: any | null; error?: string }> {
+  const authHeader = req.headers.get('Authorization') || '';
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : (authHeader.split(' ')[1] || '');
+  if (!token) {
+    return { user: null, error: 'Missing Authorization header' };
+  }
+  const { data, error } = await supabaseAnon.auth.getUser(token);
+  if (error || !data?.user) {
+    return { user: null, error: 'Invalid or expired token' };
+  }
+  return { user: data.user };
+}
+
 const handler = async (req: Request): Promise<Response> => {
   const origin = req.headers.get('origin');
   const config = getSecurityConfig();
@@ -132,10 +146,44 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    // Authenticate user
+    const { user, error: authError } = await getAuthenticatedUser(req);
+    if (!user) {
+      const ip = (req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || '')
+        .split(',')[0].trim() || null;
+      await admin.from('security_event_logs').insert({
+        event_type: 'auth_failure',
+        severity: 'medium',
+        ip_address: ip,
+        user_agent: req.headers.get('user-agent'),
+        user_id: null,
+        endpoint: 'share-to-social',
+        details: { error: authError || 'Unauthorized' }
+      });
+      return new Response(
+        JSON.stringify({ error: authError || 'Unauthorized' }),
+        { status: 401, headers: { 'Content-Type': 'application/json', ...cors } }
+      );
+    }
+
     // Persistent rate limiting
     const rate = await enforceRateLimit(req, 'share-to-social', { userLimit: 20, ipLimit: 60, windowSeconds: 60 });
     if (!rate.allowed) {
-      return new Response(JSON.stringify({ error: 'Rate limit exceeded' }), { status: 429, headers: { ...cors, 'Content-Type': 'application/json', 'Retry-After': String(rate.retryAfter ?? 60) } });
+      const ip = (req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || '')
+        .split(',')[0].trim() || null;
+      await admin.from('security_event_logs').insert({
+        event_type: 'rate_limit_exceeded',
+        severity: 'medium',
+        ip_address: ip,
+        user_agent: req.headers.get('user-agent'),
+        user_id: user.id,
+        endpoint: 'share-to-social',
+        details: { retry_after: rate.retryAfter, reason: rate.reason }
+      });
+      return new Response(
+        JSON.stringify({ error: 'Rate limit exceeded' }),
+        { status: 429, headers: { ...cors, 'Content-Type': 'application/json', 'Retry-After': String(rate.retryAfter ?? 60) } }
+      );
     }
 
     const raw = await req.json();
@@ -184,7 +232,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Track sharing in campaign metrics
     if (success) {
       // Get current metrics
-      const { data: campaign, error: fetchError } = await supabase
+      const { data: campaign, error: fetchError } = await admin
         .from('event_marketing_campaigns')
         .select('metrics')
         .eq('id', campaignId)
@@ -207,7 +255,7 @@ const handler = async (req: Request): Promise<Response> => {
       };
 
       // Save updated metrics
-      const { error: updateError } = await supabase
+      const { error: updateError } = await admin
         .from('event_marketing_campaigns')
         .update({ metrics: updatedMetrics })
         .eq('id', campaignId);

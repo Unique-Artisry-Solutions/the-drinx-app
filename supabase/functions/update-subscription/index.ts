@@ -8,6 +8,25 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { logHttpStart, logHttpEnd, logPaymentAudit } from '../_shared/logging.ts'
 import { z } from "npm:zod@3.23.8"
 
+const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
+const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+const supabaseAnon = createClient(supabaseUrl, supabaseAnonKey)
+const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+const admin = createClient(supabaseUrl, supabaseServiceKey, { auth: { persistSession: false } })
+
+async function getAuthenticatedUser(req: Request): Promise<{ user: any | null; error?: string }> {
+  const authHeader = req.headers.get('Authorization') || ''
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : (authHeader.split(' ')[1] || '')
+  if (!token) {
+    return { user: null, error: 'Missing Authorization header' }
+  }
+  const { data, error } = await supabaseAnon.auth.getUser(token)
+  if (error || !data?.user) {
+    return { user: null, error: 'Invalid or expired token' }
+  }
+  return { user: data.user }
+}
+
 const handler = async (req: Request): Promise<Response> => {
   const origin = req.headers.get('origin');
   const config = getSecurityConfig();
@@ -23,9 +42,38 @@ const handler = async (req: Request): Promise<Response> => {
   const http = await logHttpStart(req, 'update-subscription')
 
   try {
+    // Authenticate user
+    const { user, error: authError } = await getAuthenticatedUser(req)
+    if (!user) {
+      const ip = (req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || '')
+        .split(',')[0].trim() || null
+      await admin.from('security_event_logs').insert({
+        event_type: 'auth_failure',
+        severity: 'medium',
+        ip_address: ip,
+        user_agent: req.headers.get('user-agent'),
+        user_id: null,
+        endpoint: 'update-subscription',
+        details: { error: authError || 'Unauthorized' }
+      })
+      await logHttpEnd(http, 401, cors)
+      return new Response(JSON.stringify({ error: authError || 'Unauthorized' }), { status: 401, headers: { ...cors, 'Content-Type': 'application/json' } })
+    }
+
     // Persistent rate limiting
     const rate = await enforceRateLimit(req, 'update-subscription', { userLimit: 30, ipLimit: 90, windowSeconds: 60 })
     if (!rate.allowed) {
+      const ip = (req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || '')
+        .split(',')[0].trim() || null
+      await admin.from('security_event_logs').insert({
+        event_type: 'rate_limit_exceeded',
+        severity: 'medium',
+        ip_address: ip,
+        user_agent: req.headers.get('user-agent'),
+        user_id: user.id,
+        endpoint: 'update-subscription',
+        details: { retry_after: rate.retryAfter, reason: rate.reason }
+      })
       await logHttpEnd(http, 429, cors)
       return new Response(JSON.stringify({ error: 'Rate limit exceeded' }), { status: 429, headers: { ...cors, 'Content-Type': 'application/json', 'Retry-After': String(rate.retryAfter ?? 60) } })
     }
