@@ -1,6 +1,8 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { getSecurityConfig, getCorsHeaders, isOriginAllowed } from '../_shared/security.ts'
+import { enforceRateLimit } from '../_shared/rateLimit.ts'
+import { sanitizeObject, validateBasicPayload } from '../_shared/sanitize.ts'
 import Stripe from 'https://esm.sh/stripe@12.6.0?target=deno'
 
 const handler = async (req: Request): Promise<Response> => {
@@ -31,8 +33,14 @@ const handler = async (req: Request): Promise<Response> => {
       apiVersion: '2023-10-16',
       httpClient: Stripe.createFetchHttpClient(),
     })
+
+    // Persistent rate limiting
+    const rate = await enforceRateLimit(req, 'process-refund', { userLimit: 15, ipLimit: 45, windowSeconds: 60 })
+    if (!rate.allowed) {
+      return new Response(JSON.stringify({ error: 'Rate limit exceeded' }), { status: 429, headers: { ...secureHeaders, 'Content-Type': 'application/json', 'Retry-After': String(rate.retryAfter ?? 60) } })
+    }
     
-    const { paymentIntentId, amount, reason, refundedBy, transactionId } = await req.json()
+    const { paymentIntentId, amount, reason, refundedBy, transactionId } = sanitizeObject(await req.json()) as any
     
     // Get the transaction details
     const { data: transaction, error: transactionError } = await supabaseClient
@@ -96,7 +104,7 @@ const handler = async (req: Request): Promise<Response> => {
   } catch (error) {
     console.error('Error processing refund:', error)
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: (error as any).message }),
       { status: 400, headers: { ...secureHeaders, 'Content-Type': 'application/json' } }
     )
   }

@@ -6322,6 +6322,78 @@ export type Database = {
         }
         Relationships: []
       }
+      security_rate_limit_violations: {
+        Row: {
+          count: number
+          endpoint: string
+          id: string
+          ip: string
+          limit: number
+          metadata: Json
+          occurred_at: string
+          user_id: string | null
+        }
+        Insert: {
+          count: number
+          endpoint: string
+          id?: string
+          ip: string
+          limit: number
+          metadata?: Json
+          occurred_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          count?: number
+          endpoint?: string
+          id?: string
+          ip?: string
+          limit?: number
+          metadata?: Json
+          occurred_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      security_rate_limits: {
+        Row: {
+          count: number
+          created_at: string
+          endpoint: string
+          id: string
+          ip: string
+          limit: number
+          updated_at: string
+          user_id: string | null
+          window_key: string
+          window_start: string
+        }
+        Insert: {
+          count?: number
+          created_at?: string
+          endpoint: string
+          id?: string
+          ip: string
+          limit: number
+          updated_at?: string
+          user_id?: string | null
+          window_key: string
+          window_start?: string
+        }
+        Update: {
+          count?: number
+          created_at?: string
+          endpoint?: string
+          id?: string
+          ip?: string
+          limit?: number
+          updated_at?: string
+          user_id?: string | null
+          window_key?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
       streak_settings: {
         Row: {
           created_at: string

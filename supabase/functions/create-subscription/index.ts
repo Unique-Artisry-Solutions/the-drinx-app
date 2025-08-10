@@ -1,6 +1,8 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { getSecurityConfig, getCorsHeaders, isOriginAllowed } from '../_shared/security.ts'
+import { enforceRateLimit } from '../_shared/rateLimit.ts'
+import { sanitizeObject, validateBasicPayload } from '../_shared/sanitize.ts'
 import Stripe from 'https://esm.sh/stripe@12.6.0?target=deno'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -19,6 +21,12 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    // Persistent rate limiting
+    const rate = await enforceRateLimit(req, 'create-subscription', { userLimit: 30, ipLimit: 90, windowSeconds: 60 })
+    if (!rate.allowed) {
+      return new Response(JSON.stringify({ error: 'Rate limit exceeded' }), { status: 429, headers: { ...secureHeaders, 'Content-Type': 'application/json', 'Retry-After': String(rate.retryAfter ?? 60) } })
+    }
+
     const STRIPE_SECRET_KEY = Deno.env.get('STRIPE_SECRET_KEY')
     if (!STRIPE_SECRET_KEY) {
       return new Response(
@@ -38,6 +46,14 @@ const handler = async (req: Request): Promise<Response> => {
       { auth: { persistSession: false } }
     )
 
+    // Sanitize and validate input
+    const raw = await req.json()
+    const body = sanitizeObject(raw)
+    const basic = validateBasicPayload(body, { maxKeys: 20 })
+    if (!basic.ok) {
+      return new Response(JSON.stringify({ error: basic.error }), { status: 400, headers: { ...secureHeaders, 'Content-Type': 'application/json' } })
+    }
+
     const { 
       priceId, 
       customerId, 
@@ -45,9 +61,9 @@ const handler = async (req: Request): Promise<Response> => {
       metadata, 
       userId,
       currency = 'USD'
-    } = await req.json()
+    } = body as any
 
-    let customer_id = customerId
+    let customer_id = customerId as string | undefined
 
     // Create or get customer if not provided
     if (!customer_id) {
@@ -74,14 +90,14 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Create the subscription
     const subscription = await stripe.subscriptions.create({
-      customer: customer_id,
+      customer: customer_id!,
       items: [{ price: priceId }],
       trial_period_days: trialPeriodDays,
       payment_behavior: 'default_incomplete',
       payment_settings: { save_default_payment_method: 'on_subscription' },
       expand: ['latest_invoice.payment_intent'],
       metadata: {
-        ...metadata,
+        ...(metadata as any),
         userId,
         currency
       }
@@ -126,7 +142,7 @@ const handler = async (req: Request): Promise<Response> => {
   } catch (error) {
     console.error('Error creating subscription:', error)
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: (error as any).message }),
       { status: 400, headers: { ...secureHeaders, 'Content-Type': 'application/json' } }
     )
   }

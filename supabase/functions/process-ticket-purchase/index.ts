@@ -2,6 +2,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.1";
 import { getSecurityConfig, getCorsHeaders, isOriginAllowed } from "../_shared/security.ts";
+import { enforceRateLimit } from "../_shared/rateLimit.ts";
+import { sanitizeObject, validateBasicPayload } from "../_shared/sanitize.ts";
 
 interface User {
   id: string;
@@ -51,8 +53,19 @@ serve(async (req) => {
   }
 
   try {
+    // Rate limit
+    const rate = await enforceRateLimit(req, 'process-ticket-purchase', { userLimit: 30, ipLimit: 90, windowSeconds: 60 })
+    if (!rate.allowed) {
+      return new Response(JSON.stringify({ error: 'Rate limit exceeded' }), { status: 429, headers: { ...secureHeaders, 'Content-Type': 'application/json', 'Retry-After': String(rate.retryAfter ?? 60) } })
+    }
+
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    const body: TicketPurchaseRequest = await req.json();
+    const raw: TicketPurchaseRequest = await req.json();
+    const body = sanitizeObject(raw) as TicketPurchaseRequest;
+    const basic = validateBasicPayload(body, { maxKeys: 10 })
+    if (!basic.ok) {
+      return new Response(JSON.stringify({ success: false, error: basic.error }), { headers: { ...secureHeaders, "Content-Type": "application/json" }, status: 400 });
+    }
     
     const { items, userId, serviceFee, serviceFeePercentage, contactInfo } = body;
     
@@ -212,7 +225,7 @@ serve(async (req) => {
   } catch (error) {
     console.error("Error processing request:", error);
     return new Response(
-      JSON.stringify({ success: false, error: error.message }),
+      JSON.stringify({ success: false, error: (error as any).message }),
       { 
         headers: { ...secureHeaders, "Content-Type": "application/json" },
         status: 500 

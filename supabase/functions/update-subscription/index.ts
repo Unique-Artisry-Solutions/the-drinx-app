@@ -1,6 +1,8 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { corsHeaders } from '../_shared/cors.ts'
+import { enforceRateLimit } from '../_shared/rateLimit.ts'
+import { sanitizeObject, validateBasicPayload } from '../_shared/sanitize.ts'
 import Stripe from 'https://esm.sh/stripe@12.6.0?target=deno'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -10,6 +12,12 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    // Persistent rate limiting
+    const rate = await enforceRateLimit(req, 'update-subscription', { userLimit: 30, ipLimit: 90, windowSeconds: 60 })
+    if (!rate.allowed) {
+      return new Response(JSON.stringify({ error: 'Rate limit exceeded' }), { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Retry-After': String(rate.retryAfter ?? 60) } })
+    }
+
     const STRIPE_SECRET_KEY = Deno.env.get('STRIPE_SECRET_KEY')
     if (!STRIPE_SECRET_KEY) {
       return new Response(
@@ -29,7 +37,8 @@ const handler = async (req: Request): Promise<Response> => {
       { auth: { persistSession: false } }
     )
 
-    const { subscriptionId, priceId, metadata } = await req.json()
+    const raw = await req.json()
+    const { subscriptionId, priceId, metadata } = sanitizeObject(raw) as any
 
     // Update the subscription
     const subscription = await stripe.subscriptions.update(subscriptionId, {
@@ -67,7 +76,7 @@ const handler = async (req: Request): Promise<Response> => {
   } catch (error) {
     console.error('Error updating subscription:', error)
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: (error as any).message }),
       { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }

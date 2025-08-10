@@ -1,4 +1,3 @@
-
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { corsHeaders } from '../_shared/cors.ts'
 import { 
@@ -18,6 +17,8 @@ import {
   sanitizeHeaders,
   generateDeviceFingerprint
 } from '../_shared/audit.ts'
+import { enforceRateLimit } from '../_shared/rateLimit.ts'
+import { sanitizeObject, validateBasicPayload } from '../_shared/sanitize.ts'
 import Stripe from 'https://esm.sh/stripe@12.6.0?target=deno'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -51,6 +52,22 @@ const handler = async (req: Request): Promise<Response> => {
         JSON.stringify({ error: 'Origin not allowed' }),
         { status: 403, headers: secureHeaders }
       );
+    }
+
+    // New: persistent rate limiting (IP and user)
+    const rate = await enforceRateLimit(req, 'process-payment', {
+      userLimit: 20,
+      ipLimit: 60,
+      windowSeconds: 60,
+    })
+    if (!rate.allowed) {
+      return new Response(
+        JSON.stringify({ error: 'Rate limit exceeded' }),
+        {
+          status: 429,
+          headers: { ...secureHeaders, 'Content-Type': 'application/json', 'Retry-After': String(rate.retryAfter ?? 60) }
+        }
+      )
     }
 
     // Rate limiting checks
@@ -140,10 +157,14 @@ const handler = async (req: Request): Promise<Response> => {
       httpClient: Stripe.createFetchHttpClient(),
     })
     
-    // Parse and sanitize input
+    // Parse and sanitize input (enhanced)
     const rawBody = await req.json();
-    const sanitizedBody = sanitizeInput(rawBody);
-    const { paymentMethodId, amount, currency, description, metadata } = sanitizedBody;
+    const sanitizedBody = sanitizeObject(rawBody);
+    const basic = validateBasicPayload(sanitizedBody, { maxKeys: 25 });
+    if (!basic.ok) {
+      throw new Error(basic.error);
+    }
+    const { paymentMethodId, amount, currency, description, metadata } = sanitizedBody as any;
     
     // Enhanced input validation
     if (typeof amount !== 'number' || !isFinite(amount) || amount <= 0) {
@@ -165,7 +186,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Log payment attempt with comprehensive audit data
     await auditLogger.logPaymentAttempt({
       request_id: requestId,
-      user_id: metadata?.userId,
+      user_id: (metadata as any)?.userId,
       ip_address: fingerprint.ip,
       user_agent: fingerprint.userAgent,
       payment_method_id: paymentMethodId,
@@ -190,7 +211,7 @@ const handler = async (req: Request): Promise<Response> => {
     }));
     
     // Get the origin for dynamic return URL
-    const origin = req.headers.get('origin') || req.headers.get('referer')?.split('/').slice(0, 3).join('/') || 'http://localhost:3000'
+    const originForReturn = req.headers.get('origin') || req.headers.get('referer')?.split('/').slice(0, 3).join('/') || 'http://localhost:3000'
     
     // Create a payment intent
     const paymentIntent = await stripe.paymentIntents.create({
@@ -200,7 +221,7 @@ const handler = async (req: Request): Promise<Response> => {
       confirm: true,
       description,
       metadata,
-      return_url: `${origin}/payment-confirmation`,
+      return_url: `${originForReturn}/payment-confirmation`,
     })
     
     console.log('Payment intent created:', { id: 'pi_***', status: paymentIntent.status, requestId });
@@ -208,7 +229,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Log successful payment processing with comprehensive data
     await auditLogger.logPaymentAttempt({
       request_id: requestId,
-      user_id: metadata?.userId,
+      user_id: (metadata as any)?.userId,
       ip_address: fingerprint.ip,
       user_agent: fingerprint.userAgent,
       payment_method_id: paymentMethodId,
@@ -230,7 +251,7 @@ const handler = async (req: Request): Promise<Response> => {
     const { data: paymentData, error: paymentError } = await supabaseClient
       .from('payment_transactions')
       .insert({
-        user_id: metadata.userId,
+        user_id: (metadata as any).userId,
         amount,
         currency,
         status: paymentIntent.status === 'succeeded' ? 'completed' : paymentIntent.status,
@@ -238,7 +259,7 @@ const handler = async (req: Request): Promise<Response> => {
         provider_transaction_id: paymentIntent.id,
         payment_method_id: paymentMethodId,
         metadata: {
-          ...metadata,
+          ...(metadata as any),
           stripe_payment_intent: paymentIntent.id,
         }
       })
@@ -297,7 +318,7 @@ const handler = async (req: Request): Promise<Response> => {
             currency: paymentIntent.currency.toUpperCase(),
             date: new Date().toISOString(),
             description: paymentIntent.description,
-            ...metadata
+            ...(metadata as any)
           }
         })
     }
@@ -322,8 +343,8 @@ const handler = async (req: Request): Promise<Response> => {
         ip_address: fingerprint.ip,
         user_agent: fingerprint.userAgent,
         status: 'failed',
-        error_code: error.code || 'unknown',
-        error_message: error.message,
+        error_code: (error as any).code || 'unknown',
+        error_message: (error as any).message,
         processing_time_ms: Date.now() - startTime,
         timestamp: new Date().toISOString(),
         security_flags: detectSuspiciousActivity(fingerprint) ? ['suspicious_activity'] : [],
@@ -337,10 +358,10 @@ const handler = async (req: Request): Promise<Response> => {
       console.error('Failed to log audit event:', auditError);
     }
     
-    const secureHeaders = getCorsHeaders(req.headers.get('origin'), securityConfig);
+    const secureHeadersFinal = getCorsHeaders(req.headers.get('origin'), securityConfig);
     return new Response(
-      JSON.stringify({ error: error.message }),
-      { status: 400, headers: { ...secureHeaders, 'Content-Type': 'application/json' } }
+      JSON.stringify({ error: (error as any).message }),
+      { status: 400, headers: { ...secureHeadersFinal, 'Content-Type': 'application/json' } }
     );
   }
 }
