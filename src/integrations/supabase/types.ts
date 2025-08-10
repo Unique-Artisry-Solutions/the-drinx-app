@@ -3380,6 +3380,63 @@ export type Database = {
         }
         Relationships: []
       }
+      http_request_logs: {
+        Row: {
+          body_hash: string | null
+          body_summary: Json | null
+          created_at: string
+          function_name: string
+          id: string
+          ip_address: string | null
+          method: string | null
+          path: string | null
+          query_params: Json
+          request_headers: Json
+          request_id: string
+          response_headers: Json | null
+          response_time_ms: number | null
+          status_code: number | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          body_hash?: string | null
+          body_summary?: Json | null
+          created_at?: string
+          function_name: string
+          id?: string
+          ip_address?: string | null
+          method?: string | null
+          path?: string | null
+          query_params?: Json
+          request_headers?: Json
+          request_id: string
+          response_headers?: Json | null
+          response_time_ms?: number | null
+          status_code?: number | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          body_hash?: string | null
+          body_summary?: Json | null
+          created_at?: string
+          function_name?: string
+          id?: string
+          ip_address?: string | null
+          method?: string | null
+          path?: string | null
+          query_params?: Json
+          request_headers?: Json
+          request_id?: string
+          response_headers?: Json | null
+          response_time_ms?: number | null
+          status_code?: number | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       ingredient_pairing_scores: {
         Row: {
           complementary_notes: string | null
@@ -4163,8 +4220,12 @@ export type Database = {
           currency: string | null
           error_message: string | null
           id: string
+          ip_address: string | null
           metadata: Json
           payment_method_id: string | null
+          request_headers: Json
+          request_id: string | null
+          user_agent: string | null
           user_id: string | null
         }
         Insert: {
@@ -4173,8 +4234,12 @@ export type Database = {
           currency?: string | null
           error_message?: string | null
           id?: string
+          ip_address?: string | null
           metadata?: Json
           payment_method_id?: string | null
+          request_headers?: Json
+          request_id?: string | null
+          user_agent?: string | null
           user_id?: string | null
         }
         Update: {
@@ -4183,8 +4248,12 @@ export type Database = {
           currency?: string | null
           error_message?: string | null
           id?: string
+          ip_address?: string | null
           metadata?: Json
           payment_method_id?: string | null
+          request_headers?: Json
+          request_id?: string | null
+          user_agent?: string | null
           user_id?: string | null
         }
         Relationships: []
@@ -6277,6 +6346,57 @@ export type Database = {
         }
         Relationships: []
       }
+      security_alerts: {
+        Row: {
+          acknowledged_by: string | null
+          context: Json
+          created_at: string
+          description: string | null
+          event_id: string | null
+          event_type: string
+          id: string
+          notified: boolean
+          resolved_at: string | null
+          severity: string
+          source: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          acknowledged_by?: string | null
+          context?: Json
+          created_at?: string
+          description?: string | null
+          event_id?: string | null
+          event_type: string
+          id?: string
+          notified?: boolean
+          resolved_at?: string | null
+          severity: string
+          source?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          acknowledged_by?: string | null
+          context?: Json
+          created_at?: string
+          description?: string | null
+          event_id?: string | null
+          event_type?: string
+          id?: string
+          notified?: boolean
+          resolved_at?: string | null
+          severity?: string
+          source?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       security_event_logs: {
         Row: {
           created_at: string
@@ -8100,6 +8220,51 @@ export type Database = {
         }
         Relationships: []
       }
+      cors_violations_1h: {
+        Row: {
+          created_at: string | null
+          details: Json | null
+          endpoint: string | null
+          event_type: string | null
+          id: string | null
+          ip_address: string | null
+          request_headers: Json | null
+          response_time_ms: number | null
+          session_id: string | null
+          severity: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          details?: Json | null
+          endpoint?: string | null
+          event_type?: string | null
+          id?: string | null
+          ip_address?: string | null
+          request_headers?: Json | null
+          response_time_ms?: number | null
+          session_id?: string | null
+          severity?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          details?: Json | null
+          endpoint?: string | null
+          event_type?: string | null
+          id?: string | null
+          ip_address?: string | null
+          request_headers?: Json | null
+          response_time_ms?: number | null
+          session_id?: string | null
+          severity?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       drink_popularity_metrics: {
         Row: {
           average_rating: number | null
@@ -8147,6 +8312,15 @@ export type Database = {
           reported_at: string | null
           reporter_id: string | null
           reporter_name: string | null
+        }
+        Relationships: []
+      }
+      hot_ips_rate_limit_violations_10min: {
+        Row: {
+          first_seen: string | null
+          ip: string | null
+          last_seen: string | null
+          violations: number | null
         }
         Relationships: []
       }
@@ -8409,6 +8583,24 @@ export type Database = {
         }
         Relationships: []
       }
+      suspicious_payment_failures_10min: {
+        Row: {
+          fail_count: number | null
+          first_seen: string | null
+          ip_address: string | null
+          last_seen: string | null
+        }
+        Relationships: []
+      }
+      suspicious_user_failures_10min: {
+        Row: {
+          fail_count: number | null
+          first_seen: string | null
+          last_seen: string | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       advance_onboarding_step: {
@@ -8552,6 +8744,10 @@ export type Database = {
       is_allowed_multi_role_user: {
         Args: { user_email: string }
         Returns: boolean
+      }
+      purge_old_logs: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       record_campaign_segment_interaction: {
         Args: {

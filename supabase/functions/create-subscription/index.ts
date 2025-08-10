@@ -5,6 +5,7 @@ import { enforceRateLimit } from '../_shared/rateLimit.ts'
 import { sanitizeObject, validateBasicPayload } from '../_shared/sanitize.ts'
 import Stripe from 'https://esm.sh/stripe@12.6.0?target=deno'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { logHttpStart, logHttpEnd, logPaymentAudit, logSecurityEvent } from '../_shared/logging.ts'
 
 const handler = async (req: Request): Promise<Response> => {
   const origin = req.headers.get('origin');
@@ -17,18 +18,24 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   if (!isOriginAllowed(origin, securityConfig)) {
+    await logSecurityEvent(req, 'cors_violation', 'medium', { function: 'create-subscription', origin })
     return new Response(JSON.stringify({ error: 'Origin not allowed' }), { status: 403, headers: { ...secureHeaders, 'Content-Type': 'application/json' } })
   }
+
+  // Start HTTP request logging
+  const http = await logHttpStart(req, 'create-subscription')
 
   try {
     // Persistent rate limiting
     const rate = await enforceRateLimit(req, 'create-subscription', { userLimit: 30, ipLimit: 90, windowSeconds: 60 })
     if (!rate.allowed) {
+      await logHttpEnd(http, 429, secureHeaders)
       return new Response(JSON.stringify({ error: 'Rate limit exceeded' }), { status: 429, headers: { ...secureHeaders, 'Content-Type': 'application/json', 'Retry-After': String(rate.retryAfter ?? 60) } })
     }
 
     const STRIPE_SECRET_KEY = Deno.env.get('STRIPE_SECRET_KEY')
     if (!STRIPE_SECRET_KEY) {
+      await logHttpEnd(http, 500, secureHeaders)
       return new Response(
         JSON.stringify({ error: 'Stripe secret key not configured' }),
         { status: 500, headers: { ...secureHeaders, 'Content-Type': 'application/json' } }
@@ -51,6 +58,16 @@ const handler = async (req: Request): Promise<Response> => {
     const body = sanitizeObject(raw)
     const basic = validateBasicPayload(body, { maxKeys: 20 })
     if (!basic.ok) {
+      await logPaymentAudit({
+        requestId: http.requestId,
+        userId: http.userId,
+        ip: http.ip,
+        userAgent: http.userAgent,
+        currency: (body as any)?.currency,
+        status: 'failed',
+        errorMessage: basic.error ?? 'Invalid payload'
+      })
+      await logHttpEnd(http, 400, secureHeaders)
       return new Response(JSON.stringify({ error: basic.error }), { status: 400, headers: { ...secureHeaders, 'Content-Type': 'application/json' } })
     }
 
@@ -62,6 +79,16 @@ const handler = async (req: Request): Promise<Response> => {
       userId,
       currency = 'USD'
     } = body as any
+
+    // Audit: initiated
+    await logPaymentAudit({
+      requestId: http.requestId,
+      userId: http.userId ?? userId,
+      ip: http.ip,
+      userAgent: http.userAgent,
+      currency,
+      status: 'initiated'
+    })
 
     let customer_id = customerId as string | undefined
 
@@ -124,12 +151,23 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (dbError) {
       console.error('Error saving subscription to database:', dbError)
-      // Don't fail the request, but log the error
     }
+
+    // Audit: succeeded
+    await logPaymentAudit({
+      requestId: http.requestId,
+      userId: http.userId ?? userId,
+      ip: http.ip,
+      userAgent: http.userAgent,
+      currency,
+      status: 'succeeded',
+      stripePaymentIntentId: (subscription.latest_invoice as any)?.payment_intent?.id ?? null
+    })
 
     const latest_invoice = subscription.latest_invoice as Stripe.Invoice
     const payment_intent = latest_invoice?.payment_intent as Stripe.PaymentIntent
 
+    await logHttpEnd(http, 200, secureHeaders)
     return new Response(
       JSON.stringify({
         subscription_id: subscription.id,
@@ -141,6 +179,15 @@ const handler = async (req: Request): Promise<Response> => {
     )
   } catch (error) {
     console.error('Error creating subscription:', error)
+    await logPaymentAudit({
+      requestId: http.requestId,
+      userId: http.userId,
+      ip: http.ip,
+      userAgent: http.userAgent,
+      status: 'failed',
+      errorMessage: (error as any)?.message ?? 'Unknown error'
+    })
+    await logHttpEnd(http, 400, secureHeaders)
     return new Response(
       JSON.stringify({ error: (error as any).message }),
       { status: 400, headers: { ...secureHeaders, 'Content-Type': 'application/json' } }
@@ -149,3 +196,4 @@ const handler = async (req: Request): Promise<Response> => {
 }
 
 serve(handler)
+
