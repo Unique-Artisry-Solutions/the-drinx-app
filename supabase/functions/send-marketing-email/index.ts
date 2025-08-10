@@ -11,6 +11,8 @@ const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 const supabaseUrl = Deno.env.get('SUPABASE_URL') as string;
 const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') as string;
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
+const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') as string;
+const admin = createClient(supabaseUrl, supabaseServiceKey, { auth: { persistSession: false } });
 
 
 const MarketingEmailSchema = z.object({
@@ -49,6 +51,17 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     const { user, error: authError } = await getAuthenticatedUser(req);
     if (!user) {
+      const ip = (req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || '')
+        .split(',')[0].trim() || null;
+      await admin.from('security_event_logs').insert({
+        event_type: 'auth_failure',
+        severity: 'medium',
+        ip_address: ip,
+        user_agent: req.headers.get('user-agent'),
+        user_id: null,
+        endpoint: 'send-marketing-email',
+        details: { error: authError || 'Unauthorized' }
+      });
       return new Response(
         JSON.stringify({ error: authError || 'Unauthorized' }),
         { status: 401, headers: { 'Content-Type': 'application/json', ...cors } }
@@ -58,6 +71,17 @@ const handler = async (req: Request): Promise<Response> => {
     // Persistent rate limiting
     const rate = await enforceRateLimit(req, 'send-marketing-email', { userLimit: 20, ipLimit: 60, windowSeconds: 60 });
     if (!rate.allowed) {
+      const ip = (req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || '')
+        .split(',')[0].trim() || null;
+      await admin.from('security_event_logs').insert({
+        event_type: 'rate_limit_exceeded',
+        severity: 'medium',
+        ip_address: ip,
+        user_agent: req.headers.get('user-agent'),
+        user_id: user.id,
+        endpoint: 'send-marketing-email',
+        details: { retry_after: rate.retryAfter, reason: rate.reason }
+      });
       return new Response(
         JSON.stringify({ error: 'Rate limit exceeded' }),
         { status: 429, headers: { 'Content-Type': 'application/json', ...cors, 'Retry-After': String(rate.retryAfter ?? 60) } }

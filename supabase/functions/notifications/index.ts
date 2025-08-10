@@ -4,8 +4,10 @@ import { getSecurityConfig, getCorsHeaders, isOriginAllowed } from '../_shared/s
 import { enforceRateLimit } from '../_shared/rateLimit.ts'
 import { sanitizeObject } from '../_shared/sanitize.ts'
 import { z } from "npm:zod@3.23.8"
-import { enforceRateLimit } from '../_shared/rateLimit.ts'
 
+const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+const admin = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
 
 // Helper function to create consistent error responses
 const createErrorResponse = (message: string, status = 400, cors: Record<string, string>) => {
@@ -168,9 +170,24 @@ serve(async (req) => {
     }
   } catch (error) {
     console.error('Unexpected error:', error);
+    const msg = (error as any)?.message || '';
+    if (msg === 'No authorization header' || msg === 'Unauthorized') {
+      const ip = (req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || '')
+        .split(',')[0].trim() || null;
+      await admin.from('security_event_logs').insert({
+        event_type: 'auth_failure',
+        severity: 'low',
+        ip_address: ip,
+        user_agent: req.headers.get('user-agent'),
+        user_id: null,
+        endpoint: 'notifications',
+        details: { error: msg }
+      });
+    }
     return createErrorResponse(
-      error.message || 'Internal server error',
-      error.message === 'No authorization header' ? 401 : 500
+      msg || 'Internal server error',
+      msg === 'No authorization header' ? 401 : 500,
+      cors
     );
   }
 });

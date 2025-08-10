@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ComponentCatalogItem } from './types';
 import { useToast } from '@/hooks/use-toast';
+import { sanitizeHtml } from '@/utils/sanitizeHtml';
 
 interface ComponentCardProps {
   component: ComponentCatalogItem;
@@ -51,7 +52,7 @@ const ComponentCard: React.FC<ComponentCardProps> = ({ component, onSelectCompon
     // If the preview is something else (like JSX or SVG as string), render it as-is
     return (
       <div className="flex items-center justify-center h-full">
-        <div dangerouslySetInnerHTML={{ __html: component.preview }} />
+        <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(component.preview) }} />
       </div>
     );
   };

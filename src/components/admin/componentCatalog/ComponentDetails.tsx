@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { ComponentCatalogItem } from './types';
 import { useToast } from '@/hooks/use-toast';
+import { sanitizeHtml } from '@/utils/sanitizeHtml';
 
 interface ComponentDetailsProps {
   component: ComponentCatalogItem | null;
@@ -63,7 +64,7 @@ const ComponentDetails: React.FC<ComponentDetailsProps> = ({ component }) => {
     
     return (
       <div className="flex items-center justify-center h-full">
-        <div dangerouslySetInnerHTML={{ __html: component.preview }} />
+        <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(component.preview) }} />
       </div>
     );
   };
