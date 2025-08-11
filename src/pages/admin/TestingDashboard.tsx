@@ -5,6 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Play, RotateCcw, CheckCircle, XCircle, Clock, AlertCircle, TestTube } from 'lucide-react';
+import { DevSeedingPanel } from '@/components/admin/testing';
+import { useDevelopmentMode } from '@/contexts/DevelopmentModeContext';
+import useDevAuthBypass from '@/hooks/useDevAuthBypass';
 
 // Simple internal types for the testing dashboard
 interface SimpleTestResult {
@@ -33,6 +36,10 @@ const TestingDashboard: React.FC = () => {
     showBreadcrumbs: true,
     maxWidth: 'full' as const
   };
+
+  const { isDevModeActive } = useDevelopmentMode();
+  const { userType } = useDevAuthBypass();
+  const canUseDevSeeding = isDevModeActive || userType === 'admin';
 
   // Mock test suites data
   const [testSuites, setTestSuites] = useState<TestSuite[]>([
@@ -203,6 +210,20 @@ const TestingDashboard: React.FC = () => {
 
   return (
     <AdminPageLayout config={pageConfig} actions={pageActions}>
+      {/* Dev Seeding Panel - visible in dev mode or for admin users */}
+      {canUseDevSeeding ? (
+        <div className="mb-6">
+          <DevSeedingPanel />
+        </div>
+      ) : (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Dev Seeding</CardTitle>
+            <CardDescription>Only available in dev mode or for admin users.</CardDescription>
+          </CardHeader>
+        </Card>
+      )}
+
       {/* Overall Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <Card>
