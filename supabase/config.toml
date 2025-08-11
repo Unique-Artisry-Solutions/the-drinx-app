@@ -53,3 +53,6 @@ verify_jwt = false
 
 [functions.rotate-stripe-key]
 verify_jwt = true
+
+[functions.seed-dev-data]
+verify_jwt = false

@@ -8702,6 +8702,14 @@ export type Database = {
       }
     }
     Functions: {
+      _log_seed_record: {
+        Args: { p_seed_run_id: string; p_table: string; p_record_id: string }
+        Returns: undefined
+      }
+      _table_exists: {
+        Args: { p_table: string }
+        Returns: boolean
+      }
       advance_onboarding_step: {
         Args: { p_follower_id: string }
         Returns: boolean
@@ -8783,6 +8791,10 @@ export type Database = {
       check_user_consent: {
         Args: { p_user_id: string; p_consent_type: string }
         Returns: boolean
+      }
+      clear_dev_seed: {
+        Args: { p_seed_run_id?: string }
+        Returns: Json
       }
       generate_event_access_token: {
         Args: { p_event_id: string; p_days_valid?: number }
@@ -8868,6 +8880,50 @@ export type Database = {
       }
       run_retention_cleanup: {
         Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      seed_analytics: {
+        Args: {
+          p_user_ids: string[]
+          p_event_ids?: string[]
+          p_days?: number
+          p_seed_run_id?: string
+        }
+        Returns: Json
+      }
+      seed_cocktails_for_establishments: {
+        Args: {
+          p_establishment_ids: string[]
+          p_min_per?: number
+          p_max_per?: number
+          p_seed_run_id?: string
+        }
+        Returns: string[]
+      }
+      seed_establishments: {
+        Args: {
+          p_owner_ids: string[]
+          p_count?: number
+          p_seed_run_id?: string
+        }
+        Returns: string[]
+      }
+      seed_reviews: {
+        Args: {
+          p_user_ids: string[]
+          p_cocktail_ids: string[]
+          p_total?: number
+          p_seed_run_id?: string
+        }
+        Returns: number
+      }
+      seed_rewards_activity: {
+        Args: {
+          p_user_ids: string[]
+          p_establishment_ids?: string[]
+          p_events_per_user?: number
+          p_seed_run_id?: string
+        }
         Returns: Json
       }
       start_follower_onboarding: {
