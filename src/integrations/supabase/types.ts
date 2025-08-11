@@ -1415,6 +1415,62 @@ export type Database = {
           },
         ]
       }
+      dev_seed_records: {
+        Row: {
+          created_at: string
+          id: string
+          record_id: string
+          seed_run_id: string
+          table_name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          record_id: string
+          seed_run_id: string
+          table_name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          record_id?: string
+          seed_run_id?: string
+          table_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dev_seed_records_seed_run_id_fkey"
+            columns: ["seed_run_id"]
+            isOneToOne: false
+            referencedRelation: "dev_seed_registry"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dev_seed_registry: {
+        Row: {
+          completed_at: string | null
+          id: string
+          params: Json
+          started_at: string
+          status: string
+        }
+        Insert: {
+          completed_at?: string | null
+          id?: string
+          params?: Json
+          started_at?: string
+          status?: string
+        }
+        Update: {
+          completed_at?: string | null
+          id?: string
+          params?: Json
+          started_at?: string
+          status?: string
+        }
+        Relationships: []
+      }
       device_fingerprints: {
         Row: {
           created_at: string
