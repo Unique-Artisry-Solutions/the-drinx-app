@@ -4,8 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { TestTube, Users, Database, Settings } from 'lucide-react';
 import TopNavigation from '@/components/TopNavigation';
+import { DevSeedingPanel } from '@/components/admin/testing';
+import { useDevelopmentMode } from '@/contexts/DevelopmentModeContext';
 
 const TestingPage: React.FC = () => {
+  const { isDevelopment } = useDevelopmentMode();
   return (
     <div className="min-h-screen bg-white">
       <TopNavigation />
@@ -14,7 +17,11 @@ const TestingPage: React.FC = () => {
         <h1 className="text-3xl font-bold text-gray-900 mb-2">MVP Testing Suite</h1>
         <p className="text-gray-600">Comprehensive testing environment for all application features</p>
       </div>
-
+{isDevelopment && (
+        <div className="mb-8">
+          <DevSeedingPanel />
+        </div>
+      )}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card>
           <CardHeader>

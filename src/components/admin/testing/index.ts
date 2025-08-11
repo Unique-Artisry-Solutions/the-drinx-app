@@ -17,3 +17,6 @@ export { default as SegmentationTestValidator } from './SegmentationTestValidato
 // Types
 export type { TestScenario } from './TestScenarioTracker';
 export type { AudienceTestScenario } from './AudienceAnalyticsTestSuite';
+
+// Dev Seeding Panel
+export { default as DevSeedingPanel } from './DevSeedingPanel';
