@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { startTransition } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { LinkProps } from '@/types/navigation/LinkTypes';
@@ -39,7 +39,9 @@ const LinkComponent: React.FC<LinkProps> = ({
 
     // Prevent default for internal links and use React Router's navigation
     e.preventDefault();
-    navigate(href, { replace, preventScrollReset });
+    startTransition(() => {
+      navigate(href, { replace, preventScrollReset });
+    });
   };
 
   return (

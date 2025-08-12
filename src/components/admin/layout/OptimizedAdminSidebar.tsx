@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, startTransition } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ChevronDown, ChevronRight, ChevronLeft } from 'lucide-react';
 import { adminNavItems } from '@/components/navigation/admin/AdminNavItems';
@@ -40,7 +40,9 @@ const OptimizedAdminSidebar: React.FC = () => {
 
   const handleNavigation = (path: string) => {
     console.log('Navigating to:', path);
-    navigate(path);
+    startTransition(() => {
+      navigate(path);
+    });
   };
   
   return (
