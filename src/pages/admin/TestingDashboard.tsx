@@ -8,6 +8,10 @@ import { Play, RotateCcw, CheckCircle, XCircle, Clock, AlertCircle, TestTube } f
 import { DevSeedingPanel } from '@/components/admin/testing';
 import { useDevelopmentMode } from '@/contexts/DevelopmentModeContext';
 import useDevAuthBypass from '@/hooks/useDevAuthBypass';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { getHomePathByUserType } from '@/utils/breadcrumbUtils';
+import { runRouteTests } from '@/utils/routeTesting';
 
 // Simple internal types for the testing dashboard
 interface SimpleTestResult {
@@ -37,9 +41,21 @@ const TestingDashboard: React.FC = () => {
     maxWidth: 'full' as const
   };
 
+  const navigate = useNavigate();
   const { isDevModeActive } = useDevelopmentMode();
   const { userType } = useDevAuthBypass();
   const canUseDevSeeding = isDevModeActive || userType === 'admin';
+
+  const [isLoggingIn, setIsLoggingIn] = useState<string | null>(null);
+  const [loginError, setLoginError] = useState<string | null>(null);
+  const [routeStats, setRouteStats] = useState<{ passed: number; failed: number } | null>(null);
+
+  const personas = [
+    { label: 'Admin', email: 'admin@spiritless.com', password: 'admin123', type: 'admin' as const },
+    { label: 'Individual', email: 'user@spiritless.com', password: 'user123', type: 'individual' as const },
+    { label: 'Establishment', email: 'establishment@spiritless.com', password: 'establishment123', type: 'establishment' as const },
+    { label: 'Promoter', email: 'promoter@spiritless.com', password: 'promoter123', type: 'promoter' as const }
+  ];
 
   // Mock test suites data
   const [testSuites, setTestSuites] = useState<TestSuite[]>([
@@ -185,6 +201,33 @@ const TestingDashboard: React.FC = () => {
     );
   };
 
+  const quickLogin = async (
+    email: string,
+    password: string,
+    type: 'admin' | 'individual' | 'establishment' | 'promoter'
+  ) => {
+    try {
+      setIsLoggingIn(email);
+      setLoginError(null);
+      try { await supabase.auth.signOut(); } catch (_) {}
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        setLoginError(error.message);
+        setIsLoggingIn(null);
+        return;
+      }
+      const path = getHomePathByUserType(type, true);
+      navigate(path);
+    } finally {
+      setIsLoggingIn(null);
+    }
+  };
+
+  const handleRunRouteTests = () => {
+    const { passed, failed } = runRouteTests();
+    setRouteStats({ passed, failed });
+  };
+
   const pageActions = [
     {
       label: 'Run All Tests',
@@ -224,6 +267,32 @@ const TestingDashboard: React.FC = () => {
         </Card>
       )}
 
+      {/* Quick Persona Login */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Quick Persona Login</CardTitle>
+          <CardDescription>Sign in instantly as a seeded persona</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            {personas.map((p) => (
+              <Button
+                key={p.email}
+                variant="outline"
+                size="sm"
+                disabled={!!isLoggingIn}
+                onClick={() => quickLogin(p.email, p.password, p.type)}
+              >
+                {isLoggingIn === p.email ? 'Signing in…' : p.label}
+              </Button>
+            ))}
+          </div>
+          {loginError && (
+            <p className="text-sm text-destructive mt-2">{loginError}</p>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Overall Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <Card>
@@ -254,6 +323,26 @@ const TestingDashboard: React.FC = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Route Access Tests */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Route Access Tests</CardTitle>
+          <CardDescription>Validate role-based route access rules</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-3">
+            <Button variant="outline" size="sm" onClick={handleRunRouteTests}>
+              Run Route Access Tests
+            </Button>
+            {routeStats && (
+              <div className="text-sm text-muted-foreground">
+                Passed: {routeStats.passed} • Failed: {routeStats.failed}
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Progress Section */}
       {isRunning && (

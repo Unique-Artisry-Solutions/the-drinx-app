@@ -25,6 +25,16 @@ serve(async (req) => {
   }
 
   try {
+    // Optional admin token enforcement: if SEED_ADMIN_TOKEN is set, require matching header
+    const requiredToken = Deno.env.get('SEED_ADMIN_TOKEN') || '';
+    const providedToken = req.headers.get('x-seed-admin-token') || '';
+    if (requiredToken && providedToken !== requiredToken) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Unauthorized' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
+      );
+    }
+
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
@@ -105,6 +115,32 @@ serve(async (req) => {
         // Profile and user_roles are now handled by DB trigger (public.handle_new_user)
         // No manual upsert needed here
 
+        // Ensure establishment exists for establishment persona
+        if (persona.type === 'establishment') {
+          const { data: existingEst } = await supabaseClient
+            .from('establishments')
+            .select('id')
+            .eq('owner_id', userId)
+            .maybeSingle();
+
+          if (!existingEst) {
+            const { error: estInsertErr } = await supabaseClient
+              .from('establishments')
+              .insert({
+                name: persona.name || 'Seed Establishment',
+                owner_id: userId,
+                address: '123 Seed St, Test City',
+                latitude: 40.72,
+                longitude: -74.00,
+                cocktail_count: 0,
+                phone: '+1-555-0110',
+                website: 'https://seed-establishment.dev'
+              });
+            if (estInsertErr) {
+              console.error('Establishment insert error:', estInsertErr);
+            }
+          }
+        }
         results.push({
           email: persona.email,
           type: persona.type,
