@@ -151,13 +151,13 @@ async function getOrCreatePersona(p: Persona) {
   let user = created?.user || null;
   if (createErr) {
     const msg = (createErr as any)?.message || String(createErr);
-    const isDuplicate = /already|exists|duplicate/i.test(msg);
-    if (!isDuplicate) {
-      throw new Error(`createUser failed for ${p.email}: ${msg}`);
-    }
-    // Likely already exists — find by email
+    // On any error, attempt to find existing user by email before failing
     const existing = await findUserByEmail(p.email);
-    user = existing;
+    if (existing) {
+      user = existing;
+    } else {
+      throw new Error(`createUser failed for ${p.email}: ${msg} (no existing user found)`);
+    }
   }
 
   if (!user) {
@@ -217,16 +217,22 @@ async function actionSeedPersonas(custom?: Partial<Persona>[]) {
 
   const results: { email: string; user_id: string }[] = [];
   for (const p of personas) {
-    const id = await getOrCreatePersona(p);
-    results.push({ email: p.email, user_id: id });
+    try {
+      const id = await getOrCreatePersona(p);
+      results.push({ email: p.email, user_id: id });
+    } catch (e: any) {
+      throw new Error(`seed_personas:getOrCreatePersona(${p.email}) failed: ${e?.message || String(e)}`);
+    }
   }
   return ok({ personas: results });
 }
 
 async function actionSeedAll() {
   // 1) Ensure personas exist
-  const personasResult = await actionSeedPersonas();
-  const personas = (await personasResult.json()) as any; // Not accessible here; we returned Response. Recompute ids.
+  const personasResult = await actionSeedPersonas().catch((e: any) => {
+    throw new Error(`seed_all:seed_personas failed: ${e?.message || String(e)}`);
+  });
+  const personas = (await personasResult.json()) as any;
 
   // Re-fetch IDs for known persona emails
   const personaEmails = DEFAULT_PERSONAS.map((p) => p.email);
@@ -244,7 +250,7 @@ async function actionSeedAll() {
       p_count: 12,
       p_seed_run_id: null,
     });
-    if (estErr) throw estErr;
+    if (estErr) throw new Error(`seed_all:seed_establishments failed: ${estErr.message || String(estErr)}`);
     establishmentIds = estIds || [];
   }
 
@@ -257,7 +263,7 @@ async function actionSeedAll() {
       p_max_per: 6,
       p_seed_run_id: null,
     });
-    if (cocktailsErr) throw cocktailsErr;
+    if (cocktailsErr) throw new Error(`seed_all:seed_cocktails_for_establishments failed: ${cocktailsErr.message || String(cocktailsErr)}`);
     cocktailIds = cocktails || [];
   }
 
@@ -270,7 +276,7 @@ async function actionSeedAll() {
       p_total: 120,
       p_seed_run_id: null,
     });
-    if (reviewsErr) throw reviewsErr;
+    if (reviewsErr) throw new Error(`seed_all:seed_reviews failed: ${reviewsErr.message || String(reviewsErr)}`);
     totalReviews = reviewsCount || 0;
   }
 
@@ -283,7 +289,7 @@ async function actionSeedAll() {
       p_events_per_user: 6,
       p_seed_run_id: null,
     });
-    if (rewardsErr) throw rewardsErr;
+    if (rewardsErr) throw new Error(`seed_all:seed_rewards_activity failed: ${rewardsErr.message || String(rewardsErr)}`);
     rewardsSummary = rewards;
   }
 
@@ -296,7 +302,7 @@ async function actionSeedAll() {
       p_days: 30,
       p_seed_run_id: null,
     });
-    if (analyticsErr) throw analyticsErr;
+    if (analyticsErr) throw new Error(`seed_all:seed_analytics failed: ${analyticsErr.message || String(analyticsErr)}`);
     analyticsSummary = analytics;
   }
 
