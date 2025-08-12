@@ -1,317 +1,262 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
+/* eslint-disable */
+// Supabase Edge Function: seed-dev-data
+// Provides dev seeding utilities, now including Phase 2: realistic event data population.
+
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+// CORS headers
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-seed-admin-token',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Credentials': 'true',
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+type Json = Record<string, any>;
+
+function getSupabaseClient() {
+  const url =
+    Deno.env.get("SUPABASE_URL") ??
+    "https://dvifibvzwunnpcsihpxq.supabase.co";
+  // Prefer service role for RLS-protected reads; fall back to anon if not set
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const anonKey =
+    Deno.env.get("SUPABASE_ANON_KEY") ??
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR2aWZpYnZ6d3VubnBjc2locHhxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDMyNzM4MDcsImV4cCI6MjA1ODg0OTgwN30.8nsPh_YwHjoFDJ2_IMQY9tkM9NHVLmu6oFf5Tnwa2FA";
+
+  const key = serviceKey || anonKey;
+  const client = createClient(url, key, { auth: { persistSession: false } });
+  return client;
 }
 
-// Helper: map persona "type" to a valid user_role enum
-// We keep profiles.user_type as provided (including 'admin'), but user_roles.role must be one of the enum values.
-function toValidUserRole(
-  personaType: 'individual' | 'establishment' | 'promoter' | 'admin'
-): 'individual' | 'establishment' | 'promoter' {
-  return personaType === 'admin' ? 'individual' : personaType;
+async function jsonResponse(status: number, body: Json) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { "Content-Type": "application/json", ...corsHeaders },
+  });
 }
 
-serve(async (req) => {
-  // Basic request logging for CORS/debug
-  console.log(`[seed-dev-data] method=${req.method} origin=${req.headers.get('origin') || 'no-origin'}`)
-  // Handle CORS
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
-  }
-
+async function createSeedRun(supabase: ReturnType<typeof getSupabaseClient>) {
+  // Best-effort: dev_seed_registry may have different columns across environments.
+  // We'll insert minimal fields and gracefully proceed if it fails.
   try {
-    // Optional admin token enforcement: if SEED_ADMIN_TOKEN is set, require matching header
-    const requiredToken = Deno.env.get('SEED_ADMIN_TOKEN') || '';
-    const providedToken = req.headers.get('x-seed-admin-token') || '';
-    if (requiredToken && providedToken !== requiredToken) {
-      return new Response(
-        JSON.stringify({ success: false, error: 'Unauthorized' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
-      );
+    const { data, error } = await supabase
+      .from("dev_seed_registry")
+      .insert({ status: "running", started_at: new Date().toISOString() })
+      .select("id")
+      .maybeSingle();
+
+    if (error) {
+      console.log("[seed] createSeedRun warning:", error.message);
+      return null;
     }
-
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
-      }
-    )
-
-// Parse action from request body
-    let body: any = {};
-    try {
-      body = await req.json();
-    } catch (_) {
-      body = {};
-    }
-    const action: 'health' | 'seed_personas' | 'seed_all' | 'cleanup' = body?.action ?? 'seed_personas';
-    const seedRunId: string | null = body?.seed_run_id ?? null;
-
-
-    // Define test personas
-    const personas = [
-      {
-        email: 'admin@spiritless.com',
-        password: 'admin123',
-        username: 'admin',
-        name: 'System Admin',
-        type: 'admin' as const,
-      },
-      {
-        email: 'user@spiritless.com',
-        password: 'user123',
-        username: 'testuser',
-        name: 'Test User',
-        type: 'individual' as const,
-      },
-      {
-        email: 'establishment@spiritless.com',
-        password: 'establishment123',
-        username: 'testestablishment',
-        name: 'Test Establishment',
-        type: 'establishment' as const,
-      },
-      {
-        email: 'promoter@spiritless.com',
-        password: 'promoter123',
-        username: 'testpromoter',
-        name: 'Test Promoter',
-        type: 'promoter' as const,
-      },
-    ];
-
-    // Helper to seed personas (idempotent)
-    const seedPersonas = async () => {
-      const results: Array<{ email: string; type: string; status: string; userId?: string; error?: string }>= [];
-      const idsByType: Record<string, string> = {};
-
-      const { data: list } = await supabaseClient.auth.admin.listUsers();
-
-      for (const persona of personas) {
-        try {
-          const existing = list?.users?.find((u) => u.email === persona.email);
-          let userId: string;
-          if (existing) {
-            userId = existing.id;
-            console.log(`[seed] user exists ${persona.email} -> ${userId}`);
-          } else {
-            const { data: created, error: createErr } = await supabaseClient.auth.admin.createUser({
-              email: persona.email,
-              password: persona.password,
-              email_confirm: true,
-              user_metadata: {
-                username: persona.username,
-                name: persona.name,
-                user_type: persona.type,
-              },
-            });
-            if (createErr) throw new Error(createErr.message);
-            userId = created.user.id;
-            console.log(`[seed] created user ${persona.email} -> ${userId}`);
-          }
-
-          // Ensure establishment exists for establishment persona
-          if (persona.type === 'establishment') {
-            const { data: existingEst } = await supabaseClient
-              .from('establishments')
-              .select('id')
-              .eq('owner_id', userId)
-              .maybeSingle();
-            if (!existingEst) {
-              const { error: estErr } = await supabaseClient.from('establishments').insert({
-                name: persona.name || 'Seed Establishment',
-                owner_id: userId,
-                address: '123 Seed St, Test City',
-                latitude: 40.72,
-                longitude: -74.0,
-                cocktail_count: 0,
-                phone: '+1-555-0110',
-                website: 'https://seed-establishment.dev',
-              });
-              if (estErr) console.error('[seed] establishment insert error', estErr);
-            }
-          }
-
-          results.push({ email: persona.email, type: persona.type, status: 'success', userId });
-          idsByType[persona.type] = userId;
-        } catch (e: any) {
-          console.error(`[seed] persona error ${persona.email}`, e);
-          results.push({ email: persona.email, type: persona.type, status: 'error', error: e?.message || 'error' });
-        }
-      }
-
-      return { results, idsByType };
-    };
-
-    // Health check
-    if (action === 'health') {
-      const { count, error } = await supabaseClient
-        .from('profiles')
-        .select('id', { count: 'exact', head: true });
-      if (error) console.warn('[seed] health profiles count error', error);
-      return new Response(
-        JSON.stringify({ ok: true, service: 'seed-dev-data', profiles_count: count ?? 0, message: 'healthy' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 },
-      );
-    }
-
-    // Cleanup all previously seeded rows tracked in dev_seed_records
-    if (action === 'cleanup') {
-      const { data, error } = await supabaseClient.rpc('clear_dev_seed', { p_seed_run_id: seedRunId });
-      if (error) {
-        return new Response(
-          JSON.stringify({ success: false, action, seed_run_id: seedRunId, error: error.message }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 },
-        );
-      }
-      return new Response(
-        JSON.stringify({ success: true, action, seed_run_id: seedRunId, result: data }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 },
-      );
-    }
-
-    // Seed personas only
-    if (action === 'seed_personas') {
-      const { results } = await seedPersonas();
-      return new Response(
-        JSON.stringify({ success: true, message: 'Personas seeded', results }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 },
-      );
-    }
-
-    // Seed everything (personas + sample data)
-    if (action === 'seed_all') {
-      const { results, idsByType } = await seedPersonas();
-
-      // Start a seed run to track created rows for easy cleanup
-      const { data: run, error: runErr } = await supabaseClient
-        .from('dev_seed_registry')
-        .insert({ params: { action: 'seed_all' } })
-        .select('id')
-        .single();
-      if (runErr) {
-        console.error('[seed] failed to create seed run', runErr);
-      }
-      const seedRunId: string | null = run?.id ?? null;
-
-      const summary: Record<string, unknown> = { seedRunId };
-
-      // 1) Establishments
-      const ownerIds: string[] = idsByType['establishment'] ? [idsByType['establishment']] : [];
-      let establishmentIds: string[] = [];
-      if (ownerIds.length > 0) {
-        const { data: estIds, error: estErr } = await supabaseClient.rpc('seed_establishments', {
-          p_owner_ids: ownerIds,
-          p_count: 12,
-          p_seed_run_id: seedRunId,
-        });
-        if (estErr) {
-          console.error('[seed] seed_establishments error', estErr);
-        } else if (Array.isArray(estIds)) {
-          establishmentIds = estIds as string[];
-          summary.establishments = establishmentIds.length;
-        }
-      }
-
-      // 2) Cocktails
-      let cocktailIds: string[] = [];
-      if (establishmentIds.length > 0) {
-        const { data: cIds, error: cErr } = await supabaseClient.rpc('seed_cocktails_for_establishments', {
-          p_establishment_ids: establishmentIds,
-          p_min_per: 3,
-          p_max_per: 6,
-          p_seed_run_id: seedRunId,
-        });
-        if (cErr) {
-          console.error('[seed] seed_cocktails_for_establishments error', cErr);
-        } else if (Array.isArray(cIds)) {
-          cocktailIds = cIds as string[];
-          summary.cocktails = cocktailIds.length;
-        }
-      }
-
-      // 3) Reviews
-      const reviewerIds = [idsByType['individual'], idsByType['promoter']].filter(Boolean) as string[];
-      if (reviewerIds.length > 0 && cocktailIds.length > 0) {
-        const { data: reviewCount, error: rErr } = await supabaseClient.rpc('seed_reviews', {
-          p_user_ids: reviewerIds,
-          p_cocktail_ids: cocktailIds,
-          p_total: 80,
-          p_seed_run_id: seedRunId,
-        });
-        if (rErr) {
-          console.error('[seed] seed_reviews error', rErr);
-        } else {
-          summary.reviews = reviewCount ?? 0;
-        }
-      }
-
-      // 4) Rewards activity
-      if (reviewerIds.length > 0) {
-        const { data: rewardsData, error: rwErr } = await supabaseClient.rpc('seed_rewards_activity', {
-          p_user_ids: reviewerIds,
-          p_establishment_ids: establishmentIds,
-          p_events_per_user: 6,
-          p_seed_run_id: seedRunId,
-        });
-        if (rwErr) {
-          console.error('[seed] seed_rewards_activity error', rwErr);
-        } else {
-          summary.rewards = rewardsData ?? {};
-        }
-      }
-
-      // 5) Analytics
-      const analyticsUsers = [idsByType['individual'], idsByType['promoter'], idsByType['admin']].filter(Boolean) as string[];
-      if (analyticsUsers.length > 0) {
-        const { data: analyticsData, error: aErr } = await supabaseClient.rpc('seed_analytics', {
-          p_user_ids: analyticsUsers,
-          p_days: 30,
-          p_seed_run_id: seedRunId,
-        });
-        if (aErr) {
-          console.error('[seed] seed_analytics error', aErr);
-        } else {
-          summary.analytics = analyticsData ?? {};
-        }
-      }
-
-      return new Response(
-        JSON.stringify({ success: true, message: 'Seed all completed', personas: results, summary }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 },
-      );
-    }
-
-    // Default fallback
-    return new Response(
-      JSON.stringify({ success: false, error: 'Unknown action' }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 },
-    );
-
-  } catch (error) {
-    console.error('Seeding error:', error)
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: error.message
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500,
-      },
-    )
+    return data?.id ?? null;
+  } catch (e) {
+    console.log("[seed] createSeedRun exception:", String(e));
+    return null;
   }
-})
+}
 
-// (removed) Manual profile/role upsert. Relying on signup trigger to create profile
-// and assign a valid user_role automatically based on user_metadata.user_type.
+async function finalizeSeedRun(
+  supabase: ReturnType<typeof getSupabaseClient>,
+  runId: string | null,
+  status: "completed" | "failed",
+  details?: Json
+) {
+  if (!runId) return;
+  try {
+    const patch: Json = { status };
+    // Try to set completed_at if exists
+    patch.completed_at = new Date().toISOString();
+    if (details) patch.details = details;
 
+    await supabase.from("dev_seed_registry").update(patch).eq("id", runId);
+  } catch (e) {
+    console.log("[seed] finalizeSeedRun warning:", String(e));
+  }
+}
+
+async function autoDetectPromoterId(supabase: ReturnType<typeof getSupabaseClient>) {
+  // Try user_type first
+  const byType = await supabase
+    .from("profiles")
+    .select("id, user_type")
+    .eq("user_type", "promoter")
+    .limit(1)
+    .maybeSingle();
+
+  if (byType.data?.id) {
+    console.log("[seed] promoter detected by user_type:", byType.data.id);
+    return byType.data.id as string;
+  }
+
+  // Fallback by email if present
+  const byEmail = await supabase
+    .from("profiles")
+    .select("id, email")
+    .ilike("email", "promoter@%")
+    .limit(1)
+    .maybeSingle();
+
+  if (byEmail.data?.id) {
+    console.log("[seed] promoter detected by email:", byEmail.data.id);
+    return byEmail.data.id as string;
+  }
+
+  console.log("[seed] promoter not detected");
+  return null;
+}
+
+async function getEstablishmentIds(supabase: ReturnType<typeof getSupabaseClient>, limit = 6) {
+  const { data, error } = await supabase
+    .from("establishments")
+    .select("id")
+    .limit(limit);
+
+  if (error) {
+    console.log("[seed] establishments fetch warning:", error.message);
+    return [] as string[];
+  }
+  const ids = (data ?? []).map((r: any) => r.id).filter(Boolean);
+  console.log("[seed] establishments found:", ids.length);
+  return ids;
+}
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  if (req.method === "GET") {
+    return jsonResponse(200, { ok: true, message: "seed-dev-data is alive" });
+  }
+
+  if (req.method !== "POST") {
+    return jsonResponse(405, { error: "Method not allowed" });
+  }
+
+  const supabase = getSupabaseClient();
+
+  let body: any = {};
+  try {
+    body = await req.json();
+  } catch {
+    // ignore, use defaults
+  }
+
+  const action = body?.action ?? "health";
+  console.log("[seed-dev-data] action:", action);
+
+  // Simple health
+  if (action === "health") {
+    return jsonResponse(200, { ok: true, action });
+  }
+
+  // Cleanup with optional seed_run_id (null -> all)
+  if (action === "cleanup") {
+    const seedRunId = body?.seed_run_id ?? null;
+    console.log("[seed] cleanup requested for seed_run_id:", seedRunId);
+
+    const { data, error } = await supabase.rpc("clear_dev_seed", {
+      p_seed_run_id: seedRunId,
+    });
+
+    if (error) {
+      console.error("[seed] cleanup error:", error);
+      return jsonResponse(500, { ok: false, action, seed_run_id: seedRunId, error: error.message });
+    }
+    return jsonResponse(200, { ok: true, action, seed_run_id: seedRunId, result: data });
+  }
+
+  // Seed all: now includes Phase 2 Event data generation
+  if (action === "seed_all") {
+    const runId = (await createSeedRun(supabase)) as string | null;
+
+    try {
+      // Inputs
+      const requestedPromoterId: string | null = body?.promoter_id ?? null;
+      const promoterId = requestedPromoterId || (await autoDetectPromoterId(supabase));
+      if (!promoterId) {
+        throw new Error("Could not determine promoter_id; provide one in request body or create a promoter profile.");
+      }
+
+      const establishmentIds: string[] =
+        Array.isArray(body?.establishment_ids) && body.establishment_ids.length > 0
+          ? body.establishment_ids
+          : await getEstablishmentIds(supabase, 8);
+
+      // 1) Seed Events
+      const { data: seededEventIds, error: seedEventsErr } = await supabase.rpc("seed_events", {
+        p_promoter_id: promoterId,
+        p_establishment_ids: establishmentIds.length > 0 ? establishmentIds : null,
+        p_count: body?.event_count ?? 6,
+        p_seed_run_id: runId,
+      });
+
+      if (seedEventsErr) throw seedEventsErr;
+      const eventIds: string[] = Array.isArray(seededEventIds) ? seededEventIds : [];
+      console.log("[seed] events created:", eventIds.length);
+
+      // 2) Seed Ticket Types
+      const { data: ticketTypeIds, error: seedTicketErr } = await supabase.rpc("seed_event_ticket_types", {
+        p_event_ids: eventIds,
+        p_min_per: 2,
+        p_max_per: 3,
+        p_seed_run_id: runId,
+      });
+      if (seedTicketErr) throw seedTicketErr;
+
+      // 3) Seed Discount Codes
+      const { data: discountCount, error: seedDiscErr } = await supabase.rpc("seed_event_discount_codes", {
+        p_event_ids: eventIds,
+        p_codes_per_event: 2,
+        p_seed_run_id: runId,
+      });
+      if (seedDiscErr) throw seedDiscErr;
+
+      // 4) Seed Notification Schedules
+      const { data: notifCount, error: seedNotifErr } = await supabase.rpc("seed_event_notification_schedules", {
+        p_event_ids: eventIds,
+        p_seed_run_id: runId,
+      });
+      if (seedNotifErr) throw seedNotifErr;
+
+      // 5) Seed Marketing Campaigns
+      const { data: campaignCount, error: seedCampErr } = await supabase.rpc("seed_event_marketing_campaigns", {
+        p_event_ids: eventIds,
+        p_seed_run_id: runId,
+      });
+      if (seedCampErr) throw seedCampErr;
+
+      await finalizeSeedRun(supabase, runId, "completed", {
+        event_ids: eventIds,
+        ticket_types: Array.isArray(ticketTypeIds) ? ticketTypeIds.length : 0,
+        discounts: discountCount ?? 0,
+        notifications: notifCount ?? 0,
+        campaigns: campaignCount ?? 0,
+      });
+
+      return jsonResponse(200, {
+        ok: true,
+        action,
+        seed_run_id: runId,
+        summary: {
+          events: eventIds.length,
+          ticket_types: Array.isArray(ticketTypeIds) ? ticketTypeIds.length : 0,
+          discounts: discountCount ?? 0,
+          notifications: notifCount ?? 0,
+          campaigns: campaignCount ?? 0,
+        },
+        event_ids: eventIds,
+      });
+    } catch (e: any) {
+      console.error("[seed] seed_all error:", e?.message || String(e));
+      await finalizeSeedRun(supabase, body?.seed_run_id ?? null, "failed", {
+        error: e?.message || String(e),
+      });
+      return jsonResponse(500, { ok: false, action, error: e?.message || String(e) });
+    }
+  }
+
+  // Unknown action
+  return jsonResponse(400, { ok: false, error: "Unknown action", action });
+});

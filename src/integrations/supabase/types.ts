@@ -8908,6 +8908,40 @@ export type Database = {
         }
         Returns: string[]
       }
+      seed_event_discount_codes: {
+        Args: {
+          p_event_ids: string[]
+          p_codes_per_event?: number
+          p_seed_run_id?: string
+        }
+        Returns: number
+      }
+      seed_event_marketing_campaigns: {
+        Args: { p_event_ids: string[]; p_seed_run_id?: string }
+        Returns: number
+      }
+      seed_event_notification_schedules: {
+        Args: { p_event_ids: string[]; p_seed_run_id?: string }
+        Returns: number
+      }
+      seed_event_ticket_types: {
+        Args: {
+          p_event_ids: string[]
+          p_min_per?: number
+          p_max_per?: number
+          p_seed_run_id?: string
+        }
+        Returns: string[]
+      }
+      seed_events: {
+        Args: {
+          p_promoter_id: string
+          p_establishment_ids?: string[]
+          p_count?: number
+          p_seed_run_id?: string
+        }
+        Returns: string[]
+      }
       seed_reviews: {
         Args: {
           p_user_ids: string[]

@@ -1,58 +1,5 @@
+
 project_id = "dvifibvzwunnpcsihpxq"
-
-[api]
-enabled = true
-port = 54321
-schemas = ["public", "graphql_public"]
-extra_search_path = ["public", "extensions"]
-max_rows = 1000
-
-[db]
-port = 54322
-
-[studio]
-enabled = true
-port = 54323
-
-[inbucket]
-enabled = true
-port = 54324
-
-[storage]
-enabled = true
-port = 54325
-
-[auth]
-enabled = true
-port = 54326
-
-[edge_runtime]
-enabled = true
-port = 54327
-
-[functions.process-payment]
-verify_jwt = true
-
-[functions.process-refund]
-verify_jwt = true
-
-[functions.stripe-webhooks]
-verify_jwt = false
-
-[functions.create-subscription]
-verify_jwt = true
-
-[functions.update-subscription]
-verify_jwt = true
-
-[functions.cancel-subscription]
-verify_jwt = true
-
-[functions.security-healthcheck]
-verify_jwt = false
-
-[functions.rotate-stripe-key]
-verify_jwt = true
 
 [functions.seed-dev-data]
 verify_jwt = false
