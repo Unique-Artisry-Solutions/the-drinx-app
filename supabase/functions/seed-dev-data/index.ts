@@ -38,6 +38,43 @@ const unauthorized = (message = 'Unauthorized') => json({ error: message }, { st
 const badRequest = (message: string) => json({ error: message }, { status: 400 });
 const ok = (data: any) => json({ ok: true, ...data });
 
+// Password utilities
+const isStrongPassword = (pw: string) => {
+  const hasMin = pw.length >= 12;
+  const hasUpper = /[A-Z]/.test(pw);
+  const hasLower = /[a-z]/.test(pw);
+  const hasDigit = /\d/.test(pw);
+  const hasSymbol = /[^A-Za-z0-9]/.test(pw);
+  return hasMin && hasUpper && hasLower && hasDigit && hasSymbol;
+};
+
+const generateStrongPassword = (length = 20) => {
+  const upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const lower = 'abcdefghijklmnopqrstuvwxyz';
+  const digits = '0123456789';
+  const symbols = '!@#$%^&*()-_=+[]{};:,.<>/?';
+  const all = upper + lower + digits + symbols;
+  // Ensure at least one from each
+  const mandatory = [
+    upper[Math.floor(Math.random() * upper.length)],
+    lower[Math.floor(Math.random() * lower.length)],
+    digits[Math.floor(Math.random() * digits.length)],
+    symbols[Math.floor(Math.random() * symbols.length)],
+  ];
+  const restLen = Math.max(length - mandatory.length, 0);
+  const rest: string[] = [];
+  for (let i = 0; i < restLen; i++) {
+    rest.push(all[Math.floor(Math.random() * all.length)]);
+  }
+  const full = [...mandatory, ...rest];
+  // Shuffle
+  for (let i = full.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [full[i], full[j]] = [full[j], full[i]];
+  }
+  return full.join('');
+};
+
 type Persona = {
   email: string;
   password: string;
@@ -98,9 +135,10 @@ async function findUserByEmail(email: string) {
 
 async function getOrCreatePersona(p: Persona) {
   // Try to create; if already exists, fetch it
+  const passwordToUse = isStrongPassword(p.password) ? p.password : generateStrongPassword(24);
   const { data: created, error: createErr } = await supabase.auth.admin.createUser({
     email: p.email,
-    password: p.password,
+    password: passwordToUse,
     email_confirm: true,
     user_metadata: {
       user_type: p.user_type,
@@ -112,6 +150,11 @@ async function getOrCreatePersona(p: Persona) {
 
   let user = created?.user || null;
   if (createErr) {
+    const msg = (createErr as any)?.message || String(createErr);
+    const isDuplicate = /already|exists|duplicate/i.test(msg);
+    if (!isDuplicate) {
+      throw new Error(`createUser failed for ${p.email}: ${msg}`);
+    }
     // Likely already exists — find by email
     const existing = await findUserByEmail(p.email);
     user = existing;
@@ -286,6 +329,31 @@ async function actionCleanup(params: { remove_users?: boolean } = {}) {
   return ok({ cleared, removed_users: removedUsers });
 }
 
+async function actionDiagnostics() {
+  const hasServiceKey = !!SERVICE_KEY;
+  let canAdminListUsers = false;
+  let listUsersError: string | null = null;
+  try {
+    const { error } = await supabase.auth.admin.listUsers({ perPage: 1, page: 1 });
+    if (!error) canAdminListUsers = true;
+    else listUsersError = error.message || String(error);
+  } catch (e: any) {
+    listUsersError = e?.message || String(e);
+  }
+
+  const { data: settingsData, error: settingsError } = await supabase.auth.getSettings();
+
+  return ok({
+    status: 'ok',
+    service_key_present: hasServiceKey,
+    can_admin_list_users: canAdminListUsers,
+    list_users_error: listUsersError,
+    auth_settings_known: !!settingsData,
+    auth_settings_error: settingsError?.message || null,
+    password_policy_hint: 'Use 12+ chars including upper, lower, digits, and symbols.'
+  });
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -315,6 +383,8 @@ Deno.serve(async (req: Request) => {
     switch (action) {
       case 'health':
         return ok({ status: 'ok' });
+      case 'diagnostics':
+        return await actionDiagnostics();
       case 'seed_personas':
         return await actionSeedPersonas(payload.params?.personas);
       case 'seed_all':
