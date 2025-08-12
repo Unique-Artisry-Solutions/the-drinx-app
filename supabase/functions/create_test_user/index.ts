@@ -27,10 +27,16 @@ serve(async (req) => {
     const { email, password, userType, displayName } = await req.json()
 
     // Create the user
+    const localPart = (email || '').split('@')[0];
     const { data: authData, error: authError } = await supabaseClient.auth.admin.createUser({
       email,
       password,
-      email_confirm: true
+      email_confirm: true,
+      user_metadata: {
+        user_type: userType,
+        name: displayName || localPart,
+        username: localPart
+      }
     })
 
     if (authError) {
@@ -39,22 +45,7 @@ serve(async (req) => {
 
     const userId = authData.user.id
 
-    // Create profile
-    const { error: profileError } = await supabaseClient
-      .from('profiles')
-      .insert({
-        id: userId,
-        email,
-        display_name: displayName || email.split('@')[0],
-        username: email.split('@')[0],
-        user_type: userType,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      })
-
-    if (profileError) {
-      console.error('Profile creation error:', profileError)
-    }
+    // Profile creation handled by DB trigger (public.handle_new_user)
 
     // Create type-specific records
     if (userType === 'establishment') {

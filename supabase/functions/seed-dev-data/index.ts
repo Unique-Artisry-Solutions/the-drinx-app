@@ -89,7 +89,7 @@ serve(async (req) => {
             email_confirm: true,
             user_metadata: {
               username: persona.username,
-              display_name: persona.name,
+              name: persona.name,
               user_type: persona.type
             }
           })
@@ -102,13 +102,8 @@ serve(async (req) => {
           console.log(`Created new user ${persona.email} with ID: ${userId}`)
         }
 
-        await upsertPersonaArtifacts({
-          email: persona.email,
-          username: persona.username,
-          name: persona.name,
-          type: persona.type,
-          userId
-        })
+        // Profile and user_roles are now handled by DB trigger (public.handle_new_user)
+        // No manual upsert needed here
 
         results.push({
           email: persona.email,
@@ -155,59 +150,6 @@ serve(async (req) => {
   }
 })
 
-async function upsertPersonaArtifacts(p: {
-  email: string;
-  username?: string;
-  name?: string;
-  type: 'individual' | 'establishment' | 'promoter' | 'admin';
-  userId: string;
-}) {
-  const supabaseClient = createClient(
-    Deno.env.get('SUPABASE_URL') ?? '',
-    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-    {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false
-      }
-    }
-  )
+// (removed) Manual profile/role upsert. Relying on signup trigger to create profile
+// and assign a valid user_role automatically based on user_metadata.user_type.
 
-  // 1) Upsert profile: keep user_type = p.type (including 'admin'), but fail fast on error
-  const { error: profileErr } = await supabaseClient
-    .from('profiles')
-    .upsert(
-      {
-        id: p.userId,
-        username: p.username ?? p.email.split('@')[0],
-        display_name: p.name ?? p.email,
-        user_type: p.type,
-      },
-      { onConflict: 'id' }
-    );
-
-  if (profileErr) {
-    console.error('Profile upsert error for', p.email, profileErr);
-    throw new Error(`Profile upsert failed for ${p.email}: ${profileErr.message}`);
-  }
-
-  // 2) Upsert user_roles with a valid enum role (map 'admin' -> 'individual')
-  const mappedRole = toValidUserRole(p.type);
-  const { error: roleErr } = await supabaseClient
-    .from('user_roles')
-    .upsert(
-      {
-        user_id: p.userId,
-        role: mappedRole,
-        is_active: true,
-      },
-      { onConflict: 'user_id,role' }
-    );
-
-  if (roleErr) {
-    console.error('User role upsert error for', p.email, roleErr);
-    throw new Error(`User role upsert failed for ${p.email}: ${roleErr.message}`);
-  }
-
-  console.log(`Seeded persona: ${p.email} (type: ${p.type}, role: ${mappedRole})`);
-}
