@@ -24,10 +24,11 @@ const corsHeaders: Record<string, string> = {
 };
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+// Support new secret name SERVICE_ROLE_KEY with fallback to SUPABASE_SERVICE_ROLE_KEY
+const SERVICE_KEY = Deno.env.get('SERVICE_ROLE_KEY') || Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
 const SEED_ADMIN_TOKEN = Deno.env.get('SEED_ADMIN_TOKEN');
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
 
 // Utilities
 const json = (body: any, init: ResponseInit = {}) =>
@@ -135,16 +136,21 @@ async function getOrCreatePersona(p: Persona) {
     );
 
   // Upsert user role (unique on user_id,role)
-  await supabase
-    .from('user_roles')
-    .upsert(
-      {
-        user_id: user.id,
-        role: p.user_type,
-        is_active: p.user_type === 'admin', // make admin active by default
-      },
-      { onConflict: 'user_id,role' }
-    );
+// Map 'admin' persona to a valid user_roles.role (use 'individual') while keeping profiles.user_type = 'admin'
+const roleForUserRoles = p.user_type === 'admin' ? 'individual' : p.user_type;
+const { error: roleErr } = await supabase
+  .from('user_roles')
+  .upsert(
+    {
+      user_id: user.id,
+      role: roleForUserRoles,
+      is_active: p.user_type === 'admin', // make admin active by default
+    },
+    { onConflict: 'user_id,role' }
+  );
+if (roleErr) {
+  throw new Error(`Role upsert failed for ${p.email}: ${roleErr.message}`);
+}
 
   // If establishment user, ensure at least one establishment exists for them
   if (p.user_type === 'establishment') {
@@ -289,6 +295,11 @@ Deno.serve(async (req: Request) => {
   const token = req.headers.get('x-seed-admin-token');
   if (!SEED_ADMIN_TOKEN || token !== SEED_ADMIN_TOKEN) {
     return unauthorized('Missing or invalid x-seed-admin-token');
+  }
+
+  // Validate service role key presence early for clearer errors
+  if (!SERVICE_KEY) {
+    return json({ error: 'Missing service role key. Add SERVICE_ROLE_KEY (recommended) or SUPABASE_SERVICE_ROLE_KEY in Edge Function secrets.' }, { status: 500 });
   }
 
   let payload: { action?: string; params?: any } = {};
