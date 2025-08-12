@@ -1,410 +1,209 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-// Supabase Edge Function: seed-dev-data
-// Actions:
-// - health: quick status check
-// - seed_personas: creates core dev users + profiles + roles (+ establishment)
-// - seed_all: runs personas + establishments + cocktails + reviews + rewards + analytics
-// - cleanup: clears dev-seeded data (and optionally deletes personas)
-//
-// Security:
-// - Requires `x-seed-admin-token` header to match SEED_ADMIN_TOKEN
-//
-// Notes:
-// - Uses service role key to perform admin operations safely
-// - Relies on existing SQL functions for bulk seeding where available
-
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-
-const corsHeaders: Record<string, string> = {
+const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-seed-admin-token',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Content-Type': 'application/json',
-};
-
-const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
-// Support new secret name SERVICE_ROLE_KEY with fallback to SUPABASE_SERVICE_ROLE_KEY
-const SERVICE_KEY = Deno.env.get('SERVICE_ROLE_KEY') || Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
-const SEED_ADMIN_TOKEN = Deno.env.get('SEED_ADMIN_TOKEN');
-
-const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
-
-// Utilities
-const json = (body: any, init: ResponseInit = {}) =>
-  new Response(JSON.stringify(body), { ...init, headers: { ...corsHeaders, ...(init.headers || {}) } });
-
-const unauthorized = (message = 'Unauthorized') => json({ error: message }, { status: 401 });
-const badRequest = (message: string) => json({ error: message }, { status: 400 });
-const ok = (data: any) => json({ ok: true, ...data });
-
-// Password utilities
-const isStrongPassword = (pw: string) => {
-  const hasMin = pw.length >= 12;
-  const hasUpper = /[A-Z]/.test(pw);
-  const hasLower = /[a-z]/.test(pw);
-  const hasDigit = /\d/.test(pw);
-  const hasSymbol = /[^A-Za-z0-9]/.test(pw);
-  return hasMin && hasUpper && hasLower && hasDigit && hasSymbol;
-};
-
-const generateStrongPassword = (length = 20) => {
-  const upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-  const lower = 'abcdefghijklmnopqrstuvwxyz';
-  const digits = '0123456789';
-  const symbols = '!@#$%^&*()-_=+[]{};:,.<>/?';
-  const all = upper + lower + digits + symbols;
-  // Ensure at least one from each
-  const mandatory = [
-    upper[Math.floor(Math.random() * upper.length)],
-    lower[Math.floor(Math.random() * lower.length)],
-    digits[Math.floor(Math.random() * digits.length)],
-    symbols[Math.floor(Math.random() * symbols.length)],
-  ];
-  const restLen = Math.max(length - mandatory.length, 0);
-  const rest: string[] = [];
-  for (let i = 0; i < restLen; i++) {
-    rest.push(all[Math.floor(Math.random() * all.length)]);
-  }
-  const full = [...mandatory, ...rest];
-  // Shuffle
-  for (let i = full.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [full[i], full[j]] = [full[j], full[i]];
-  }
-  return full.join('');
-};
-
-type Persona = {
-  email: string;
-  password: string;
-  user_type: 'admin' | 'establishment' | 'individual' | 'promoter';
-  username: string;
-  name: string;
-  phone: string;
-};
-
-const DEFAULT_PERSONAS: Persona[] = [
-  {
-    email: 'admin+dev@spiritless.com',
-    password: 'Password123!',
-    user_type: 'admin',
-    username: 'devadmin',
-    name: 'Dev Admin',
-    phone: '+1555010001',
-  },
-  {
-    email: 'establishment+dev@spiritless.com',
-    password: 'Password123!',
-    user_type: 'establishment',
-    username: 'devestab',
-    name: 'Dev Establishment',
-    phone: '+1555010002',
-  },
-  {
-    email: 'individual+dev@spiritless.com',
-    password: 'Password123!',
-    user_type: 'individual',
-    username: 'devuser',
-    name: 'Dev Individual',
-    phone: '+1555010003',
-  },
-  {
-    email: 'promoter+dev@spiritless.com',
-    password: 'Password123!',
-    user_type: 'promoter',
-    username: 'devpromoter',
-    name: 'Dev Promoter',
-    phone: '+1555010004',
-  },
-];
-
-async function findUserByEmail(email: string) {
-  // Fallback to listing users to find by email (admin API lacks direct get-by-email)
-  // We'll scan a few pages to locate the user if they already exist.
-  const perPage = 100;
-  for (let page = 1; page <= 10; page++) {
-    const { data, error } = await supabase.auth.admin.listUsers({ page, perPage });
-    if (error) throw error;
-    const found = data.users.find((u) => u.email?.toLowerCase() === email.toLowerCase());
-    if (found) return found;
-    if (data.users.length < perPage) break;
-  }
-  return null;
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-async function getOrCreatePersona(p: Persona) {
-  // Try to create; if already exists, fetch it
-  const passwordToUse = isStrongPassword(p.password) ? p.password : generateStrongPassword(24);
-  const { data: created, error: createErr } = await supabase.auth.admin.createUser({
-    email: p.email,
-    password: passwordToUse,
-    email_confirm: true,
-    user_metadata: {
-      user_type: p.user_type,
-      username: p.username,
-      name: p.name,
-      phone: p.phone,
-    },
-  });
+// Helper: map persona "type" to a valid user_role enum
+// We keep profiles.user_type as provided (including 'admin'), but user_roles.role must be one of the enum values.
+function toValidUserRole(
+  personaType: 'individual' | 'establishment' | 'promoter' | 'admin'
+): 'individual' | 'establishment' | 'promoter' {
+  return personaType === 'admin' ? 'individual' : personaType;
+}
 
-  let user = created?.user || null;
-  if (createErr) {
-    const msg = (createErr as any)?.message || String(createErr);
-    // On any error, attempt to find existing user by email before failing
-    const existing = await findUserByEmail(p.email);
-    if (existing) {
-      user = existing;
-    } else {
-      throw new Error(`createUser failed for ${p.email}: ${msg} (no existing user found)`);
+serve(async (req) => {
+  // Handle CORS
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders })
+  }
+
+  try {
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
+    )
+
+    // Define test personas
+    const personas = [
+      {
+        email: 'admin@spiritless.com',
+        password: 'admin123',
+        username: 'admin',
+        name: 'System Admin',
+        type: 'admin' as const
+      },
+      {
+        email: 'user@spiritless.com',
+        password: 'user123',
+        username: 'testuser',
+        name: 'Test User',
+        type: 'individual' as const
+      },
+      {
+        email: 'establishment@spiritless.com',
+        password: 'establishment123',
+        username: 'testestablishment',
+        name: 'Test Establishment',
+        type: 'establishment' as const
+      },
+      {
+        email: 'promoter@spiritless.com',
+        password: 'promoter123',
+        username: 'testpromoter',
+        name: 'Test Promoter',
+        type: 'promoter' as const
+      }
+    ]
+
+    const results = []
+
+    for (const persona of personas) {
+      try {
+        // Check if user already exists
+        const { data: existingUser } = await supabaseClient.auth.admin.listUsers()
+        const userExists = existingUser.users.find(u => u.email === persona.email)
+
+        let userId: string
+
+        if (userExists) {
+          userId = userExists.id
+          console.log(`User ${persona.email} already exists with ID: ${userId}`)
+        } else {
+          // Create new user
+          const { data: newUser, error: createError } = await supabaseClient.auth.admin.createUser({
+            email: persona.email,
+            password: persona.password,
+            email_confirm: true,
+            user_metadata: {
+              username: persona.username,
+              display_name: persona.name,
+              user_type: persona.type
+            }
+          })
+
+          if (createError) {
+            throw new Error(`Failed to create user ${persona.email}: ${createError.message}`)
+          }
+
+          userId = newUser.user.id
+          console.log(`Created new user ${persona.email} with ID: ${userId}`)
+        }
+
+        await upsertPersonaArtifacts({
+          email: persona.email,
+          username: persona.username,
+          name: persona.name,
+          type: persona.type,
+          userId
+        })
+
+        results.push({
+          email: persona.email,
+          type: persona.type,
+          status: 'success',
+          userId
+        })
+
+      } catch (error) {
+        console.error(`Error processing persona ${persona.email}:`, error)
+        results.push({
+          email: persona.email,
+          type: persona.type,
+          status: 'error',
+          error: error.message
+        })
+      }
     }
-  }
 
-  if (!user) {
-    throw new Error(`Unable to create or find user for ${p.email}`);
-  }
+    return new Response(
+      JSON.stringify({
+        success: true,
+        message: 'Dev data seeding completed',
+        results
+      }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      },
+    )
 
-  // Upsert profile
-  const { error: profileErr } = await supabase
+  } catch (error) {
+    console.error('Seeding error:', error)
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: error.message
+      }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500,
+      },
+    )
+  }
+})
+
+async function upsertPersonaArtifacts(p: {
+  email: string;
+  username?: string;
+  name?: string;
+  type: 'individual' | 'establishment' | 'promoter' | 'admin';
+  userId: string;
+}) {
+  const supabaseClient = createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    }
+  )
+
+  // 1) Upsert profile: keep user_type = p.type (including 'admin'), but fail fast on error
+  const { error: profileErr } = await supabaseClient
     .from('profiles')
     .upsert(
       {
-        id: user.id,
-        username: p.username,
-        display_name: p.name,
-        user_type: p.user_type,
-        phone: p.phone,
+        id: p.userId,
+        username: p.username ?? p.email.split('@')[0],
+        display_name: p.name ?? p.email,
+        user_type: p.type,
       },
       { onConflict: 'id' }
     );
+
   if (profileErr) {
+    console.error('Profile upsert error for', p.email, profileErr);
     throw new Error(`Profile upsert failed for ${p.email}: ${profileErr.message}`);
   }
 
-  // Upsert user role (unique on user_id,role)
-// Map 'admin' persona to a valid user_roles.role (use 'individual') while keeping profiles.user_type = 'admin'
-const roleForUserRoles = p.user_type === 'admin' ? 'individual' : p.user_type;
-const { error: roleErr } = await supabase
-  .from('user_roles')
-  .upsert(
-    {
-      user_id: user.id,
-      role: roleForUserRoles,
-      is_active: p.user_type === 'admin', // make admin active by default
-    },
-    { onConflict: 'user_id,role' }
-  );
-if (roleErr) {
-  throw new Error(`Role upsert failed for ${p.email}: ${roleErr.message}`);
+  // 2) Upsert user_roles with a valid enum role (map 'admin' -> 'individual')
+  const mappedRole = toValidUserRole(p.type);
+  const { error: roleErr } = await supabaseClient
+    .from('user_roles')
+    .upsert(
+      {
+        user_id: p.userId,
+        role: mappedRole,
+        is_active: true,
+      },
+      { onConflict: 'user_id,role' }
+    );
+
+  if (roleErr) {
+    console.error('User role upsert error for', p.email, roleErr);
+    throw new Error(`User role upsert failed for ${p.email}: ${roleErr.message}`);
+  }
+
+  console.log(`Seeded persona: ${p.email} (type: ${p.type}, role: ${mappedRole})`);
 }
-
-  // If establishment user, ensure at least one establishment exists for them
-  if (p.user_type === 'establishment') {
-    await supabase.rpc('seed_establishments', {
-      p_owner_ids: [user.id],
-      p_count: 1,
-      p_seed_run_id: null,
-    });
-  }
-
-  return user.id;
-}
-
-async function actionSeedPersonas(custom?: Partial<Persona>[]) {
-  const personas: Persona[] =
-    (custom && custom.length ? custom : DEFAULT_PERSONAS).map((x) => ({
-      ...x,
-      // enforce lowercase types for consistency
-      user_type: x.user_type as Persona['user_type'],
-    }));
-
-  const results: { email: string; user_id: string }[] = [];
-  for (const p of personas) {
-    try {
-      const id = await getOrCreatePersona(p);
-      results.push({ email: p.email, user_id: id });
-    } catch (e: any) {
-      throw new Error(`seed_personas:getOrCreatePersona(${p.email}) failed: ${e?.message || String(e)}`);
-    }
-  }
-  return ok({ personas: results });
-}
-
-async function actionSeedAll() {
-  // 1) Ensure personas exist
-  const personasResult = await actionSeedPersonas().catch((e: any) => {
-    throw new Error(`seed_all:seed_personas failed: ${e?.message || String(e)}`);
-  });
-  const personas = (await personasResult.json()) as any;
-
-  // Re-fetch IDs for known persona emails
-  const personaEmails = DEFAULT_PERSONAS.map((p) => p.email);
-  const users = await Promise.all(personaEmails.map((e) => findUserByEmail(e)));
-  const ids = users.filter(Boolean).map((u: any) => u.id) as string[];
-
-  const establishmentUser = await findUserByEmail('establishment+dev@spiritless.com');
-  const ownerId = establishmentUser?.id as string | undefined;
-
-  // 2) Seed establishments
-  let establishmentIds: string[] = [];
-  if (ownerId) {
-    const { data: estIds, error: estErr } = await supabase.rpc('seed_establishments', {
-      p_owner_ids: [ownerId],
-      p_count: 12,
-      p_seed_run_id: null,
-    });
-    if (estErr) throw new Error(`seed_all:seed_establishments failed: ${estErr.message || String(estErr)}`);
-    establishmentIds = estIds || [];
-  }
-
-  // 3) Seed cocktails for establishments
-  let cocktailIds: string[] = [];
-  if (establishmentIds.length > 0) {
-    const { data: cocktails, error: cocktailsErr } = await supabase.rpc('seed_cocktails_for_establishments', {
-      p_establishment_ids: establishmentIds,
-      p_min_per: 3,
-      p_max_per: 6,
-      p_seed_run_id: null,
-    });
-    if (cocktailsErr) throw new Error(`seed_all:seed_cocktails_for_establishments failed: ${cocktailsErr.message || String(cocktailsErr)}`);
-    cocktailIds = cocktails || [];
-  }
-
-  // 4) Seed reviews
-  let totalReviews = 0;
-  if (ids.length > 0 && cocktailIds.length > 0) {
-    const { data: reviewsCount, error: reviewsErr } = await supabase.rpc('seed_reviews', {
-      p_user_ids: ids,
-      p_cocktail_ids: cocktailIds,
-      p_total: 120,
-      p_seed_run_id: null,
-    });
-    if (reviewsErr) throw new Error(`seed_all:seed_reviews failed: ${reviewsErr.message || String(reviewsErr)}`);
-    totalReviews = reviewsCount || 0;
-  }
-
-  // 5) Seed rewards activity
-  let rewardsSummary: any = null;
-  if (ids.length > 0) {
-    const { data: rewards, error: rewardsErr } = await supabase.rpc('seed_rewards_activity', {
-      p_user_ids: ids,
-      p_establishment_ids: establishmentIds.length ? establishmentIds : null,
-      p_events_per_user: 6,
-      p_seed_run_id: null,
-    });
-    if (rewardsErr) throw new Error(`seed_all:seed_rewards_activity failed: ${rewardsErr.message || String(rewardsErr)}`);
-    rewardsSummary = rewards;
-  }
-
-  // 6) Seed analytics
-  let analyticsSummary: any = null;
-  if (ids.length > 0) {
-    const { data: analytics, error: analyticsErr } = await supabase.rpc('seed_analytics', {
-      p_user_ids: ids,
-      p_event_ids: null,
-      p_days: 30,
-      p_seed_run_id: null,
-    });
-    if (analyticsErr) throw new Error(`seed_all:seed_analytics failed: ${analyticsErr.message || String(analyticsErr)}`);
-    analyticsSummary = analytics;
-  }
-
-  return ok({
-    users: ids.length,
-    establishments: establishmentIds.length,
-    cocktails: cocktailIds.length,
-    reviews_created: totalReviews,
-    rewards_summary: rewardsSummary,
-    analytics_summary: analyticsSummary,
-  });
-}
-
-async function actionCleanup(params: { remove_users?: boolean } = {}) {
-  // Clear dev-seeded records tracked by seed functions
-  const { data: cleared, error: clearErr } = await supabase.rpc('clear_dev_seed', { p_seed_run_id: null });
-  if (clearErr) throw clearErr;
-
-  let removedUsers = 0;
-  if (params.remove_users) {
-    for (const p of DEFAULT_PERSONAS) {
-      const u = await findUserByEmail(p.email);
-      if (u?.id) {
-        await supabase.auth.admin.deleteUser(u.id);
-        removedUsers++;
-      }
-    }
-  }
-
-  return ok({ cleared, removed_users: removedUsers });
-}
-
-async function actionDiagnostics() {
-  const hasServiceKey = !!SERVICE_KEY;
-  let canAdminListUsers = false;
-  let listUsersError: string | null = null;
-  try {
-    const { error } = await supabase.auth.admin.listUsers({ perPage: 1, page: 1 });
-    if (!error) canAdminListUsers = true;
-    else listUsersError = error.message || String(error);
-  } catch (e: any) {
-    listUsersError = e?.message || String(e);
-  }
-
-  const { data: settingsData, error: settingsError } = await supabase.auth.getSettings();
-
-  return ok({
-    status: 'ok',
-    service_key_present: hasServiceKey,
-    can_admin_list_users: canAdminListUsers,
-    list_users_error: listUsersError,
-    auth_settings_known: !!settingsData,
-    auth_settings_error: settingsError?.message || null,
-    password_policy_hint: 'Use 12+ chars including upper, lower, digits, and symbols.'
-  });
-}
-
-Deno.serve(async (req: Request) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
-
-  // Check admin token
-  const token = req.headers.get('x-seed-admin-token');
-  if (!SEED_ADMIN_TOKEN || token !== SEED_ADMIN_TOKEN) {
-    return unauthorized('Missing or invalid x-seed-admin-token');
-  }
-
-  // Validate service role key presence early for clearer errors
-  if (!SERVICE_KEY) {
-    return json({ error: 'Missing service role key. Add SERVICE_ROLE_KEY (recommended) or SUPABASE_SERVICE_ROLE_KEY in Edge Function secrets.' }, { status: 500 });
-  }
-
-  let payload: { action?: string; params?: any } = {};
-  try {
-    payload = await req.json();
-  } catch {
-    // no body is fine (e.g., health)
-  }
-
-  const action = payload.action || 'health';
-
-  try {
-    switch (action) {
-      case 'health':
-        return ok({ status: 'ok' });
-      case 'diagnostics':
-        return await actionDiagnostics();
-      case 'seed_personas':
-        return await actionSeedPersonas(payload.params?.personas);
-      case 'seed_all':
-        return await actionSeedAll();
-      case 'cleanup':
-        return await actionCleanup(payload.params || {});
-      default:
-        return badRequest(`Unknown action: ${action}`);
-    }
-  } catch (err: any) {
-    console.error('seed-dev-data error:', err);
-    return json({ error: err?.message || 'Internal Error' }, { status: 500 });
-  }
-});
