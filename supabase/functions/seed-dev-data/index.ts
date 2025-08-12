@@ -165,7 +165,7 @@ async function getOrCreatePersona(p: Persona) {
   }
 
   // Upsert profile
-  await supabase
+  const { error: profileErr } = await supabase
     .from('profiles')
     .upsert(
       {
@@ -177,6 +177,9 @@ async function getOrCreatePersona(p: Persona) {
       },
       { onConflict: 'id' }
     );
+  if (profileErr) {
+    throw new Error(`Profile upsert failed for ${p.email}: ${profileErr.message}`);
+  }
 
   // Upsert user role (unique on user_id,role)
 // Map 'admin' persona to a valid user_roles.role (use 'individual') while keeping profiles.user_type = 'admin'
