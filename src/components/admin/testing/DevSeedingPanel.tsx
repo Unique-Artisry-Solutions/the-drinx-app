@@ -15,7 +15,7 @@ interface LogEntry {
 
 const TOKEN_STORAGE_KEY = 'seed_admin_token';
 
-type SeedAction = 'health' | 'seed_personas' | 'seed_all' | 'cleanup';
+type SeedAction = 'health' | 'seed_personas' | 'seed_all' | 'seed_events' | 'cleanup';
 
 const DevSeedingPanel: React.FC = () => {
   const [token, setToken] = useState('');
@@ -31,6 +31,7 @@ const DevSeedingPanel: React.FC = () => {
   const [runsLoading, setRunsLoading] = useState(false);
   const [runsError, setRunsError] = useState<string | null>(null);
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
+  const [eventsCount, setEventsCount] = useState<number>(6);
 
   // Load token from localStorage
   useEffect(() => {
@@ -131,7 +132,7 @@ const clearToken = () => {
       }
       toast({ description: `${action} finished successfully` });
 
-      if (action === 'seed_all') {
+      if (action === 'seed_all' || action === 'seed_events') {
         // Refresh runs so the new run appears in the dropdown
         fetchRuns();
       }
@@ -223,6 +224,21 @@ const clearToken = () => {
           )}
         </div>
 
+        {/* Event seeding options */}
+        <div className="space-y-2">
+          <label className="text-sm text-muted-foreground">Events to create</label>
+          <div className="w-32">
+            <input
+              type="number"
+              min={1}
+              max={50}
+              value={eventsCount}
+              onChange={(e) => setEventsCount(Number(e.target.value))}
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30"
+            />
+          </div>
+        </div>
+
         {/* Actions */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
           <Button
@@ -250,6 +266,15 @@ const clearToken = () => {
             className="justify-start"
           >
             <Rocket className="h-4 w-4 mr-2" /> Seed All
+          </Button>
+
+          <Button
+            variant="outline"
+            onClick={() => invoke('seed_events', { event_count: eventsCount })}
+            disabled={!!isRunning}
+            className="justify-start"
+          >
+            <Rocket className="h-4 w-4 mr-2" /> Seed Events
           </Button>
 
           <Button

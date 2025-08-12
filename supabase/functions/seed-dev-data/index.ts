@@ -257,6 +257,75 @@ Deno.serve(async (req) => {
     }
   }
 
+  // Seed only events and related data
+  if (action === "seed_events") {
+    const runId = (await createSeedRun(supabase)) as string | null;
+    try {
+      const requestedPromoterId: string | null = body?.promoter_id ?? null;
+      const promoterId = requestedPromoterId || (await autoDetectPromoterId(supabase));
+      if (!promoterId) {
+        throw new Error("Could not determine promoter_id; provide one in request body or create a promoter profile.");
+      }
+      const establishmentIds: string[] = Array.isArray(body?.establishment_ids) && body.establishment_ids.length > 0 ? body.establishment_ids : await getEstablishmentIds(supabase, 8);
+      const { data: seededEventIds, error: seedEventsErr } = await supabase.rpc("seed_events", {
+        p_promoter_id: promoterId,
+        p_establishment_ids: establishmentIds.length > 0 ? establishmentIds : null,
+        p_count: body?.event_count ?? 6,
+        p_seed_run_id: runId,
+      });
+      if (seedEventsErr) throw seedEventsErr;
+      const eventIds: string[] = Array.isArray(seededEventIds) ? seededEventIds : [];
+      console.log("[seed] events created:", eventIds.length);
+      const { data: ticketTypeIds, error: seedTicketErr } = await supabase.rpc("seed_event_ticket_types", {
+        p_event_ids: eventIds,
+        p_min_per: 2,
+        p_max_per: 3,
+        p_seed_run_id: runId,
+      });
+      if (seedTicketErr) throw seedTicketErr;
+      const { data: discountCount, error: seedDiscErr } = await supabase.rpc("seed_event_discount_codes", {
+        p_event_ids: eventIds,
+        p_codes_per_event: 2,
+        p_seed_run_id: runId,
+      });
+      if (seedDiscErr) throw seedDiscErr;
+      const { data: notifCount, error: seedNotifErr } = await supabase.rpc("seed_event_notification_schedules", {
+        p_event_ids: eventIds,
+        p_seed_run_id: runId,
+      });
+      if (seedNotifErr) throw seedNotifErr;
+      const { data: campaignCount, error: seedCampErr } = await supabase.rpc("seed_event_marketing_campaigns", {
+        p_event_ids: eventIds,
+        p_seed_run_id: runId,
+      });
+      if (seedCampErr) throw seedCampErr;
+      await finalizeSeedRun(supabase, runId, "completed", {
+        event_ids: eventIds,
+        ticket_types: Array.isArray(ticketTypeIds) ? ticketTypeIds.length : 0,
+        discounts: discountCount ?? 0,
+        notifications: notifCount ?? 0,
+        campaigns: campaignCount ?? 0,
+      });
+      return jsonResponse(200, {
+        ok: true,
+        action,
+        seed_run_id: runId,
+        summary: {
+          events: eventIds.length,
+          ticket_types: Array.isArray(ticketTypeIds) ? ticketTypeIds.length : 0,
+          discounts: discountCount ?? 0,
+          notifications: notifCount ?? 0,
+          campaigns: campaignCount ?? 0,
+        },
+        event_ids: eventIds,
+      });
+    } catch (e: any) {
+      console.error("[seed] seed_events error:", e?.message || String(e));
+      await finalizeSeedRun(supabase, body?.seed_run_id ?? null, "failed", { error: e?.message || String(e) });
+      return jsonResponse(500, { ok: false, action, error: e?.message || String(e) });
+    }
+  }
+
   // Unknown action
   return jsonResponse(400, { ok: false, error: "Unknown action", action });
 });
