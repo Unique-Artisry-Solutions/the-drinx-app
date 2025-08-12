@@ -46,7 +46,7 @@ serve(async (req) => {
       }
     )
 
-    // Parse action from request body
+// Parse action from request body
     let body: any = {};
     try {
       body = await req.json();
@@ -54,6 +54,8 @@ serve(async (req) => {
       body = {};
     }
     const action: 'health' | 'seed_personas' | 'seed_all' | 'cleanup' = body?.action ?? 'seed_personas';
+    const seedRunId: string | null = body?.seed_run_id ?? null;
+
 
     // Define test personas
     const personas = [
@@ -164,15 +166,15 @@ serve(async (req) => {
 
     // Cleanup all previously seeded rows tracked in dev_seed_records
     if (action === 'cleanup') {
-      const { data, error } = await supabaseClient.rpc('clear_dev_seed', { p_seed_run_id: null });
+      const { data, error } = await supabaseClient.rpc('clear_dev_seed', { p_seed_run_id: seedRunId });
       if (error) {
         return new Response(
-          JSON.stringify({ success: false, action, error: error.message }),
+          JSON.stringify({ success: false, action, seed_run_id: seedRunId, error: error.message }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 },
         );
       }
       return new Response(
-        JSON.stringify({ success: true, action, result: data }),
+        JSON.stringify({ success: true, action, seed_run_id: seedRunId, result: data }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 },
       );
     }

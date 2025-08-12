@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ShieldCheck, Activity, Rocket, Trash2, EyeOff, Eye } from 'lucide-react';
 
 // Simple log entry type
@@ -23,6 +24,13 @@ const DevSeedingPanel: React.FC = () => {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [lastResult, setLastResult] = useState<any>(null);
   const consoleRef = useRef<HTMLDivElement>(null);
+
+  // Seed runs state
+  type SeedRun = { id: string; started_at: string; status: string };
+  const [runs, setRuns] = useState<SeedRun[]>([]);
+  const [runsLoading, setRunsLoading] = useState(false);
+  const [runsError, setRunsError] = useState<string | null>(null);
+  const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
 
   // Load token from localStorage
   useEffect(() => {
@@ -57,7 +65,7 @@ const DevSeedingPanel: React.FC = () => {
     addLog({ level: 'success', message: 'Token saved to localStorage' });
   };
 
-  const clearToken = () => {
+const clearToken = () => {
     localStorage.removeItem(TOKEN_STORAGE_KEY);
     setSavedToken('');
     setToken('');
@@ -65,7 +73,32 @@ const DevSeedingPanel: React.FC = () => {
     addLog({ level: 'info', message: 'Token cleared from localStorage' });
   };
 
-  const invoke = async (action: SeedAction) => {
+  // Fetch recent seed runs for targeted cleanup
+  const fetchRuns = useCallback(async () => {
+    setRunsLoading(true);
+    setRunsError(null);
+    try {
+      const { data, error } = await supabase
+        .from('dev_seed_registry')
+        .select('id, started_at, status')
+        .order('started_at', { ascending: false })
+        .limit(25);
+      if (error) throw error;
+      setRuns(data || []);
+    } catch (e: any) {
+      setRuns([]);
+      setRunsError(e?.message || 'Unable to load seed runs');
+      addLog({ level: 'error', message: `Failed to load seed runs: ${e?.message || 'unknown error'}` });
+    } finally {
+      setRunsLoading(false);
+    }
+  }, [addLog]);
+
+  useEffect(() => {
+    fetchRuns();
+  }, [fetchRuns]);
+
+  const invoke = async (action: SeedAction, extra?: Record<string, any>) => {
     if (!savedToken) {
       toast({ description: 'Please save a token first' });
       addLog({ level: 'error', message: 'No token saved. Save token before running actions.' });
@@ -83,7 +116,7 @@ const DevSeedingPanel: React.FC = () => {
 
     try {
       const { data, error } = await supabase.functions.invoke('seed-dev-data', {
-        body: { action },
+        body: { action, ...(extra || {}) },
         headers: { 'x-seed-admin-token': savedToken },
       });
 
@@ -97,6 +130,11 @@ const DevSeedingPanel: React.FC = () => {
         addLog({ level: 'info', message: `Response: ${JSON.stringify(data)}` });
       }
       toast({ description: `${action} finished successfully` });
+
+      if (action === 'seed_all') {
+        // Refresh runs so the new run appears in the dropdown
+        fetchRuns();
+      }
     } catch (err: any) {
       const msg = err?.message || 'Unknown error';
       addLog({ level: 'error', message: `${action} failed: ${msg}` });
@@ -148,6 +186,43 @@ const DevSeedingPanel: React.FC = () => {
           )}
         </div>
 
+        {/* Cleanup target (optional) */}
+        <div className="space-y-2">
+          <label className="text-sm text-muted-foreground">Cleanup target (optional)</label>
+          <div className="flex items-center gap-2">
+            <div className="min-w-[220px]">
+              <Select
+                value={selectedRunId ?? 'all'}
+                onValueChange={(v) => setSelectedRunId(v === 'all' ? null : v)}
+                disabled={!!isRunning || runsLoading}
+              >
+                <SelectTrigger className="w-[220px]">
+                  <SelectValue placeholder="All runs" />
+                </SelectTrigger>
+                <SelectContent className="z-50">
+                  <SelectItem value="all">All runs</SelectItem>
+                  {runs.map((r) => (
+                    <SelectItem key={r.id} value={r.id}>
+                      {`${r.id.slice(0, 8)} — ${r.status} — ${new Date(r.started_at).toLocaleString()}`}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button variant="outline" size="sm" onClick={fetchRuns} disabled={runsLoading || !!isRunning}>
+              Refresh
+            </Button>
+          </div>
+          {runsError && (
+            <p className="text-xs text-muted-foreground">
+              Could not list runs. Cleanup will affect all runs unless a specific ID is selected.
+            </p>
+          )}
+          {!runsError && runs.length === 0 && (
+            <p className="text-xs text-muted-foreground">No seed runs yet. Run Seed All to create one.</p>
+          )}
+        </div>
+
         {/* Actions */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
           <Button
@@ -179,7 +254,7 @@ const DevSeedingPanel: React.FC = () => {
 
           <Button
             variant="destructive"
-            onClick={() => invoke('cleanup')}
+            onClick={() => invoke('cleanup', { seed_run_id: selectedRunId })}
             disabled={!!isRunning}
             className="justify-start"
           >
