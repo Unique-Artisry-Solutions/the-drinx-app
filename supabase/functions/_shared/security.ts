@@ -52,7 +52,7 @@ export function getCorsHeaders(origin: string | null, config: SecurityConfig) {
 
   return {
     'Access-Control-Allow-Origin': isAllowed && origin ? origin : 'null',
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-user-id',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-user-id, x-seed-admin-token',
     'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
     'Access-Control-Allow-Credentials': 'true',
     'Vary': 'Origin',

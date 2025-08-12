@@ -3,7 +3,9 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-seed-admin-token',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Credentials': 'true',
 }
 
 // Helper: map persona "type" to a valid user_role enum
@@ -15,6 +17,8 @@ function toValidUserRole(
 }
 
 serve(async (req) => {
+  // Basic request logging for CORS/debug
+  console.log(`[seed-dev-data] method=${req.method} origin=${req.headers.get('origin') || 'no-origin'}`)
   // Handle CORS
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
