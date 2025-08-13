@@ -1,8 +1,7 @@
 
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '@/contexts/auth/AuthProvider';
-import { useDevelopmentMode } from '@/contexts/DevelopmentModeContext';
+import { useAuthenticatedUser } from '@/hooks/useAuthenticatedUser';
 import { UserType } from '@/types/navigation';
 
 interface RouteProtectionWrapperProps {
@@ -20,12 +19,11 @@ export const RouteProtectionWrapper: React.FC<RouteProtectionWrapperProps> = ({
   redirectTo = '/login',
   fallbackComponent = null
 }) => {
-  const { user, session, userType, isLoading, authStable } = useAuth();
-  const { isDevelopment, isDevModeActive, devMode, isInitialized } = useDevelopmentMode();
+const { user, session, userType, isLoading, authStable, isAuthenticated, isUsingDevBypass } = useAuthenticatedUser();
   const location = useLocation();
 
-  // Wait for initialization
-  if (!isInitialized || (isLoading && !(isDevelopment && isDevModeActive))) {
+// Wait for initialization/loading
+  if (isLoading && !isUsingDevBypass) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -36,9 +34,9 @@ export const RouteProtectionWrapper: React.FC<RouteProtectionWrapperProps> = ({
     );
   }
 
-  // Development mode bypass
-  if (isDevelopment && isDevModeActive) {
-    console.log('RouteProtectionWrapper: Development mode active, bypassing protection');
+// Development mode bypass via hook
+  if (isUsingDevBypass) {
+    console.log('RouteProtectionWrapper: Dev bypass active, allowing access');
     return <>{children}</>;
   }
 
@@ -54,31 +52,28 @@ export const RouteProtectionWrapper: React.FC<RouteProtectionWrapperProps> = ({
     );
   }
 
-  const isAuthenticated = !!(user && session);
-  const currentUserType = userType || 'individual';
+const isAuthenticatedFlag = isAuthenticated;
 
-  // Check authentication requirement
-  if (requireAuth && !isAuthenticated) {
+// Check authentication requirement
+  if (requireAuth && !isAuthenticatedFlag) {
     localStorage.setItem('auth_redirect', location.pathname);
     return <Navigate to={redirectTo} replace />;
   }
 
-  // Check user type restrictions
-  if (allowedUserTypes.length > 0 && isAuthenticated) {
-    if (!allowedUserTypes.includes(currentUserType as UserType)) {
+// Check user type restrictions
+  const currentUserType = (userType || 'individual') as UserType;
+  if (allowedUserTypes.length > 0 && isAuthenticatedFlag) {
+    if (!allowedUserTypes.includes(currentUserType)) {
       if (fallbackComponent) {
         return <>{fallbackComponent}</>;
       }
-      
-      // Redirect to appropriate dashboard based on user type
       const userTypeDashboards: Record<UserType, string> = {
         admin: '/admin/system-breakdown',
         establishment: '/establishment/dashboard',
         promoter: '/promoter/dashboard',
         individual: '/explore'
       };
-      
-      return <Navigate to={userTypeDashboards[currentUserType as UserType]} replace />;
+      return <Navigate to={userTypeDashboards[currentUserType]} replace />;
     }
   }
 

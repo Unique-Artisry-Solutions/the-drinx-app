@@ -1,8 +1,7 @@
 
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { useDevelopmentMode } from '@/contexts/DevelopmentModeContext';
-import { useAuth } from '@/contexts/auth/AuthProvider';
+import { useAuthenticatedUser } from '@/hooks/useAuthenticatedUser';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -19,12 +18,10 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   fallbackPath = '/',
   fallbackComponent = null
 }) => {
-  const location = useLocation();
-  const { isDevelopment, isDevModeActive, devMode, isInitialized } = useDevelopmentMode();
-  const { user, session, userType, isLoading, authStable, isAuthenticated } = useAuth();
+const { user, session, userType, isLoading, authStable, isAuthenticated, isUsingDevBypass } = useAuthenticatedUser();
 
-  // Wait for initialization
-  if (!isInitialized || (isLoading && !(isDevelopment && isDevModeActive))) {
+// Wait for loading to finish
+  if (isLoading && !isUsingDevBypass) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -35,9 +32,9 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     );
   }
 
-  // Development mode bypass
-  if (isDevelopment && isDevModeActive) {
-    console.log('ProtectedRoute: Development mode active, bypassing protection');
+// Development bypass via hook
+  if (isUsingDevBypass) {
+    console.log('ProtectedRoute: Dev bypass active, allowing access');
     return <>{children}</>;
   }
 

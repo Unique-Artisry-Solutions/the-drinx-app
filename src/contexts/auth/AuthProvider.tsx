@@ -6,16 +6,10 @@ import { AuthState, AuthActions, AuthContextType } from './types';
 import { sessionPersistenceService } from '@/services/SessionPersistenceService';
 import { authCache } from './authCache';
 import { debouncedToast } from '@/utils/debouncedToast';
+import { inferUserType } from '@/utils/auth/admin';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Type conversion helper
-function convertToUserType(value: string | null): 'individual' | 'establishment' | 'promoter' | 'admin' {
-  if (value === 'establishment' || value === 'promoter' || value === 'admin') {
-    return value;
-  }
-  return 'individual';
-}
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
@@ -55,10 +49,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setSession(currentSession);
         setUser(currentSession.user);
         
-        // Determine user type
-        const userTypeFromMetadata = currentSession.user.user_metadata?.user_type;
-        const resolvedUserType = convertToUserType(userTypeFromMetadata);
-        setUserType(resolvedUserType);
+// Determine user type
+        setUserType(inferUserType(currentSession.user));
         
         // Set email verification status
         setIsEmailVerified(currentSession.user.email_confirmed_at !== null);
@@ -103,9 +95,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setSession(newSession);
         setUser(newSession.user);
         
-        const userTypeFromMetadata = newSession.user.user_metadata?.user_type;
-        const resolvedUserType = convertToUserType(userTypeFromMetadata);
-        setUserType(resolvedUserType);
+setUserType(inferUserType(newSession.user));
         
         setIsEmailVerified(newSession.user.email_confirmed_at !== null);
         setAuthError(null);

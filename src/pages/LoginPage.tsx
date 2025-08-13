@@ -66,8 +66,8 @@ const LoginPage = () => {
       // Get saved redirect path
       const savedRedirect = localStorage.getItem('auth_redirect');
       
-      // Navigate to appropriate page
-      goToAfterLogin(user.user_metadata?.user_type, savedRedirect);
+// Navigate to appropriate page
+      goToAfterLogin(undefined, savedRedirect);
     }
   }, [isAuthenticated, user, goToAfterLogin]);
   
