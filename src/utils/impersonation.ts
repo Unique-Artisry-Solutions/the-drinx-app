@@ -72,3 +72,11 @@ export async function impersonateUser(targetUserId: string): Promise<{ ok: boole
   window.location.href = link;
   return { ok: true };
 }
+
+export async function impersonationDiagnostics(targetUserId?: string): Promise<{ ok: boolean; data?: any; error?: string }> {
+  const { data, error } = await supabase.functions.invoke('impersonation-diagnostics', {
+    body: { target_user_id: targetUserId ?? null, test_link: false },
+  });
+  if (error) return { ok: false, error: error.message };
+  return { ok: true, data };
+}

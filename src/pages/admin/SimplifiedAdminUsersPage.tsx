@@ -5,6 +5,7 @@ import { UnifiedAdminTable } from '@/components/admin/tables/UnifiedAdminTable';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { impersonateUser } from '@/utils/impersonation';
+import { toast } from 'sonner';
 const SimplifiedAdminUsersPage: React.FC = () => {
   const { state, actions } = useSimpleAdmin('users');
 
@@ -37,7 +38,18 @@ const SimplifiedAdminUsersPage: React.FC = () => {
       key: '_actions',
       label: 'Actions',
       render: (_: any, item: any) => (
-        <Button variant="outline" size="sm" onClick={() => impersonateUser(item.id)}>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={async () => {
+            const res = await impersonateUser(item.id);
+            if (!res.ok) {
+              toast.error(res.error || 'Impersonation failed');
+            } else {
+              toast.message('Impersonation link generated. Redirecting...');
+            }
+          }}
+        >
           Impersonate
         </Button>
       )

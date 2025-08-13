@@ -5,3 +5,7 @@ verify_jwt = false
 
 [functions.impersonate-user]
 verify_jwt = true
+
+[functions.impersonation-diagnostics]
+verify_jwt = true
+
