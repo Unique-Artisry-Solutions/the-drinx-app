@@ -30,6 +30,8 @@ const ContentModerationPage = lazy(() => import('@/pages/admin/ContentModeration
 const ThemeCustomizationPage = lazy(() => import('@/pages/admin/ThemeCustomizationPage'));
 const TestingInterfacePage = lazy(() => import('@/pages/admin/TestingInterfacePage'));
 const AdminLogsPage = lazy(() => import('@/pages/admin/AdminLogsPage'));
+const SimplifiedAdminUsersPage = lazy(() => import('@/pages/admin/SimplifiedAdminUsersPage'));
+
 
 // Simplified admin routes - removed duplicate simplified routes
 export const adminRoutes: RouteObject[] = [
@@ -60,7 +62,7 @@ export const adminRoutes: RouteObject[] = [
       { path: 'system-configuration', element: <SystemConfigurationPage /> },
       
       // User Management
-      { path: 'users', element: <AdminUsersPage /> },
+      { path: 'users', element: <SimplifiedAdminUsersPage /> },
       { path: 'users/:id', element: <AdminUserProfile /> },
       
       // Content Management

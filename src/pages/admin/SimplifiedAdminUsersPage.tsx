@@ -6,8 +6,11 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { impersonateUser } from '@/utils/impersonation';
 import { toast } from 'sonner';
+import { useAuthenticatedUser } from '@/hooks/useAuthenticatedUser';
 const SimplifiedAdminUsersPage: React.FC = () => {
   const { state, actions } = useSimpleAdmin('users');
+  const { userType, isUsingDevBypass } = useAuthenticatedUser();
+  const canImpersonate = userType === 'admin' && !isUsingDevBypass;
 
   const columns = [
     {
@@ -58,6 +61,27 @@ const SimplifiedAdminUsersPage: React.FC = () => {
 
   return (
     <div className="container mx-auto p-6">
+      <div className="mb-4 flex items-center justify-end">
+        <Button
+          variant="secondary"
+          size="sm"
+          disabled={!canImpersonate}
+          title={!canImpersonate ? (userType !== 'admin' ? 'Requires admin role' : 'Disabled in Dev Mode bypass; sign in as real admin') : undefined}
+          onClick={async () => {
+            const targetId = window.prompt('Enter target user ID to impersonate:');
+            if (!targetId) return;
+            toast.message('Generating impersonation link...');
+            const res = await impersonateUser(targetId.trim());
+            if (!res.ok) {
+              toast.error(res.error || 'Impersonation failed');
+            } else {
+              toast.message('Impersonation link generated. Redirecting...');
+            }
+          }}
+        >
+          Impersonate by ID
+        </Button>
+      </div>
       <UnifiedAdminTable
         title="Users Management"
         items={state.items}
