@@ -10,7 +10,7 @@ import { adminRoutes } from '@/routes/config/adminRoutes';
 import { promoterRoutes } from '@/routes/config/promoterRoutes';
 import { establishmentRoutes } from '@/routes/config/establishmentRoutes';
 import { testingRoutes } from '@/routes/testingRoutes';
-
+import ImpersonationBanner from '@/components/auth/ImpersonationBanner';
 
 const App: React.FC = () => {
   const { isReady, isAuthenticated, userType } = useAuthenticatedUser();
@@ -28,6 +28,8 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-white">
+      {/* Global impersonation banner */}
+      <ImpersonationBanner />
       <Routes>
         {/* Public Routes */}
         {publicRoutes.map((route, index) => (

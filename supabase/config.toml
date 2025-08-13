@@ -1,5 +1,7 @@
-
 project_id = "dvifibvzwunnpcsihpxq"
 
 [functions.seed-dev-data]
 verify_jwt = false
+
+[functions.impersonate-user]
+verify_jwt = true

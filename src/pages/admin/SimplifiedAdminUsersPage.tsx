@@ -3,7 +3,8 @@ import React from 'react';
 import { useSimpleAdmin } from '@/hooks/admin/useSimpleAdmin';
 import { UnifiedAdminTable } from '@/components/admin/tables/UnifiedAdminTable';
 import { Badge } from '@/components/ui/badge';
-
+import { Button } from '@/components/ui/button';
+import { impersonateUser } from '@/utils/impersonation';
 const SimplifiedAdminUsersPage: React.FC = () => {
   const { state, actions } = useSimpleAdmin('users');
 
@@ -31,6 +32,15 @@ const SimplifiedAdminUsersPage: React.FC = () => {
       key: 'created_at',
       label: 'Created',
       render: (value: string) => value ? new Date(value).toLocaleDateString() : '-'
+    },
+    {
+      key: '_actions',
+      label: 'Actions',
+      render: (_: any, item: any) => (
+        <Button variant="outline" size="sm" onClick={() => impersonateUser(item.id)}>
+          Impersonate
+        </Button>
+      )
     }
   ];
 
