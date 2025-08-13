@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { startTransition } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
@@ -26,10 +26,14 @@ const BackButton: React.FC<BackButtonProps> = ({
   const goBack = () => {
     // If there's history to go back to, use it
     if (window.history.length > 2) {
-      navigate(-1);
+      startTransition(() => {
+        navigate(-1);
+      });
     } else {
       // If there's no history (e.g., opened in a new tab), go to fallback
-      navigate(fallbackPath);
+      startTransition(() => {
+        navigate(fallbackPath);
+      });
     }
   };
 

@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { startTransition } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { UnifiedNavItem } from '@/types/navigation/NavigationTypes';
@@ -25,7 +25,9 @@ const NavItem: React.FC<NavItemProps> = ({
       onClick(e);
     } else {
       e.preventDefault();
-      navigate(item.path);
+      startTransition(() => {
+        navigate(item.path);
+      });
     }
   };
 
