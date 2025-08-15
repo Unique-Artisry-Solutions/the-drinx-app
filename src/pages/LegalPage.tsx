@@ -1,11 +1,20 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FileText, Shield, Lock, Eye } from 'lucide-react';
 import Layout from '@/components/Layout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useSearchParams } from 'react-router-dom';
 
 const LegalPage = () => {
+  const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState("terms");
+
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam && ['terms', 'privacy', 'cookies'].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams]);
 
   return (
     <Layout>

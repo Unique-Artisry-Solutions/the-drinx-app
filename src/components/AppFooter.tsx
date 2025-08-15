@@ -25,9 +25,9 @@ const AppFooter: React.FC = () => {
               <ExternalLink className="h-4 w-4 mr-1" />
               Resources
             </Link>
-            <Link to="/legal" className="hover:text-material-primary flex items-center">
+            <Link to="/legal?tab=privacy" className="hover:text-material-primary flex items-center">
               <Mail className="h-4 w-4 mr-1" />
-              Legal
+              Privacy Policy
             </Link>
           </div>
         </div>
