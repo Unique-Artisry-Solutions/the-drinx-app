@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthenticatedUser } from '@/hooks/useAuthenticatedUser';
 import { DevRoleSwitcher } from '@/components/development';
@@ -11,21 +11,47 @@ import { promoterRoutes } from '@/routes/config/promoterRoutes';
 import { establishmentRoutes } from '@/routes/config/establishmentRoutes';
 import { testingRoutes } from '@/routes/testingRoutes';
 import ImpersonationBanner from '@/components/auth/ImpersonationBanner';
+import { initDebug } from '@/utils/initDebug';
 
 const App: React.FC = () => {
-  const { isReady, isAuthenticated, userType } = useAuthenticatedUser();
+  const { isReady, isAuthenticated, userType, isLoading, authStable } = useAuthenticatedUser();
+  const [forceReady, setForceReady] = useState(false);
 
-  if (!isReady) {
+  initDebug.log('App render', { isReady, isAuthenticated, userType, isLoading, authStable, forceReady });
+
+  // Timeout mechanism to prevent infinite loading
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (!isReady && !forceReady) {
+        initDebug.warn('App loading timeout - forcing ready state');
+        setForceReady(true);
+      }
+    }, 8000); // 8 second timeout
+
+    return () => clearTimeout(timeoutId);
+  }, [isReady, forceReady]);
+
+  // Use forceReady if timeout has passed or isReady is true
+  const effectiveIsReady = isReady || forceReady;
+
+  if (!effectiveIsReady) {
+    initDebug.log('App loading screen shown', { forceReady });
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-spiritless-pink border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+          <p className="mt-4 text-gray-600">
+            {forceReady ? 'Starting app...' : 'Loading...'}
+          </p>
+          {forceReady && (
+            <p className="mt-2 text-xs text-gray-500">Taking longer than expected</p>
+          )}
         </div>
       </div>
     );
   }
 
+  initDebug.log('App routes rendered');
   return (
     <div className="min-h-screen bg-white">
       {/* Global impersonation banner */}

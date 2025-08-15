@@ -70,7 +70,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <DevErrorBoundary>
       <BrowserRouter>
         <QueryClientProvider client={queryClient}>
+          {/* DevelopmentModeProvider should initialize first */}
           <DevelopmentModeProvider>
+            {/* AuthProvider depends on dev mode context */}
             <AuthProvider>
               <ThemeProvider>
                 <NavigationProvider>
@@ -97,4 +99,5 @@ if (process.env.NODE_ENV === 'development') {
   console.log('🚀 Phase 9E Application initialized with enhanced validation');
   console.log('📊 QueryClient configured with optimized retry logic');
   console.log('🔧 Development mode features enabled');
+  console.log('🎯 App starting - check initialization order');
 }

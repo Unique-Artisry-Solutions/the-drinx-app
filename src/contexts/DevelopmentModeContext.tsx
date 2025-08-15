@@ -23,19 +23,23 @@ export const DevelopmentModeProvider: React.FC<{ children: React.ReactNode }> = 
   const [isDevelopment, setIsDevelopment] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Initialize development mode detection
+  // Initialize development mode detection - simplified and faster
   useEffect(() => {
+    console.log('🔧 DevelopmentModeProvider - Initializing');
+    
     const hostname = window.location.hostname;
     const isDevMode = hostname === 'localhost' || 
                      hostname === '127.0.0.1' ||
                      hostname.includes('preview--') ||
                      hostname.includes('lovable');
     
+    console.log('🔧 DevelopmentModeProvider - isDevelopment:', isDevMode);
     setIsDevelopment(isDevMode);
     
     if (isDevMode) {
       const savedDevType = localStorage.getItem('dev_user_type') as DevUserType;
       if (savedDevType) {
+        console.log('🔧 DevelopmentModeProvider - Restored dev mode:', savedDevType);
         setDevMode(savedDevType);
       }
     } else {
@@ -44,15 +48,17 @@ export const DevelopmentModeProvider: React.FC<{ children: React.ReactNode }> = 
     }
     
     setIsInitialized(true);
+    console.log('🔧 DevelopmentModeProvider - Initialization complete');
   }, []);
 
-  // Clear dev mode when on landing page or related routes
+  // Clear dev mode when on landing page or related routes - debounced
   useEffect(() => {
     if (!isInitialized || !isDevelopment) return;
     
     const landingRoutes = ['/', '/landing'];
     if (landingRoutes.includes(location.pathname)) {
       if (devMode !== null) {
+        console.log('🔧 DevelopmentModeProvider - Clearing dev mode for landing page');
         setDevMode(null);
         localStorage.removeItem('dev_user_type');
       }
@@ -107,6 +113,7 @@ export const DevelopmentModeProvider: React.FC<{ children: React.ReactNode }> = 
   const switchToUserType = useCallback((userType: DevUserType) => {
     if (!isDevelopment || devMode === userType) return;
     
+    console.log('🔧 DevelopmentModeProvider - Switching to user type:', userType);
     setDevMode(userType);
     
     if (userType) {

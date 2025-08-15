@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { lazy } from 'react';
-import { RouteObject } from 'react-router-dom';
+import { RouteObject, Navigate } from 'react-router-dom';
 import LandingPage from '@/pages/LandingPage';
 import LoginPage from '@/pages/LoginPage';
 import SignupPage from '@/pages/SignupPage';
@@ -9,19 +9,12 @@ import VerifyEmail from '@/pages/VerifyEmail';
 import ContactPage from '@/pages/ContactPage';
 import MapPage from '@/pages/MapPage';
 
-// Simple redirect component for root route
+// Simple redirect component for root route using Navigate component
 const RootRedirect: React.FC = () => {
-  React.useEffect(() => {
-    window.location.replace('/landing');
-  }, []);
+  console.log('🔄 Root redirect: redirecting to /landing');
   
   return (
-    <div className="flex items-center justify-center min-h-screen">
-      <div className="text-center">
-        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-        <p className="text-sm text-muted-foreground">Redirecting...</p>
-      </div>
-    </div>
+    <Navigate to="/landing" replace />
   );
 };
 

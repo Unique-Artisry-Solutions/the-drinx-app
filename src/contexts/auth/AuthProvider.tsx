@@ -24,32 +24,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   
   const initializationRef = useRef(false);
 
-  // Initialize auth state
+  // Initialize auth state - simplified and more robust
   const initializeAuth = useCallback(async () => {
     if (initializationRef.current) return;
     initializationRef.current = true;
 
-    console.log('AuthProvider - Starting initialization');
+    console.log('🔐 AuthProvider - Starting initialization');
     setIsLoading(true);
     setAuthError(null);
 
     try {
-      // Get current session
-      const { data: { session: currentSession }, error } = await supabase.auth.getSession();
+      // Get current session with timeout
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Session fetch timeout')), 5000)
+      );
+      
+      const sessionPromise = supabase.auth.getSession();
+      
+      const { data: { session: currentSession }, error } = await Promise.race([
+        sessionPromise,
+        timeoutPromise
+      ]) as any;
       
       if (error) {
-        console.error('AuthProvider - Session fetch error:', error);
+        console.error('🔐 AuthProvider - Session fetch error:', error);
         throw error;
       }
 
       if (currentSession?.user) {
-        console.log('AuthProvider - Session found, setting auth state');
+        console.log('🔐 AuthProvider - Session found, setting auth state');
         
         // Set session and user
         setSession(currentSession);
         setUser(currentSession.user);
         
-// Determine user type
+        // Determine user type
         setUserType(inferUserType(currentSession.user));
         
         // Set email verification status
@@ -58,9 +67,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Update persistence service
         sessionPersistenceService.updateSession(currentSession, currentSession.user);
         
-        console.log('AuthProvider - Auth state set successfully');
+        console.log('🔐 AuthProvider - Auth state set successfully');
       } else {
-        console.log('AuthProvider - No session found, user not authenticated');
+        console.log('🔐 AuthProvider - No session found, user not authenticated');
         
         // Clear auth state
         setSession(null);
@@ -73,33 +82,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
     } catch (error: any) {
-      console.error('AuthProvider - Initialization failed:', error);
-      setAuthError(new Error(`Initialization failed: ${error.message}`));
+      console.error('🔐 AuthProvider - Initialization failed:', error);
+      // Don't set auth error for timeout - just proceed with no auth
+      if (!error.message.includes('timeout')) {
+        setAuthError(new Error(`Initialization failed: ${error.message}`));
+      }
+      // Clear auth state on error
+      setSession(null);
+      setUser(null);
+      setUserType('individual');
+      setIsEmailVerified(false);
+      sessionPersistenceService.clearSession();
     } finally {
       // ALWAYS set these flags to true after initialization attempt
       setIsLoading(false);
       setAuthStable(true);
       setNavigationReady(true);
-      console.log('AuthProvider - Initialization complete, auth stable and navigation ready');
+      console.log('🔐 AuthProvider - Initialization complete, auth stable and navigation ready');
     }
   }, []);
 
-  // Handle auth state changes
+  // Handle auth state changes - simplified
   useEffect(() => {
-    console.log('AuthProvider - Setting up auth state listener');
+    console.log('🔐 AuthProvider - Setting up auth state listener');
     
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, newSession) => {
-      console.log('AuthProvider - Auth state changed:', event, !!newSession);
+      console.log('🔐 AuthProvider - Auth state changed:', event, !!newSession);
       
       if (event === 'SIGNED_IN' && newSession?.user) {
         setSession(newSession);
         setUser(newSession.user);
-        
-setUserType(inferUserType(newSession.user));
-        
+        setUserType(inferUserType(newSession.user));
         setIsEmailVerified(newSession.user.email_confirmed_at !== null);
         setAuthError(null);
-        
         sessionPersistenceService.updateSession(newSession, newSession.user);
         
       } else if (event === 'SIGNED_OUT') {
@@ -108,7 +123,6 @@ setUserType(inferUserType(newSession.user));
         setUserType('individual');
         setIsEmailVerified(false);
         setAuthError(null);
-        
         sessionPersistenceService.clearSession();
       }
     });
