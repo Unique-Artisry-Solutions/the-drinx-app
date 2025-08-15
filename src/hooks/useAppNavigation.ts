@@ -2,6 +2,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useCallback } from 'react';
 import { debouncedToast } from '@/utils/debouncedToast';
+import { useAuth } from '@/contexts/auth/AuthProvider';
 
 /**
  * A custom hook for handling app navigation consistently
@@ -9,22 +10,32 @@ import { debouncedToast } from '@/utils/debouncedToast';
  */
 export const useAppNavigation = () => {
   const navigate = useNavigate();
+  const { userType: ctxUserType, isAuthenticated } = useAuth();
   
   /**
    * Navigate to the appropriate home page based on user type
    */
   const goToHomePage = useCallback((userType?: string | null) => {
-    if (!userType) {
-      navigate('/landing');
+    const effectiveUserType = userType || ctxUserType;
+    
+    if (!effectiveUserType) {
+      if (isAuthenticated) {
+        // Default to individual/explore if authenticated but no userType
+        navigate('/explore');
+      } else {
+        navigate('/landing');
+      }
       return;
     }
     
-    switch (userType) {
+    console.debug('Navigating to home page for user type:', effectiveUserType);
+    
+    switch (effectiveUserType) {
       case 'establishment':
         navigate('/establishment/dashboard');
         break;
       case 'promoter':
-        navigate('/promoter/dashboard');
+        navigate('/promoter');
         break;
       case 'admin':
         navigate('/admin/system-breakdown');
@@ -32,7 +43,7 @@ export const useAppNavigation = () => {
       default:
         navigate('/explore');
     }
-  }, [navigate]);
+  }, [navigate, ctxUserType, isAuthenticated]);
   
   /**
    * Navigate to the profile page based on user type
@@ -53,11 +64,14 @@ export const useAppNavigation = () => {
   const goToAfterLogin = useCallback((userType?: string | null, savedRedirect?: string | null) => {
     if (savedRedirect) {
       navigate(savedRedirect);
+      localStorage.removeItem('auth_redirect');
       return;
     }
     
-    goToHomePage(userType);
-  }, [navigate, goToHomePage]);
+    const effectiveUserType = userType ?? ctxUserType;
+    console.debug('Navigating after login for user type:', effectiveUserType);
+    goToHomePage(effectiveUserType);
+  }, [navigate, goToHomePage, ctxUserType]);
 
   /**
    * Navigate to login page
