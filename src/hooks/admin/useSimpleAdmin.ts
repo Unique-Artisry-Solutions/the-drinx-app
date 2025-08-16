@@ -29,18 +29,30 @@ export function useSimpleAdmin<T extends { id: string; name?: string }>(
   
   // Create fetch function based on data type
   const fetchFn = async (): Promise<T[]> => {
-    switch (dataType) {
-      case 'users':
-        const userResponse = await SimplifiedAdminService.getUsers();
-        return userResponse.data as T[];
-      case 'establishments':
-        const establishmentResponse = await SimplifiedAdminService.getEstablishments();
-        return establishmentResponse.data as unknown as T[];
-      case 'cocktails':
-        const cocktailResponse = await SimplifiedAdminService.getCocktails();
-        return cocktailResponse.data as unknown as T[];
-      default:
-        return [];
+    console.log(`🚀 useSimpleAdmin fetchFn called for dataType: ${dataType}`);
+    
+    try {
+      switch (dataType) {
+        case 'users':
+          console.log('👥 Fetching users via SimplifiedAdminService...');
+          const userResponse = await SimplifiedAdminService.getUsers();
+          console.log('✅ Users response received:', userResponse);
+          return userResponse.data as T[];
+        case 'establishments':
+          console.log('🏢 Fetching establishments via SimplifiedAdminService...');
+          const establishmentResponse = await SimplifiedAdminService.getEstablishments();
+          return establishmentResponse.data as unknown as T[];
+        case 'cocktails':
+          console.log('🍹 Fetching cocktails via SimplifiedAdminService...');
+          const cocktailResponse = await SimplifiedAdminService.getCocktails();
+          return cocktailResponse.data as unknown as T[];
+        default:
+          console.warn('⚠️ Unknown dataType:', dataType);
+          return [];
+      }
+    } catch (error) {
+      console.error(`❌ useSimpleAdmin fetchFn error for ${dataType}:`, error);
+      throw error;
     }
   };
 
@@ -56,9 +68,12 @@ export function useSimpleAdmin<T extends { id: string; name?: string }>(
     setPage: actions.setPage,
     setLimit: actions.setLimit,
     setSearch: (term: string) => {
+      console.log(`🔍 useSimpleAdmin setSearch called with term: "${term}" for dataType: ${dataType}`);
       actions.setSearchTerm(term);
       // For users, we'll implement server-side search by refreshing with new params
       if (dataType === 'users') {
+        console.log('🔄 Triggering refresh for server-side search...');
+        // TODO: Pass search term to the service - for now just refresh
         actions.refresh();
       }
     },

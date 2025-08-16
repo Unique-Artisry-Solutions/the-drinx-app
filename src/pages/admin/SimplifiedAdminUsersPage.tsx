@@ -8,9 +8,31 @@ import { impersonateUser } from '@/utils/impersonation';
 import { toast } from 'sonner';
 import { useAuthenticatedUser } from '@/hooks/useAuthenticatedUser';
 const SimplifiedAdminUsersPage: React.FC = () => {
+  console.log('🎯 SimplifiedAdminUsersPage component rendered');
+  
   const { state, actions } = useSimpleAdmin('users');
   const { userType, isUsingDevBypass } = useAuthenticatedUser();
   const canImpersonate = userType === 'admin' && !isUsingDevBypass;
+
+  console.log('📊 SimplifiedAdminUsersPage state:', { 
+    itemsCount: state.items?.length || 0, 
+    isLoading: state.isLoading, 
+    error: state.error,
+    total: state.total
+  });
+
+  // Add component-level error handling
+  React.useEffect(() => {
+    if (state.error) {
+      console.error('🚨 SimplifiedAdminUsersPage detected error in state:', state.error);
+      toast.error(`Failed to load users: ${state.error}`);
+    }
+  }, [state.error]);
+
+  // Add loading state logging
+  React.useEffect(() => {
+    console.log('⏳ SimplifiedAdminUsersPage loading state changed:', state.isLoading);
+  }, [state.isLoading]);
 
   const columns = [
     {
@@ -94,9 +116,54 @@ const SimplifiedAdminUsersPage: React.FC = () => {
         searchPlaceholder="Search users..."
       />
       
+      {/* Enhanced error display with debugging info */}
       {state.error && (
-        <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-md">
-          <p className="text-red-600">{state.error}</p>
+        <div className="mt-4 p-4 bg-destructive/10 border border-destructive/20 rounded-md">
+          <div className="flex items-start justify-between">
+            <div>
+              <h4 className="text-sm font-medium text-destructive mb-2">Error Loading Users</h4>
+              <p className="text-sm text-destructive/80">{state.error}</p>
+              <div className="mt-2 text-xs text-muted-foreground">
+                <p>Debug Info:</p>
+                <p>• Items loaded: {state.items?.length || 0}</p>
+                <p>• Loading state: {state.isLoading ? 'true' : 'false'}</p>
+                <p>• Total: {state.total}</p>
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                console.log('🔄 Manual retry button clicked');
+                actions.refresh();
+              }}
+            >
+              Retry
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Show helpful message when no data and no error */}
+      {!state.isLoading && !state.error && state.items.length === 0 && (
+        <div className="mt-4 p-4 bg-muted/50 border border-muted rounded-md text-center">
+          <p className="text-muted-foreground">No users found. This could mean:</p>
+          <ul className="text-sm text-muted-foreground mt-2 list-disc list-inside">
+            <li>The profiles table is empty</li>
+            <li>You don't have permission to view users</li>
+            <li>There's a connectivity issue</li>
+          </ul>
+          <Button
+            variant="outline"
+            size="sm"
+            className="mt-3"
+            onClick={() => {
+              console.log('🔄 Refresh when no data button clicked');
+              actions.refresh();
+            }}
+          >
+            Refresh
+          </Button>
         </div>
       )}
     </div>

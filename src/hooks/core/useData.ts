@@ -47,10 +47,22 @@ export function useData<T extends { id: string; name?: string }>(
   const [searchTerm, setSearchTerm] = useState('');
 
   const refresh = useCallback(async () => {
-    setState(prev => ({ ...prev, isLoading: true }));
+    console.log('🔄 useData.refresh called, setting loading to true');
+    setState(prev => ({ ...prev, isLoading: true, error: null }));
+    
     try {
       if (options.fetchFn) {
-        const data = await options.fetchFn();
+        console.log('📡 useData calling fetchFn...');
+        
+        // Add timeout to prevent infinite loading
+        const fetchPromise = options.fetchFn();
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Request timeout - taking too long to load')), 30000)
+        );
+        
+        const data = await Promise.race([fetchPromise, timeoutPromise]) as any;
+        
+        console.log('✅ useData fetchFn completed with data:', data?.length || 0, 'items');
         setState(prev => ({
           ...prev,
           data,
@@ -59,12 +71,15 @@ export function useData<T extends { id: string; name?: string }>(
           error: null
         }));
       } else {
+        console.log('⚠️ useData no fetchFn provided, just setting loading to false');
         setState(prev => ({ ...prev, isLoading: false }));
       }
     } catch (error) {
+      console.error('❌ useData refresh error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'An error occurred while loading data';
       setState(prev => ({
         ...prev,
-        error: error instanceof Error ? error.message : 'An error occurred',
+        error: errorMessage,
         isLoading: false
       }));
     }

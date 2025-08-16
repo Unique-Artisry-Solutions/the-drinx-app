@@ -51,44 +51,117 @@ export interface SimpleResponse<T> {
 export class SimplifiedAdminService {
   // Users operations
   static async getUsers(params: SimpleQueryParams = {}): Promise<SimpleResponse<AdminUser>> {
-    try {
-      const { page = 1, limit = 20, search = '' } = params;
-      const offset = (page - 1) * limit;
+    const { page = 1, limit = 20, search = '' } = params;
+    
+    console.log('🔍 SimplifiedAdminService.getUsers called with params:', params);
+    
+    // Retry logic with exponential backoff
+    const maxRetries = 3;
+    let lastError: any = null;
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        console.log(`📡 Attempt ${attempt}/${maxRetries} - Fetching users from Supabase...`);
+        
+        // Check authentication first
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        if (authError) {
+          console.error('❌ Authentication error:', authError);
+          throw new Error(`Authentication failed: ${authError.message}`);
+        }
+        
+        if (!user) {
+          console.error('❌ No authenticated user found');
+          throw new Error('User not authenticated');
+        }
+        
+        console.log('✅ User authenticated:', user.id);
 
-      let query = supabase
-        .from('profiles')
-        .select('id, display_name, username, user_type, phone, bio, created_at');
+        const offset = (page - 1) * limit;
 
-      // Add search filter if provided
-      if (search) {
-        query = query.or(`display_name.ilike.%${search}%,username.ilike.%${search}%`);
+        let query = supabase
+          .from('profiles')
+          .select('id, display_name, username, user_type, phone, bio, created_at');
+
+        // Add search filter if provided
+        if (search) {
+          console.log('🔍 Adding search filter:', search);
+          query = query.or(`display_name.ilike.%${search}%,username.ilike.%${search}%`);
+        }
+
+        console.log('📊 Getting total count...');
+        // Get total count with timeout
+        const countPromise = supabase
+          .from('profiles')
+          .select('*', { count: 'exact', head: true });
+        
+        const countResult = await Promise.race([
+          countPromise,
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Count query timeout')), 10000)
+          )
+        ]) as any;
+
+        if (countResult.error) {
+          console.error('❌ Error getting count:', countResult.error);
+          throw new Error(`Count query failed: ${countResult.error.message}`);
+        }
+
+        console.log('📊 Total count retrieved:', countResult.count);
+
+        console.log('📋 Getting paginated data...');
+        // Get paginated data with timeout
+        const dataPromise = query
+          .range(offset, offset + limit - 1)
+          .order('created_at', { ascending: false });
+
+        const dataResult = await Promise.race([
+          dataPromise,
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Data query timeout')), 15000)
+          )
+        ]) as any;
+
+        if (dataResult.error) {
+          console.error('❌ Error getting data:', dataResult.error);
+          throw new Error(`Data query failed: ${dataResult.error.message}`);
+        }
+
+        console.log('✅ Data retrieved successfully:', dataResult.data?.length || 0, 'users');
+
+        const result = {
+          data: dataResult.data || [],
+          total: countResult.count || 0,
+          page,
+          limit
+        };
+
+        console.log('🎉 SimplifiedAdminService.getUsers completed successfully:', result);
+        return result;
+
+      } catch (error: any) {
+        console.error(`❌ Attempt ${attempt} failed:`, error);
+        lastError = error;
+        
+        // Don't retry on authentication errors
+        if (error.message?.includes('Authentication') || error.message?.includes('not authenticated')) {
+          throw error;
+        }
+        
+        // Don't retry on the last attempt
+        if (attempt === maxRetries) {
+          break;
+        }
+        
+        // Exponential backoff: wait 1s, 2s, 4s
+        const delay = Math.pow(2, attempt - 1) * 1000;
+        console.log(`⏰ Waiting ${delay}ms before retry...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
       }
-
-      // Get total count
-      const { count } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true });
-
-      // Get paginated data
-      const { data, error } = await query
-        .range(offset, offset + limit - 1)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching users:', error);
-        throw new Error(error.message);
-      }
-
-      return {
-        data: data || [],
-        total: count || 0,
-        page,
-        limit
-      };
-    } catch (error) {
-      console.error('Error in getUsers:', error);
-      throw error;
     }
+    
+    console.error('💥 All retry attempts failed, throwing last error:', lastError);
+    throw lastError || new Error('Failed to fetch users after multiple attempts');
   }
 
   static async getUserById(id: string): Promise<AdminUser | null> {
