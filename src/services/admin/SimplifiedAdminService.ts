@@ -1,6 +1,8 @@
 
 // Primary admin service - simplified implementation without complex inheritance
 
+import { supabase } from '@/lib/supabase';
+
 // Type definitions for admin entities
 export interface AdminUser {
   id: string;
@@ -49,13 +51,44 @@ export interface SimpleResponse<T> {
 export class SimplifiedAdminService {
   // Users operations
   static async getUsers(params: SimpleQueryParams = {}): Promise<SimpleResponse<AdminUser>> {
-    // Mock implementation - in real app would use Supabase
-    return {
-      data: [],
-      total: 0,
-      page: params.page || 1,
-      limit: params.limit || 20
-    };
+    try {
+      const { page = 1, limit = 20, search = '' } = params;
+      const offset = (page - 1) * limit;
+
+      let query = supabase
+        .from('profiles')
+        .select('id, display_name, username, user_type, phone, bio, created_at');
+
+      // Add search filter if provided
+      if (search) {
+        query = query.or(`display_name.ilike.%${search}%,username.ilike.%${search}%`);
+      }
+
+      // Get total count
+      const { count } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true });
+
+      // Get paginated data
+      const { data, error } = await query
+        .range(offset, offset + limit - 1)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching users:', error);
+        throw new Error(error.message);
+      }
+
+      return {
+        data: data || [],
+        total: count || 0,
+        page,
+        limit
+      };
+    } catch (error) {
+      console.error('Error in getUsers:', error);
+      throw error;
+    }
   }
 
   static async getUserById(id: string): Promise<AdminUser | null> {
@@ -71,7 +104,22 @@ export class SimplifiedAdminService {
   }
 
   static async deleteUser(id: string): Promise<boolean> {
-    return true;
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        console.error('Error deleting user:', error);
+        throw new Error(error.message);
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error in deleteUser:', error);
+      return false;
+    }
   }
 
   // Establishments operations
@@ -128,7 +176,38 @@ export class SimplifiedAdminService {
 
   // Bulk operations
   static async bulkDelete(ids: string[], type: 'users' | 'establishments' | 'cocktails'): Promise<boolean> {
-    return true;
+    try {
+      switch (type) {
+        case 'users':
+          const { error: userError } = await supabase
+            .from('profiles')
+            .delete()
+            .in('id', ids);
+          if (userError) throw new Error(userError.message);
+          break;
+        case 'establishments':
+          const { error: establishmentError } = await supabase
+            .from('establishments')
+            .delete()
+            .in('id', ids);
+          if (establishmentError) throw new Error(establishmentError.message);
+          break;
+        case 'cocktails':
+          const { error: cocktailError } = await supabase
+            .from('cocktails')
+            .delete()
+            .in('id', ids);
+          if (cocktailError) throw new Error(cocktailError.message);
+          break;
+        default:
+          throw new Error('Invalid type for bulk delete');
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error in bulkDelete:', error);
+      return false;
+    }
   }
 
   static async search(query: string, type: 'users' | 'establishments' | 'cocktails'): Promise<any[]> {
