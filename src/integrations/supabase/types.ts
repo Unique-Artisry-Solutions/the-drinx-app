@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.12 (cd3cf9e)"
@@ -8703,7 +8703,7 @@ export type Database = {
     }
     Functions: {
       _log_seed_record: {
-        Args: { p_seed_run_id: string; p_table: string; p_record_id: string }
+        Args: { p_record_id: string; p_seed_run_id: string; p_table: string }
         Returns: undefined
       }
       _table_exists: {
@@ -8727,28 +8727,28 @@ export type Database = {
         Returns: undefined
       }
       anonymize_user_data: {
-        Args: { p_user_id: string; p_tables?: string[] }
+        Args: { p_tables?: string[]; p_user_id: string }
         Returns: string
       }
       batch_update_user_points: {
         Args: { p_operations: Json }
         Returns: {
-          user_id: string
-          success: boolean
-          points_change: number
-          new_balance: number
           error: string
+          new_balance: number
+          points_change: number
+          success: boolean
+          user_id: string
         }[]
       }
       calculate_comprehensive_engagement_score: {
         Args: { p_follower_id: string }
         Returns: {
-          overall_score: number
           activity_score: number
+          conversion_score: number
           interaction_score: number
           loyalty_score: number
+          overall_score: number
           recency_score: number
-          conversion_score: number
           recommended_tier: string
           score_breakdown: Json
         }[]
@@ -8762,21 +8762,21 @@ export type Database = {
         Returns: number
       }
       calculate_fees_and_taxes: {
-        Args: { p_amount: number; p_region?: string; p_event_type?: string }
+        Args: { p_amount: number; p_event_type?: string; p_region?: string }
         Returns: {
           gross_amount: number
+          net_amount: number
           platform_fee: number
           processing_fee: number
-          total_fees: number
           tax_amount: number
-          net_amount: number
+          total_fees: number
         }[]
       }
       calculate_refund_amount: {
-        Args: { p_ticket_purchase_id: string; p_event_date?: string }
+        Args: { p_event_date?: string; p_ticket_purchase_id: string }
         Returns: {
-          refund_amount: number
           processing_fee: number
+          refund_amount: number
           refund_percentage: number
         }[]
       }
@@ -8789,7 +8789,7 @@ export type Database = {
         Returns: boolean
       }
       check_user_consent: {
-        Args: { p_user_id: string; p_consent_type: string }
+        Args: { p_consent_type: string; p_user_id: string }
         Returns: boolean
       }
       clear_dev_seed: {
@@ -8797,7 +8797,7 @@ export type Database = {
         Returns: Json
       }
       generate_event_access_token: {
-        Args: { p_event_id: string; p_days_valid?: number }
+        Args: { p_days_valid?: number; p_event_id: string }
         Returns: string
       }
       generate_expiring_promotion_notifications: {
@@ -8811,41 +8811,41 @@ export type Database = {
           p_ticket_type_id?: string
         }
         Returns: {
-          tier_id: string
-          tier_name: string
-          current_price: number
           base_price: number
+          current_price: number
           discount_amount: number
           is_early_bird: boolean
           remaining_quantity: number
+          tier_id: string
+          tier_name: string
         }[]
       }
       get_user_retention: {
-        Args: { p_start_date: string; p_end_date: string }
+        Args: { p_end_date: string; p_start_date: string }
         Returns: {
           cohort_date: string
-          total_users: number
           retained_users_week1: number
           retained_users_week2: number
           retained_users_week3: number
           retained_users_week4: number
+          total_users: number
         }[]
       }
       get_user_streaks: {
         Args: { p_user_id: string }
         Returns: {
-          streak_type: string
-          streak_name: string
           current_count: number
-          longest_count: number
-          last_activity_date: string
-          streak_start_date: string
-          is_active: boolean
           days_to_milestone: number
+          establishment_id: string
+          is_active: boolean
+          last_activity_date: string
+          longest_count: number
           next_milestone: number
           next_milestone_reward: number
           streak_metadata: Json
-          establishment_id: string
+          streak_name: string
+          streak_start_date: string
+          streak_type: string
         }[]
       }
       initialize_admin_roles: {
@@ -8863,10 +8863,10 @@ export type Database = {
       record_campaign_segment_interaction: {
         Args: {
           p_campaign_id: string
-          p_segment_id: string
-          p_interaction_type: string
-          p_value?: number
           p_date?: string
+          p_interaction_type: string
+          p_segment_id: string
+          p_value?: number
         }
         Returns: undefined
       }
@@ -8875,7 +8875,7 @@ export type Database = {
         Returns: undefined
       }
       refresh_reward_profile_cache: {
-        Args: { p_user_id: string; p_establishment_id?: string }
+        Args: { p_establishment_id?: string; p_user_id: string }
         Returns: undefined
       }
       run_retention_cleanup: {
@@ -8884,34 +8884,34 @@ export type Database = {
       }
       seed_analytics: {
         Args: {
-          p_user_ids: string[]
-          p_event_ids?: string[]
           p_days?: number
+          p_event_ids?: string[]
           p_seed_run_id?: string
+          p_user_ids: string[]
         }
         Returns: Json
       }
       seed_cocktails_for_establishments: {
         Args: {
           p_establishment_ids: string[]
-          p_min_per?: number
           p_max_per?: number
+          p_min_per?: number
           p_seed_run_id?: string
         }
         Returns: string[]
       }
       seed_establishments: {
         Args: {
-          p_owner_ids: string[]
           p_count?: number
+          p_owner_ids: string[]
           p_seed_run_id?: string
         }
         Returns: string[]
       }
       seed_event_discount_codes: {
         Args: {
-          p_event_ids: string[]
           p_codes_per_event?: number
+          p_event_ids: string[]
           p_seed_run_id?: string
         }
         Returns: number
@@ -8927,36 +8927,36 @@ export type Database = {
       seed_event_ticket_types: {
         Args: {
           p_event_ids: string[]
-          p_min_per?: number
           p_max_per?: number
+          p_min_per?: number
           p_seed_run_id?: string
         }
         Returns: string[]
       }
       seed_events: {
         Args: {
-          p_promoter_id: string
-          p_establishment_ids?: string[]
           p_count?: number
+          p_establishment_ids?: string[]
+          p_promoter_id: string
           p_seed_run_id?: string
         }
         Returns: string[]
       }
       seed_reviews: {
         Args: {
-          p_user_ids: string[]
           p_cocktail_ids: string[]
-          p_total?: number
           p_seed_run_id?: string
+          p_total?: number
+          p_user_ids: string[]
         }
         Returns: number
       }
       seed_rewards_activity: {
         Args: {
-          p_user_ids: string[]
           p_establishment_ids?: string[]
           p_events_per_user?: number
           p_seed_run_id?: string
+          p_user_ids: string[]
         }
         Returns: Json
       }
@@ -8971,45 +8971,45 @@ export type Database = {
       test_reward_system_performance: {
         Args: { test_size?: number }
         Returns: {
-          test_name: string
           duration_ms: number
           rows_processed: number
           status: string
+          test_name: string
         }[]
       }
       track_analytics_event: {
         Args: {
-          p_user_id: string
-          p_event_type: string
           p_event_data?: Json
+          p_event_type: string
+          p_ip_address?: string
           p_page_url?: string
           p_user_agent?: string
-          p_ip_address?: string
+          p_user_id: string
         }
         Returns: string
       }
       track_follower_journey_event: {
         Args: {
-          p_follower_id: string
-          p_event_type: string
           p_event_data?: Json
-          p_source_page?: string
-          p_referrer_url?: string
-          p_user_agent?: string
+          p_event_type: string
+          p_follower_id: string
           p_ip_address?: unknown
+          p_referrer_url?: string
+          p_source_page?: string
+          p_user_agent?: string
         }
         Returns: string
       }
       update_user_points: {
-        Args: { p_user_id: string; p_points: number }
+        Args: { p_points: number; p_user_id: string }
         Returns: undefined
       }
       validate_promotion: {
         Args: {
-          p_promotion_id: string
-          p_user_id: string
-          p_purchase_amount?: number
           p_current_time?: string
+          p_promotion_id: string
+          p_purchase_amount?: number
+          p_user_id: string
         }
         Returns: Json
       }
