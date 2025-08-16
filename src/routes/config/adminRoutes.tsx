@@ -23,14 +23,7 @@ const AdminDashboard = lazy(() => import('@/pages/admin/AdminDashboard'));
 const RewardSystemMonitorPage = lazy(() => import('@/pages/admin/RewardSystemMonitorPage'));
 const RewardsAdminPage = lazy(() => import('@/pages/admin/RewardsAdminPage'));
 const AdminUsersPage = lazy(() => import('@/pages/admin/AdminUsersPage'));
-const AdminUserProfile = lazy(() => import('@/pages/admin/AdminUserProfile'));
-const AdminEstablishmentProfile = lazy(() => import('@/pages/admin/AdminEstablishmentProfile'));
-const SystemAnalyticsPage = lazy(() => import('@/pages/admin/SystemAnalyticsPage'));
-const ContentModerationPage = lazy(() => import('@/pages/admin/ContentModerationPage'));
-const ThemeCustomizationPage = lazy(() => import('@/pages/admin/ThemeCustomizationPage'));
-const TestingInterfacePage = lazy(() => import('@/pages/admin/TestingInterfacePage'));
-const AdminLogsPage = lazy(() => import('@/pages/admin/AdminLogsPage'));
-const SimplifiedAdminUsersPage = lazy(() => import('@/pages/admin/SimplifiedAdminUsersPage'));
+
 
 
 // Simplified admin routes - removed duplicate simplified routes
@@ -58,27 +51,18 @@ export const adminRoutes: RouteObject[] = [
       { index: true, element: <AdminSystemOverviewPage /> },
       { path: 'dashboard', element: <AdminDashboard /> },
       { path: 'system-breakdown', element: <AdminSystemOverviewPage /> },
-      { path: 'analytics', element: <SystemAnalyticsPage /> },
       { path: 'system-configuration', element: <SystemConfigurationPage /> },
       
       // User Management
-      { path: 'users', element: <SimplifiedAdminUsersPage /> },
-      { path: 'users/:id', element: <AdminUserProfile /> },
+      { path: 'users', element: <AdminUsersPage /> },
       
       // Content Management
       { path: 'establishments', element: <AdminEstablishmentsPage /> },
-      { path: 'establishments/:id', element: <AdminEstablishmentProfile /> },
       { path: 'photo-moderation', element: <PhotoModerationPage /> },
-      { path: 'content-moderation', element: <ContentModerationPage /> },
       
       // System Tools
       { path: 'component-catalog', element: <AdminToolsPage /> },
-      { path: 'theme-customization', element: <ThemeCustomizationPage /> },
-      { path: 'testing', element: <TestingInterfacePage /> },
       { path: 'testing-dashboard', element: <TestingDashboard /> },
-      
-      // Logs & Alerts
-      { path: 'logs', element: <AdminLogsPage /> },
       
       // Communication
       { path: 'notifications', element: <AdminNotificationsPage /> },

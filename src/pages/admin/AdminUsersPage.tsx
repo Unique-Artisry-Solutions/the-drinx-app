@@ -14,19 +14,14 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, UserPlus, Search, Filter } from 'lucide-react';
-
-// Mock user data - in a real app this would come from a database
-const mockUsers = [
-  { id: '1', name: 'John Doe', email: 'john@example.com', role: 'individual', status: 'active', joinDate: '2024-01-15' },
-  { id: '2', name: 'Jane Smith', email: 'jane@example.com', role: 'admin', status: 'active', joinDate: '2024-01-10' },
-  { id: '3', name: 'Alice Johnson', email: 'alice@example.com', role: 'establishment', status: 'active', joinDate: '2024-01-20' },
-  { id: '4', name: 'Bob Wilson', email: 'bob@example.com', role: 'promoter', status: 'pending', joinDate: '2024-01-25' },
-  { id: '5', name: 'Carol Brown', email: 'carol@example.com', role: 'individual', status: 'suspended', joinDate: '2024-01-12' },
-];
+import { useUsers } from '@/hooks/admin/useUsers';
+import { impersonateUser } from '@/utils/impersonation';
+import { toast } from 'sonner';
 
 const AdminUsersPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
+  const { users, isLoading, error, stats, refetch, deleteUser } = useUsers();
   
   const pageConfig = {
     title: 'User Management',
@@ -37,33 +32,32 @@ const AdminUsersPage: React.FC = () => {
 
   const pageActions = [
     {
-      label: 'Add User',
-      icon: UserPlus,
-      variant: 'default' as const,
-      onClick: () => console.log('Add user')
+      label: 'Refresh',
+      icon: Search,
+      variant: 'outline' as const,
+      onClick: refetch
     },
     {
       label: 'Export Users',
       icon: Filter,
       variant: 'outline' as const,
-      onClick: () => console.log('Export users')
+      onClick: () => toast.info('Export functionality coming soon')
     }
   ];
   
-  const filteredUsers = mockUsers.filter(user => {
-    const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesRole = roleFilter === 'all' || user.role === roleFilter;
+  const filteredUsers = users.filter(user => {
+    const matchesSearch = (user.display_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (user.username || '').toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesRole = roleFilter === 'all' || user.user_type === roleFilter;
     return matchesSearch && matchesRole;
   });
 
-  const getStatusBadge = (status: string) => {
-    const variants = {
-      active: 'default',
-      pending: 'secondary',
-      suspended: 'destructive'
-    } as const;
-    return <Badge variant={variants[status as keyof typeof variants] || 'default'}>{status}</Badge>;
+  const getStatusBadge = (user: any) => {
+    if (user.display_name || user.username) {
+      return <Badge variant="default">Active</Badge>;
+    } else {
+      return <Badge variant="secondary">Incomplete</Badge>;
+    }
   };
 
   const getRoleBadge = (role: string) => {
@@ -81,11 +75,26 @@ const AdminUsersPage: React.FC = () => {
   };
 
   const userStats = [
-    { title: 'Total Users', value: mockUsers.length, icon: Users },
-    { title: 'Active Users', value: mockUsers.filter(u => u.status === 'active').length, icon: Users },
-    { title: 'Pending Approval', value: mockUsers.filter(u => u.status === 'pending').length, icon: Users },
-    { title: 'Suspended', value: mockUsers.filter(u => u.status === 'suspended').length, icon: Users }
+    { title: 'Total Users', value: stats.total, icon: Users },
+    { title: 'Active Users', value: stats.active, icon: Users },
+    { title: 'Pending Approval', value: stats.pending, icon: Users },
+    { title: 'Admins', value: stats.byRole.admin || 0, icon: Users }
   ];
+
+  if (error) {
+    return (
+      <AdminPageLayout config={pageConfig} actions={pageActions}>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <p className="text-destructive mb-4">{error}</p>
+            <Button onClick={refetch} variant="outline">
+              Try Again
+            </Button>
+          </div>
+        </div>
+      </AdminPageLayout>
+    );
+  }
 
   return (
     <AdminPageLayout config={pageConfig} actions={pageActions}>
@@ -110,7 +119,7 @@ const AdminUsersPage: React.FC = () => {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search users by name or email..."
+              placeholder="Search users by name or username..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -132,42 +141,63 @@ const AdminUsersPage: React.FC = () => {
         {/* Users Table */}
         <Card>
           <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>User</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Join Date</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredUsers.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">{user.name}</div>
-                        <div className="text-sm text-muted-foreground">{user.email}</div>
-                      </div>
-                    </TableCell>
-                    <TableCell>{getRoleBadge(user.role)}</TableCell>
-                    <TableCell>{getStatusBadge(user.status)}</TableCell>
-                    <TableCell>{new Date(user.joinDate).toLocaleDateString()}</TableCell>
-                    <TableCell>
-                      <div className="flex space-x-2">
-                        <Button variant="outline" size="sm" asChild>
-                          <Link to={`/admin/users/${user.id}`}>View</Link>
-                        </Button>
-                        <Button variant="outline" size="sm">
-                          Edit
-                        </Button>
-                      </div>
-                    </TableCell>
+            {isLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="text-muted-foreground">Loading users...</div>
+              </div>
+            ) : filteredUsers.length === 0 ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="text-muted-foreground">No users found</div>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>User</TableHead>
+                    <TableHead>Role</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Join Date</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {filteredUsers.map((user) => (
+                    <TableRow key={user.id}>
+                      <TableCell>
+                        <div>
+                          <div className="font-medium">{user.display_name || user.username || 'No name'}</div>
+                          <div className="text-sm text-muted-foreground">ID: {user.id.slice(0, 8)}...</div>
+                        </div>
+                      </TableCell>
+                      <TableCell>{getRoleBadge(user.user_type || 'individual')}</TableCell>
+                      <TableCell>{getStatusBadge(user)}</TableCell>
+                      <TableCell>{new Date(user.created_at).toLocaleDateString()}</TableCell>
+                      <TableCell>
+                        <div className="flex space-x-2">
+                          <Button variant="outline" size="sm" asChild>
+                            <Link to={`/admin/users/${user.id}`}>View</Link>
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={async () => {
+                              const res = await impersonateUser(user.id);
+                              if (!res.ok) {
+                                toast.error(res.error || 'Impersonation failed');
+                              } else {
+                                toast.success('Impersonation link generated. Redirecting...');
+                              }
+                            }}
+                          >
+                            Impersonate
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
       </div>
