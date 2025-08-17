@@ -117,6 +117,43 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsEmailVerified(false);
         sessionPersistenceService.clearSession();
         
+        // **RECOVERY MECHANISM**: Check for interrupted magic link processing
+        const interruptedProcessing = localStorage.getItem('magic_link_processing') === 'true';
+        const processingTimestamp = localStorage.getItem('magic_link_processing_timestamp');
+        const impersonationBackup = localStorage.getItem('impersonation_backup');
+        
+        if (interruptedProcessing && processingTimestamp && impersonationBackup) {
+          const age = Date.now() - parseInt(processingTimestamp);
+          if (age < 60000) { // Less than 1 minute old
+            console.log('🔄 AuthProvider - Detecting interrupted magic link processing, attempting recovery');
+            
+            try {
+              const backup = JSON.parse(impersonationBackup);
+              
+              // Restore impersonation flags if they're missing
+              const hasFlags = !!(
+                sessionStorage.getItem('impersonation_active') ||
+                sessionStorage.getItem('impersonation_magic_link') ||
+                localStorage.getItem('impersonation_active_backup')
+              );
+              
+              if (!hasFlags && backup.email) {
+                console.log('🔄 AuthProvider - Restoring impersonation flags after interruption');
+                sessionStorage.setItem('impersonation_active', 'true');
+                sessionStorage.setItem('impersonation_magic_link', 'true');
+                localStorage.setItem('impersonation_active_backup', 'true');
+                sessionStorage.setItem('impersonation_target_email', backup.email);
+              }
+            } catch (error) {
+              console.warn('❌ Failed to parse impersonation backup during recovery:', error);
+            }
+          } else {
+            console.log('🧹 AuthProvider - Clearing stale interrupted processing flags');
+            localStorage.removeItem('magic_link_processing');
+            localStorage.removeItem('magic_link_processing_timestamp');
+          }
+        }
+        
         // Check if we're processing a magic link (skip dev auto-login in that case)
         const urlHash = window.location.hash;
         const urlSearch = window.location.search;
@@ -167,8 +204,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                   backupEmail: parsedBackup?.email
                 });
                 
-                // **CRITICAL FIX**: Set magic link processing flag to prevent premature validation
-                sessionStorage.setItem('magic_link_processing', 'true');
+                // **CRITICAL FIX**: Set persistent magic link processing flag to survive refreshes
+                localStorage.setItem('magic_link_processing', 'true');
+                localStorage.setItem('magic_link_processing_timestamp', Date.now().toString());
                 
                 // **CRITICAL FIX**: If we have backup but no flags, set them BEFORE authentication
                 if (parsedBackup && !hasExistingImpersonationFlags) {
@@ -197,62 +235,61 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 if (sessionData.session?.user) {
                   console.log('✅ AuthProvider - Manual magic link processing successful');
                   
-                  // **CRITICAL FIX**: Clear processing flag before validation
-                  sessionStorage.removeItem('magic_link_processing');
+                  // **CRITICAL FIX**: Immediate synchronous state updates to prevent race conditions
+                  console.log('🔄 AuthProvider - Applying immediate auth state updates');
                   
-                  // Use setTimeout to defer state updates and prevent DOM conflicts
-                  setTimeout(() => {
-                    console.log('🔄 AuthProvider - Applying deferred auth state updates');
+                  // Set auth state immediately to prevent refresh issues
+                  setSession(sessionData.session);
+                  setUser(sessionData.session.user);
+                  setUserType(inferUserType(sessionData.session.user));
+                  setIsEmailVerified(sessionData.session.user.email_confirmed_at !== null);
+                  sessionPersistenceService.updateSession(sessionData.session, sessionData.session.user);
+                  
+                  // **CRITICAL FIX**: Enhanced impersonation validation after manual auth
+                  if (parsedBackup) {
+                    console.log('🎭 AuthProvider - Validating impersonation state after manual auth');
                     
-                    // Set auth state with deferred updates to prevent race conditions
-                    setSession(sessionData.session);
-                    setUser(sessionData.session.user);
-                    setUserType(inferUserType(sessionData.session.user));
-                    setIsEmailVerified(sessionData.session.user.email_confirmed_at !== null);
-                    sessionPersistenceService.updateSession(sessionData.session, sessionData.session.user);
+                    const currentFlags = {
+                      active: sessionStorage.getItem('impersonation_active'),
+                      magicLink: sessionStorage.getItem('impersonation_magic_link'),
+                      backup: localStorage.getItem('impersonation_active_backup'),
+                      targetEmail: sessionStorage.getItem('impersonation_target_email')
+                    };
                     
-                    // **CRITICAL FIX**: Enhanced impersonation validation after manual auth
-                    if (parsedBackup) {
-                      console.log('🎭 AuthProvider - Validating impersonation state after manual auth');
-                      
-                      const currentFlags = {
-                        active: sessionStorage.getItem('impersonation_active'),
-                        magicLink: sessionStorage.getItem('impersonation_magic_link'),
-                        backup: localStorage.getItem('impersonation_active_backup'),
-                        targetEmail: sessionStorage.getItem('impersonation_target_email')
-                      };
-                      
-                      console.log('🔍 AuthProvider - Current impersonation flags:', currentFlags);
-                      
-                      // **SESSION VALIDATION**: Check if authenticated user matches expected target
-                      const expectedTargetFromBackup = currentFlags.targetEmail || parsedBackup.email;
-                      const actualUserEmail = sessionData.session.user.email;
-                      const actualUserId = sessionData.session.user.id;
-                      
-                      console.log('🎯 AuthProvider - Session validation:', {
-                        expectedEmail: expectedTargetFromBackup,
-                        actualEmail: actualUserEmail,
-                        actualUserId,
-                        backupUserId: parsedBackup.user_id,
-                        isValidImpersonation: actualUserId !== parsedBackup.user_id
-                      });
-                      
-                      // Validate impersonation using enhanced validation with processing context
-                      const validation = validateImpersonationState(actualUserId, actualUserEmail || '', true);
-                      
-                      console.log('🔍 AuthProvider - Manual auth validation result:', validation);
-                      
-                      if (validation.shouldClear) {
-                        console.log('🧹 AuthProvider - Clearing impersonation state after manual auth:', validation.reason);
-                        clearImpersonationFlags();
-                      } else if (validation.shouldPersist && validation.isValid) {
-                        console.log('✅ AuthProvider - Maintaining impersonation state after manual auth:', validation.reason);
-                        ensureImpersonationFlags(actualUserEmail || expectedTargetFromBackup || '');
-                      }
+                    console.log('🔍 AuthProvider - Current impersonation flags:', currentFlags);
+                    
+                    // **SESSION VALIDATION**: Check if authenticated user matches expected target
+                    const expectedTargetFromBackup = currentFlags.targetEmail || parsedBackup.email;
+                    const actualUserEmail = sessionData.session.user.email;
+                    const actualUserId = sessionData.session.user.id;
+                    
+                    console.log('🎯 AuthProvider - Session validation:', {
+                      expectedEmail: expectedTargetFromBackup,
+                      actualEmail: actualUserEmail,
+                      actualUserId,
+                      backupUserId: parsedBackup.user_id,
+                      isValidImpersonation: actualUserId !== parsedBackup.user_id
+                    });
+                    
+                    // Validate impersonation using enhanced validation with processing context
+                    const validation = validateImpersonationState(actualUserId, actualUserEmail || '', true);
+                    
+                    console.log('🔍 AuthProvider - Manual auth validation result:', validation);
+                    
+                    if (validation.shouldClear) {
+                      console.log('🧹 AuthProvider - Clearing impersonation state after manual auth:', validation.reason);
+                      clearImpersonationFlags();
+                    } else if (validation.shouldPersist && validation.isValid) {
+                      console.log('✅ AuthProvider - Maintaining impersonation state after manual auth:', validation.reason);
+                      ensureImpersonationFlags(actualUserEmail || expectedTargetFromBackup || '');
                     }
-                    
-                    console.log('🔐 AuthProvider - Deferred manual auth processing complete');
-                  }, 0);
+                  }
+                  
+                  // **CRITICAL FIX**: Clear processing flags after successful processing
+                  localStorage.removeItem('magic_link_processing');
+                  localStorage.removeItem('magic_link_processing_timestamp');
+                  
+                  console.log('🔐 AuthProvider - Immediate manual auth processing complete');
                   
                   // Clean up URL tokens immediately (safe DOM operation)
                   cleanTokensFromUrl();
@@ -267,8 +304,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               console.error('🔑 AuthProvider - Manual token processing failed:', tokenError);
               setAuthError(new Error(`Manual token processing failed: ${tokenError.message}`));
               
-              // **CRITICAL FIX**: Clear processing flag on error
-              sessionStorage.removeItem('magic_link_processing');
+              // **CRITICAL FIX**: Clear processing flags on error
+              localStorage.removeItem('magic_link_processing');
+              localStorage.removeItem('magic_link_processing_timestamp');
               
               // Clean up URL on error
               cleanTokensFromUrl();
@@ -338,8 +376,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (event === 'SIGNED_IN' && newSession?.user) {
         console.log('🔐 AuthProvider - User signed in successfully');
         
-        // **CRITICAL FIX**: Check if we're in magic link processing mode
-        const isMagicLinkProcessing = sessionStorage.getItem('magic_link_processing') === 'true';
+        // **CRITICAL FIX**: Check if we're in magic link processing mode (using persistent storage)
+        const isMagicLinkProcessing = localStorage.getItem('magic_link_processing') === 'true';
+        const processingTimestamp = localStorage.getItem('magic_link_processing_timestamp');
+        
+        // **RECOVERY MECHANISM**: Clear stale processing flags (older than 30 seconds)
+        if (isMagicLinkProcessing && processingTimestamp) {
+          const age = Date.now() - parseInt(processingTimestamp);
+          if (age > 30000) { // 30 seconds
+            console.log('🧹 AuthProvider - Clearing stale magic link processing flags');
+            localStorage.removeItem('magic_link_processing');
+            localStorage.removeItem('magic_link_processing_timestamp');
+          }
+        }
         
         console.log('🎭 AuthProvider - Auth state change context:', {
           event,
