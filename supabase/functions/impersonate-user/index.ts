@@ -34,11 +34,11 @@ Deno.serve(async (req) => {
     console.log(`Impersonation request for user: ${target_user_id}`)
 
     // Get current request origin to determine the correct redirect URL
-    // CRITICAL: Ensure consistent domain to prevent cross-domain token loss
+    // CRITICAL: Use EXACT same domain as request origin to prevent cross-domain token loss
     const origin = req.headers.get('origin') || req.headers.get('referer')
     const userAgent = req.headers.get('user-agent') || ''
     
-    // CRITICAL: Always use lovable.app domain for magic links to prevent cross-domain issues
+    // Default fallback (should rarely be used)
     let redirectTo = 'https://id-preview--f6fbe853-0047-490f-9d7f-c7bab9534659.lovable.app'
     
     console.log(`🔍 Impersonation domain detection:`, {
@@ -57,21 +57,20 @@ Deno.serve(async (req) => {
           isLovableProject: url.hostname.includes('lovableproject.com')
         })
         
-        // CRITICAL: Always use lovable.app for consistent domain behavior
-        if (url.hostname.includes('lovable.app')) {
+        // CRITICAL: Use the EXACT same domain format as the request origin
+        // This prevents cross-domain redirects that cause token loss
+        if (url.hostname.includes('lovable.app') || url.hostname.includes('lovableproject.com')) {
           redirectTo = url.origin
-          console.log(`✅ Using lovable.app domain for impersonation: ${redirectTo}`)
+          console.log(`✅ Using exact origin domain for impersonation: ${redirectTo}`)
         } else {
-          // For any other domain (including lovableproject.com), force lovable.app
-          console.log(`🔄 Forcing lovable.app redirect from ${url.hostname} to prevent cross-domain token loss`)
-          // redirectTo already set to lovable.app default
+          console.log(`⚠️  Unknown domain ${url.hostname}, using fallback: ${redirectTo}`)
         }
       } catch (e) {
         console.error(`❌ Failed to parse origin: ${e}`)
-        console.log(`Using default lovable.app redirect: ${redirectTo}`)
+        console.log(`Using fallback redirect: ${redirectTo}`)
       }
     } else {
-      console.log(`⚠️  No origin header found, using default lovable.app redirect: ${redirectTo}`)
+      console.log(`⚠️  No origin header found, using fallback redirect: ${redirectTo}`)
     }
 
     // Verify the target user exists
