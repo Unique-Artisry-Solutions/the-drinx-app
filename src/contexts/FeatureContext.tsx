@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import { useAuth } from './auth';
+import { useAuth } from './auth/AuthProvider';
 import { FeatureId, FEATURES, getFeature } from '@/lib/features/registry';
 import { checkFeatureAccess, trackFeatureEvent } from '@/lib/features/api';
 import { useToast } from '@/hooks/use-toast';
