@@ -50,16 +50,24 @@ serve(async (req) => {
   const origin = req.headers.get('origin');
   const config = getSecurityConfig();
   const cors = getCorsHeaders(origin, config);
+  
+  console.log(`[Notifications] Request: ${req.method} from origin: ${origin}`);
+  
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
+    console.log(`[Notifications] CORS preflight handled for origin: ${origin}`);
     return new Response(null, { 
       status: 204, 
       headers: cors 
     });
   }
+  
   if (!isOriginAllowed(origin, config)) {
+    console.error(`[Notifications] Origin not allowed: ${origin}`);
     return createErrorResponse('Origin not allowed', 403, cors);
   }
+  
+  console.log(`[Notifications] Origin allowed: ${origin}`);
 
   try {
     // Persistent rate limiting
@@ -165,9 +173,9 @@ serve(async (req) => {
 
       case 'getEstablishmentNotifications':
         if (!params?.establishmentId) {
-          return createErrorResponse('Establishment ID is required');
+          return createErrorResponse('Establishment ID is required', 400, cors);
         }
-        return await handleGetEstablishmentNotifications(params);
+        return await handleGetEstablishmentNotifications(params, cors);
 
       case 'updateEstablishmentPreferences':
         const pEstPref = PreferencesSchema.parse(params ?? {});
@@ -177,7 +185,7 @@ serve(async (req) => {
         return await handleUpdateEstablishmentPreferences(pEstPref, cors);
 
       default:
-        return createErrorResponse('Invalid action');
+        return createErrorResponse('Invalid action', 400, cors);
     }
   } catch (error) {
     console.error('Unexpected error:', error);
@@ -230,7 +238,7 @@ async function handleMarkAllAsRead(params: any, cors: Record<string, string>) {
       }
     );
   } catch (error) {
-    return createErrorResponse(`Error marking notifications as read: ${error.message}`);
+    return createErrorResponse(`Error marking notifications as read: ${error.message}`, 500, cors);
   }
 }
 
@@ -256,13 +264,13 @@ async function handleUpdateNotification(params: any, cors: Record<string, string
       }
     );
   } catch (error) {
-    return createErrorResponse(`Error updating notification: ${error.message}`);
+    return createErrorResponse(`Error updating notification: ${error.message}`, 500, cors);
   }
 }
 
 async function handleGetNotifications(params: any, cors: Record<string, string>) {
   if (!params.userId) {
-    return createErrorResponse('User ID is required to fetch notifications');
+    return createErrorResponse('User ID is required to fetch notifications', 400, cors);
   }
 
   const supabaseClient = createClient(
@@ -295,7 +303,7 @@ async function handleGetNotifications(params: any, cors: Record<string, string>)
       }
     );
   } catch (error) {
-    return createErrorResponse(`Error fetching notifications: ${error.message}`);
+    return createErrorResponse(`Error fetching notifications: ${error.message}`, 500, cors);
   }
 }
 
@@ -400,7 +408,66 @@ async function handleGetEstablishmentNotifications(params: any, cors: Record<str
       }
     );
   } catch (error) {
-    return createErrorResponse(`Error fetching establishment notifications: ${error.message}`);
+    return createErrorResponse(`Error fetching establishment notifications: ${error.message}`, 500, cors);
+  }
+}
+
+async function handleGetPromoterNotifications(params: any, cors: Record<string, string>) {
+  try {
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
+    const { data, error } = await supabaseClient
+      .from('notifications')
+      .select(`
+        *,
+        notification_categories(name, description)
+      `)
+      .eq('recipient_id', params.promoterId)
+      .eq('recipient_type', 'promoter')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    return new Response(
+      JSON.stringify({ data }),
+      {
+        headers: { ...cors, 'Content-Type': 'application/json' },
+      }
+    );
+  } catch (error) {
+    return createErrorResponse(`Error fetching promoter notifications: ${error.message}`, 500, cors);
+  }
+}
+
+async function handleUpdatePromoterPreferences(params: any, cors: Record<string, string>) {
+  try {
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
+    const { data, error } = await supabaseClient
+      .from('promoter_notification_preferences')
+      .upsert(params.preferences)
+      .select();
+
+    if (error) throw error;
+
+    return new Response(
+      JSON.stringify({ 
+        success: true, 
+        data,
+        message: 'Promoter preferences updated successfully' 
+      }),
+      {
+        headers: { ...cors, 'Content-Type': 'application/json' },
+      }
+    );
+  } catch (error) {
+    return createErrorResponse(`Error updating promoter preferences: ${error.message}`, 500, cors);
   }
 }
 
@@ -429,6 +496,6 @@ async function handleUpdateEstablishmentPreferences(params: any, cors: Record<st
       }
     );
   } catch (error) {
-    return createErrorResponse(`Error updating establishment preferences: ${error.message}`);
+    return createErrorResponse(`Error updating establishment preferences: ${error.message}`, 500, cors);
   }
 }

@@ -30,12 +30,14 @@ export function getSecurityConfig(environment: string = 'production'): SecurityC
     allowedOrigins: isProduction 
       ? [
           'https://*.lovableproject.com',
+          'https://f6fbe853-0047-490f-9d7f-c7bab9534659.lovableproject.com',
           'https://dvifibvzwunnpcsihpxq.lovableproject.com',
           'https://localhost:3000',
           'https://127.0.0.1:3000'
         ]
       : [
           'https://*.lovableproject.com',
+          'https://f6fbe853-0047-490f-9d7f-c7bab9534659.lovableproject.com',
           'http://localhost:3000',
           'http://127.0.0.1:3000',
           'https://localhost:3000'
@@ -67,18 +69,35 @@ export function isOriginAllowed(origin: string | null, config: SecurityConfig): 
   try {
     const url = new URL(origin);
     const hostname = url.hostname;
-    return config.allowedOrigins.some((allowed) => {
+    
+    console.log(`[CORS Debug] Checking origin: ${origin}, hostname: ${hostname}`);
+    
+    const isAllowed = config.allowedOrigins.some((allowed) => {
+      console.log(`[CORS Debug] Testing against allowed origin: ${allowed}`);
+      
       if (allowed.includes('localhost') || allowed.includes('127.0.0.1')) {
         // Allow any scheme for localhost variants
-        return origin.includes('localhost') || origin.includes('127.0.0.1');
+        const match = origin.includes('localhost') || origin.includes('127.0.0.1');
+        console.log(`[CORS Debug] Localhost check: ${match}`);
+        return match;
       }
+      
       if (allowed.startsWith('https://*.')) {
         const allowedDomain = allowed.replace('https://*.', '');
-        return hostname === allowedDomain || hostname.endsWith('.' + allowedDomain);
+        const match = hostname === allowedDomain || hostname.endsWith('.' + allowedDomain);
+        console.log(`[CORS Debug] Wildcard check for ${allowedDomain}: hostname=${hostname}, match=${match}`);
+        return match;
       }
-      return allowed === origin;
+      
+      const exactMatch = allowed === origin;
+      console.log(`[CORS Debug] Exact match check: ${exactMatch}`);
+      return exactMatch;
     });
-  } catch {
+    
+    console.log(`[CORS Debug] Final result for ${origin}: ${isAllowed}`);
+    return isAllowed;
+  } catch (error) {
+    console.error(`[CORS Debug] Error parsing origin ${origin}:`, error);
     return false;
   }
 }
