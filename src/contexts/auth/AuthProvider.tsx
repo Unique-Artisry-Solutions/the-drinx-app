@@ -11,6 +11,42 @@ import { DevAutoLoginService } from '@/services/DevAutoLoginService';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Utility function to extract tokens from URL hash
+const extractTokensFromUrl = (): { access_token?: string; refresh_token?: string } | null => {
+  try {
+    const hash = window.location.hash;
+    const params = new URLSearchParams(hash.substring(1));
+    
+    const accessToken = params.get('access_token');
+    const refreshToken = params.get('refresh_token');
+    
+    if (accessToken) {
+      console.log('🔑 Token extraction - Found tokens in URL hash');
+      return {
+        access_token: accessToken,
+        refresh_token: refreshToken || undefined
+      };
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('🔑 Token extraction failed:', error);
+    return null;
+  }
+};
+
+// Utility function to clean tokens from URL
+const cleanTokensFromUrl = () => {
+  try {
+    if (window.location.hash.includes('access_token=')) {
+      const newUrl = window.location.pathname + window.location.search;
+      window.history.replaceState({}, document.title, newUrl);
+      console.log('🔑 URL cleaned - Tokens removed from hash');
+    }
+  } catch (error) {
+    console.error('🔑 URL cleanup failed:', error);
+  }
+};
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
@@ -95,7 +131,85 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
         
         if (hasMagicLinkTokens || isMagicLinkProcessing || expectingMagicLink) {
-          console.log('🔐 AuthProvider - Magic link tokens detected or processing, skipping dev auto-login');
+          console.log('🔐 AuthProvider - Magic link tokens detected or processing, checking for manual processing');
+          
+          // Try manual token processing if tokens are present but no session exists
+          if (hasMagicLinkTokens && !currentSession) {
+            console.log('🔑 AuthProvider - Attempting manual magic link token processing');
+            
+            try {
+              const tokens = extractTokensFromUrl();
+              
+              if (tokens?.access_token) {
+                console.log('🔑 AuthProvider - Extracted tokens, setting session manually');
+                
+                // Check if we have impersonation flags before processing
+                const impersonationBackup = localStorage.getItem('impersonation_backup');
+                const hasImpersonationFlags = !!(
+                  sessionStorage.getItem('impersonation_magic_link') ||
+                  sessionStorage.getItem('impersonation_active') ||
+                  localStorage.getItem('impersonation_active_backup')
+                );
+                
+                console.log('🎭 AuthProvider - Pre-authentication impersonation check:', {
+                  hasBackup: !!impersonationBackup,
+                  hasFlags: hasImpersonationFlags
+                });
+                
+                // Set session using manual tokens
+                const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
+                  access_token: tokens.access_token,
+                  refresh_token: tokens.refresh_token || ''
+                });
+                
+                if (sessionError) {
+                  console.error('🔑 AuthProvider - Manual session setting failed:', sessionError);
+                  throw sessionError;
+                }
+                
+                if (sessionData.session?.user) {
+                  console.log('✅ AuthProvider - Manual magic link processing successful');
+                  
+                  // Set auth state immediately
+                  setSession(sessionData.session);
+                  setUser(sessionData.session.user);
+                  setUserType(inferUserType(sessionData.session.user));
+                  setIsEmailVerified(sessionData.session.user.email_confirmed_at !== null);
+                  sessionPersistenceService.updateSession(sessionData.session, sessionData.session.user);
+                  
+                  // Handle impersonation flags if present
+                  if (impersonationBackup && hasImpersonationFlags) {
+                    console.log('🎭 AuthProvider - Setting impersonation state after manual auth');
+                    
+                    // Ensure all impersonation flags are set
+                    sessionStorage.setItem('impersonation_active', 'true');
+                    sessionStorage.setItem('impersonation_magic_link', 'true');
+                    localStorage.setItem('impersonation_active_backup', 'true');
+                    sessionStorage.setItem('impersonation_target_email', sessionData.session.user.email || '');
+                    
+                    console.log('✅ AuthProvider - Impersonation state configured after manual auth');
+                  }
+                  
+                  // Clean up URL tokens
+                  cleanTokensFromUrl();
+                  
+                  console.log('🔐 AuthProvider - Manual auth processing complete');
+                } else {
+                  console.warn('🔑 AuthProvider - Manual session setting returned no user');
+                }
+              } else {
+                console.warn('🔑 AuthProvider - No valid tokens found for manual processing');
+              }
+            } catch (tokenError: any) {
+              console.error('🔑 AuthProvider - Manual token processing failed:', tokenError);
+              setAuthError(new Error(`Manual token processing failed: ${tokenError.message}`));
+              
+              // Clean up URL on error
+              cleanTokensFromUrl();
+            }
+          } else {
+            console.log('🔐 AuthProvider - Magic link detected but skipping processing (session exists or no tokens)');
+          }
         } else if (DevAutoLoginService.isDevelopmentMode()) {
           console.log('🔐 AuthProvider - Development mode detected, initializing auto-login');
           
