@@ -145,9 +145,9 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         hasActionLink: true,
-        actionLink: actionLink,
-        redirectTo: redirectTo,
-        targetEmail: targetUser.user.email,
+        action_link: actionLink,
+        redirect_to: redirectTo,
+        target_email: targetUser.user.email,
         linkDomain: linkDomain
       }),
       { 
