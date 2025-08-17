@@ -1,123 +1,102 @@
-import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
 
-serve(async (req: Request) => {
+interface RequestBody {
+  target_user_id: string;
+}
+
+Deno.serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const url = new URL(req.url);
-    const origin = req.headers.get('origin') || `${url.protocol}//${url.host}`;
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    )
 
-    const supabaseUrl = Deno.env.get('SUPABASE_URL');
-    const anonKey = Deno.env.get('SUPABASE_ANON_KEY');
-    const serviceRoleKey = Deno.env.get('SERVICE_ROLE_KEY');
-
-    if (!supabaseUrl || !anonKey) {
-      return new Response(JSON.stringify({ error: 'Missing Supabase URL or anon key' }), {
-        status: 500,
-        headers: { 'content-type': 'application/json', ...corsHeaders },
-      });
-    }
-    if (!serviceRoleKey) {
-      return new Response(JSON.stringify({ error: 'SERVICE_ROLE_KEY is not configured' }), {
-        status: 500,
-        headers: { 'content-type': 'application/json', ...corsHeaders },
-      });
-    }
-
-    const authHeader = req.headers.get('Authorization') ?? '';
-
-    // Client bound to the caller's JWT (to read caller info if needed)
-    const supabase = createClient(supabaseUrl, anonKey, {
-      global: { headers: { Authorization: authHeader } },
-      auth: { autoRefreshToken: false, persistSession: false },
-    });
-
-    // Admin client for privileged actions
-    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
-      auth: { autoRefreshToken: false, persistSession: false },
-    });
-
-    if (req.method !== 'POST') {
-      return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-        status: 405,
-        headers: { 'content-type': 'application/json', ...corsHeaders },
-      });
-    }
-
-    const { target_user_id } = await req.json().catch(() => ({ target_user_id: null }));
+    // Get the request body
+    const { target_user_id }: RequestBody = await req.json()
+    
     if (!target_user_id) {
-      return new Response(JSON.stringify({ error: 'target_user_id is required' }), {
-        status: 400,
-        headers: { 'content-type': 'application/json', ...corsHeaders },
-      });
+      return new Response(
+        JSON.stringify({ error: 'target_user_id is required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
 
-    // Get caller
-    const { data: userData, error: userErr } = await supabase.auth.getUser();
-    if (userErr || !userData?.user) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: { 'content-type': 'application/json', ...corsHeaders },
-      });
+    console.log(`Impersonation request for user: ${target_user_id}`)
+
+    // Get current request origin to determine the correct redirect URL
+    const origin = req.headers.get('origin') || req.headers.get('referer')
+    let redirectTo = 'https://f6fbe853-0047-490f-9d7f-c7bab9534659.lovableproject.com'
+    
+    if (origin) {
+      try {
+        const url = new URL(origin)
+        redirectTo = url.origin
+        console.log(`Using origin-based redirect: ${redirectTo}`)
+      } catch (e) {
+        console.log(`Failed to parse origin, using default: ${redirectTo}`)
+      }
     }
 
-    const callerId = userData.user.id;
-
-    // Verify caller is admin via profiles.user_type
-    const { data: profile, error: profileErr } = await supabase
-      .from('profiles')
-      .select('user_type')
-      .eq('id', callerId)
-      .single();
-
-    if (profileErr || profile?.user_type !== 'admin') {
-      return new Response(JSON.stringify({ error: 'Forbidden: admin only' }), {
-        status: 403,
-        headers: { 'content-type': 'application/json', ...corsHeaders },
-      });
+    // Verify the target user exists
+    const { data: targetUser, error: userError } = await supabaseClient.auth.admin.getUserById(target_user_id)
+    
+    if (userError || !targetUser.user) {
+      console.error('User lookup error:', userError)
+      return new Response(
+        JSON.stringify({ error: 'User not found or inaccessible' }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
 
-    // Fetch target user (to get email)
-    const { data: targetUserRes, error: targetUserErr } = await supabaseAdmin.auth.admin.getUserById(target_user_id);
-    if (targetUserErr || !targetUserRes?.user?.email) {
-      return new Response(JSON.stringify({ error: 'Target user not found or has no email' }), {
-        status: 404,
-        headers: { 'content-type': 'application/json', ...corsHeaders },
-      });
-    }
+    console.log(`Target user found: ${targetUser.user.email}`)
 
-    const redirectTo = `${origin}/`;
-
-    // Generate magic link
-    const { data: linkData, error: linkErr } = await supabaseAdmin.auth.admin.generateLink({
+    // Generate magic link for the target user
+    const { data, error } = await supabaseClient.auth.admin.generateLink({
       type: 'magiclink',
-      email: targetUserRes.user.email,
-      options: { redirectTo },
-    } as any);
+      email: targetUser.user.email!,
+      options: {
+        redirectTo: redirectTo
+      }
+    })
 
-    if (linkErr || !linkData?.properties?.action_link) {
-      return new Response(JSON.stringify({ error: linkErr?.message || 'Failed to generate link' }), {
-        status: 500,
-        headers: { 'content-type': 'application/json', ...corsHeaders },
-      });
+    if (error) {
+      console.error('Magic link generation error:', error)
+      return new Response(
+        JSON.stringify({ error: 'Failed to generate impersonation link' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
+
+    console.log(`Magic link generated successfully for ${targetUser.user.email}`)
+    console.log(`Redirect URL: ${redirectTo}`)
 
     return new Response(
-      JSON.stringify({ action_link: linkData.properties.action_link }),
-      { status: 200, headers: { 'content-type': 'application/json', ...corsHeaders } }
-    );
-  } catch (e) {
-    return new Response(JSON.stringify({ error: String(e) }), {
-      status: 500,
-      headers: { 'content-type': 'application/json', ...corsHeaders },
-    });
+      JSON.stringify({ 
+        action_link: data.properties?.action_link,
+        redirect_to: redirectTo,
+        target_email: targetUser.user.email 
+      }),
+      { 
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      }
+    )
+
+  } catch (error) {
+    console.error('Impersonation error:', error)
+    return new Response(
+      JSON.stringify({ error: 'Internal server error' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
   }
-});
+})
