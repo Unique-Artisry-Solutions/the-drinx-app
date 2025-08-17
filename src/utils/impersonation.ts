@@ -60,7 +60,11 @@ export const restoreImpersonation = async (): Promise<void> => {
       backupTimestamp: backup.created_at
     });
 
-    // Clear ALL impersonation flags and data comprehensively
+    // Set explicit restoration flag BEFORE clearing other flags
+    sessionStorage.setItem('impersonation_restore_requested', 'true');
+    console.log('🎯 Set explicit restoration flag');
+
+    // Clear ALL other impersonation flags and data comprehensively
     clearImpersonationState();
 
     // Call custom edge function to restore admin session
@@ -74,6 +78,8 @@ export const restoreImpersonation = async (): Promise<void> => {
 
     if (error) {
       console.error('❌ Edge function error:', error);
+      // Clear restoration flag on error
+      sessionStorage.removeItem('impersonation_restore_requested');
       throw error;
     }
 
@@ -83,11 +89,15 @@ export const restoreImpersonation = async (): Promise<void> => {
       console.log('🔗 Magic link received, redirecting...');
       window.location.href = data.action_link;
     } else {
+      // Clear restoration flag on error
+      sessionStorage.removeItem('impersonation_restore_requested');
       throw new Error('No magic link received from restore function');
     }
 
   } catch (error) {
     console.error('❌ Failed to restore impersonation:', error);
+    // Ensure restoration flag is cleared on any error
+    sessionStorage.removeItem('impersonation_restore_requested');
     throw error;
   }
 };
@@ -108,10 +118,13 @@ export async function impersonateUser(targetUserId: string): Promise<{ ok: boole
 
   console.log('✅ Admin session backup saved, calling impersonate-user function');
 
-  // Set expectation flag for magic link processing
+  // Set expectation flag and target email for magic link processing
   if (typeof window !== 'undefined') {
     window.sessionStorage.setItem('expecting_magic_link', 'true');
     window.sessionStorage.setItem('impersonation_start_time', Date.now().toString());
+    window.sessionStorage.setItem('impersonation_active', 'true');
+    window.sessionStorage.setItem('impersonation_magic_link', 'true');
+    window.localStorage.setItem('impersonation_active_backup', 'true');
   }
 
   const { data, error } = await supabase.functions.invoke('impersonate-user', {
@@ -120,10 +133,9 @@ export async function impersonateUser(targetUserId: string): Promise<{ ok: boole
 
   if (error) {
     console.error('❌ Impersonation function error:', error);
-    // Clear expectation flag on error
+    // Clear expectation flags on error
     if (typeof window !== 'undefined') {
-      window.sessionStorage.removeItem('expecting_magic_link');
-      window.sessionStorage.removeItem('impersonation_start_time');
+      clearAllImpersonationState();
     }
     return { ok: false, error: error.message };
   }
@@ -140,12 +152,16 @@ export async function impersonateUser(targetUserId: string): Promise<{ ok: boole
 
   if (!link) {
     console.error('❌ No magic link returned from impersonation function');
-    // Clear expectation flag on error
+    // Clear expectation flags on error
     if (typeof window !== 'undefined') {
-      window.sessionStorage.removeItem('expecting_magic_link');
-      window.sessionStorage.removeItem('impersonation_start_time');
+      clearAllImpersonationState();
     }
     return { ok: false, error: 'No magic link returned' };
+  }
+
+  // Store target email for validation
+  if (response?.target_email && typeof window !== 'undefined') {
+    window.sessionStorage.setItem('impersonation_target_email', response.target_email);
   }
 
   console.log('🔗 Redirecting to magic link:', {
@@ -162,6 +178,7 @@ export const clearImpersonationState = (): void => {
   
   try {
     // Clear all session storage flags (including new ones)
+    // NOTE: We do NOT clear 'impersonation_restore_requested' here as it's handled separately
     sessionStorage.removeItem('impersonation_active');
     sessionStorage.removeItem('impersonation_magic_link');
     sessionStorage.removeItem('magiclink_processing');
@@ -183,4 +200,18 @@ export const clearImpersonationState = (): void => {
   } catch (error) {
     console.error('❌ Failed to clear impersonation state:', error);
   }
+};
+
+/**
+ * Clear all impersonation state including restoration flag (for complete cleanup)
+ */
+export const clearAllImpersonationState = (): void => {
+  console.log('🧹 Clearing ALL impersonation state including restoration flag...');
+  
+  clearImpersonationState();
+  
+  // Also clear the restoration flag
+  sessionStorage.removeItem('impersonation_restore_requested');
+  
+  console.log('✅ All impersonation state cleared completely');
 };

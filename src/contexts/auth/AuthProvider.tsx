@@ -8,6 +8,7 @@ import { authCache } from './authCache';
 import { debouncedToast } from '@/utils/debouncedToast';
 import { inferUserType } from '@/utils/auth/admin';
 import { DevAutoLoginService } from '@/services/DevAutoLoginService';
+import { validateImpersonationState, ensureImpersonationFlags, clearImpersonationFlags } from '@/utils/impersonationValidator';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -183,17 +184,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     setIsEmailVerified(sessionData.session.user.email_confirmed_at !== null);
                     sessionPersistenceService.updateSession(sessionData.session, sessionData.session.user);
                     
-                    // Handle impersonation flags if present
+                    // Handle impersonation flags if present (for manual magic link processing)
                     if (impersonationBackup && hasImpersonationFlags) {
                       console.log('🎭 AuthProvider - Setting impersonation state after manual auth');
                       
-                      // Ensure all impersonation flags are set
-                      sessionStorage.setItem('impersonation_active', 'true');
-                      sessionStorage.setItem('impersonation_magic_link', 'true');
-                      localStorage.setItem('impersonation_active_backup', 'true');
-                      sessionStorage.setItem('impersonation_target_email', sessionData.session.user.email || '');
+                      // Use validation utility to determine proper action
+                      const validation = validateImpersonationState(sessionData.session.user.id, sessionData.session.user.email || '');
                       
-                      console.log('✅ AuthProvider - Impersonation state configured after manual auth');
+                      console.log('🔍 AuthProvider - Manual auth validation result:', validation);
+                      
+                      if (validation.shouldClear) {
+                        console.log('🧹 AuthProvider - Clearing impersonation state after manual auth:', validation.reason);
+                        clearImpersonationFlags();
+                      } else if (validation.shouldPersist && validation.isValid) {
+                        console.log('✅ AuthProvider - Maintaining impersonation state after manual auth:', validation.reason);
+                        ensureImpersonationFlags(sessionData.session.user.email || '');
+                      }
                     }
                     
                     console.log('🔐 AuthProvider - Deferred manual auth processing complete');
@@ -280,37 +286,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (event === 'SIGNED_IN' && newSession?.user) {
         console.log('🔐 AuthProvider - User signed in successfully');
         
-        // Enhanced impersonation detection for magic link authentication
-        const impersonationBackup = localStorage.getItem('impersonation_backup');
-        const hasImpersonationFlags = !!(
-          sessionStorage.getItem('impersonation_magic_link') ||
-          sessionStorage.getItem('impersonation_active') ||
-          localStorage.getItem('impersonation_active_backup')
-        );
+        // Validate and handle impersonation state using the validation utility
+        const validation = validateImpersonationState(newSession.user.id, newSession.user.email || '');
         
-        const isMagicLinkImpersonation = !!(impersonationBackup && hasImpersonationFlags);
+        console.log('🔍 AuthProvider - Impersonation validation result:', validation);
         
-        console.log('🎭 AuthProvider - Enhanced impersonation detection:', {
-          hasBackup: !!impersonationBackup,
-          hasFlags: hasImpersonationFlags,
-          isMagicLinkImpersonation,
-          backupUserId: impersonationBackup ? JSON.parse(impersonationBackup).user_id : null,
-          currentUserId: newSession.user.id,
-          userEmail: newSession.user.email
-        });
-        
-        if (isMagicLinkImpersonation) {
-          console.log('🎭 AuthProvider - Magic link impersonation confirmed, ensuring all flags are set');
-          
-          // Ensure all impersonation flags are set for consistent state
-          sessionStorage.setItem('impersonation_active', 'true');
-          sessionStorage.setItem('impersonation_magic_link', 'true');
-          localStorage.setItem('impersonation_active_backup', 'true');
-          
-          // Store target user info for banner display
-          sessionStorage.setItem('impersonation_target_email', newSession.user.email || '');
-          
-          console.log('✅ AuthProvider - Impersonation state fully configured');
+        if (validation.shouldClear) {
+          console.log('🧹 AuthProvider - Clearing impersonation state:', validation.reason);
+          clearImpersonationFlags();
+        } else if (validation.shouldPersist && validation.isValid) {
+          console.log('✅ AuthProvider - Maintaining impersonation state:', validation.reason);
+          ensureImpersonationFlags(newSession.user.email || '');
         }
         
         setSession(newSession);
