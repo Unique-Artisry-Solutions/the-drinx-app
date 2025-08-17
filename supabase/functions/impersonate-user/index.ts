@@ -34,27 +34,45 @@ Deno.serve(async (req) => {
     console.log(`Impersonation request for user: ${target_user_id}`)
 
     // Get current request origin to determine the correct redirect URL
-    // Prioritize lovable.app domain to stay within the same browser context
+    // CRITICAL: Always prioritize lovable.app domain to prevent cross-domain token loss
     const origin = req.headers.get('origin') || req.headers.get('referer')
-    let redirectTo = 'https://f6fbe853-0047-490f-9d7f-c7bab9534659.lovableproject.com'
+    const userAgent = req.headers.get('user-agent') || ''
+    let redirectTo = 'https://id-preview--f6fbe853-0047-490f-9d7f-c7bab9534659.lovable.app'
+    
+    console.log(`🔍 Impersonation domain detection:`, {
+      origin,
+      userAgent: userAgent.substring(0, 100) + '...',
+      allHeaders: Object.fromEntries(req.headers.entries())
+    })
     
     if (origin) {
       try {
         const url = new URL(origin)
-        // If the origin is from lovable.app (preview environment), use it directly
+        console.log(`🌐 Parsed origin URL:`, {
+          hostname: url.hostname,
+          origin: url.origin,
+          isLovableApp: url.hostname.includes('lovable.app'),
+          isLovableProject: url.hostname.includes('lovableproject.com')
+        })
+        
+        // ALWAYS prioritize lovable.app domain to prevent cross-domain redirect issues
         if (url.hostname.includes('lovable.app')) {
           redirectTo = url.origin
-          console.log(`Using lovable.app domain for impersonation: ${redirectTo}`)
+          console.log(`✅ Using lovable.app domain for impersonation: ${redirectTo}`)
+        } else if (url.hostname.includes('lovableproject.com')) {
+          // If coming from lovableproject.com, still redirect to lovable.app to avoid cross-domain issues
+          console.log(`⚠️  Origin is lovableproject.com, but redirecting to lovable.app to prevent token loss`)
+          // Keep the default lovable.app redirect
         } else {
-          // For other domains, still use the origin but log for debugging
-          redirectTo = url.origin
-          console.log(`Using origin-based redirect: ${redirectTo}`)
+          // For any other domain, use lovable.app as well
+          console.log(`⚠️  Unknown domain origin, using lovable.app: ${url.hostname}`)
         }
       } catch (e) {
-        console.log(`Failed to parse origin, using default: ${redirectTo}`)
+        console.error(`❌ Failed to parse origin: ${e}`)
+        console.log(`Using default lovable.app redirect: ${redirectTo}`)
       }
     } else {
-      console.log(`No origin header found, using default redirect: ${redirectTo}`)
+      console.log(`⚠️  No origin header found, using default lovable.app redirect: ${redirectTo}`)
     }
 
     // Verify the target user exists

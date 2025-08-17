@@ -83,8 +83,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const urlHash = window.location.hash;
         const hasMagicLinkTokens = urlHash.includes('access_token=') && urlHash.includes('type=magiclink');
         const isMagicLinkProcessing = typeof window !== 'undefined' && window.sessionStorage.getItem('processing_magic_link') === 'true';
+        const expectingMagicLink = typeof window !== 'undefined' && window.sessionStorage.getItem('expecting_magic_link') === 'true';
         
-        if (hasMagicLinkTokens || isMagicLinkProcessing) {
+        console.log('🔍 AuthProvider - Magic link detection:', {
+          hasMagicLinkTokens,
+          isMagicLinkProcessing,
+          expectingMagicLink,
+          urlHash: urlHash ? urlHash.substring(0, 50) + '...' : 'empty',
+          currentDomain: window.location.hostname
+        });
+        
+        if (hasMagicLinkTokens || isMagicLinkProcessing || expectingMagicLink) {
           console.log('🔐 AuthProvider - Magic link tokens detected or processing, skipping dev auto-login');
         } else if (DevAutoLoginService.isDevelopmentMode()) {
           console.log('🔐 AuthProvider - Development mode detected, initializing auto-login');

@@ -94,17 +94,65 @@ export async function restoreImpersonation(): Promise<boolean> {
 }
 
 export async function impersonateUser(targetUserId: string): Promise<{ ok: boolean; error?: string }> {
+  console.log('🎭 Starting impersonation process:', {
+    targetUserId,
+    currentDomain: window.location.hostname,
+    currentOrigin: window.location.origin,
+    timestamp: new Date().toISOString()
+  });
+
   const saved = await saveImpersonationBackup();
-  if (!saved) return { ok: false, error: 'Unable to save admin session backup' };
+  if (!saved) {
+    console.error('❌ Failed to save admin session backup');
+    return { ok: false, error: 'Unable to save admin session backup' };
+  }
+
+  console.log('✅ Admin session backup saved, calling impersonate-user function');
+
+  // Set expectation flag for magic link processing
+  if (typeof window !== 'undefined') {
+    window.sessionStorage.setItem('expecting_magic_link', 'true');
+    window.sessionStorage.setItem('impersonation_start_time', Date.now().toString());
+  }
 
   const { data, error } = await supabase.functions.invoke('impersonate-user', {
     body: { target_user_id: targetUserId },
   });
 
-  if (error) return { ok: false, error: error.message };
+  if (error) {
+    console.error('❌ Impersonation function error:', error);
+    // Clear expectation flag on error
+    if (typeof window !== 'undefined') {
+      window.sessionStorage.removeItem('expecting_magic_link');
+      window.sessionStorage.removeItem('impersonation_start_time');
+    }
+    return { ok: false, error: error.message };
+  }
 
-  const link = (data as any)?.action_link;
-  if (!link) return { ok: false, error: 'No magic link returned' };
+  const response = data as any;
+  const link = response?.action_link;
+  
+  console.log('📨 Impersonation response received:', {
+    hasActionLink: !!link,
+    redirectTo: response?.redirect_to,
+    targetEmail: response?.target_email,
+    linkDomain: link ? new URL(link).hostname : 'N/A'
+  });
+
+  if (!link) {
+    console.error('❌ No magic link returned from impersonation function');
+    // Clear expectation flag on error
+    if (typeof window !== 'undefined') {
+      window.sessionStorage.removeItem('expecting_magic_link');
+      window.sessionStorage.removeItem('impersonation_start_time');
+    }
+    return { ok: false, error: 'No magic link returned' };
+  }
+
+  console.log('🔗 Redirecting to magic link:', {
+    link: link.substring(0, 100) + '...',
+    linkDomain: new URL(link).hostname
+  });
 
   window.location.href = link;
   return { ok: true };
