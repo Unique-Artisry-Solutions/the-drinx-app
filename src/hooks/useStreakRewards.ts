@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import useDevAuthBypass from '@/hooks/useDevAuthBypass';
+import { useAuthenticatedUser } from '@/hooks/useAuthenticatedUser';
 
 export interface StreakReward {
   day: number;
@@ -39,7 +39,7 @@ export interface StreakMilestone {
 }
 
 export const useStreakRewards = () => {
-  const { user, isAuthenticated } = useDevAuthBypass();
+  const { user, isAuthenticated } = useAuthenticatedUser();
   const { toast } = useToast();
   
   const [streakStats, setStreakStats] = useState<StreakStats | null>(null);

@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ChevronDown, ChevronUp, Settings, User, Store, Megaphone, Shield, Move, Bug, TestTube, ExternalLink } from 'lucide-react';
 import { useDevelopmentMode } from '@/contexts/DevelopmentModeContext';
 import { useAuth } from '@/contexts/auth/AuthProvider';
-import { useDevAuthBypass } from '@/hooks/useDevAuthBypass';
+import { useAuthenticatedUser } from '@/hooks/useAuthenticatedUser';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 type Position = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
@@ -20,19 +20,12 @@ const DevRoleSwitcher: React.FC = () => {
   const [position, setPosition] = useState<Position>('bottom-right');
   
   // Auth testing data
-  const { 
-    user, 
-    session, 
-    isLoading, 
-    authStable, 
-    userType: authUserType 
-  } = useAuth();
+    const { user, isAuthenticated, isLoading } = useAuth();
   
   const { 
     isAuthenticated: devIsAuthenticated, 
-    userType: devUserType,
-    isUsingDevBypass 
-  } = useDevAuthBypass();
+    userType: devUserType 
+  } = useAuthenticatedUser();
 
   if (!isDevelopment) return null;
 
@@ -190,22 +183,19 @@ const DevRoleSwitcher: React.FC = () => {
                       <div>{isLoading ? '✅' : '❌'}</div>
                       
                       <div>Auth Stable:</div>
-                      <div>{authStable ? '✅' : '❌'}</div>
+                      <div>{!isLoading ? '✅' : '❌'}</div>
                       
                       <div>Has User:</div>
                       <div>{user ? '✅' : '❌'}</div>
                       
                       <div>Has Session:</div>
-                      <div>{session ? '✅' : '❌'}</div>
+                      <div>{user ? '✅' : '❌'}</div>
                       
                       <div>Auth User Type:</div>
-                      <div className="truncate">{authUserType || 'none'}</div>
+                      <div className="truncate">{devUserType || 'none'}</div>
                       
                       <div>Dev User Type:</div>
                       <div className="truncate">{devUserType || 'none'}</div>
-                      
-                      <div>Using Dev Bypass:</div>
-                      <div>{isUsingDevBypass ? '✅' : '❌'}</div>
                       
                       <div>Dev Authenticated:</div>
                       <div>{devIsAuthenticated ? '✅' : '❌'}</div>

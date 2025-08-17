@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useTheme } from '@/contexts/ThemeContext';
-import useDevAuthBypass from '@/hooks/useDevAuthBypass';
+import { useAuthenticatedUser } from '@/hooks/useAuthenticatedUser';
 import { 
   Trophy, 
   Target, 
@@ -50,7 +50,7 @@ const DailyChallenges: React.FC<DailyChallengesProps> = ({
   onChallengeComplete
 }) => {
   const { theme } = useTheme();
-  const { isAuthenticated, user } = useDevAuthBypass();
+  const { isAuthenticated, user } = useAuthenticatedUser();
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedChallenge, setExpandedChallenge] = useState<string | null>(null);

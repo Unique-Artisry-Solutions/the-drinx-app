@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth/AuthProvider';
-import { useDevAuthBypass } from '@/hooks/useDevAuthBypass';
+import { useAuthenticatedUser } from '@/hooks/useAuthenticatedUser';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAppNavigation } from '@/hooks/useAppNavigation';
 import { supabase } from '@/lib/supabase';
@@ -40,9 +40,8 @@ const UserNavbar: React.FC<UserNavbarProps> = ({
   const { 
     user, 
     userType, 
-    isAuthenticated, 
-    isUsingDevBypass 
-  } = useDevAuthBypass();
+    isAuthenticated 
+  } = useAuthenticatedUser();
   const isMobile = useIsMobile();
   
   // Convert userType to non-admin type for components that don't handle admin
@@ -52,18 +51,7 @@ const UserNavbar: React.FC<UserNavbarProps> = ({
     const fetchUsername = async () => {
       if (user) {
         try {
-          // In dev mode, use mock profile data
-          if (isUsingDevBypass) {
-            const displayNames = {
-              admin: 'System Administrator',
-              establishment: 'Test Bar & Grill',
-              promoter: 'Test Event Promoter',
-              individual: 'Test Individual'
-            };
-            setUsername(displayNames[userType] || 'Test User');
-            return;
-          }
-
+        try {
           // For real users, fetch from database
           const { data, error } = await supabase
             .from('profiles')
@@ -73,7 +61,13 @@ const UserNavbar: React.FC<UserNavbarProps> = ({
           
           if (data && !error) {
             setUsername(data.display_name || data.username || "Guest User");
+          } else {
+            setUsername("Guest User");
           }
+        } catch (error) {
+          console.error('Error fetching user data:', error);
+          setUsername("Guest User");
+        }
         } catch (error) {
           console.error('Error fetching user data:', error);
           setUsername("Guest User");
@@ -84,7 +78,7 @@ const UserNavbar: React.FC<UserNavbarProps> = ({
     };
     
     fetchUsername();
-  }, [user, userType, isUsingDevBypass]);
+  }, [user, userType]);
   
   const handleLogout = async () => {
     try {
@@ -131,7 +125,6 @@ const UserNavbar: React.FC<UserNavbarProps> = ({
               {!isMobile && <span>less</span>}
               {userType === 'promoter' && !isMobile && <span className="ml-1 text-xs px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded-md">Promoter</span>}
               {userType === 'establishment' && !isMobile && <span className="ml-1 text-xs px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded-md">Establishment</span>}
-              {isUsingDevBypass && !isMobile && <span className="ml-1 text-xs px-1.5 py-0.5 bg-orange-100 text-orange-700 rounded-md">Dev Mode</span>}
             </Link>
             
             <UserNavLinks userType={nonAdminUserType} />

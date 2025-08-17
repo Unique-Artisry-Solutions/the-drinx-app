@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth';
 import { useToast } from '@/hooks/use-toast';
-import { useDevAuthBypass } from '@/hooks/useDevAuthBypass';
+import { useAuthenticatedUser } from '@/hooks/useAuthenticatedUser';
 import { sampleEstablishments, sampleCocktails } from '@/data/sampleData';
 
 export function useProfileData() {
@@ -15,7 +15,7 @@ export function useProfileData() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { signOut } = useAuth();
-  const { isAuthenticated } = useDevAuthBypass();
+  const { isAuthenticated } = useAuthenticatedUser();
 
   useEffect(() => {
     if (isAuthenticated) {

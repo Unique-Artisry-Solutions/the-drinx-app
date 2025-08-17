@@ -8,12 +8,12 @@ import {
 import BreadcrumbItem from './BreadcrumbItem';
 import { buildBreadcrumbs, shouldShowBreadcrumbs } from './BreadcrumbUtils';
 import { useDevelopmentMode } from '@/contexts/DevelopmentModeContext';
-import { useDevAuthBypass } from '@/hooks/useDevAuthBypass';
+import { useAuthenticatedUser } from '@/hooks/useAuthenticatedUser';
 
 const Breadcrumbs: React.FC = () => {
   const location = useLocation();
   const { isDevelopment, isDevModeActive } = useDevelopmentMode();
-  const { userType, isAuthenticated } = useDevAuthBypass();
+  const { userType, isAuthenticated } = useAuthenticatedUser();
   
   if (!shouldShowBreadcrumbs(location.pathname)) {
     return null;

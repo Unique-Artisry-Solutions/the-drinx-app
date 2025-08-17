@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useDevelopmentMode } from './DevelopmentModeContext';
-import { useDevAuthBypass } from '@/hooks/useDevAuthBypass';
+import { useAuthenticatedUser } from '@/hooks/useAuthenticatedUser';
 import { UnifiedNavItem, UserType } from '@/types/navigation/NavigationTypes';
 import { getGuestNavItems } from '@/components/navigation/mobile/GuestNavItems';
 import { getUserNavItems } from '@/components/navigation/mobile/UserNavItems';
@@ -22,7 +22,7 @@ const NavigationContext = createContext<NavigationContextType | undefined>(undef
 export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
   const { isDevelopment, isInitialized } = useDevelopmentMode();
-  const { userType, isAuthenticated } = useDevAuthBypass();
+  const { userType, isAuthenticated } = useAuthenticatedUser();
   
   const [navigationState, setNavigationState] = useState<NavigationContextType>({
     currentPath: location.pathname,

@@ -15,7 +15,6 @@ export { useUserRecipes } from './useUserRecipes';
 export { useSwigCircuits } from './useSwigCircuits';
 export { useStreakData } from './useStreakData';
 export { useAuthenticatedUser } from './useAuthenticatedUser';
-export { useDevAuthBypass } from './useDevAuthBypass';
 
 // Direct notifications hook
 export { useDirectNotifications } from './useDirectNotifications';

@@ -5,7 +5,7 @@ import { NavigationType } from '../navigation/NavigationTypes';
 import MobileNavigation from '../navigation/MobileNavigation';
 import UserNavbar from '../navigation/user/UserNavbar';
 import Breadcrumbs from '../navigation/Breadcrumbs';
-import { useDevAuthBypass } from '@/hooks/useDevAuthBypass';
+import { useAuthenticatedUser } from '@/hooks/useAuthenticatedUser';
 import GuestTopNavigation from '../navigation/GuestTopNavigation';
 import AdminTopNavigation from '../navigation/AdminTopNavigation';
 import AppFooter from '../AppFooter';
@@ -33,7 +33,7 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
   forceGuestNavigation = false
 }) => {
   const location = useLocation();
-  const { userType, isAuthenticated } = useDevAuthBypass();
+  const { userType, isAuthenticated } = useAuthenticatedUser();
   
   const [effectiveNavState, setEffectiveNavState] = React.useState(() => 
     resolveNavigationState(null, false, location.pathname, forceGuestNavigation)

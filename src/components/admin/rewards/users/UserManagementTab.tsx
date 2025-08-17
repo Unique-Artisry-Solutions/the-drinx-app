@@ -1,7 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { UserRewardProfile } from './UserRewardProfile';
 import { UserRewardsList } from './UserRewardsList';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
@@ -140,8 +139,8 @@ export const UserManagementTab = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            <div className="md:col-span-1">
+          <div className="grid gap-6 md:grid-cols-1">
+            <div>
               <UserFilter 
                 filter={filter}
                 onFilterChange={setFilter}
@@ -160,19 +159,6 @@ export const UserManagementTab = () => {
                   selectedUserId={selectedUserId}
                   onUserSelect={handleUserSelect}
                 />
-              )}
-            </div>
-            
-            <div className="md:col-span-1 lg:col-span-2">
-              {selectedUserId ? (
-                <UserRewardProfile
-                  userId={selectedUserId}
-                  onUpdate={handleUserUpdate}
-                />
-              ) : (
-                <div className="flex items-center justify-center h-64 border rounded-md bg-muted/20">
-                  <p className="text-muted-foreground">Select a user to view their reward profile</p>
-                </div>
               )}
             </div>
           </div>

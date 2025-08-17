@@ -7,7 +7,7 @@ import { Progress } from '@/components/ui/progress';
 import { Play, RotateCcw, CheckCircle, XCircle, Clock, AlertCircle, TestTube } from 'lucide-react';
 import { DevSeedingPanel } from '@/components/admin/testing';
 import { useDevelopmentMode } from '@/contexts/DevelopmentModeContext';
-import useDevAuthBypass from '@/hooks/useDevAuthBypass';
+import { useAuthenticatedUser } from '@/hooks/useAuthenticatedUser';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { getHomePathByUserType } from '@/utils/breadcrumbUtils';
@@ -43,7 +43,7 @@ const TestingDashboard: React.FC = () => {
 
   const navigate = useNavigate();
   const { isDevModeActive } = useDevelopmentMode();
-  const { userType } = useDevAuthBypass();
+  const { userType } = useAuthenticatedUser();
   const canUseDevSeeding = isDevModeActive || userType === 'admin';
 
   const [isLoggingIn, setIsLoggingIn] = useState<string | null>(null);

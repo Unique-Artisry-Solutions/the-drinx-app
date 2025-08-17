@@ -8,7 +8,7 @@ import GuestTopNavigation from '../navigation/GuestTopNavigation';
 import Breadcrumbs from '../navigation/Breadcrumbs';
 import AppFooter from '../AppFooter';
 import AdminFooter from '../admin/AdminFooter';
-import { useDevAuthBypass } from '@/hooks/useDevAuthBypass';
+import { useAuthenticatedUser } from '@/hooks/useAuthenticatedUser';
 import { resolveNavigationState } from '@/utils/navigationResolver';
 
 interface TabOption {
@@ -32,7 +32,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
   forceGuestNavigation = false
 }) => {
   const location = useLocation();
-  const { userType, isAuthenticated } = useDevAuthBypass();
+  const { userType, isAuthenticated } = useAuthenticatedUser();
   
   const [effectiveNavState, setEffectiveNavState] = React.useState(() => 
     resolveNavigationState(null, false, location.pathname, forceGuestNavigation)

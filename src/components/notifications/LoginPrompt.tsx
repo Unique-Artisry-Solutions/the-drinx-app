@@ -3,12 +3,12 @@ import React from 'react';
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { User, Settings } from "lucide-react";
-import { useDevAuthBypass } from '@/hooks/useDevAuthBypass';
+import { useAuthenticatedUser } from '@/hooks/useAuthenticatedUser';
 import { useNavigate } from 'react-router-dom';
 import { useDevelopmentMode } from '@/contexts/DevelopmentModeContext';
 
 export const LoginPrompt = () => {
-  const { isAuthenticated, isUsingDevBypass } = useDevAuthBypass();
+  const { isAuthenticated } = useAuthenticatedUser();
   const { isDevelopment } = useDevelopmentMode();
   const navigate = useNavigate();
 
@@ -17,7 +17,7 @@ export const LoginPrompt = () => {
     navigate('/auth');
   };
 
-  // Don't show login prompt if already authenticated (including dev bypass)
+  // Don't show login prompt if already authenticated
   if (isAuthenticated) {
     return null;
   }
