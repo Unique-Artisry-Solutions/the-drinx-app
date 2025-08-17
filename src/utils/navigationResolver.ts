@@ -43,9 +43,19 @@ export const resolveNavigationState = (
     };
   }
 
-  // Landing page and auth pages always use guest navigation
+  // Landing page and auth pages - use guest navigation unless authenticated
   const guestPaths = ['/', '/landing', '/login', '/signup', '/verify-email', '/contact'];
   if (guestPaths.includes(pathname)) {
+    // If user is authenticated but on landing page, show user navigation (for impersonation scenarios)
+    if (pathname === '/landing' && isAuthenticated && userType) {
+      console.log('🧭 Navigation resolver: Authenticated user on landing page, using user navigation');
+      return {
+        navigationType: NavigationType.USER,
+        userType,
+        isAuthenticated: true
+      };
+    }
+    
     return {
       navigationType: NavigationType.GUEST,
       userType: null,

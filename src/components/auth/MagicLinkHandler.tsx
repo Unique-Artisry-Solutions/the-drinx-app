@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuthenticatedUser } from '@/hooks/useAuthenticatedUser';
 
 /**
@@ -7,7 +8,9 @@ import { useAuthenticatedUser } from '@/hooks/useAuthenticatedUser';
  */
 export const MagicLinkHandler: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isProcessingMagicLink, setIsProcessingMagicLink] = useState(false);
-  const { isAuthenticated, authStable } = useAuthenticatedUser();
+  const [shouldRedirect, setShouldRedirect] = useState(false);
+  const { isAuthenticated, authStable, userType } = useAuthenticatedUser();
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Check if we have magic link tokens in the URL
@@ -38,12 +41,28 @@ export const MagicLinkHandler: React.FC<{ children: React.ReactNode }> = ({ chil
         window.history.replaceState({}, document.title, cleanUrl);
         console.log('Magic link processing completed, URL cleaned');
         setIsProcessingMagicLink(false);
+        setShouldRedirect(true);
       }, 1500); // Increased timeout for better stability
     } else if (window.location.hash) {
       // Log any other hash parameters for debugging
       console.log('Non-magic-link hash detected:', window.location.hash);
     }
   }, []);
+
+  // Handle post-authentication redirect
+  useEffect(() => {
+    if (shouldRedirect && authStable && isAuthenticated && userType) {
+      console.log('🔄 MagicLinkHandler: Redirecting authenticated user after magic link', { userType });
+      
+      const dashboardPath = 
+        userType === 'admin' ? '/admin/system-breakdown' :
+        userType === 'establishment' ? '/establishment/dashboard' :
+        userType === 'promoter' ? '/promoter/dashboard' : '/explore';
+      
+      navigate(dashboardPath, { replace: true });
+      setShouldRedirect(false);
+    }
+  }, [shouldRedirect, authStable, isAuthenticated, userType, navigate]);
 
   // Show loading while processing magic link
   if (isProcessingMagicLink) {
