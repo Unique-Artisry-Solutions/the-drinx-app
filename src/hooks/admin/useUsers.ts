@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useAuthenticatedUser } from '@/hooks/useAuthenticatedUser';
 
 export interface AdminUser {
   id: string;
@@ -27,6 +28,8 @@ interface UseUsersState {
 }
 
 export const useUsers = () => {
+  const { isAuthenticated, userType, isLoading: authLoading } = useAuthenticatedUser();
+  
   const [state, setState] = useState<UseUsersState>({
     users: [],
     isLoading: true,
@@ -44,20 +47,12 @@ export const useUsers = () => {
     try {
       setState(prev => ({ ...prev, isLoading: true, error: null }));
 
-      // Check if current user is admin
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+      // Early return if not authenticated or not admin
+      if (!isAuthenticated) {
         throw new Error('Not authenticated');
       }
 
-      // Get current user's profile to verify admin status
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('user_type')
-        .eq('id', user.id)
-        .single();
-
-      if (!profile || profile.user_type !== 'admin') {
+      if (userType !== 'admin') {
         throw new Error('Access denied: Admin privileges required');
       }
 
@@ -132,8 +127,17 @@ export const useUsers = () => {
   };
 
   useEffect(() => {
-    fetchUsers();
-  }, []);
+    // Don't fetch if still loading auth or not authenticated
+    if (!authLoading && isAuthenticated && userType === 'admin') {
+      fetchUsers();
+    } else if (!authLoading && (!isAuthenticated || userType !== 'admin')) {
+      setState(prev => ({
+        ...prev,
+        isLoading: false,
+        error: !isAuthenticated ? 'Not authenticated' : 'Access denied: Admin privileges required'
+      }));
+    }
+  }, [authLoading, isAuthenticated, userType]);
 
   return {
     ...state,

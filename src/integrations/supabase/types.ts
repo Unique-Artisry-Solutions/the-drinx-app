@@ -8820,6 +8820,10 @@ export type Database = {
           tier_name: string
         }[]
       }
+      get_current_user_type: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_user_retention: {
         Args: { p_end_date: string; p_start_date: string }
         Returns: {
