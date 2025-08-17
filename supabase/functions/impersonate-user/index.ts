@@ -34,17 +34,27 @@ Deno.serve(async (req) => {
     console.log(`Impersonation request for user: ${target_user_id}`)
 
     // Get current request origin to determine the correct redirect URL
+    // Prioritize lovable.app domain to stay within the same browser context
     const origin = req.headers.get('origin') || req.headers.get('referer')
     let redirectTo = 'https://f6fbe853-0047-490f-9d7f-c7bab9534659.lovableproject.com'
     
     if (origin) {
       try {
         const url = new URL(origin)
-        redirectTo = url.origin
-        console.log(`Using origin-based redirect: ${redirectTo}`)
+        // If the origin is from lovable.app (preview environment), use it directly
+        if (url.hostname.includes('lovable.app')) {
+          redirectTo = url.origin
+          console.log(`Using lovable.app domain for impersonation: ${redirectTo}`)
+        } else {
+          // For other domains, still use the origin but log for debugging
+          redirectTo = url.origin
+          console.log(`Using origin-based redirect: ${redirectTo}`)
+        }
       } catch (e) {
         console.log(`Failed to parse origin, using default: ${redirectTo}`)
       }
+    } else {
+      console.log(`No origin header found, using default redirect: ${redirectTo}`)
     }
 
     // Verify the target user exists

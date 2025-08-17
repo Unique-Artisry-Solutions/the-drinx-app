@@ -14,35 +14,46 @@ export const MagicLinkHandler: React.FC<{ children: React.ReactNode }> = ({ chil
 
   useEffect(() => {
     // Check if we have magic link tokens in the URL
-    const urlParams = new URLSearchParams(window.location.hash.substring(1));
-    const accessToken = urlParams.get('access_token');
-    const refreshToken = urlParams.get('refresh_token');
-    const tokenType = urlParams.get('token_type');
-    const type = urlParams.get('type');
-
-    // Only process if we have magic link tokens and it's a magic link
-    if (accessToken && refreshToken && type === 'magiclink' && tokenType === 'bearer') {
-      console.log('Magic link detected, processing...', {
-        hasAccessToken: !!accessToken,
-        hasRefreshToken: !!refreshToken,
-        tokenType,
-        type,
-        currentUrl: window.location.href
-      });
+    const urlHash = window.location.hash;
+    const searchParams = new URLSearchParams(urlHash.substring(1));
+    
+    // Look for access_token, refresh_token, token_type, and type parameters
+    const accessToken = searchParams.get('access_token');
+    const refreshToken = searchParams.get('refresh_token');
+    const tokenType = searchParams.get('token_type');
+    const type = searchParams.get('type');
+    
+    console.log('MagicLinkHandler - Checking URL hash:', {
+      hasAccessToken: !!accessToken,
+      hasRefreshToken: !!refreshToken,
+      tokenType,
+      type,
+      fullHash: urlHash
+    });
+    
+    if (accessToken && refreshToken && tokenType === 'bearer' && type === 'magiclink') {
+      console.log('🔗 Magic link tokens detected, processing authentication');
       setIsProcessingMagicLink(true);
-
-      // Let the auth system handle the tokens naturally
-      // The AuthProvider will pick up the session change automatically
       
-      // Clean up the URL after a short delay to let auth settle
+      // Set flag to prevent dev auto-login interference
+      if (typeof window !== 'undefined') {
+        window.sessionStorage.setItem('processing_magic_link', 'true');
+      }
+      
+      // Clean the URL after a delay to allow Supabase to process the tokens
       setTimeout(() => {
-        // Remove the hash from URL to clean it up
-        const cleanUrl = window.location.pathname + window.location.search;
+        const currentUrl = new URL(window.location.href);
+        const cleanUrl = `${currentUrl.origin}${currentUrl.pathname}${currentUrl.search}`;
         window.history.replaceState({}, document.title, cleanUrl);
         console.log('Magic link processing completed, URL cleaned');
         setIsProcessingMagicLink(false);
         setShouldRedirect(true);
-      }, 1500); // Increased timeout for better stability
+        
+        // Clear the magic link processing flag
+        if (typeof window !== 'undefined') {
+          window.sessionStorage.removeItem('processing_magic_link');
+        }
+      }, 2000); // Increased timeout for better stability
     } else if (window.location.hash) {
       // Log any other hash parameters for debugging
       console.log('Non-magic-link hash detected:', window.location.hash);

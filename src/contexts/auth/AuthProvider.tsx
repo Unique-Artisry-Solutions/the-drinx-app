@@ -79,8 +79,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsEmailVerified(false);
         sessionPersistenceService.clearSession();
         
-        // Initialize development auto-login if in dev mode
-        if (DevAutoLoginService.isDevelopmentMode()) {
+        // Check if we're processing a magic link (skip dev auto-login in that case)
+        const urlHash = window.location.hash;
+        const hasMagicLinkTokens = urlHash.includes('access_token=') && urlHash.includes('type=magiclink');
+        const isMagicLinkProcessing = typeof window !== 'undefined' && window.sessionStorage.getItem('processing_magic_link') === 'true';
+        
+        if (hasMagicLinkTokens || isMagicLinkProcessing) {
+          console.log('🔐 AuthProvider - Magic link tokens detected or processing, skipping dev auto-login');
+        } else if (DevAutoLoginService.isDevelopmentMode()) {
           console.log('🔐 AuthProvider - Development mode detected, initializing auto-login');
           
           // Check if there's a stored dev user type, otherwise default to admin
