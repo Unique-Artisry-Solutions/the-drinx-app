@@ -22,7 +22,17 @@ const NavigationContext = createContext<NavigationContextType | undefined>(undef
 export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
   const { isDevelopment, isInitialized } = useDevelopmentMode();
-  const { userType, isAuthenticated } = useAuthenticatedUser();
+  
+  // Safely get auth state with fallback for hot reload scenarios
+  let authState;
+  try {
+    authState = useAuthenticatedUser();
+  } catch (error) {
+    console.warn('NavigationProvider: Auth context not available during hot reload, using fallbacks');
+    authState = { userType: null, isAuthenticated: false, authStable: false };
+  }
+  
+  const { userType, isAuthenticated, authStable } = authState;
   
   const [navigationState, setNavigationState] = useState<NavigationContextType>({
     currentPath: location.pathname,
@@ -34,7 +44,7 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   });
 
   useEffect(() => {
-    if (!isInitialized) return;
+    if (!isInitialized || !authStable) return;
     
     const protectedPaths = ['/admin', '/establishment', '/promoter'];
     const isProtected = protectedPaths.some(path => location.pathname.startsWith(path));
@@ -68,7 +78,7 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       userType,
       isAuthenticated
     });
-  }, [location.pathname, userType, isAuthenticated, isInitialized]);
+  }, [location.pathname, userType, isAuthenticated, isInitialized, authStable]);
 
   return (
     <NavigationContext.Provider value={navigationState}>
