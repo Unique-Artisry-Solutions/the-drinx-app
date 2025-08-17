@@ -20,47 +20,41 @@ export const useImpersonationState = () => {
     const checkImpersonation = () => {
       const backup = getImpersonationBackup();
       
-      // Basic impersonation check: backup exists and current user is different
-      const basicImpersonation = !!(
-        backup && 
-        user && 
-        backup.user_id !== user.id
-      );
-
-      // Enhanced magic link impersonation check with multiple flag sources
-      const impersonationFlags = {
-        sessionActive: sessionStorage.getItem('impersonation_active'),
-        sessionMagicLink: sessionStorage.getItem('impersonation_magic_link'),
-        localBackup: localStorage.getItem('impersonation_active_backup'),
-        localMagicLink: localStorage.getItem('impersonation_magic_link_backup')
-      };
+      // Simplified impersonation detection - streamlined for better reliability
+      let finalImpersonating = false;
       
-      const hasAnyImpersonationFlag = !!(
-        impersonationFlags.sessionActive || 
-        impersonationFlags.sessionMagicLink ||
-        impersonationFlags.localBackup ||
-        impersonationFlags.localMagicLink
-      );
-
-      const magicLinkImpersonation = !!(
-        backup && 
-        isAuthenticated && 
-        hasAnyImpersonationFlag
-      );
-
-      const finalImpersonating = basicImpersonation || magicLinkImpersonation;
-
-      console.log('🎭 useImpersonationState - Enhanced impersonation check:', {
-        basicImpersonation,
-        magicLinkImpersonation,
-        finalImpersonating,
-        hasBackup: !!backup,
-        hasUser: !!user,
-        isAuthenticated,
-        backupUserId: backup?.user_id,
-        currentUserId: user?.id,
-        impersonationFlags
-      });
+      if (backup) {
+        // Method 1: Basic impersonation (different user IDs)
+        const basicImpersonation = !!(user && backup.user_id !== user.id);
+        
+        // Method 2: Magic link impersonation (backup exists + any impersonation flag + authenticated)
+        const hasImpersonationFlag = !!(
+          sessionStorage.getItem('impersonation_active') ||
+          sessionStorage.getItem('impersonation_magic_link') ||
+          localStorage.getItem('impersonation_active_backup')
+        );
+        
+        const magicLinkImpersonation = !!(isAuthenticated && hasImpersonationFlag);
+        
+        finalImpersonating = basicImpersonation || magicLinkImpersonation;
+        
+        console.log('🎭 useImpersonationState - Streamlined impersonation check:', {
+          hasBackup: true,
+          basicImpersonation,
+          magicLinkImpersonation,
+          finalImpersonating,
+          hasUser: !!user,
+          isAuthenticated,
+          backupUserId: backup.user_id,
+          currentUserId: user?.id,
+          currentUserEmail: user?.email,
+          impersonationFlags: {
+            sessionActive: !!sessionStorage.getItem('impersonation_active'),
+            sessionMagicLink: !!sessionStorage.getItem('impersonation_magic_link'),
+            localBackup: !!localStorage.getItem('impersonation_active_backup')
+          }
+        });
+      }
 
       setIsImpersonating(finalImpersonating);
       setImpersonationBackup(backup);

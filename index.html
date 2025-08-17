@@ -25,85 +25,26 @@
   <body>
     <div id="root"></div>
     
-    <!-- CRITICAL: Magic Link Token Capture - Must run BEFORE React -->
+    <!-- Simplified Magic Link Impersonation Detection -->
     <script>
       (function() {
-        // Enhanced cross-domain token capture
-        const currentUrl = window.location.href;
+        // Simple impersonation detection for magic links
         const urlHash = window.location.hash;
         const urlSearch = window.location.search;
-        const hostname = window.location.hostname;
         
-        // Domain detection for cross-domain scenarios
-        const isLovableApp = hostname.includes('lovable.app');
-        const isLovableProject = hostname.includes('lovableproject.com');
-        const isLovableDomain = isLovableApp || isLovableProject;
+        // Check if we have magic link tokens and impersonation backup
+        const hasMagicLinkTokens = urlHash.includes('access_token=') || urlSearch.includes('access_token=');
+        const impersonationBackup = localStorage.getItem('impersonation_backup');
         
-        console.log('🔍 [EARLY] Enhanced token capture script running:', {
-          url: currentUrl,
-          hash: urlHash.substring(0, 50) + '...',
-          search: urlSearch,
-          domain: hostname,
-          isLovableApp,
-          isLovableProject,
-          isLovableDomain
-        });
-        
-        // Check for magic link tokens in URL hash and search params
-        const hashParams = new URLSearchParams(urlHash.substring(1));
-        const searchParams = new URLSearchParams(urlSearch);
-        
-        const accessToken = hashParams.get('access_token') || searchParams.get('access_token');
-        const refreshToken = hashParams.get('refresh_token') || searchParams.get('refresh_token');
-        const tokenType = hashParams.get('token_type') || searchParams.get('token_type');
-        const type = hashParams.get('type') || searchParams.get('type');
-        
-        if (accessToken || refreshToken) {
-          console.log('🔗 [EARLY] Magic link tokens detected, preserving with enhanced cross-domain support');
+        if (hasMagicLinkTokens && impersonationBackup) {
+          console.log('🎭 [EARLY] Magic link impersonation detected, setting flags');
           
-          // Enhanced token data with domain info
-          const tokenData = {
-            access_token: accessToken,
-            refresh_token: refreshToken,
-            token_type: tokenType,
-            type: type,
-            captured_at: new Date().toISOString(),
-            original_url: currentUrl,
-            original_hash: urlHash,
-            domain: hostname,
-            domain_type: isLovableApp ? 'lovable.app' : isLovableProject ? 'lovableproject.com' : 'unknown',
-            is_cross_domain_capable: isLovableDomain
-          };
+          // Set simple impersonation flags
+          sessionStorage.setItem('impersonation_magic_link', 'true');
+          sessionStorage.setItem('impersonation_active', 'true');
+          localStorage.setItem('impersonation_active_backup', 'true');
           
-          try {
-            // Multi-layer storage for maximum reliability
-            sessionStorage.setItem('magiclink_tokens', JSON.stringify(tokenData));
-            localStorage.setItem('magiclink_tokens_backup', JSON.stringify(tokenData));
-            
-            // Cross-domain storage key based on domain type
-            const domainKey = `magiclink_tokens_${isLovableApp ? 'app' : 'project'}`;
-            localStorage.setItem(domainKey, JSON.stringify(tokenData));
-            
-            // Check if this might be an impersonation magic link
-            const impersonationBackup = localStorage.getItem('impersonation_backup');
-            if (impersonationBackup) {
-              console.log('🎭 [EARLY] Impersonation context detected, flagging magic link');
-              
-              // Multi-layer impersonation flags
-              sessionStorage.setItem('impersonation_magic_link', 'true');
-              sessionStorage.setItem('impersonation_active', 'true');
-              localStorage.setItem('impersonation_magic_link_backup', 'true');
-              localStorage.setItem('impersonation_active_backup', 'true');
-              
-              // Cross-domain impersonation flag
-              const impersonationDomainKey = `impersonation_${isLovableApp ? 'app' : 'project'}`;
-              localStorage.setItem(impersonationDomainKey, 'true');
-            }
-            
-            console.log('✅ [EARLY] Enhanced tokens preserved successfully with cross-domain support');
-          } catch (e) {
-            console.error('❌ [EARLY] Failed to preserve tokens:', e);
-          }
+          console.log('✅ [EARLY] Impersonation flags set for magic link authentication');
         }
       })();
     </script>

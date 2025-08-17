@@ -8,7 +8,6 @@ import { authCache } from './authCache';
 import { debouncedToast } from '@/utils/debouncedToast';
 import { inferUserType } from '@/utils/auth/admin';
 import { DevAutoLoginService } from '@/services/DevAutoLoginService';
-import { checkMagicLinkImpersonation } from './checkMagicLinkImpersonation';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -154,27 +153,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (event === 'SIGNED_IN' && newSession?.user) {
         console.log('🔐 AuthProvider - User signed in successfully');
         
-        // CRITICAL: Immediate impersonation detection and flag setting
-        const isMagicLinkImpersonation = checkMagicLinkImpersonation();
-        console.log('🎭 AuthProvider - Impersonation check result:', isMagicLinkImpersonation);
+        // Enhanced impersonation detection for magic link authentication
+        const impersonationBackup = localStorage.getItem('impersonation_backup');
+        const hasImpersonationFlags = !!(
+          sessionStorage.getItem('impersonation_magic_link') ||
+          sessionStorage.getItem('impersonation_active') ||
+          localStorage.getItem('impersonation_active_backup')
+        );
+        
+        const isMagicLinkImpersonation = !!(impersonationBackup && hasImpersonationFlags);
+        
+        console.log('🎭 AuthProvider - Enhanced impersonation detection:', {
+          hasBackup: !!impersonationBackup,
+          hasFlags: hasImpersonationFlags,
+          isMagicLinkImpersonation,
+          backupUserId: impersonationBackup ? JSON.parse(impersonationBackup).user_id : null,
+          currentUserId: newSession.user.id,
+          userEmail: newSession.user.email
+        });
         
         if (isMagicLinkImpersonation) {
-          console.log('🎭 AuthProvider - Magic link impersonation confirmed, setting all flags immediately');
-          // Set multiple flags for redundancy
+          console.log('🎭 AuthProvider - Magic link impersonation confirmed, ensuring all flags are set');
+          
+          // Ensure all impersonation flags are set for consistent state
           sessionStorage.setItem('impersonation_active', 'true');
           sessionStorage.setItem('impersonation_magic_link', 'true');
           localStorage.setItem('impersonation_active_backup', 'true');
           
-          // Ensure impersonation state is immediately available
-          setTimeout(() => {
-            console.log('🎭 AuthProvider - Verifying impersonation flags are set');
-            const flags = {
-              session_active: sessionStorage.getItem('impersonation_active'),
-              session_magic: sessionStorage.getItem('impersonation_magic_link'),
-              local_backup: localStorage.getItem('impersonation_active_backup')
-            };
-            console.log('🎭 AuthProvider - Impersonation flags verification:', flags);
-          }, 0);
+          // Store target user info for banner display
+          sessionStorage.setItem('impersonation_target_email', newSession.user.email || '');
+          
+          console.log('✅ AuthProvider - Impersonation state fully configured');
         }
         
         setSession(newSession);
