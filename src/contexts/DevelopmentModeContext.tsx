@@ -1,14 +1,16 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { DevAutoLoginService } from '@/services/DevAutoLoginService';
+import type { TestUserType } from '@/services/DevAutoLoginService';
 
-export type DevUserType = 'individual' | 'establishment' | 'promoter' | 'admin' | null;
+export type DevUserType = TestUserType | null;
 
 interface DevelopmentModeContextType {
   isDevelopment: boolean;
   devMode: DevUserType;
-  switchToUserType: (userType: DevUserType) => void;
-  exitDevMode: () => void;
+  switchToUserType: (userType: DevUserType) => Promise<void>;
+  exitDevMode: () => Promise<void>;
   isDevModeActive: boolean;
   isInitialized: boolean;
 }
@@ -23,27 +25,23 @@ export const DevelopmentModeProvider: React.FC<{ children: React.ReactNode }> = 
   const [isDevelopment, setIsDevelopment] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Initialize development mode detection - simplified and faster
+  // Initialize development mode detection and sync with auto-login service
   useEffect(() => {
     console.log('🔧 DevelopmentModeProvider - Initializing');
     
-    const hostname = window.location.hostname;
-    const isDevMode = hostname === 'localhost' || 
-                     hostname === '127.0.0.1' ||
-                     hostname.includes('preview--') ||
-                     hostname.includes('lovable');
+    const isDevMode = DevAutoLoginService.isDevelopmentMode();
     
     console.log('🔧 DevelopmentModeProvider - isDevelopment:', isDevMode);
     setIsDevelopment(isDevMode);
     
     if (isDevMode) {
-      const savedDevType = localStorage.getItem('dev_user_type') as DevUserType;
-      if (savedDevType) {
-        console.log('🔧 DevelopmentModeProvider - Restored dev mode:', savedDevType);
-        setDevMode(savedDevType);
+      // Get current user type from auto-login service
+      const currentUserType = DevAutoLoginService.getCurrentDevUserType();
+      if (currentUserType) {
+        console.log('🔧 DevelopmentModeProvider - Current user type:', currentUserType);
+        setDevMode(currentUserType);
       }
     } else {
-      localStorage.removeItem('dev_user_type');
       setDevMode(null);
     }
     
@@ -51,7 +49,7 @@ export const DevelopmentModeProvider: React.FC<{ children: React.ReactNode }> = 
     console.log('🔧 DevelopmentModeProvider - Initialization complete');
   }, []);
 
-  // Clear dev mode when on landing page or related routes - debounced
+  // Clear dev mode when on landing page or related routes
   useEffect(() => {
     if (!isInitialized || !isDevelopment) return;
     
@@ -60,7 +58,7 @@ export const DevelopmentModeProvider: React.FC<{ children: React.ReactNode }> = 
       if (devMode !== null) {
         console.log('🔧 DevelopmentModeProvider - Clearing dev mode for landing page');
         setDevMode(null);
-        localStorage.removeItem('dev_user_type');
+        DevAutoLoginService.logout();
       }
     }
   }, [location.pathname, isInitialized, isDevelopment, devMode]);
@@ -110,24 +108,30 @@ export const DevelopmentModeProvider: React.FC<{ children: React.ReactNode }> = 
     }
   }, [navigate, location.pathname]);
 
-  const switchToUserType = useCallback((userType: DevUserType) => {
+  const switchToUserType = useCallback(async (userType: DevUserType) => {
     if (!isDevelopment || devMode === userType) return;
     
     console.log('🔧 DevelopmentModeProvider - Switching to user type:', userType);
-    setDevMode(userType);
     
     if (userType) {
-      localStorage.setItem('dev_user_type', userType);
-      navigateToUserDashboard(userType);
+      // Use DevAutoLoginService to switch user type with real authentication
+      const result = await DevAutoLoginService.switchUserType(userType);
+      if (result.success) {
+        setDevMode(userType);
+        navigateToUserDashboard(userType);
+      } else {
+        console.error('Failed to switch user type:', result.error);
+      }
     } else {
-      localStorage.removeItem('dev_user_type');
+      await DevAutoLoginService.logout();
+      setDevMode(null);
       navigate('/landing', { replace: true });
     }
   }, [isDevelopment, devMode, navigateToUserDashboard, navigate]);
 
-  const exitDevMode = useCallback(() => {
+  const exitDevMode = useCallback(async () => {
+    await DevAutoLoginService.logout();
     setDevMode(null);
-    localStorage.removeItem('dev_user_type');
     navigate('/landing', { replace: true });
   }, [navigate]);
 
