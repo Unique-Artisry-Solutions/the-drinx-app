@@ -88,6 +88,7 @@ Deno.serve(async (req) => {
     console.log(`Target user found: ${targetUser.user.email}`)
 
     // Generate magic link for the target user
+    console.log(`🔗 Generating magic link with redirect: ${redirectTo}`)
     const { data, error } = await supabaseClient.auth.admin.generateLink({
       type: 'magiclink',
       email: targetUser.user.email!,
@@ -97,24 +98,54 @@ Deno.serve(async (req) => {
     })
 
     if (error) {
-      console.error('Magic link generation error:', error)
+      console.error('❌ Magic link generation error:', error)
+      console.log('❌ Supabase client configuration:', {
+        url: Deno.env.get('SUPABASE_URL') ? 'SET' : 'MISSING',
+        serviceKey: Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ? 'SET' : 'MISSING'
+      })
       return new Response(
-        JSON.stringify({ error: 'Failed to generate impersonation link' }),
+        JSON.stringify({ 
+          error: 'Failed to generate impersonation link',
+          details: error.message,
+          supabaseConfig: {
+            url: !!Deno.env.get('SUPABASE_URL'),
+            serviceKey: !!Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+          }
+        }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-    console.log(`Magic link generated successfully for ${targetUser.user.email}`)
-    console.log(`Redirect URL: ${redirectTo}`)
+    const actionLink = data.properties?.action_link
+    console.log(`✅ Magic link generation result:`, {
+      hasActionLink: !!actionLink,
+      actionLinkLength: actionLink ? actionLink.length : 0,
+      redirectTo: redirectTo,
+      dataKeys: Object.keys(data),
+      propertiesKeys: data.properties ? Object.keys(data.properties) : 'NO_PROPERTIES'
+    })
+
+    if (!actionLink) {
+      console.error('❌ No action link in response data:', data)
+      return new Response(
+        JSON.stringify({ 
+          error: 'Magic link generation failed - no action link returned',
+          debugData: data
+        }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    console.log(`✅ Magic link generated successfully for ${targetUser.user.email}`)
+    console.log(`🔗 Action link: ${actionLink.substring(0, 100)}...`)
 
     // Extract domain from the magic link for validation
-    const magicLinkUrl = data.properties?.action_link || ''
-    const linkDomain = magicLinkUrl ? new URL(magicLinkUrl).hostname : 'unknown'
+    const linkDomain = new URL(actionLink).hostname
     
     return new Response(
       JSON.stringify({ 
-        hasActionLink: !!data.properties?.action_link,
-        actionLink: data.properties?.action_link,
+        hasActionLink: true,
+        actionLink: actionLink,
         redirectTo: redirectTo,
         targetEmail: targetUser.user.email,
         linkDomain: linkDomain

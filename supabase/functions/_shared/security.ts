@@ -30,14 +30,18 @@ export function getSecurityConfig(environment: string = 'production'): SecurityC
     allowedOrigins: isProduction 
       ? [
           'https://*.lovableproject.com',
+          'https://*.lovable.app',
           'https://f6fbe853-0047-490f-9d7f-c7bab9534659.lovableproject.com',
+          'https://id-preview--f6fbe853-0047-490f-9d7f-c7bab9534659.lovable.app',
           'https://dvifibvzwunnpcsihpxq.lovableproject.com',
           'https://localhost:3000',
           'https://127.0.0.1:3000'
         ]
       : [
           'https://*.lovableproject.com',
+          'https://*.lovable.app',
           'https://f6fbe853-0047-490f-9d7f-c7bab9534659.lovableproject.com',
+          'https://id-preview--f6fbe853-0047-490f-9d7f-c7bab9534659.lovable.app',
           'http://localhost:3000',
           'http://127.0.0.1:3000',
           'https://localhost:3000'
