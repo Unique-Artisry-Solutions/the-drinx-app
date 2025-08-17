@@ -146,18 +146,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               if (tokens?.access_token) {
                 console.log('🔑 AuthProvider - Extracted tokens, setting session manually');
                 
-                // Check if we have impersonation flags before processing
+                // Check if we have impersonation backup
                 const impersonationBackup = localStorage.getItem('impersonation_backup');
-                const hasImpersonationFlags = !!(
+                let parsedBackup = null;
+                try {
+                  parsedBackup = impersonationBackup ? JSON.parse(impersonationBackup) : null;
+                } catch (e) {
+                  console.warn('Failed to parse impersonation backup:', e);
+                }
+                
+                const hasExistingImpersonationFlags = !!(
                   sessionStorage.getItem('impersonation_magic_link') ||
                   sessionStorage.getItem('impersonation_active') ||
                   localStorage.getItem('impersonation_active_backup')
                 );
                 
                 console.log('🎭 AuthProvider - Pre-authentication impersonation check:', {
-                  hasBackup: !!impersonationBackup,
-                  hasFlags: hasImpersonationFlags
+                  hasBackup: !!parsedBackup,
+                  hasExistingFlags: hasExistingImpersonationFlags,
+                  backupEmail: parsedBackup?.email
                 });
+                
+                // **CRITICAL FIX**: Set magic link processing flag to prevent premature validation
+                sessionStorage.setItem('magic_link_processing', 'true');
+                
+                // **CRITICAL FIX**: If we have backup but no flags, set them BEFORE authentication
+                if (parsedBackup && !hasExistingImpersonationFlags) {
+                  console.log('🎯 AuthProvider - Setting impersonation flags before authentication');
+                  sessionStorage.setItem('impersonation_active', 'true');
+                  sessionStorage.setItem('impersonation_magic_link', 'true');
+                  localStorage.setItem('impersonation_active_backup', 'true');
+                  
+                  // Store target email from backup for validation
+                  if (parsedBackup.email) {
+                    sessionStorage.setItem('impersonation_target_email', parsedBackup.email);
+                  }
+                }
                 
                 // Set session using manual tokens
                 const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
@@ -173,6 +197,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 if (sessionData.session?.user) {
                   console.log('✅ AuthProvider - Manual magic link processing successful');
                   
+                  // **CRITICAL FIX**: Clear processing flag before validation
+                  sessionStorage.removeItem('magic_link_processing');
+                  
                   // Use setTimeout to defer state updates and prevent DOM conflicts
                   setTimeout(() => {
                     console.log('🔄 AuthProvider - Applying deferred auth state updates');
@@ -184,12 +211,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     setIsEmailVerified(sessionData.session.user.email_confirmed_at !== null);
                     sessionPersistenceService.updateSession(sessionData.session, sessionData.session.user);
                     
-                    // Handle impersonation flags if present (for manual magic link processing)
-                    if (impersonationBackup && hasImpersonationFlags) {
-                      console.log('🎭 AuthProvider - Setting impersonation state after manual auth');
+                    // **CRITICAL FIX**: Enhanced impersonation validation after manual auth
+                    if (parsedBackup) {
+                      console.log('🎭 AuthProvider - Validating impersonation state after manual auth');
                       
-                      // Use validation utility to determine proper action
-                      const validation = validateImpersonationState(sessionData.session.user.id, sessionData.session.user.email || '');
+                      const currentFlags = {
+                        active: sessionStorage.getItem('impersonation_active'),
+                        magicLink: sessionStorage.getItem('impersonation_magic_link'),
+                        backup: localStorage.getItem('impersonation_active_backup'),
+                        targetEmail: sessionStorage.getItem('impersonation_target_email')
+                      };
+                      
+                      console.log('🔍 AuthProvider - Current impersonation flags:', currentFlags);
+                      
+                      // **SESSION VALIDATION**: Check if authenticated user matches expected target
+                      const expectedTargetFromBackup = currentFlags.targetEmail || parsedBackup.email;
+                      const actualUserEmail = sessionData.session.user.email;
+                      const actualUserId = sessionData.session.user.id;
+                      
+                      console.log('🎯 AuthProvider - Session validation:', {
+                        expectedEmail: expectedTargetFromBackup,
+                        actualEmail: actualUserEmail,
+                        actualUserId,
+                        backupUserId: parsedBackup.user_id,
+                        isValidImpersonation: actualUserId !== parsedBackup.user_id
+                      });
+                      
+                      // Validate impersonation using enhanced validation with processing context
+                      const validation = validateImpersonationState(actualUserId, actualUserEmail || '', true);
                       
                       console.log('🔍 AuthProvider - Manual auth validation result:', validation);
                       
@@ -198,7 +247,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                         clearImpersonationFlags();
                       } else if (validation.shouldPersist && validation.isValid) {
                         console.log('✅ AuthProvider - Maintaining impersonation state after manual auth:', validation.reason);
-                        ensureImpersonationFlags(sessionData.session.user.email || '');
+                        ensureImpersonationFlags(actualUserEmail || expectedTargetFromBackup || '');
                       }
                     }
                     
@@ -217,6 +266,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             } catch (tokenError: any) {
               console.error('🔑 AuthProvider - Manual token processing failed:', tokenError);
               setAuthError(new Error(`Manual token processing failed: ${tokenError.message}`));
+              
+              // **CRITICAL FIX**: Clear processing flag on error
+              sessionStorage.removeItem('magic_link_processing');
               
               // Clean up URL on error
               cleanTokensFromUrl();
@@ -286,17 +338,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (event === 'SIGNED_IN' && newSession?.user) {
         console.log('🔐 AuthProvider - User signed in successfully');
         
-        // Validate and handle impersonation state using the validation utility
-        const validation = validateImpersonationState(newSession.user.id, newSession.user.email || '');
+        // **CRITICAL FIX**: Check if we're in magic link processing mode
+        const isMagicLinkProcessing = sessionStorage.getItem('magic_link_processing') === 'true';
+        
+        console.log('🎭 AuthProvider - Auth state change context:', {
+          event,
+          isMagicLinkProcessing,
+          userId: newSession.user.id,
+          userEmail: newSession.user.email
+        });
+        
+        // **CRITICAL FIX**: Enhanced validation with processing context
+        const validation = validateImpersonationState(
+          newSession.user.id, 
+          newSession.user.email || '', 
+          isMagicLinkProcessing
+        );
         
         console.log('🔍 AuthProvider - Impersonation validation result:', validation);
         
-        if (validation.shouldClear) {
+        if (validation.shouldClear && !isMagicLinkProcessing) {
           console.log('🧹 AuthProvider - Clearing impersonation state:', validation.reason);
           clearImpersonationFlags();
         } else if (validation.shouldPersist && validation.isValid) {
           console.log('✅ AuthProvider - Maintaining impersonation state:', validation.reason);
           ensureImpersonationFlags(newSession.user.email || '');
+        } else if (isMagicLinkProcessing) {
+          console.log('⏳ AuthProvider - Deferring validation during magic link processing');
         }
         
         setSession(newSession);

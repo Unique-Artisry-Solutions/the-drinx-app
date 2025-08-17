@@ -14,7 +14,11 @@ export interface ImpersonationValidationResult {
 /**
  * Validate current impersonation state against session and expected targets
  */
-export const validateImpersonationState = (currentUserId: string, currentUserEmail: string): ImpersonationValidationResult => {
+export const validateImpersonationState = (
+  currentUserId: string, 
+  currentUserEmail: string, 
+  isMagicLinkProcessing: boolean = false
+): ImpersonationValidationResult => {
   try {
     const backup = getImpersonationBackup();
     const hasImpersonationFlags = !!(
@@ -25,6 +29,17 @@ export const validateImpersonationState = (currentUserId: string, currentUserEma
     
     const expectedTargetEmail = sessionStorage.getItem('impersonation_target_email');
     const restoreRequested = sessionStorage.getItem('impersonation_restore_requested') === 'true';
+    
+    console.log('🔍 Impersonation validation context:', {
+      currentUserId,
+      currentUserEmail,
+      isMagicLinkProcessing,
+      hasBackup: !!backup,
+      hasFlags: hasImpersonationFlags,
+      expectedTargetEmail,
+      restoreRequested,
+      backupUserId: backup?.user_id
+    });
     
     // If restoration was requested, we should be restoring to admin
     if (restoreRequested) {
@@ -41,6 +56,33 @@ export const validateImpersonationState = (currentUserId: string, currentUserEma
           shouldPersist: false,
           shouldClear: true,
           reason: 'Restoration requested but user mismatch'
+        };
+      }
+    }
+    
+    // **CRITICAL FIX**: During magic link processing, be more lenient
+    if (isMagicLinkProcessing) {
+      console.log('🔄 Validation during magic link processing - being lenient');
+      
+      // If we have backup and we're processing, assume flags will be set properly
+      if (backup) {
+        const isActuallyImpersonating = backup.user_id !== currentUserId;
+        
+        if (!isActuallyImpersonating) {
+          return {
+            isValid: false,
+            shouldPersist: false,
+            shouldClear: true,
+            reason: 'User IDs match - not actually impersonating (during processing)'
+          };
+        }
+        
+        // During processing, allow impersonation even if flags aren't fully set yet
+        return {
+          isValid: true,
+          shouldPersist: true,
+          shouldClear: false,
+          reason: 'Valid impersonation during magic link processing'
         };
       }
     }
@@ -76,7 +118,8 @@ export const validateImpersonationState = (currentUserId: string, currentUserEma
       };
     }
     
-    // If we have flags but no backup, or backup but no flags, state is inconsistent
+    // **CRITICAL FIX**: If we have flags but no backup, or backup but no flags, state is inconsistent
+    // BUT during magic link processing, be more forgiving about temporary state
     if (hasImpersonationFlags && !backup) {
       return {
         isValid: false,
@@ -87,12 +130,23 @@ export const validateImpersonationState = (currentUserId: string, currentUserEma
     }
     
     if (backup && !hasImpersonationFlags) {
-      return {
-        isValid: false,
-        shouldPersist: false,
-        shouldClear: true,
-        reason: 'Backup present but no impersonation flags'
-      };
+      // **CRITICAL FIX**: During normal processing, this is an issue, but allow recovery
+      if (!isMagicLinkProcessing) {
+        console.log('🔄 Backup present but no flags - allowing flag restoration');
+        return {
+          isValid: true,
+          shouldPersist: true,
+          shouldClear: false,
+          reason: 'Backup present - restoring impersonation flags'
+        };
+      } else {
+        return {
+          isValid: false,
+          shouldPersist: false,
+          shouldClear: true,
+          reason: 'Backup present but no impersonation flags'
+        };
+      }
     }
     
     // No impersonation state detected
