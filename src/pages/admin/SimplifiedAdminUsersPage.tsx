@@ -11,8 +11,8 @@ const SimplifiedAdminUsersPage: React.FC = () => {
   console.log('🎯 SimplifiedAdminUsersPage component rendered');
   
   const { state, actions } = useSimpleAdmin('users');
-  const { userType, isUsingDevBypass } = useAuthenticatedUser();
-  const canImpersonate = userType === 'admin' && !isUsingDevBypass;
+  const { userType } = useAuthenticatedUser();
+  const canImpersonate = userType === 'admin';
 
   console.log('📊 SimplifiedAdminUsersPage state:', { 
     itemsCount: state.items?.length || 0, 
@@ -88,7 +88,7 @@ const SimplifiedAdminUsersPage: React.FC = () => {
           variant="secondary"
           size="sm"
           disabled={!canImpersonate}
-          title={!canImpersonate ? (userType !== 'admin' ? 'Requires admin role' : 'Disabled in Dev Mode bypass; sign in as real admin') : undefined}
+          title={!canImpersonate ? 'Requires admin role' : undefined}
           onClick={async () => {
             const targetId = window.prompt('Enter target user ID to impersonate:');
             if (!targetId) return;

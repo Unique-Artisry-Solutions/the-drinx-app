@@ -18,10 +18,10 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   fallbackPath = '/',
   fallbackComponent = null
 }) => {
-const { user, session, userType, isLoading, authStable, isAuthenticated, isUsingDevBypass } = useAuthenticatedUser();
+const { user, session, userType, isLoading, authStable, isAuthenticated } = useAuthenticatedUser();
 
 // Wait for loading to finish
-  if (isLoading && !isUsingDevBypass) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -30,12 +30,6 @@ const { user, session, userType, isLoading, authStable, isAuthenticated, isUsing
         </div>
       </div>
     );
-  }
-
-// Development bypass via hook
-  if (isUsingDevBypass) {
-    console.log('ProtectedRoute: Dev bypass active, allowing access');
-    return <>{children}</>;
   }
 
   // Wait for auth to stabilize
@@ -53,6 +47,7 @@ const { user, session, userType, isLoading, authStable, isAuthenticated, isUsing
   // Check authentication requirement
   if (requireAuth && !isAuthenticated) {
     // Store the current location for potential redirect after login
+    const location = useLocation();
     localStorage.setItem('auth_redirect', location.pathname);
     return <Navigate to={fallbackPath} replace />;
   }

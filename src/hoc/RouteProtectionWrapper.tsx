@@ -19,11 +19,11 @@ export const RouteProtectionWrapper: React.FC<RouteProtectionWrapperProps> = ({
   redirectTo = '/login',
   fallbackComponent = null
 }) => {
-const { user, session, userType, isLoading, authStable, isAuthenticated, isUsingDevBypass } = useAuthenticatedUser();
+const { user, session, userType, isLoading, authStable, isAuthenticated } = useAuthenticatedUser();
   const location = useLocation();
 
 // Wait for initialization/loading
-  if (isLoading && !isUsingDevBypass) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -32,12 +32,6 @@ const { user, session, userType, isLoading, authStable, isAuthenticated, isUsing
         </div>
       </div>
     );
-  }
-
-// Development mode bypass via hook
-  if (isUsingDevBypass) {
-    console.log('RouteProtectionWrapper: Dev bypass active, allowing access');
-    return <>{children}</>;
   }
 
   // Wait for auth to stabilize
@@ -52,7 +46,7 @@ const { user, session, userType, isLoading, authStable, isAuthenticated, isUsing
     );
   }
 
-const isAuthenticatedFlag = isAuthenticated;
+  const isAuthenticatedFlag = isAuthenticated;
 
 // Check authentication requirement
   if (requireAuth && !isAuthenticatedFlag) {
