@@ -44,64 +44,53 @@ export function clearImpersonationBackup() {
 /**
  * Restore impersonation by switching back to the backed up session
  */
-export async function restoreImpersonation(): Promise<boolean> {
-  const backup = getImpersonationBackup();
-  if (!backup) {
-    console.warn('No impersonation backup found');
-    // Still redirect to admin panel even without backup
-    window.location.href = '/admin/users';
-    return false;
-  }
-
+export const restoreImpersonation = async (): Promise<void> => {
   try {
-    console.log('Restoring impersonation session...');
+    console.log('🔄 Starting impersonation restoration...');
     
-    // Clear impersonation flags and session data
-    if (typeof window !== 'undefined') {
-      window.sessionStorage.removeItem('impersonation_active');
-      window.sessionStorage.removeItem('impersonation_target_email');
-      window.sessionStorage.removeItem('magic_link_impersonation');
-      window.sessionStorage.removeItem('captured_magic_tokens');
-      window.sessionStorage.removeItem('expecting_magic_link');
-      window.sessionStorage.removeItem('impersonation_start_time');
+    const backup = getImpersonationBackup();
+    if (!backup) {
+      console.error('❌ No impersonation backup found');
+      throw new Error('No impersonation backup found');
     }
-    
-    // First clear the current session to avoid conflicts
-    await supabase.auth.signOut();
-    
-    // Wait a moment for signOut to complete
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
-    // Set the backup session
-    const { data, error } = await supabase.auth.setSession({
-      access_token: backup.access_token,
-      refresh_token: backup.refresh_token
+
+    console.log('📦 Found impersonation backup:', {
+      adminUserId: backup.user_id,
+      adminEmail: backup.email,
+      backupTimestamp: backup.created_at
+    });
+
+    // Clear ALL impersonation flags and data comprehensively
+    clearImpersonationState();
+
+    // Call custom edge function to restore admin session
+    console.log('🔧 Calling restore-impersonation function...');
+    const { data, error } = await supabase.functions.invoke('restore-impersonation', {
+      body: { 
+        admin_user_id: backup.user_id,
+        admin_email: backup.email 
+      }
     });
 
     if (error) {
-      console.error('Failed to restore session:', error);
+      console.error('❌ Edge function error:', error);
       throw error;
     }
 
-    console.log('Impersonation session restored successfully');
-    clearImpersonationBackup();
-    
-    // Navigate back to where the admin was, with fallback to users page
-    const path = backup.return_path || '/admin/users';
-    
-    // Use replace instead of href to avoid page reload issues
-    window.location.replace(path);
-    return true;
-    
+    console.log('✅ Restore function response:', data);
+
+    if (data?.action_link) {
+      console.log('🔗 Magic link received, redirecting...');
+      window.location.href = data.action_link;
+    } else {
+      throw new Error('No magic link received from restore function');
+    }
+
   } catch (error) {
-    console.error('Failed to restore impersonation:', error);
-    clearImpersonationBackup();
-    
-    // Fallback: Force reload and redirect
-    window.location.href = '/admin/users';
-    return false;
+    console.error('❌ Failed to restore impersonation:', error);
+    throw error;
   }
-}
+};
 
 export async function impersonateUser(targetUserId: string): Promise<{ ok: boolean; error?: string }> {
   console.log('🎭 Starting impersonation process:', {
@@ -168,10 +157,30 @@ export async function impersonateUser(targetUserId: string): Promise<{ ok: boole
   return { ok: true };
 }
 
-export async function impersonationDiagnostics(targetUserId?: string): Promise<{ ok: boolean; data?: any; error?: string }> {
-  const { data, error } = await supabase.functions.invoke('impersonation-diagnostics', {
-    body: { target_user_id: targetUserId ?? null, test_link: false },
-  });
-  if (error) return { ok: false, error: error.message };
-  return { ok: true, data };
-}
+export const clearImpersonationState = (): void => {
+  console.log('🧹 Clearing comprehensive impersonation state...');
+  
+  try {
+    // Clear all session storage flags (including new ones)
+    sessionStorage.removeItem('impersonation_active');
+    sessionStorage.removeItem('impersonation_magic_link');
+    sessionStorage.removeItem('magiclink_processing');
+    sessionStorage.removeItem('expecting_magic_link');
+    sessionStorage.removeItem('magiclink_tokens');
+    sessionStorage.removeItem('processing_magic_link');
+    sessionStorage.removeItem('magic_link_impersonation');
+    sessionStorage.removeItem('captured_magic_tokens');
+    sessionStorage.removeItem('impersonation_target_email');
+    sessionStorage.removeItem('impersonation_start_time');
+    
+    // Clear localStorage backup and additional flags
+    localStorage.removeItem('impersonation_backup');
+    localStorage.removeItem('impersonation_active_backup');
+    localStorage.removeItem('impersonation_magic_link_backup');
+    localStorage.removeItem('magiclink_tokens_backup');
+    
+    console.log('✅ Comprehensive impersonation state cleared successfully');
+  } catch (error) {
+    console.error('❌ Failed to clear impersonation state:', error);
+  }
+};

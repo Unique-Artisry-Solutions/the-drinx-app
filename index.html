@@ -24,6 +24,69 @@
 
   <body>
     <div id="root"></div>
+    
+    <!-- CRITICAL: Magic Link Token Capture - Must run BEFORE React -->
+    <script>
+      (function() {
+        // Immediate synchronous token capture to prevent cross-domain loss
+        const currentUrl = window.location.href;
+        const urlHash = window.location.hash;
+        const urlSearch = window.location.search;
+        
+        console.log('🔍 [EARLY] Token capture script running:', {
+          url: currentUrl,
+          hash: urlHash,
+          search: urlSearch,
+          domain: window.location.hostname
+        });
+        
+        // Check for magic link tokens in URL hash
+        const hashParams = new URLSearchParams(urlHash.substring(1));
+        const searchParams = new URLSearchParams(urlSearch);
+        
+        const accessToken = hashParams.get('access_token') || searchParams.get('access_token');
+        const refreshToken = hashParams.get('refresh_token') || searchParams.get('refresh_token');
+        const tokenType = hashParams.get('token_type') || searchParams.get('token_type');
+        const type = hashParams.get('type') || searchParams.get('type');
+        
+        if (accessToken || refreshToken) {
+          console.log('🔗 [EARLY] Magic link tokens detected, preserving for impersonation');
+          
+          // Store tokens immediately in multiple locations as backup
+          const tokenData = {
+            access_token: accessToken,
+            refresh_token: refreshToken,
+            token_type: tokenType,
+            type: type,
+            captured_at: new Date().toISOString(),
+            original_url: currentUrl,
+            original_hash: urlHash,
+            domain: window.location.hostname
+          };
+          
+          try {
+            // Primary storage
+            sessionStorage.setItem('magiclink_tokens', JSON.stringify(tokenData));
+            // Backup storage for cross-domain scenarios
+            localStorage.setItem('magiclink_tokens_backup', JSON.stringify(tokenData));
+            
+            // Check if this might be an impersonation magic link
+            const impersonationBackup = localStorage.getItem('impersonation_backup');
+            if (impersonationBackup) {
+              console.log('🎭 [EARLY] Impersonation backup found, flagging magic link as impersonation');
+              sessionStorage.setItem('impersonation_magic_link', 'true');
+              sessionStorage.setItem('impersonation_active', 'true');
+              localStorage.setItem('impersonation_magic_link_backup', 'true');
+            }
+            
+            console.log('✅ [EARLY] Tokens preserved successfully');
+          } catch (e) {
+            console.error('❌ [EARLY] Failed to preserve tokens:', e);
+          }
+        }
+      })();
+    </script>
+    
     <!-- IMPORTANT: DO NOT REMOVE THIS SCRIPT TAG OR THIS VERY COMMENT! -->
     <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
     <script type="module" src="/src/main.tsx"></script>

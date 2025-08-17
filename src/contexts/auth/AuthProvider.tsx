@@ -8,6 +8,7 @@ import { authCache } from './authCache';
 import { debouncedToast } from '@/utils/debouncedToast';
 import { inferUserType } from '@/utils/auth/admin';
 import { DevAutoLoginService } from '@/services/DevAutoLoginService';
+import { checkMagicLinkImpersonation } from './checkMagicLinkImpersonation';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -81,7 +82,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         // Check if we're processing a magic link (skip dev auto-login in that case)
         const urlHash = window.location.hash;
-        const hasMagicLinkTokens = urlHash.includes('access_token=') && urlHash.includes('type=magiclink');
+        const urlSearch = window.location.search;
+        const hasMagicLinkTokens = urlHash.includes('access_token=') || urlSearch.includes('access_token=');
         const isMagicLinkProcessing = typeof window !== 'undefined' && window.sessionStorage.getItem('processing_magic_link') === 'true';
         const expectingMagicLink = typeof window !== 'undefined' && window.sessionStorage.getItem('expecting_magic_link') === 'true';
         
@@ -89,7 +91,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           hasMagicLinkTokens,
           isMagicLinkProcessing,
           expectingMagicLink,
-          urlHash: urlHash ? urlHash.substring(0, 50) + '...' : 'empty',
+          urlHash: urlHash.substring(0, 50) + '...',
           currentDomain: window.location.hostname
         });
         
@@ -150,45 +152,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log('🔐 AuthProvider - Auth state changed:', event, !!newSession);
       
       if (event === 'SIGNED_IN' && newSession?.user) {
-        console.log('🔐 AuthProvider - User signed in, updating state');
+        console.log('🔐 AuthProvider - User signed in successfully');
         
-        // Enhanced magic link detection for impersonation
-        const isMagicLinkAuth = newSession.user.aud === 'authenticated' && 
-          newSession.user.app_metadata?.providers?.includes('email') &&
-          (typeof window !== 'undefined' && 
-           (window.sessionStorage.getItem('processing_magic_link') === 'true' ||
-            window.sessionStorage.getItem('expecting_magic_link') === 'true' ||
-            window.location.hash.includes('type=magiclink')));
-            
-        console.log('🔍 AuthProvider - Magic link detection in SIGNED_IN:', {
-          isMagicLinkAuth,
-          userEmail: newSession.user.email,
-          hasProcessingFlag: typeof window !== 'undefined' && window.sessionStorage.getItem('processing_magic_link') === 'true',
-          hasExpectingFlag: typeof window !== 'undefined' && window.sessionStorage.getItem('expecting_magic_link') === 'true',
-          hasHashTokens: typeof window !== 'undefined' && window.location.hash.includes('type=magiclink')
-        });
+        // CRITICAL: Immediate impersonation detection and flag setting
+        const isMagicLinkImpersonation = checkMagicLinkImpersonation();
+        console.log('🎭 AuthProvider - Impersonation check result:', isMagicLinkImpersonation);
         
-        // Check for active impersonation context
-        let isImpersonationActive = false;
-        if (typeof window !== 'undefined' && isMagicLinkAuth) {
-          try {
-            const impersonationBackup = localStorage.getItem('impersonation_backup');
-            if (impersonationBackup) {
-              const backup = JSON.parse(impersonationBackup);
-              console.log('🎭 AuthProvider - Found impersonation backup during magic link sign-in:', {
-                adminUserId: backup.user_id,
-                targetUserEmail: newSession.user.email,
-                hasReturnPath: !!backup.return_path
-              });
-              
-              // Mark impersonation as successfully active
-              isImpersonationActive = true;
-              window.sessionStorage.setItem('impersonation_active', 'true');
-              window.sessionStorage.setItem('impersonation_target_email', newSession.user.email || '');
-            }
-          } catch (error) {
-            console.error('🔐 AuthProvider - Error checking impersonation backup:', error);
-          }
+        if (isMagicLinkImpersonation) {
+          console.log('🎭 AuthProvider - Magic link impersonation confirmed, setting all flags immediately');
+          // Set multiple flags for redundancy
+          sessionStorage.setItem('impersonation_active', 'true');
+          sessionStorage.setItem('impersonation_magic_link', 'true');
+          localStorage.setItem('impersonation_active_backup', 'true');
+          
+          // Ensure impersonation state is immediately available
+          setTimeout(() => {
+            console.log('🎭 AuthProvider - Verifying impersonation flags are set');
+            const flags = {
+              session_active: sessionStorage.getItem('impersonation_active'),
+              session_magic: sessionStorage.getItem('impersonation_magic_link'),
+              local_backup: localStorage.getItem('impersonation_active_backup')
+            };
+            console.log('🎭 AuthProvider - Impersonation flags verification:', flags);
+          }, 0);
         }
         
         setSession(newSession);
@@ -201,11 +187,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Mark auth as stable for sign-ins (important for impersonation)
         setAuthStable(true);
         setNavigationReady(true);
-        
-        // Log successful impersonation activation
-        if (isImpersonationActive) {
-          console.log('✅ AuthProvider - Impersonation successfully activated after magic link authentication');
-        }
         
       } else if (event === 'SIGNED_OUT') {
         console.log('🔐 AuthProvider - User signed out, clearing state');

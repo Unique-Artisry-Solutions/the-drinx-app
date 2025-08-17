@@ -12,36 +12,45 @@ export const useImpersonationState = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Only check impersonation state when auth is stable
     if (!authStable) {
       setIsLoading(true);
       return;
     }
 
-    try {
+    const checkImpersonation = () => {
       const backup = getImpersonationBackup();
-      setImpersonationBackup(backup);
       
-      // Enhanced impersonation detection including magic link flows
-      const basicImpersonation = Boolean(
+      // Basic impersonation check: backup exists and current user is different
+      const basicImpersonation = !!(
         backup && 
         user && 
-        isAuthenticated && 
         backup.user_id !== user.id
       );
+
+      // Enhanced magic link impersonation check with multiple flag sources
+      const impersonationFlags = {
+        sessionActive: sessionStorage.getItem('impersonation_active'),
+        sessionMagicLink: sessionStorage.getItem('impersonation_magic_link'),
+        localBackup: localStorage.getItem('impersonation_active_backup'),
+        localMagicLink: localStorage.getItem('impersonation_magic_link_backup')
+      };
       
-      // Check for active impersonation from magic link flow
-      const magicLinkImpersonation = Boolean(
-        typeof window !== 'undefined' &&
-        window.sessionStorage.getItem('impersonation_active') === 'true' &&
-        backup &&
-        user &&
-        isAuthenticated
+      const hasAnyImpersonationFlag = !!(
+        impersonationFlags.sessionActive || 
+        impersonationFlags.sessionMagicLink ||
+        impersonationFlags.localBackup ||
+        impersonationFlags.localMagicLink
       );
-      
+
+      const magicLinkImpersonation = !!(
+        backup && 
+        isAuthenticated && 
+        hasAnyImpersonationFlag
+      );
+
       const finalImpersonating = basicImpersonation || magicLinkImpersonation;
-      
-      console.log('🎭 useImpersonationState - Impersonation check:', {
+
+      console.log('🎭 useImpersonationState - Enhanced impersonation check:', {
         basicImpersonation,
         magicLinkImpersonation,
         finalImpersonating,
@@ -50,18 +59,15 @@ export const useImpersonationState = () => {
         isAuthenticated,
         backupUserId: backup?.user_id,
         currentUserId: user?.id,
-        impersonationActiveFlag: typeof window !== 'undefined' ? window.sessionStorage.getItem('impersonation_active') : null
+        impersonationFlags
       });
-      
+
       setIsImpersonating(finalImpersonating);
-      setIsLoading(false);
-      
-    } catch (error) {
-      console.error('Error checking impersonation state:', error);
-      setIsImpersonating(false);
-      setImpersonationBackup(null);
-      setIsLoading(false);
-    }
+      setImpersonationBackup(backup);
+    };
+
+    checkImpersonation();
+    setIsLoading(false);
   }, [user, isAuthenticated, authStable]);
 
   return {

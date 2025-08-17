@@ -34,9 +34,11 @@ Deno.serve(async (req) => {
     console.log(`Impersonation request for user: ${target_user_id}`)
 
     // Get current request origin to determine the correct redirect URL
-    // CRITICAL: Always prioritize lovable.app domain to prevent cross-domain token loss
+    // CRITICAL: Ensure consistent domain to prevent cross-domain token loss
     const origin = req.headers.get('origin') || req.headers.get('referer')
     const userAgent = req.headers.get('user-agent') || ''
+    
+    // CRITICAL: Always use lovable.app domain for magic links to prevent cross-domain issues
     let redirectTo = 'https://id-preview--f6fbe853-0047-490f-9d7f-c7bab9534659.lovable.app'
     
     console.log(`🔍 Impersonation domain detection:`, {
@@ -55,17 +57,14 @@ Deno.serve(async (req) => {
           isLovableProject: url.hostname.includes('lovableproject.com')
         })
         
-        // ALWAYS prioritize lovable.app domain to prevent cross-domain redirect issues
+        // CRITICAL: Always use lovable.app for consistent domain behavior
         if (url.hostname.includes('lovable.app')) {
           redirectTo = url.origin
           console.log(`✅ Using lovable.app domain for impersonation: ${redirectTo}`)
-        } else if (url.hostname.includes('lovableproject.com')) {
-          // If coming from lovableproject.com, still redirect to lovable.app to avoid cross-domain issues
-          console.log(`⚠️  Origin is lovableproject.com, but redirecting to lovable.app to prevent token loss`)
-          // Keep the default lovable.app redirect
         } else {
-          // For any other domain, use lovable.app as well
-          console.log(`⚠️  Unknown domain origin, using lovable.app: ${url.hostname}`)
+          // For any other domain (including lovableproject.com), force lovable.app
+          console.log(`🔄 Forcing lovable.app redirect from ${url.hostname} to prevent cross-domain token loss`)
+          // redirectTo already set to lovable.app default
         }
       } catch (e) {
         console.error(`❌ Failed to parse origin: ${e}`)
@@ -108,11 +107,17 @@ Deno.serve(async (req) => {
     console.log(`Magic link generated successfully for ${targetUser.user.email}`)
     console.log(`Redirect URL: ${redirectTo}`)
 
+    // Extract domain from the magic link for validation
+    const magicLinkUrl = data.properties?.action_link || ''
+    const linkDomain = magicLinkUrl ? new URL(magicLinkUrl).hostname : 'unknown'
+    
     return new Response(
       JSON.stringify({ 
-        action_link: data.properties?.action_link,
-        redirect_to: redirectTo,
-        target_email: targetUser.user.email 
+        hasActionLink: !!data.properties?.action_link,
+        actionLink: data.properties?.action_link,
+        redirectTo: redirectTo,
+        targetEmail: targetUser.user.email,
+        linkDomain: linkDomain
       }),
       { 
         status: 200,

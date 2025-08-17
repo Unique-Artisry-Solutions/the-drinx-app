@@ -2,180 +2,106 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthenticatedUser } from '@/hooks/useAuthenticatedUser';
 
-/**
- * Component to handle magic link authentication for impersonation
- * This component processes the magic link tokens in the URL fragment
- */
+interface TokenDetectionResult {
+  method: 'URL_HASH' | 'URL_SEARCH' | 'STORED_TOKENS';
+  hasAccessToken: boolean;
+  hasRefreshToken: boolean;
+  tokenType: string | null;
+  type: string | null;
+  fullHash: string;
+  currentDomain: string;
+  fullUrl: string;
+}
 export const MagicLinkHandler: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isProcessingMagicLink, setIsProcessingMagicLink] = useState(false);
   const [shouldRedirect, setShouldRedirect] = useState(false);
   const { isAuthenticated, authStable, userType } = useAuthenticatedUser();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    // IMMEDIATE token capture before Supabase processes them
-    const captureTokensImmediately = () => {
-      const urlHash = window.location.hash;
-      
-      // Immediate synchronous capture
-      if (urlHash.includes('access_token=') && urlHash.includes('type=magiclink')) {
-        const searchParams = new URLSearchParams(urlHash.substring(1));
-        const tokens = {
-          accessToken: searchParams.get('access_token'),
-          refreshToken: searchParams.get('refresh_token'),
-          tokenType: searchParams.get('token_type'),
-          type: searchParams.get('type')
-        };
-        
-        console.log('⚡ MagicLinkHandler - IMMEDIATE token capture:', {
-          hasAccessToken: !!tokens.accessToken,
-          hasRefreshToken: !!tokens.refreshToken,
-          tokenType: tokens.tokenType,
-          type: tokens.type,
-          timestamp: Date.now(),
-          fullHash: urlHash.substring(0, 100) + '...'
+  const detectTokens = (): TokenDetectionResult => {
+    const urlHash = window.location.hash;
+    const urlSearch = window.location.search;
+    
+    // First, check if tokens were already captured by the early script
+    const storedTokens = sessionStorage.getItem('magiclink_tokens') || localStorage.getItem('magiclink_tokens_backup');
+    if (storedTokens) {
+      try {
+        const tokenData = JSON.parse(storedTokens);
+        console.log('🔍 MagicLinkHandler - Using pre-captured tokens:', {
+          source: sessionStorage.getItem('magiclink_tokens') ? 'session' : 'localStorage',
+          hasAccess: !!tokenData.access_token,
+          hasRefresh: !!tokenData.refresh_token,
+          capturedAt: tokenData.captured_at
         });
         
-        // Store tokens immediately before Supabase consumes them
-        if (tokens.accessToken && tokens.refreshToken) {
-          window.sessionStorage.setItem('captured_magic_tokens', JSON.stringify({
-            ...tokens,
-            captureTime: Date.now(),
-            domain: window.location.hostname
-          }));
-          
-          // Check for impersonation context
-          const impersonationBackup = localStorage.getItem('impersonation_backup');
-          if (impersonationBackup) {
-            console.log('🎭 MagicLinkHandler - Impersonation context detected with magic link!');
-            window.sessionStorage.setItem('magic_link_impersonation', 'true');
-          }
-        }
-        
-        return tokens;
-      }
-      
-      return null;
-    };
-    
-    // Enhanced magic link detection with multiple fallback methods
-    const detectMagicLinkTokens = () => {
-      // First try immediate capture
-      const immediateTokens = captureTokensImmediately();
-      if (immediateTokens?.accessToken) {
-        return immediateTokens;
-      }
-      
-      const urlHash = window.location.hash;
-      const searchParams = new URLSearchParams(urlHash.substring(1));
-      
-      // Primary method: Check URL hash
-      const accessToken = searchParams.get('access_token');
-      const refreshToken = searchParams.get('refresh_token');
-      const tokenType = searchParams.get('token_type');
-      const type = searchParams.get('type');
-      
-      console.log('🔍 MagicLinkHandler - Enhanced token detection:', {
-        method: 'URL_HASH',
-        hasAccessToken: !!accessToken,
-        hasRefreshToken: !!refreshToken,
-        tokenType,
-        type,
-        fullHash: urlHash,
-        currentDomain: window.location.hostname,
-        fullUrl: window.location.href
-      });
-      
-      // Backup method: Check captured tokens
-      let capturedTokens = null;
-      try {
-        const stored = window.sessionStorage.getItem('captured_magic_tokens');
-        if (stored) {
-          capturedTokens = JSON.parse(stored);
-          console.log('🔄 Found captured magic link tokens:', {
-            hasCapturedTokens: !!capturedTokens,
-            captureMethod: 'IMMEDIATE_CAPTURE',
-            captureTime: capturedTokens.captureTime
-          });
-        }
+        return {
+          method: 'STORED_TOKENS',
+          hasAccessToken: !!tokenData.access_token,
+          hasRefreshToken: !!tokenData.refresh_token,
+          tokenType: tokenData.token_type,
+          type: tokenData.type,
+          fullHash: tokenData.original_hash || '',
+          currentDomain: window.location.hostname,
+          fullUrl: window.location.href
+        };
       } catch (e) {
-        console.warn('Failed to parse captured tokens:', e);
+        console.error('🔍 MagicLinkHandler - Failed to parse stored tokens:', e);
       }
-      
-      // Fallback method: Check session storage backup
-      let backupTokens = null;
-      try {
-        const storedTokens = window.sessionStorage.getItem('magic_link_backup');
-        if (storedTokens) {
-          backupTokens = JSON.parse(storedTokens);
-          console.log('🔄 Found backup magic link tokens in session storage:', {
-            hasBackupTokens: !!backupTokens,
-            backupMethod: 'SESSION_STORAGE'
-          });
-        }
-      } catch (e) {
-        console.warn('Failed to parse backup tokens:', e);
-      }
-      
-      // Use tokens in priority order: immediate > url > captured > backup
-      const finalTokens = {
-        accessToken: accessToken || capturedTokens?.accessToken || backupTokens?.access_token,
-        refreshToken: refreshToken || capturedTokens?.refreshToken || backupTokens?.refresh_token,
-        tokenType: tokenType || capturedTokens?.tokenType || backupTokens?.token_type,
-        type: type || capturedTokens?.type || backupTokens?.type
-      };
-      
-      return finalTokens;
+    }
+    
+    // Fallback to URL detection
+    let params = new URLSearchParams(urlHash.substring(1));
+    let method: 'URL_HASH' | 'URL_SEARCH' = 'URL_HASH';
+    
+    // Fallback to URL search params
+    if (!params.get('access_token')) {
+      params = new URLSearchParams(urlSearch);
+      method = 'URL_SEARCH';
+    }
+    
+    const accessToken = params.get('access_token');
+    const refreshToken = params.get('refresh_token');
+    const tokenType = params.get('token_type');
+    const type = params.get('type');
+    
+    return {
+      method,
+      hasAccessToken: !!accessToken,
+      hasRefreshToken: !!refreshToken,
+      tokenType,
+      type,
+      fullHash: urlHash,
+      currentDomain: window.location.hostname,
+      fullUrl: window.location.href
     };
+  };
+
+  useEffect(() => {
+    const tokens = detectTokens();
     
-    const tokens = detectMagicLinkTokens();
+    console.log('🔍 MagicLinkHandler - Enhanced token detection:', tokens);
     
-    if (tokens.accessToken && tokens.refreshToken && tokens.tokenType === 'bearer' && tokens.type === 'magiclink') {
+    if (tokens.hasAccessToken && tokens.hasRefreshToken && tokens.tokenType === 'bearer' && tokens.type === 'magiclink') {
       console.log('✅ Magic link tokens detected, processing authentication');
       setIsProcessingMagicLink(true);
       
       // Set flag to prevent dev auto-login interference
       if (typeof window !== 'undefined') {
         window.sessionStorage.setItem('processing_magic_link', 'true');
-        
-        // Store tokens as backup in case of cross-domain issues
-        window.sessionStorage.setItem('magic_link_backup', JSON.stringify({
-          access_token: tokens.accessToken,
-          refresh_token: tokens.refreshToken,
-          token_type: tokens.tokenType,
-          type: tokens.type,
-          timestamp: Date.now()
-        }));
       }
       
       // Clean the URL after a delay to allow Supabase to process the tokens
       setTimeout(() => {
-        const currentUrl = new URL(window.location.href);
-        const cleanUrl = `${currentUrl.origin}${currentUrl.pathname}${currentUrl.search}`;
+        const cleanUrl = `${window.location.origin}${window.location.pathname}${window.location.search}`;
         window.history.replaceState({}, document.title, cleanUrl);
         console.log('🧹 Magic link processing completed, URL cleaned');
         setIsProcessingMagicLink(false);
         setShouldRedirect(true);
         
-        // Clear the magic link processing flag and backup tokens
         if (typeof window !== 'undefined') {
           window.sessionStorage.removeItem('processing_magic_link');
-          window.sessionStorage.removeItem('magic_link_backup');
         }
-      }, 3000); // Increased timeout for better stability
-    } else if (window.location.hash) {
-      // Log any other hash parameters for debugging
-      console.log('❓ Non-magic-link hash detected:', {
-        hash: window.location.hash,
-        parsedParams: Object.fromEntries(new URLSearchParams(window.location.hash.substring(1)).entries())
-      });
-    } else {
-      // Check if we're expecting a magic link but don't have tokens (cross-domain issue)
-      const expectingMagicLink = window.sessionStorage.getItem('expecting_magic_link');
-      if (expectingMagicLink) {
-        console.warn('⚠️  Expected magic link tokens but none found - possible cross-domain issue');
-        window.sessionStorage.removeItem('expecting_magic_link');
-      }
+      }, 3000);
     }
   }, []);
 
