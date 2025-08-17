@@ -13,8 +13,59 @@ export const MagicLinkHandler: React.FC<{ children: React.ReactNode }> = ({ chil
   const navigate = useNavigate();
 
   useEffect(() => {
+    // IMMEDIATE token capture before Supabase processes them
+    const captureTokensImmediately = () => {
+      const urlHash = window.location.hash;
+      
+      // Immediate synchronous capture
+      if (urlHash.includes('access_token=') && urlHash.includes('type=magiclink')) {
+        const searchParams = new URLSearchParams(urlHash.substring(1));
+        const tokens = {
+          accessToken: searchParams.get('access_token'),
+          refreshToken: searchParams.get('refresh_token'),
+          tokenType: searchParams.get('token_type'),
+          type: searchParams.get('type')
+        };
+        
+        console.log('⚡ MagicLinkHandler - IMMEDIATE token capture:', {
+          hasAccessToken: !!tokens.accessToken,
+          hasRefreshToken: !!tokens.refreshToken,
+          tokenType: tokens.tokenType,
+          type: tokens.type,
+          timestamp: Date.now(),
+          fullHash: urlHash.substring(0, 100) + '...'
+        });
+        
+        // Store tokens immediately before Supabase consumes them
+        if (tokens.accessToken && tokens.refreshToken) {
+          window.sessionStorage.setItem('captured_magic_tokens', JSON.stringify({
+            ...tokens,
+            captureTime: Date.now(),
+            domain: window.location.hostname
+          }));
+          
+          // Check for impersonation context
+          const impersonationBackup = localStorage.getItem('impersonation_backup');
+          if (impersonationBackup) {
+            console.log('🎭 MagicLinkHandler - Impersonation context detected with magic link!');
+            window.sessionStorage.setItem('magic_link_impersonation', 'true');
+          }
+        }
+        
+        return tokens;
+      }
+      
+      return null;
+    };
+    
     // Enhanced magic link detection with multiple fallback methods
     const detectMagicLinkTokens = () => {
+      // First try immediate capture
+      const immediateTokens = captureTokensImmediately();
+      if (immediateTokens?.accessToken) {
+        return immediateTokens;
+      }
+      
       const urlHash = window.location.hash;
       const searchParams = new URLSearchParams(urlHash.substring(1));
       
@@ -35,7 +86,23 @@ export const MagicLinkHandler: React.FC<{ children: React.ReactNode }> = ({ chil
         fullUrl: window.location.href
       });
       
-      // Backup method: Check if we have tokens in session storage (for cross-domain scenarios)
+      // Backup method: Check captured tokens
+      let capturedTokens = null;
+      try {
+        const stored = window.sessionStorage.getItem('captured_magic_tokens');
+        if (stored) {
+          capturedTokens = JSON.parse(stored);
+          console.log('🔄 Found captured magic link tokens:', {
+            hasCapturedTokens: !!capturedTokens,
+            captureMethod: 'IMMEDIATE_CAPTURE',
+            captureTime: capturedTokens.captureTime
+          });
+        }
+      } catch (e) {
+        console.warn('Failed to parse captured tokens:', e);
+      }
+      
+      // Fallback method: Check session storage backup
       let backupTokens = null;
       try {
         const storedTokens = window.sessionStorage.getItem('magic_link_backup');
@@ -50,12 +117,12 @@ export const MagicLinkHandler: React.FC<{ children: React.ReactNode }> = ({ chil
         console.warn('Failed to parse backup tokens:', e);
       }
       
-      // Use primary tokens if available, otherwise use backup
+      // Use tokens in priority order: immediate > url > captured > backup
       const finalTokens = {
-        accessToken: accessToken || backupTokens?.access_token,
-        refreshToken: refreshToken || backupTokens?.refresh_token,
-        tokenType: tokenType || backupTokens?.token_type,
-        type: type || backupTokens?.type
+        accessToken: accessToken || capturedTokens?.accessToken || backupTokens?.access_token,
+        refreshToken: refreshToken || capturedTokens?.refreshToken || backupTokens?.refresh_token,
+        tokenType: tokenType || capturedTokens?.tokenType || backupTokens?.token_type,
+        type: type || capturedTokens?.type || backupTokens?.type
       };
       
       return finalTokens;
@@ -112,15 +179,33 @@ export const MagicLinkHandler: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, []);
 
-  // Handle post-authentication redirect
+  // Handle post-authentication redirect with impersonation awareness
   useEffect(() => {
     if (shouldRedirect && authStable && isAuthenticated && userType) {
       console.log('🔄 MagicLinkHandler: Redirecting authenticated user after magic link', { userType });
+      
+      // Check if this is an impersonation flow
+      const isImpersonation = window.sessionStorage.getItem('magic_link_impersonation') === 'true' ||
+                             window.sessionStorage.getItem('impersonation_active') === 'true';
+      
+      if (isImpersonation) {
+        console.log('🎭 MagicLinkHandler: Impersonation detected, redirecting to target user dashboard');
+        
+        // Clear magic link impersonation flag but keep impersonation_active for banner
+        window.sessionStorage.removeItem('magic_link_impersonation');
+      }
       
       const dashboardPath = 
         userType === 'admin' ? '/admin/system-breakdown' :
         userType === 'establishment' ? '/establishment/dashboard' :
         userType === 'promoter' ? '/promoter/dashboard' : '/explore';
+      
+      console.log('🎯 MagicLinkHandler: Final redirect decision:', {
+        userType,
+        dashboardPath,
+        isImpersonation,
+        targetEmail: window.sessionStorage.getItem('impersonation_target_email')
+      });
       
       navigate(dashboardPath, { replace: true });
       setShouldRedirect(false);

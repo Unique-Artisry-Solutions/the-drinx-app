@@ -151,6 +151,46 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (event === 'SIGNED_IN' && newSession?.user) {
         console.log('🔐 AuthProvider - User signed in, updating state');
+        
+        // Enhanced magic link detection for impersonation
+        const isMagicLinkAuth = newSession.user.aud === 'authenticated' && 
+          newSession.user.app_metadata?.providers?.includes('email') &&
+          (typeof window !== 'undefined' && 
+           (window.sessionStorage.getItem('processing_magic_link') === 'true' ||
+            window.sessionStorage.getItem('expecting_magic_link') === 'true' ||
+            window.location.hash.includes('type=magiclink')));
+            
+        console.log('🔍 AuthProvider - Magic link detection in SIGNED_IN:', {
+          isMagicLinkAuth,
+          userEmail: newSession.user.email,
+          hasProcessingFlag: typeof window !== 'undefined' && window.sessionStorage.getItem('processing_magic_link') === 'true',
+          hasExpectingFlag: typeof window !== 'undefined' && window.sessionStorage.getItem('expecting_magic_link') === 'true',
+          hasHashTokens: typeof window !== 'undefined' && window.location.hash.includes('type=magiclink')
+        });
+        
+        // Check for active impersonation context
+        let isImpersonationActive = false;
+        if (typeof window !== 'undefined' && isMagicLinkAuth) {
+          try {
+            const impersonationBackup = localStorage.getItem('impersonation_backup');
+            if (impersonationBackup) {
+              const backup = JSON.parse(impersonationBackup);
+              console.log('🎭 AuthProvider - Found impersonation backup during magic link sign-in:', {
+                adminUserId: backup.user_id,
+                targetUserEmail: newSession.user.email,
+                hasReturnPath: !!backup.return_path
+              });
+              
+              // Mark impersonation as successfully active
+              isImpersonationActive = true;
+              window.sessionStorage.setItem('impersonation_active', 'true');
+              window.sessionStorage.setItem('impersonation_target_email', newSession.user.email || '');
+            }
+          } catch (error) {
+            console.error('🔐 AuthProvider - Error checking impersonation backup:', error);
+          }
+        }
+        
         setSession(newSession);
         setUser(newSession.user);
         setUserType(inferUserType(newSession.user));
@@ -161,6 +201,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Mark auth as stable for sign-ins (important for impersonation)
         setAuthStable(true);
         setNavigationReady(true);
+        
+        // Log successful impersonation activation
+        if (isImpersonationActive) {
+          console.log('✅ AuthProvider - Impersonation successfully activated after magic link authentication');
+        }
         
       } else if (event === 'SIGNED_OUT') {
         console.log('🔐 AuthProvider - User signed out, clearing state');

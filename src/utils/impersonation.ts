@@ -56,6 +56,16 @@ export async function restoreImpersonation(): Promise<boolean> {
   try {
     console.log('Restoring impersonation session...');
     
+    // Clear impersonation flags and session data
+    if (typeof window !== 'undefined') {
+      window.sessionStorage.removeItem('impersonation_active');
+      window.sessionStorage.removeItem('impersonation_target_email');
+      window.sessionStorage.removeItem('magic_link_impersonation');
+      window.sessionStorage.removeItem('captured_magic_tokens');
+      window.sessionStorage.removeItem('expecting_magic_link');
+      window.sessionStorage.removeItem('impersonation_start_time');
+    }
+    
     // First clear the current session to avoid conflicts
     await supabase.auth.signOut();
     
