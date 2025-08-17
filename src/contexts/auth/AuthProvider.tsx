@@ -7,6 +7,7 @@ import { sessionPersistenceService } from '@/services/SessionPersistenceService'
 import { authCache } from './authCache';
 import { debouncedToast } from '@/utils/debouncedToast';
 import { inferUserType } from '@/utils/auth/admin';
+import { DevAutoLoginService } from '@/services/DevAutoLoginService';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -24,7 +25,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   
   const initializationRef = useRef(false);
 
-  // Initialize auth state - simplified and more robust
+  // Initialize auth state - simplified and more robust with dev auto-login
   const initializeAuth = useCallback(async () => {
     if (initializationRef.current) return;
     initializationRef.current = true;
@@ -69,16 +70,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         console.log('🔐 AuthProvider - Auth state set successfully');
       } else {
-        console.log('🔐 AuthProvider - No session found, user not authenticated');
+        console.log('🔐 AuthProvider - No session found, checking for dev auto-login');
         
-        // Clear auth state
+        // Clear auth state first
         setSession(null);
         setUser(null);
         setUserType('individual');
         setIsEmailVerified(false);
-        
-        // Clear persistence
         sessionPersistenceService.clearSession();
+        
+        // Initialize development auto-login if in dev mode
+        if (DevAutoLoginService.isDevelopmentMode()) {
+          console.log('🔐 AuthProvider - Development mode detected, initializing auto-login');
+          
+          // Check if there's a stored dev user type, otherwise default to admin
+          const storedDevType = DevAutoLoginService.getCurrentDevUserType();
+          if (!storedDevType) {
+            console.log('🔐 AuthProvider - No stored dev user type, auto-logging in as admin');
+            await DevAutoLoginService.autoLogin('admin');
+          } else {
+            console.log('🔐 AuthProvider - Found stored dev user type, initializing auto-login');
+            await DevAutoLoginService.initializeAutoLogin();
+          }
+          
+          // After auto-login attempt, check for session again
+          const { data: { session: devSession } } = await supabase.auth.getSession();
+          if (devSession?.user) {
+            console.log('🔐 AuthProvider - Dev auto-login successful, setting auth state');
+            setSession(devSession);
+            setUser(devSession.user);
+            setUserType(inferUserType(devSession.user));
+            setIsEmailVerified(devSession.user.email_confirmed_at !== null);
+            sessionPersistenceService.updateSession(devSession, devSession.user);
+          }
+        }
       }
 
     } catch (error: any) {
