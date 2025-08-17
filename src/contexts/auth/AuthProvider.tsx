@@ -59,9 +59,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [authStable, setAuthStable] = useState(false);
   const [userType, setUserType] = useState<'individual' | 'establishment' | 'promoter' | 'admin'>('individual');
   const [navigationReady, setNavigationReady] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [authStateStable, setAuthStateStable] = useState(false);
   
   const initializationRef = useRef(false);
   const tokenProcessingRef = useRef(false); // Prevent multiple token processing attempts
+  const stabilizationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // HMR Protection: Preserve impersonation state during development reloads
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      const handleBeforeUnload = () => {
+        const backup = localStorage.getItem('impersonation_backup');
+        const hasFlags = !!(
+          sessionStorage.getItem('impersonation_active') ||
+          sessionStorage.getItem('impersonation_magic_link')
+        );
+        
+        if (backup && hasFlags) {
+          console.log('🔄 HMR Protection: Preserving impersonation state during reload');
+          localStorage.setItem('hmr_impersonation_preserved', 'true');
+        }
+      };
+      
+      window.addEventListener('beforeunload', handleBeforeUnload);
+      
+      // Check if we're recovering from HMR
+      if (localStorage.getItem('hmr_impersonation_preserved') === 'true') {
+        console.log('🔄 HMR Recovery: Detected preserved impersonation state');
+        localStorage.removeItem('hmr_impersonation_preserved');
+      }
+      
+      return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    }
+  }, []);
 
   // Initialize auth state - simplified and more robust with dev auto-login
   const initializeAuth = useCallback(async () => {
@@ -235,16 +266,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                  if (sessionData.session?.user) {
                    console.log('✅ AuthProvider - Manual magic link processing successful');
                    
-                   // **CRITICAL FIX**: Batch state updates to prevent DOM race conditions
-                   startTransition(() => {
-                     console.log('🔄 AuthProvider - Applying batched auth state updates');
-                     
-                     // Set auth state in a single batch to prevent race conditions
-                     setSession(sessionData.session);
-                     setUser(sessionData.session.user);
-                     setUserType(inferUserType(sessionData.session.user));
-                     setIsEmailVerified(sessionData.session.user.email_confirmed_at !== null);
-                   });
+                 // **CRITICAL FIX**: Batch state updates to prevent DOM race conditions
+                 startTransition(() => {
+                   console.log('🔄 AuthProvider - Applying batched auth state updates');
+                   
+                   // Set transitioning state first
+                   setIsTransitioning(true);
+                   setAuthStateStable(false);
+                   
+                   // Set auth state in a single batch to prevent race conditions
+                   setSession(sessionData.session);
+                   setUser(sessionData.session.user);
+                   setUserType(inferUserType(sessionData.session.user));
+                   setIsEmailVerified(sessionData.session.user.email_confirmed_at !== null);
+                 });
                    
                    sessionPersistenceService.updateSession(sessionData.session, sessionData.session.user);
                   
@@ -365,6 +400,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setIsLoading(false);
       setAuthStable(true);
       setNavigationReady(true);
+      setAuthStateStable(true);
       console.log('🔐 AuthProvider - Initialization complete, auth stable and navigation ready');
     }
   }, []);
@@ -409,26 +445,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         console.log('🔍 AuthProvider - Impersonation validation result:', validation);
         
-         // **CRITICAL FIX**: Batch state updates to prevent DOM race conditions
-         startTransition(() => {
-           console.log('🔍 AuthProvider - Batching impersonation validation state updates');
-           
-           if (validation.shouldClear && !isMagicLinkProcessing) {
-             console.log('🧹 AuthProvider - Clearing impersonation state:', validation.reason);
-             clearImpersonationFlags();
-           } else if (validation.shouldPersist && validation.isValid) {
-             console.log('✅ AuthProvider - Maintaining impersonation state:', validation.reason);
-             ensureImpersonationFlags(newSession.user.email || '');
-           } else if (isMagicLinkProcessing) {
-             console.log('⏳ AuthProvider - Deferring validation during magic link processing');
-           }
-           
-           setSession(newSession);
-           setUser(newSession.user);
-           setUserType(inferUserType(newSession.user));
-           setIsEmailVerified(newSession.user.email_confirmed_at !== null);
-           setAuthError(null);
-         });
+          // **CRITICAL FIX**: Batch state updates to prevent DOM race conditions
+          startTransition(() => {
+            console.log('🔍 AuthProvider - Batching impersonation validation state updates');
+            
+            // Set transitioning state first
+            setIsTransitioning(true);
+            setAuthStateStable(false);
+            
+            if (validation.shouldClear && !isMagicLinkProcessing) {
+              console.log('🧹 AuthProvider - Clearing impersonation state:', validation.reason);
+              clearImpersonationFlags();
+            } else if (validation.shouldPersist && validation.isValid) {
+              console.log('✅ AuthProvider - Maintaining impersonation state:', validation.reason);
+              ensureImpersonationFlags(newSession.user.email || '');
+            } else if (isMagicLinkProcessing) {
+              console.log('⏳ AuthProvider - Deferring validation during magic link processing');
+            }
+            
+            setSession(newSession);
+            setUser(newSession.user);
+            setUserType(inferUserType(newSession.user));
+            setIsEmailVerified(newSession.user.email_confirmed_at !== null);
+            setAuthError(null);
+          });
          
          sessionPersistenceService.updateSession(newSession, newSession.user);
          
@@ -438,19 +478,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
       } else if (event === 'SIGNED_OUT') {
         console.log('🔐 AuthProvider - User signed out, clearing state');
-        setSession(null);
-        setUser(null);
-        setUserType('individual');
-        setIsEmailVerified(false);
-        setAuthError(null);
+        
+        startTransition(() => {
+          setIsTransitioning(true);
+          setAuthStateStable(false);
+          setSession(null);
+          setUser(null);
+          setUserType('individual');
+          setIsEmailVerified(false);
+          setAuthError(null);
+        });
+        
         sessionPersistenceService.clearSession();
         
       } else if (event === 'TOKEN_REFRESHED' && newSession?.user) {
         console.log('🔐 AuthProvider - Token refreshed, updating state');
-        setSession(newSession);
-        setUser(newSession.user);
-        setUserType(inferUserType(newSession.user));
-        setIsEmailVerified(newSession.user.email_confirmed_at !== null);
+        
+        startTransition(() => {
+          setIsTransitioning(true);
+          setAuthStateStable(false);
+          setSession(newSession);
+          setUser(newSession.user);
+          setUserType(inferUserType(newSession.user));
+          setIsEmailVerified(newSession.user.email_confirmed_at !== null);
+        });
+        
         sessionPersistenceService.updateSession(newSession, newSession.user);
       }
     });
@@ -462,6 +514,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       subscription.unsubscribe();
     };
   }, [initializeAuth]);
+
+  // State stabilization mechanism - prevents premature navigation decisions
+  useEffect(() => {
+    // Clear any existing stabilization timeout
+    if (stabilizationTimeoutRef.current) {
+      clearTimeout(stabilizationTimeoutRef.current);
+    }
+
+    // If we're in a transitioning state, set timeout to stabilize
+    if (isTransitioning) {
+      console.log('🔄 AuthProvider - Starting state stabilization period');
+      stabilizationTimeoutRef.current = setTimeout(() => {
+        console.log('✅ AuthProvider - State stabilization complete');
+        setAuthStateStable(true);
+        setIsTransitioning(false);
+      }, 100); // Brief stabilization delay
+    } else {
+      setAuthStateStable(true);
+    }
+
+    return () => {
+      if (stabilizationTimeoutRef.current) {
+        clearTimeout(stabilizationTimeoutRef.current);
+      }
+    };
+  }, [isTransitioning, session, user, userType]);
 
   // Auth actions
   const signIn = useCallback(async (email: string, password: string) => {
@@ -576,6 +654,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     authStable,
     userType,
     navigationReady,
+    isTransitioning,
+    authStateStable,
     
     // Actions
     signIn,

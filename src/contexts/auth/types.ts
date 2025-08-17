@@ -25,6 +25,8 @@ export interface AuthState {
   authStable: boolean;
   userType: 'individual' | 'establishment' | 'promoter' | 'admin';
   navigationReady: boolean;
+  isTransitioning: boolean;
+  authStateStable: boolean;
 }
 
 export interface AuthActions {

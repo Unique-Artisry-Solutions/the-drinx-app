@@ -54,7 +54,9 @@ export function setupMocks(authUser = mockUser) {
     authError: null,
     isVerificationEmailSent: false,
     userType: 'individual' as const,
-    navigationReady: true, // Add the missing navigationReady property
+    navigationReady: true,
+    isTransitioning: false,
+    authStateStable: true,
     signIn: vi.fn().mockResolvedValue({ error: null, data: {} }),
     signUp: vi.fn().mockResolvedValue({}),
     signOut: vi.fn().mockResolvedValue({}),

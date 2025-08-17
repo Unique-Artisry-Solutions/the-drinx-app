@@ -13,6 +13,7 @@ export interface ImpersonationValidationResult {
 
 /**
  * Validate current impersonation state against session and expected targets
+ * Enhanced for better timing resilience
  */
 export const validateImpersonationState = (
   currentUserId: string, 
@@ -60,7 +61,7 @@ export const validateImpersonationState = (
       }
     }
     
-    // **CRITICAL FIX**: During magic link processing, be more lenient
+    // **CRITICAL FIX**: During magic link processing, be more lenient and resilient
     if (isMagicLinkProcessing) {
       console.log('🔄 Validation during magic link processing - being lenient');
       
@@ -78,6 +79,7 @@ export const validateImpersonationState = (
         }
         
         // During processing, allow impersonation even if flags aren't fully set yet
+        // This provides timing resilience
         return {
           isValid: true,
           shouldPersist: true,
@@ -100,14 +102,21 @@ export const validateImpersonationState = (
         };
       }
       
-      // Validate email matches expected target
+      // Validate email matches expected target (with fallback tolerance)
       if (expectedTargetEmail && expectedTargetEmail !== currentUserEmail) {
-        return {
-          isValid: false,
-          shouldPersist: false,
-          shouldClear: true,
-          reason: `Email mismatch: expected ${expectedTargetEmail}, got ${currentUserEmail}`
-        };
+        console.warn(`⚠️ Email mismatch detected: expected ${expectedTargetEmail}, got ${currentUserEmail}`);
+        
+        // During magic link processing, be more tolerant of email mismatches
+        if (!isMagicLinkProcessing) {
+          return {
+            isValid: false,
+            shouldPersist: false,
+            shouldClear: true,
+            reason: `Email mismatch: expected ${expectedTargetEmail}, got ${currentUserEmail}`
+          };
+        } else {
+          console.log('🔄 Allowing email mismatch during magic link processing');
+        }
       }
       
       return {

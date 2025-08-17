@@ -7,14 +7,19 @@ import { useAuth } from '@/contexts/auth/AuthProvider';
  * Uses only real Supabase authentication - no bypasses or mocks
  */
 export const useAuthenticatedUser = () => {
+  const authContext = useAuth();
+  
+  // Direct state consumption without local derivations to ensure consistency
   const { 
     user, 
     session, 
     isLoading, 
     isAuthenticated, 
     authStable,
-    userType 
-  } = useAuth();
+    userType,
+    isTransitioning,
+    authStateStable
+  } = authContext;
 
   const result = {
     user,
@@ -23,8 +28,10 @@ export const useAuthenticatedUser = () => {
     isAuthenticated,
     authStable,
     userType,
-    // Computed properties
-    isReady: authStable,
+    isTransitioning,
+    authStateStable,
+    // Computed properties - use auth state stability for better accuracy
+    isReady: authStable && authStateStable && !isTransitioning,
     hasValidSession: !!(user && session),
   };
 
