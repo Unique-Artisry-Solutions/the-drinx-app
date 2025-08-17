@@ -18,7 +18,28 @@ export function lazyLoad<T extends React.ComponentType<any>>(
   importFunc: () => Promise<{ default: T }>,
   options: LazyLoadOptions = {}
 ): React.ComponentType<React.ComponentProps<T>> {
-  const LazyComponent = React.lazy(importFunc);
+  const LazyComponent = React.lazy(() => {
+    return importFunc().catch(error => {
+      console.error('Error loading lazy component:', error);
+      // Return a fallback component for failed imports
+      const ErrorFallback: React.ComponentType<any> = () => (
+        <div className="w-full h-full min-h-[200px] flex items-center justify-center p-4">
+          <div className="text-center space-y-4">
+            <p className="text-destructive">Failed to load component</p>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+            >
+              Reload Page
+            </button>
+          </div>
+        </div>
+      );
+      return {
+        default: ErrorFallback as T
+      };
+    });
+  });
   
   // Set prefetch priority based on options
   if (typeof document !== 'undefined' && options.priority) {

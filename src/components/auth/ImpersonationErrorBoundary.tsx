@@ -27,6 +27,19 @@ class ImpersonationErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('ImpersonationErrorBoundary caught an error:', error, errorInfo);
+    
+    // Check if this is a module loading error - these should not trigger impersonation error handling
+    if (error.message.includes('loading dynamically imported module') || 
+        error.message.includes('Loading chunk') ||
+        error.message.includes('Import error')) {
+      console.warn('Module loading error detected - this should be handled by a different error boundary');
+      // For module loading errors, just retry without showing impersonation error
+      setTimeout(() => {
+        this.handleRetry();
+      }, 1000);
+      return;
+    }
+    
     this.setState({ errorInfo });
   }
 

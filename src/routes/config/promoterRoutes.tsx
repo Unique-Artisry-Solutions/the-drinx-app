@@ -2,8 +2,10 @@
 import { lazy } from 'react';
 import { RouteObject, Navigate } from 'react-router-dom';
 
-// Lazy loaded components
-const PromoterDashboardPage = lazy(() => import('@/pages/promoter/PromoterDashboardPage'));
+// Critical pages - direct import to avoid module loading issues during impersonation
+import PromoterDashboardPage from '@/pages/promoter/PromoterDashboardPage';
+
+// Lazy loaded components for non-critical pages
 const PromoterProfile = lazy(() => import('@/pages/promoter/PromoterProfile'));
 const PromoterProfileEdit = lazy(() => import('@/pages/promoter/PromoterProfileEdit'));
 const PromoterSettingsPage = lazy(() => import('@/pages/promoter/PromoterSettingsPage'));

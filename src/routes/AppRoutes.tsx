@@ -11,6 +11,7 @@ import { useNavigationTracking } from '@/utils/lazyRouteLoader';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
+import ModuleLoadingErrorBoundary from '@/components/error/ModuleLoadingErrorBoundary';
 
 // Direct imports for commerce and event pages - simplified routing
 import CheckoutPage from '@/pages/CheckoutPage';
@@ -75,17 +76,29 @@ const AppRoutes = () => {
             </Route>
           ))}
 
-          {/* Other Protected Routes - Keep existing structure */}
+          {/* Other Protected Routes - Wrap with module loading error boundary */}
           {establishmentRoutes.map((route) => (
-            <Route key={route.path} path={route.path} element={route.element} />
+            <Route key={route.path} path={route.path} element={
+              <ModuleLoadingErrorBoundary>
+                {route.element}
+              </ModuleLoadingErrorBoundary>
+            } />
           ))}
 
           {promoterRoutes.map((route) => (
-            <Route key={route.path} path={route.path} element={route.element} />
+            <Route key={route.path} path={route.path} element={
+              <ModuleLoadingErrorBoundary>
+                {route.element}
+              </ModuleLoadingErrorBoundary>
+            } />
           ))}
 
           {profileRoutes.map((route) => (
-            <Route key={route.path} path={route.path} element={route.element} />
+            <Route key={route.path} path={route.path} element={
+              <ModuleLoadingErrorBoundary>
+                {route.element}
+              </ModuleLoadingErrorBoundary>
+            } />
           ))}
 
           {/* Fallback */}
