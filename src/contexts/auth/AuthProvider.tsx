@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef, startTransition } from 'react';
 import { Session, User, AuthError } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { AuthState, AuthActions, AuthContextType } from './types';
@@ -232,18 +232,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                   throw sessionError;
                 }
                 
-                if (sessionData.session?.user) {
-                  console.log('✅ AuthProvider - Manual magic link processing successful');
-                  
-                  // **CRITICAL FIX**: Immediate synchronous state updates to prevent race conditions
-                  console.log('🔄 AuthProvider - Applying immediate auth state updates');
-                  
-                  // Set auth state immediately to prevent refresh issues
-                  setSession(sessionData.session);
-                  setUser(sessionData.session.user);
-                  setUserType(inferUserType(sessionData.session.user));
-                  setIsEmailVerified(sessionData.session.user.email_confirmed_at !== null);
-                  sessionPersistenceService.updateSession(sessionData.session, sessionData.session.user);
+                 if (sessionData.session?.user) {
+                   console.log('✅ AuthProvider - Manual magic link processing successful');
+                   
+                   // **CRITICAL FIX**: Batch state updates to prevent DOM race conditions
+                   startTransition(() => {
+                     console.log('🔄 AuthProvider - Applying batched auth state updates');
+                     
+                     // Set auth state in a single batch to prevent race conditions
+                     setSession(sessionData.session);
+                     setUser(sessionData.session.user);
+                     setUserType(inferUserType(sessionData.session.user));
+                     setIsEmailVerified(sessionData.session.user.email_confirmed_at !== null);
+                   });
+                   
+                   sessionPersistenceService.updateSession(sessionData.session, sessionData.session.user);
                   
                   // **CRITICAL FIX**: Enhanced impersonation validation after manual auth
                   if (parsedBackup) {
@@ -406,26 +409,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         console.log('🔍 AuthProvider - Impersonation validation result:', validation);
         
-        if (validation.shouldClear && !isMagicLinkProcessing) {
-          console.log('🧹 AuthProvider - Clearing impersonation state:', validation.reason);
-          clearImpersonationFlags();
-        } else if (validation.shouldPersist && validation.isValid) {
-          console.log('✅ AuthProvider - Maintaining impersonation state:', validation.reason);
-          ensureImpersonationFlags(newSession.user.email || '');
-        } else if (isMagicLinkProcessing) {
-          console.log('⏳ AuthProvider - Deferring validation during magic link processing');
-        }
-        
-        setSession(newSession);
-        setUser(newSession.user);
-        setUserType(inferUserType(newSession.user));
-        setIsEmailVerified(newSession.user.email_confirmed_at !== null);
-        setAuthError(null);
-        sessionPersistenceService.updateSession(newSession, newSession.user);
-        
-        // Mark auth as stable for sign-ins (important for impersonation)
-        setAuthStable(true);
-        setNavigationReady(true);
+         // **CRITICAL FIX**: Batch state updates to prevent DOM race conditions
+         startTransition(() => {
+           console.log('🔍 AuthProvider - Batching impersonation validation state updates');
+           
+           if (validation.shouldClear && !isMagicLinkProcessing) {
+             console.log('🧹 AuthProvider - Clearing impersonation state:', validation.reason);
+             clearImpersonationFlags();
+           } else if (validation.shouldPersist && validation.isValid) {
+             console.log('✅ AuthProvider - Maintaining impersonation state:', validation.reason);
+             ensureImpersonationFlags(newSession.user.email || '');
+           } else if (isMagicLinkProcessing) {
+             console.log('⏳ AuthProvider - Deferring validation during magic link processing');
+           }
+           
+           setSession(newSession);
+           setUser(newSession.user);
+           setUserType(inferUserType(newSession.user));
+           setIsEmailVerified(newSession.user.email_confirmed_at !== null);
+           setAuthError(null);
+         });
+         
+         sessionPersistenceService.updateSession(newSession, newSession.user);
+         
+         // Mark auth as stable for sign-ins (important for impersonation)
+         setAuthStable(true);
+         setNavigationReady(true);
         
       } else if (event === 'SIGNED_OUT') {
         console.log('🔐 AuthProvider - User signed out, clearing state');
