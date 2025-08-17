@@ -18,7 +18,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   fallbackPath = '/',
   fallbackComponent = null
 }) => {
-const { user, session, userType, isLoading, authStable, isAuthenticated } = useAuthenticatedUser();
+  const { user, session, userType, isLoading, authStable, isAuthenticated } = useAuthenticatedUser();
+  const location = useLocation();
 
 // Wait for loading to finish
   if (isLoading) {
@@ -47,8 +48,11 @@ const { user, session, userType, isLoading, authStable, isAuthenticated } = useA
   // Check authentication requirement
   if (requireAuth && !isAuthenticated) {
     // Store the current location for potential redirect after login
-    const location = useLocation();
-    localStorage.setItem('auth_redirect', location.pathname);
+    try {
+      localStorage.setItem('auth_redirect', location.pathname);
+    } catch (error) {
+      console.warn('Failed to store redirect path:', error);
+    }
     return <Navigate to={fallbackPath} replace />;
   }
 

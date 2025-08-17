@@ -127,7 +127,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
-  // Handle auth state changes - simplified
+  // Handle auth state changes - enhanced for impersonation
   useEffect(() => {
     console.log('🔐 AuthProvider - Setting up auth state listener');
     
@@ -135,6 +135,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log('🔐 AuthProvider - Auth state changed:', event, !!newSession);
       
       if (event === 'SIGNED_IN' && newSession?.user) {
+        console.log('🔐 AuthProvider - User signed in, updating state');
         setSession(newSession);
         setUser(newSession.user);
         setUserType(inferUserType(newSession.user));
@@ -142,13 +143,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setAuthError(null);
         sessionPersistenceService.updateSession(newSession, newSession.user);
         
+        // Mark auth as stable for sign-ins (important for impersonation)
+        setAuthStable(true);
+        setNavigationReady(true);
+        
       } else if (event === 'SIGNED_OUT') {
+        console.log('🔐 AuthProvider - User signed out, clearing state');
         setSession(null);
         setUser(null);
         setUserType('individual');
         setIsEmailVerified(false);
         setAuthError(null);
         sessionPersistenceService.clearSession();
+        
+      } else if (event === 'TOKEN_REFRESHED' && newSession?.user) {
+        console.log('🔐 AuthProvider - Token refreshed, updating state');
+        setSession(newSession);
+        setUser(newSession.user);
+        setUserType(inferUserType(newSession.user));
+        setIsEmailVerified(newSession.user.email_confirmed_at !== null);
+        sessionPersistenceService.updateSession(newSession, newSession.user);
       }
     });
 

@@ -41,19 +41,56 @@ export function clearImpersonationBackup() {
   localStorage.removeItem(STORAGE_KEY);
 }
 
+/**
+ * Restore impersonation by switching back to the backed up session
+ */
 export async function restoreImpersonation(): Promise<boolean> {
   const backup = getImpersonationBackup();
-  if (!backup) return false;
-  const { data, error } = await supabase.auth.setSession({
-    access_token: backup.access_token,
-    refresh_token: backup.refresh_token,
-  });
-  if (error) return false;
-  clearImpersonationBackup();
-  // Navigate back to where the admin was
-  const path = backup.return_path || '/admin';
-  window.location.href = path;
-  return true;
+  if (!backup) {
+    console.warn('No impersonation backup found');
+    // Still redirect to admin panel even without backup
+    window.location.href = '/admin/users';
+    return false;
+  }
+
+  try {
+    console.log('Restoring impersonation session...');
+    
+    // First clear the current session to avoid conflicts
+    await supabase.auth.signOut();
+    
+    // Wait a moment for signOut to complete
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    // Set the backup session
+    const { data, error } = await supabase.auth.setSession({
+      access_token: backup.access_token,
+      refresh_token: backup.refresh_token
+    });
+
+    if (error) {
+      console.error('Failed to restore session:', error);
+      throw error;
+    }
+
+    console.log('Impersonation session restored successfully');
+    clearImpersonationBackup();
+    
+    // Navigate back to where the admin was, with fallback to users page
+    const path = backup.return_path || '/admin/users';
+    
+    // Use replace instead of href to avoid page reload issues
+    window.location.replace(path);
+    return true;
+    
+  } catch (error) {
+    console.error('Failed to restore impersonation:', error);
+    clearImpersonationBackup();
+    
+    // Fallback: Force reload and redirect
+    window.location.href = '/admin/users';
+    return false;
+  }
 }
 
 export async function impersonateUser(targetUserId: string): Promise<{ ok: boolean; error?: string }> {

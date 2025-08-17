@@ -11,6 +11,8 @@ import { promoterRoutes } from '@/routes/config/promoterRoutes';
 import { establishmentRoutes } from '@/routes/config/establishmentRoutes';
 import { testingRoutes } from '@/routes/testingRoutes';
 import ImpersonationBanner from '@/components/auth/ImpersonationBanner';
+import ImpersonationErrorBoundary from '@/components/auth/ImpersonationErrorBoundary';
+import MagicLinkHandler from '@/components/auth/MagicLinkHandler';
 import { initDebug } from '@/utils/initDebug';
 
 const App: React.FC = () => {
@@ -53,68 +55,72 @@ const App: React.FC = () => {
 
   initDebug.log('App routes rendered');
   return (
-    <div className="min-h-screen bg-white">
-      {/* Global impersonation banner */}
-      <ImpersonationBanner />
-      <Routes>
-        {/* Public Routes */}
-        {publicRoutes.map((route, index) => (
-          <Route key={index} path={route.path} element={route.element} />
-        ))}
-
-        {/* Individual User Routes */}
-        {individualRoutes.map((route, index) => (
-          <Route key={index} path={route.path} element={route.element} />
-        ))}
-
-        {/* Profile Routes */}
-        {profileRoutes.map((route, index) => (
-          <Route key={index} path={route.path} element={route.element} />
-        ))}
-
-        {/* Admin Routes */}
-        {adminRoutes.map((route, index) => (
-          <Route 
-            key={index} 
-            path={route.path} 
-            element={route.element}
-          >
-            {route.children?.map((childRoute, childIndex) => (
-              <Route 
-                key={childIndex}
-                path={childRoute.path}
-                index={childRoute.index}
-                element={childRoute.element}
-              />
+    <MagicLinkHandler>
+      <ImpersonationErrorBoundary>
+        <div className="min-h-screen bg-white">
+          {/* Global impersonation banner */}
+          <ImpersonationBanner />
+          <Routes>
+            {/* Public Routes */}
+            {publicRoutes.map((route, index) => (
+              <Route key={index} path={route.path} element={route.element} />
             ))}
-          </Route>
-        ))}
 
-        {/* Promoter Routes */}
-        {promoterRoutes.map((route, index) => (
-          <Route key={index} path={route.path} element={route.element} />
-        ))}
+            {/* Individual User Routes */}
+            {individualRoutes.map((route, index) => (
+              <Route key={index} path={route.path} element={route.element} />
+            ))}
 
-        {/* Establishment Routes */}
-        {establishmentRoutes.map((route, index) => (
-          <Route key={index} path={route.path} element={route.element} />
-        ))}
-        
-        {/* Testing Routes */}
-        {testingRoutes}
+            {/* Profile Routes */}
+            {profileRoutes.map((route, index) => (
+              <Route key={index} path={route.path} element={route.element} />
+            ))}
 
-        {/* Fallback Route - Redirect based on user type */}
-        <Route path="*" element={<Navigate to={
-          isAuthenticated ?
-            (userType === 'admin' ? '/admin/system-breakdown' :
-              (userType === 'establishment' ? '/establishment/dashboard' :
-                (userType === 'promoter' ? '/promoter/dashboard' : '/explore'))) :
-            '/landing'} replace />} />
-      </Routes>
+            {/* Admin Routes */}
+            {adminRoutes.map((route, index) => (
+              <Route 
+                key={index} 
+                path={route.path} 
+                element={route.element}
+              >
+                {route.children?.map((childRoute, childIndex) => (
+                  <Route 
+                    key={childIndex}
+                    path={childRoute.path}
+                    index={childRoute.index}
+                    element={childRoute.element}
+                  />
+                ))}
+              </Route>
+            ))}
+
+            {/* Promoter Routes */}
+            {promoterRoutes.map((route, index) => (
+              <Route key={index} path={route.path} element={route.element} />
+            ))}
+
+            {/* Establishment Routes */}
+            {establishmentRoutes.map((route, index) => (
+              <Route key={index} path={route.path} element={route.element} />
+            ))}
+            
+            {/* Testing Routes */}
+            {testingRoutes}
+
+            {/* Fallback Route - Redirect based on user type */}
+            <Route path="*" element={<Navigate to={
+              isAuthenticated ?
+                (userType === 'admin' ? '/admin/system-breakdown' :
+                  (userType === 'establishment' ? '/establishment/dashboard' :
+                    (userType === 'promoter' ? '/promoter/dashboard' : '/explore'))) :
+                '/landing'} replace />} />
+          </Routes>
       
-      {/* Development Tools */}
-      <DevRoleSwitcher />
-    </div>
+          {/* Development Tools */}
+          <DevRoleSwitcher />
+        </div>
+      </ImpersonationErrorBoundary>
+    </MagicLinkHandler>
   );
 };
 
