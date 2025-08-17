@@ -60,6 +60,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [navigationReady, setNavigationReady] = useState(false);
   
   const initializationRef = useRef(false);
+  const tokenProcessingRef = useRef(false); // Prevent multiple token processing attempts
 
   // Initialize auth state - simplified and more robust with dev auto-login
   const initializeAuth = useCallback(async () => {
@@ -134,7 +135,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           console.log('🔐 AuthProvider - Magic link tokens detected or processing, checking for manual processing');
           
           // Try manual token processing if tokens are present but no session exists
-          if (hasMagicLinkTokens && !currentSession) {
+          if (hasMagicLinkTokens && !currentSession && !tokenProcessingRef.current) {
+            tokenProcessingRef.current = true; // Prevent multiple processing attempts
             console.log('🔑 AuthProvider - Attempting manual magic link token processing');
             
             try {
@@ -170,30 +172,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 if (sessionData.session?.user) {
                   console.log('✅ AuthProvider - Manual magic link processing successful');
                   
-                  // Set auth state immediately
-                  setSession(sessionData.session);
-                  setUser(sessionData.session.user);
-                  setUserType(inferUserType(sessionData.session.user));
-                  setIsEmailVerified(sessionData.session.user.email_confirmed_at !== null);
-                  sessionPersistenceService.updateSession(sessionData.session, sessionData.session.user);
-                  
-                  // Handle impersonation flags if present
-                  if (impersonationBackup && hasImpersonationFlags) {
-                    console.log('🎭 AuthProvider - Setting impersonation state after manual auth');
+                  // Use setTimeout to defer state updates and prevent DOM conflicts
+                  setTimeout(() => {
+                    console.log('🔄 AuthProvider - Applying deferred auth state updates');
                     
-                    // Ensure all impersonation flags are set
-                    sessionStorage.setItem('impersonation_active', 'true');
-                    sessionStorage.setItem('impersonation_magic_link', 'true');
-                    localStorage.setItem('impersonation_active_backup', 'true');
-                    sessionStorage.setItem('impersonation_target_email', sessionData.session.user.email || '');
+                    // Set auth state with deferred updates to prevent race conditions
+                    setSession(sessionData.session);
+                    setUser(sessionData.session.user);
+                    setUserType(inferUserType(sessionData.session.user));
+                    setIsEmailVerified(sessionData.session.user.email_confirmed_at !== null);
+                    sessionPersistenceService.updateSession(sessionData.session, sessionData.session.user);
                     
-                    console.log('✅ AuthProvider - Impersonation state configured after manual auth');
-                  }
+                    // Handle impersonation flags if present
+                    if (impersonationBackup && hasImpersonationFlags) {
+                      console.log('🎭 AuthProvider - Setting impersonation state after manual auth');
+                      
+                      // Ensure all impersonation flags are set
+                      sessionStorage.setItem('impersonation_active', 'true');
+                      sessionStorage.setItem('impersonation_magic_link', 'true');
+                      localStorage.setItem('impersonation_active_backup', 'true');
+                      sessionStorage.setItem('impersonation_target_email', sessionData.session.user.email || '');
+                      
+                      console.log('✅ AuthProvider - Impersonation state configured after manual auth');
+                    }
+                    
+                    console.log('🔐 AuthProvider - Deferred manual auth processing complete');
+                  }, 0);
                   
-                  // Clean up URL tokens
+                  // Clean up URL tokens immediately (safe DOM operation)
                   cleanTokensFromUrl();
                   
-                  console.log('🔐 AuthProvider - Manual auth processing complete');
                 } else {
                   console.warn('🔑 AuthProvider - Manual session setting returned no user');
                 }
@@ -206,7 +214,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               
               // Clean up URL on error
               cleanTokensFromUrl();
+            } finally {
+              // Reset the processing flag
+              tokenProcessingRef.current = false;
             }
+          } else if (hasMagicLinkTokens && tokenProcessingRef.current) {
+            console.log('🔑 AuthProvider - Token processing already in progress, skipping duplicate attempt');
           } else {
             console.log('🔐 AuthProvider - Magic link detected but skipping processing (session exists or no tokens)');
           }
