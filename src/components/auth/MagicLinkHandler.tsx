@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthenticatedUser } from '@/hooks/useAuthenticatedUser';
+import { parseDomainInfo, isSameProject } from '@/utils/domain';
 
 interface TokenDetectionResult {
   method: 'URL_HASH' | 'URL_SEARCH' | 'STORED_TOKENS';
@@ -23,26 +24,44 @@ export const MagicLinkHandler: React.FC<{ children: React.ReactNode }> = ({ chil
   const { isAuthenticated, authStable, userType } = useAuthenticatedUser();
   const navigate = useNavigate();
 
-  // Single useEffect for token detection and processing
+  // Enhanced token detection with cross-domain support
   useEffect(() => {
     const detectAndProcessTokens = () => {
       const urlHash = window.location.hash;
       const urlSearch = window.location.search;
+      const domainInfo = parseDomainInfo();
       
-      // Check if tokens were already captured by the early script
+      // Enhanced cross-domain token detection
       let hasTokens = false;
       let tokenData: any = null;
+      let tokenSource = 'none';
       
       try {
-        const storedTokens = sessionStorage.getItem('magiclink_tokens') || localStorage.getItem('magiclink_tokens_backup');
-        if (storedTokens) {
-          tokenData = JSON.parse(storedTokens);
-          hasTokens = !!(tokenData.access_token && tokenData.refresh_token);
-          console.log('🔍 MagicLinkHandler - Using pre-captured tokens:', {
-            source: sessionStorage.getItem('magiclink_tokens') ? 'session' : 'localStorage',
-            hasAccess: !!tokenData.access_token,
-            hasRefresh: !!tokenData.refresh_token
-          });
+        // Try multiple storage sources for cross-domain scenarios
+        const sources = [
+          { key: 'magiclink_tokens', storage: sessionStorage, name: 'session' },
+          { key: 'magiclink_tokens_backup', storage: localStorage, name: 'localStorage' },
+          { key: `magiclink_tokens_${domainInfo.isLovableApp ? 'app' : 'project'}`, storage: localStorage, name: 'domain-specific' }
+        ];
+        
+        for (const source of sources) {
+          const storedTokens = source.storage.getItem(source.key);
+          if (storedTokens) {
+            tokenData = JSON.parse(storedTokens);
+            hasTokens = !!(tokenData.access_token && tokenData.refresh_token);
+            tokenSource = source.name;
+            
+            console.log('🔍 MagicLinkHandler - Found tokens in storage:', {
+              source: source.name,
+              key: source.key,
+              hasAccess: !!tokenData.access_token,
+              hasRefresh: !!tokenData.refresh_token,
+              tokenDomain: tokenData.domain,
+              currentDomain: domainInfo.hostname,
+              crossDomain: tokenData.domain !== domainInfo.hostname
+            });
+            break;
+          }
         }
       } catch (e) {
         console.error('🔍 MagicLinkHandler - Failed to parse stored tokens:', e);
@@ -62,19 +81,22 @@ export const MagicLinkHandler: React.FC<{ children: React.ReactNode }> = ({ chil
         
         if (hasTokens) {
           tokenData = { access_token: accessToken, refresh_token: refreshToken, token_type: tokenType, type };
+          tokenSource = 'url';
           console.log('🔍 MagicLinkHandler - Detected tokens in URL');
         }
       }
       
       console.log('🔍 MagicLinkHandler - Token detection result:', {
         hasTokens,
+        tokenSource,
         method: tokenData ? 'DETECTED' : 'NONE',
-        currentDomain: window.location.hostname,
+        currentDomain: domainInfo.hostname,
+        domainType: domainInfo.isLovableApp ? 'lovable.app' : domainInfo.isLovableProject ? 'lovableproject.com' : 'unknown',
         fullUrl: window.location.href
       });
       
       if (hasTokens && tokenData) {
-        console.log('✅ Magic link tokens detected, processing authentication');
+        console.log('✅ Magic link tokens detected, processing authentication with cross-domain support');
         setIsProcessingMagicLink(true);
         
         // Set processing flag
