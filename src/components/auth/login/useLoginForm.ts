@@ -84,22 +84,8 @@ export const useLoginForm = (onSuccess?: () => void, onClose?: () => void, userT
     
     try {
       if (isAdminLogin) {
-        console.log("Attempting admin login");
-        if (identifier === 'admin@spiritless.com' && password === 'admin123') {
-          console.log("Admin credentials verified, setting admin session");
-          localStorage.setItem('admin_authenticated', 'true');
-          localStorage.setItem('admin_username', 'Admin');
-          localStorage.setItem('admin_session_created', new Date().toISOString());
-          
-          toast({
-            title: 'Admin login successful',
-            description: 'Welcome to the admin dashboard',
-          });
-          navigate('/admin/dashboard');
-          return;
-        } else {
-          throw new Error('Invalid admin credentials');
-        }
+        setFormError('Please use the development bypass login for admin access');
+        return;
       } else {
         console.log(`Attempting regular login with identifier: ${identifier}`);
         const isEmail = identifier.includes('@');
