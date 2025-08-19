@@ -4049,6 +4049,7 @@ export type Database = {
       notifications: {
         Row: {
           category_id: string | null
+          channels: Json | null
           content: string
           created_at: string
           id: string
@@ -4057,11 +4058,13 @@ export type Database = {
           priority: Database["public"]["Enums"]["notification_priority"]
           recipient_id: string
           recipient_type: string | null
+          sms_delivery_log_id: string | null
           title: string
           updated_at: string
         }
         Insert: {
           category_id?: string | null
+          channels?: Json | null
           content: string
           created_at?: string
           id?: string
@@ -4070,11 +4073,13 @@ export type Database = {
           priority?: Database["public"]["Enums"]["notification_priority"]
           recipient_id: string
           recipient_type?: string | null
+          sms_delivery_log_id?: string | null
           title: string
           updated_at?: string
         }
         Update: {
           category_id?: string | null
+          channels?: Json | null
           content?: string
           created_at?: string
           id?: string
@@ -4083,6 +4088,7 @@ export type Database = {
           priority?: Database["public"]["Enums"]["notification_priority"]
           recipient_id?: string
           recipient_type?: string | null
+          sms_delivery_log_id?: string | null
           title?: string
           updated_at?: string
         }
@@ -6570,6 +6576,195 @@ export type Database = {
         }
         Relationships: []
       }
+      sms_campaigns: {
+        Row: {
+          campaign_cost: number | null
+          created_at: string | null
+          created_by: string
+          id: string
+          message_body: string
+          message_template_id: string | null
+          messages_delivered: number | null
+          messages_failed: number | null
+          messages_sent: number | null
+          metadata: Json | null
+          name: string
+          scheduled_for: string | null
+          status: string | null
+          target_audience: Json | null
+          total_recipients: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          campaign_cost?: number | null
+          created_at?: string | null
+          created_by: string
+          id?: string
+          message_body: string
+          message_template_id?: string | null
+          messages_delivered?: number | null
+          messages_failed?: number | null
+          messages_sent?: number | null
+          metadata?: Json | null
+          name: string
+          scheduled_for?: string | null
+          status?: string | null
+          target_audience?: Json | null
+          total_recipients?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          campaign_cost?: number | null
+          created_at?: string | null
+          created_by?: string
+          id?: string
+          message_body?: string
+          message_template_id?: string | null
+          messages_delivered?: number | null
+          messages_failed?: number | null
+          messages_sent?: number | null
+          metadata?: Json | null
+          name?: string
+          scheduled_for?: string | null
+          status?: string | null
+          target_audience?: Json | null
+          total_recipients?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      sms_consent_tracking: {
+        Row: {
+          consent_method: string
+          consent_type: string
+          created_at: string | null
+          id: string
+          ip_address: unknown | null
+          metadata: Json | null
+          phone_number: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          consent_method: string
+          consent_type: string
+          created_at?: string | null
+          id?: string
+          ip_address?: unknown | null
+          metadata?: Json | null
+          phone_number: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          consent_method?: string
+          consent_type?: string
+          created_at?: string | null
+          id?: string
+          ip_address?: unknown | null
+          metadata?: Json | null
+          phone_number?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      sms_delivery_logs: {
+        Row: {
+          cost_amount: number | null
+          created_at: string | null
+          delivery_status: string | null
+          delivery_timestamp: string | null
+          error_message: string | null
+          id: string
+          message_body: string
+          metadata: Json | null
+          notification_id: string | null
+          phone_number: string
+          provider: string | null
+          provider_message_id: string | null
+          segments: number | null
+          status: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          cost_amount?: number | null
+          created_at?: string | null
+          delivery_status?: string | null
+          delivery_timestamp?: string | null
+          error_message?: string | null
+          id?: string
+          message_body: string
+          metadata?: Json | null
+          notification_id?: string | null
+          phone_number: string
+          provider?: string | null
+          provider_message_id?: string | null
+          segments?: number | null
+          status?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          cost_amount?: number | null
+          created_at?: string | null
+          delivery_status?: string | null
+          delivery_timestamp?: string | null
+          error_message?: string | null
+          id?: string
+          message_body?: string
+          metadata?: Json | null
+          notification_id?: string | null
+          phone_number?: string
+          provider?: string | null
+          provider_message_id?: string | null
+          segments?: number | null
+          status?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      sms_templates: {
+        Row: {
+          category: string
+          created_at: string | null
+          created_by: string | null
+          id: string
+          is_active: boolean | null
+          message_template: string
+          name: string
+          template_key: string
+          updated_at: string | null
+          variables: Json | null
+        }
+        Insert: {
+          category?: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          message_template: string
+          name: string
+          template_key: string
+          updated_at?: string | null
+          variables?: Json | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          message_template?: string
+          name?: string
+          template_key?: string
+          updated_at?: string | null
+          variables?: Json | null
+        }
+        Relationships: []
+      }
       streak_settings: {
         Row: {
           created_at: string
@@ -7933,6 +8128,54 @@ export type Database = {
         }
         Relationships: []
       }
+      user_phone_numbers: {
+        Row: {
+          country_code: string
+          created_at: string | null
+          id: string
+          is_primary: boolean | null
+          is_verified: boolean | null
+          phone_number: string
+          sms_opt_in: boolean | null
+          sms_opt_in_date: string | null
+          sms_opt_out_date: string | null
+          updated_at: string | null
+          user_id: string
+          verification_code: string | null
+          verification_code_expires_at: string | null
+        }
+        Insert: {
+          country_code?: string
+          created_at?: string | null
+          id?: string
+          is_primary?: boolean | null
+          is_verified?: boolean | null
+          phone_number: string
+          sms_opt_in?: boolean | null
+          sms_opt_in_date?: string | null
+          sms_opt_out_date?: string | null
+          updated_at?: string | null
+          user_id: string
+          verification_code?: string | null
+          verification_code_expires_at?: string | null
+        }
+        Update: {
+          country_code?: string
+          created_at?: string | null
+          id?: string
+          is_primary?: boolean | null
+          is_verified?: boolean | null
+          phone_number?: string
+          sms_opt_in?: boolean | null
+          sms_opt_in_date?: string | null
+          sms_opt_out_date?: string | null
+          updated_at?: string | null
+          user_id?: string
+          verification_code?: string | null
+          verification_code_expires_at?: string | null
+        }
+        Relationships: []
+      }
       user_recipes: {
         Row: {
           created_at: string
@@ -8670,6 +8913,48 @@ export type Database = {
         }
         Relationships: []
       }
+      sms_campaign_stats: {
+        Row: {
+          campaign_cost: number | null
+          created_at: string | null
+          delivery_rate_percent: number | null
+          id: string | null
+          messages_delivered: number | null
+          messages_failed: number | null
+          messages_sent: number | null
+          name: string | null
+          scheduled_for: string | null
+          status: string | null
+          total_recipients: number | null
+        }
+        Insert: {
+          campaign_cost?: number | null
+          created_at?: string | null
+          delivery_rate_percent?: never
+          id?: string | null
+          messages_delivered?: number | null
+          messages_failed?: number | null
+          messages_sent?: number | null
+          name?: string | null
+          scheduled_for?: string | null
+          status?: string | null
+          total_recipients?: number | null
+        }
+        Update: {
+          campaign_cost?: number | null
+          created_at?: string | null
+          delivery_rate_percent?: never
+          id?: string | null
+          messages_delivered?: number | null
+          messages_failed?: number | null
+          messages_sent?: number | null
+          name?: string | null
+          scheduled_for?: string | null
+          status?: string | null
+          total_recipients?: number | null
+        }
+        Relationships: []
+      }
       streak_performance: {
         Row: {
           avg_current_streak_length: number | null
@@ -9034,7 +9319,7 @@ export type Database = {
         | "in_list"
       audience_segment_status: "draft" | "active" | "archived"
       event_status: "draft" | "published" | "cancelled" | "completed"
-      notification_channel: "in_app" | "email" | "push"
+      notification_channel: "in_app" | "email" | "push" | "sms"
       notification_priority: "low" | "medium" | "high" | "urgent"
       subscription_tier: "free" | "basic" | "premium"
       user_role: "individual" | "establishment" | "promoter"
@@ -9177,7 +9462,7 @@ export const Constants = {
       ],
       audience_segment_status: ["draft", "active", "archived"],
       event_status: ["draft", "published", "cancelled", "completed"],
-      notification_channel: ["in_app", "email", "push"],
+      notification_channel: ["in_app", "email", "push", "sms"],
       notification_priority: ["low", "medium", "high", "urgent"],
       subscription_tier: ["free", "basic", "premium"],
       user_role: ["individual", "establishment", "promoter"],
