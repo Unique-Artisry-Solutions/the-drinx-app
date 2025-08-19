@@ -205,7 +205,9 @@ export const DevelopmentModeProvider: React.FC<{ children: React.ReactNode }> = 
     }
   }, [location.search, isInitialized, isDevelopment]);
 
-  const navigateToUserDashboard = useCallback((userType: DevUserType) => {
+  const navigateToUserDashboard = useCallback(async (userType: DevUserType) => {
+    console.log(`🔧 DevBypass - navigateToUserDashboard called for ${userType}`);
+    
     // Clean URL parameters
     const newUrl = new URL(window.location.href);
     newUrl.searchParams.delete('dev_mode');
@@ -230,8 +232,31 @@ export const DevelopmentModeProvider: React.FC<{ children: React.ReactNode }> = 
         targetPath = '/landing';
     }
     
-    if (location.pathname !== targetPath) {
+    console.log(`🔧 DevBypass - Target path: ${targetPath}, Current path: ${location.pathname}`);
+    
+    // For admin routes, add a small delay to ensure auth state propagates
+    if (userType === 'admin') {
+      console.log('🔧 DevBypass - Admin navigation, waiting for auth state to stabilize...');
+      
+      // Wait for auth state to propagate from Supabase to AuthProvider
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
+      // Try navigation with force replace to bypass any stale route protection
+      console.log(`🔧 DevBypass - Navigating to admin dashboard: ${targetPath}`);
       navigate(targetPath, { replace: true });
+      
+      // Fallback: if we're still on admin login after delay, force navigate again
+      setTimeout(() => {
+        if (location.pathname === '/admin/login') {
+          console.log('🔧 DevBypass - Still on admin login, force navigating again');
+          navigate(targetPath, { replace: true });
+        }
+      }, 500);
+    } else {
+      // For non-admin routes, navigate immediately
+      if (location.pathname !== targetPath) {
+        navigate(targetPath, { replace: true });
+      }
     }
   }, [navigate, location.pathname]);
 
@@ -264,7 +289,7 @@ export const DevelopmentModeProvider: React.FC<{ children: React.ReactNode }> = 
         if (result.success) {
           console.log(`🔧 DevBypass - Login successful, updating state and navigation`);
           setDevMode(userType);
-          navigateToUserDashboard(userType);
+          await navigateToUserDashboard(userType);
           
           // Use simple browser alert for development instead of toast
           console.log(`✅ Development Login Successful: Logged in as ${userType}`);

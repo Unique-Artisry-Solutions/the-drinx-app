@@ -27,10 +27,12 @@ const AdminLogin: React.FC = () => {
 
   useEffect(() => {
     // Check if user is already logged in as admin
-    if (isAuthenticated && user && userType === 'admin') {
-      console.log('AdminLogin - User already authenticated as admin, AuthProvider will handle redirect');
+    if (isAuthenticated && user && userType === 'admin' && navigationReady) {
+      console.log('AdminLogin - User already authenticated as admin, navigating to dashboard');
+      // Force navigation to admin dashboard for already-authenticated admin users
+      window.location.href = '/admin/system-breakdown';
     }
-  }, [isAuthenticated, user, userType]);
+  }, [isAuthenticated, user, userType, navigationReady]);
 
 
   const handleLogin = async (e: React.FormEvent) => {

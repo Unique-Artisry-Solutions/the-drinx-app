@@ -90,8 +90,28 @@ const DevBypass: React.FC<DevBypassProps> = ({
 
   const handleSwitchUser = async (userType: TestUserType) => {
     console.log(`🔧 DevBypass Component - Button clicked for ${userType}`);
+    
+    // Add visual feedback for navigation in progress
+    if (userType === 'admin') {
+      console.log('🔧 DevBypass Component - Admin login starting, expect navigation delay...');
+    }
+    
     try {
       await switchToUserType(userType);
+      
+      // For admin, add additional navigation status logging
+      if (userType === 'admin') {
+        setTimeout(() => {
+          const currentPath = window.location.pathname;
+          console.log(`🔧 DevBypass Component - Post-admin-login navigation check: ${currentPath}`);
+          
+          if (currentPath === '/admin/login') {
+            console.warn('🔧 DevBypass Component - Still on admin login page, navigation may have failed');
+            // Try one more navigation attempt
+            window.location.href = '/admin/system-breakdown';
+          }
+        }, 1000);
+      }
     } catch (error) {
       console.error(`🔧 DevBypass Component - Error switching to ${userType}:`, error);
       alert(`❌ Failed to switch to ${userType}: ${error}`);
