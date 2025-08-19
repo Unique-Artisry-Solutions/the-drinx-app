@@ -12,7 +12,7 @@ export const MagicLinkHandler: React.FC<{ children: React.ReactNode }> = ({ chil
   const { isAuthenticated, authStable, userType, isTransitioning, authStateStable } = useAuthenticatedUser();
   const navigate = useNavigate();
 
-  // Simplified magic link detection with DevTools bypass
+  // Simplified magic link detection with enhanced DevTools bypass
   useEffect(() => {
     try {
       // Check if window object is available (DOM ready)
@@ -21,16 +21,21 @@ export const MagicLinkHandler: React.FC<{ children: React.ReactNode }> = ({ chil
         return;
       }
 
-      // **CRITICAL FIX**: Detect DevTools login flows and skip processing
-      const isDevToolsLogin = localStorage.getItem('dev_auto_login_user_type');
+      // **PHASE 2 FIX**: Enhanced DevTools detection with timestamp validation
+      const devToolsUserType = localStorage.getItem('dev_auto_login_user_type');
+      const devToolsLoginTimestamp = localStorage.getItem('dev_auto_login_timestamp');
+      const isActiveDevToolsLogin = devToolsUserType && devToolsLoginTimestamp && 
+        (Date.now() - parseInt(devToolsLoginTimestamp)) < 15000; // 15 second protection window
       const currentPath = window.location?.pathname || '';
       const isAdminLogin = currentPath === '/admin/login';
       
-      if (isDevToolsLogin || isAdminLogin) {
-        console.log('🔧 MagicLinkHandler - DevTools login detected, skipping magic link processing:', {
-          isDevToolsLogin: !!isDevToolsLogin,
+      if (devToolsUserType || isActiveDevToolsLogin || isAdminLogin) {
+        console.log('🔧 MagicLinkHandler - DevTools login detected, completely bypassing magic link processing:', {
+          devToolsUserType,
+          isActiveDevToolsLogin,
           isAdminLogin,
-          currentPath
+          currentPath,
+          timeSinceLogin: devToolsLoginTimestamp ? Date.now() - parseInt(devToolsLoginTimestamp) : 'N/A'
         });
         return;
       }
@@ -77,10 +82,18 @@ export const MagicLinkHandler: React.FC<{ children: React.ReactNode }> = ({ chil
 
   // Enhanced redirect handling with DevTools bypass
   useEffect(() => {
-    // **CRITICAL FIX**: Skip redirect handling for DevTools flows
-    const isDevToolsLogin = localStorage.getItem('dev_auto_login_user_type');
-    if (isDevToolsLogin && shouldRedirect) {
-      console.log('🔧 MagicLinkHandler - DevTools login detected, cancelling magic link redirect');
+    // **PHASE 2 FIX**: Enhanced DevTools protection for redirects
+    const devToolsUserType = localStorage.getItem('dev_auto_login_user_type');
+    const devToolsLoginTimestamp = localStorage.getItem('dev_auto_login_timestamp');
+    const isActiveDevToolsLogin = devToolsUserType && devToolsLoginTimestamp && 
+      (Date.now() - parseInt(devToolsLoginTimestamp)) < 15000; // 15 second protection window
+    
+    if ((devToolsUserType || isActiveDevToolsLogin) && shouldRedirect) {
+      console.log('🔧 MagicLinkHandler - DevTools login detected, cancelling magic link redirect:', {
+        devToolsUserType,
+        isActiveDevToolsLogin,
+        timeSinceLogin: devToolsLoginTimestamp ? Date.now() - parseInt(devToolsLoginTimestamp) : 'N/A'
+      });
       setShouldRedirect(false);
       return;
     }
@@ -122,9 +135,14 @@ export const MagicLinkHandler: React.FC<{ children: React.ReactNode }> = ({ chil
   }, [shouldRedirect, authStable, authStateStable, isTransitioning, isAuthenticated, userType, navigate]);
 
   // Show loading while processing magic link or during auth transitions
-  // **CRITICAL FIX**: Don't show loading for DevTools flows
-  const isDevToolsLogin = localStorage.getItem('dev_auto_login_user_type');
-  const shouldShowLoading = !isDevToolsLogin && (isProcessingMagicLink || (shouldRedirect && (isTransitioning || !authStateStable)));
+  // **PHASE 2 FIX**: Enhanced DevTools detection for loading state
+  const devToolsUserType = localStorage.getItem('dev_auto_login_user_type');
+  const devToolsLoginTimestamp = localStorage.getItem('dev_auto_login_timestamp');
+  const isActiveDevToolsLogin = devToolsUserType && devToolsLoginTimestamp && 
+    (Date.now() - parseInt(devToolsLoginTimestamp)) < 15000; // 15 second protection window
+  
+  const shouldShowLoading = !(devToolsUserType || isActiveDevToolsLogin) && 
+    (isProcessingMagicLink || (shouldRedirect && (isTransitioning || !authStateStable)));
   
   if (shouldShowLoading) {
     return (

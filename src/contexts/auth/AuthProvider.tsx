@@ -103,6 +103,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setAuthError(null);
 
     try {
+      // **PHASE 1 FIX**: Enhanced DevTools login detection with grace period
+      const devToolsUserType = localStorage.getItem('dev_auto_login_user_type');
+      const devToolsLoginTimestamp = localStorage.getItem('dev_auto_login_timestamp');
+      const isActiveDevToolsLogin = devToolsUserType && devToolsLoginTimestamp && 
+        (Date.now() - parseInt(devToolsLoginTimestamp)) < 10000; // 10 second grace period
+
+      console.log('🔧 AuthProvider - DevTools state check:', {
+        devToolsUserType,
+        devToolsLoginTimestamp,
+        isActiveDevToolsLogin,
+        timeSinceLogin: devToolsLoginTimestamp ? Date.now() - parseInt(devToolsLoginTimestamp) : 'N/A'
+      });
+
       // Get current session with timeout
       const timeoutPromise = new Promise((_, reject) => 
         setTimeout(() => reject(new Error('Session fetch timeout')), 5000)
@@ -123,6 +136,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (currentSession?.user) {
         console.log('🔐 AuthProvider - Session found, setting auth state');
         
+        // **PHASE 1 FIX**: If this is a DevTools login, set timestamp for protection
+        if (devToolsUserType && !devToolsLoginTimestamp) {
+          localStorage.setItem('dev_auto_login_timestamp', Date.now().toString());
+          console.log('🔧 AuthProvider - DevTools login detected, setting protection timestamp');
+        }
+        
         // Set session and user
         setSession(currentSession);
         setUser(currentSession.user);
@@ -140,9 +159,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } else {
           console.log('🔐 AuthProvider - No session found, checking for dev auto-login');
           
-          // **CRITICAL FIX**: Don't clear auth state if DevTools login is in progress
-          const isDevToolsLogin = localStorage.getItem('dev_auto_login_user_type');
-          if (!isDevToolsLogin) {
+          // **PHASE 1 FIX**: Enhanced DevTools protection - don't clear auth state during active DevTools login
+          if (!isActiveDevToolsLogin) {
             // Clear auth state first
             setSession(null);
             setUser(null);
@@ -150,7 +168,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setIsEmailVerified(false);
             sessionPersistenceService.clearSession();
           } else {
-            console.log('🔧 AuthProvider - DevTools login detected, preserving potential auth state');
+            console.log('🔧 AuthProvider - Active DevTools login detected, preserving auth state for grace period');
+            return; // Exit early to prevent further processing
           }
         
         // **RECOVERY MECHANISM**: Check for interrupted magic link processing
@@ -396,15 +415,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
-  // Handle auth state changes - enhanced for impersonation
+  // Handle auth state changes - enhanced for impersonation and DevTools protection
   useEffect(() => {
     console.log('🔐 AuthProvider - Setting up auth state listener');
     
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, newSession) => {
       console.log('🔐 AuthProvider - Auth state changed:', event, !!newSession);
       
+      // **PHASE 1 FIX**: Enhanced DevTools protection in auth state changes
+      const devToolsUserType = localStorage.getItem('dev_auto_login_user_type');
+      const devToolsLoginTimestamp = localStorage.getItem('dev_auto_login_timestamp');
+      const isActiveDevToolsLogin = devToolsUserType && devToolsLoginTimestamp && 
+        (Date.now() - parseInt(devToolsLoginTimestamp)) < 10000; // 10 second grace period
+      
+      console.log('🔧 AuthProvider - DevTools protection check during state change:', {
+        event,
+        devToolsUserType,
+        isActiveDevToolsLogin,
+        hasSession: !!newSession
+      });
+      
+      // **CRITICAL FIX**: Prevent sign-out during active DevTools login
+      if (event === 'SIGNED_OUT' && isActiveDevToolsLogin && newSession === null) {
+        console.log('🔧 AuthProvider - Blocking SIGNED_OUT event during active DevTools login');
+        return; // Exit early to prevent clearing auth state
+      }
+      
       if (event === 'SIGNED_IN' && newSession?.user) {
         console.log('🔐 AuthProvider - User signed in successfully');
+        
+        // **CRITICAL FIX**: If this is a DevTools login, set timestamp for protection
+        if (devToolsUserType && !devToolsLoginTimestamp) {
+          localStorage.setItem('dev_auto_login_timestamp', Date.now().toString());
+          console.log('🔧 AuthProvider - DevTools login detected, setting protection timestamp');
+        }
         
         // **CRITICAL FIX**: Check if we're in magic link processing mode (using persistent storage)
         const isMagicLinkProcessing = localStorage.getItem('magic_link_processing') === 'true';
