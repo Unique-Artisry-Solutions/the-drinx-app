@@ -12,33 +12,52 @@ export const MagicLinkHandler: React.FC<{ children: React.ReactNode }> = ({ chil
   const { isAuthenticated, authStable, userType, isTransitioning, authStateStable } = useAuthenticatedUser();
   const navigate = useNavigate();
 
-  // Simplified magic link detection - only check URL for processing state
+  // Simplified magic link detection with error handling - only check URL for processing state
   useEffect(() => {
-    const urlHash = window.location.hash;
-    const urlSearch = window.location.search;
-    
-    // Simple check for magic link tokens in URL
-    const hasMagicLinkTokens = urlHash.includes('access_token=') || urlSearch.includes('access_token=');
-    
-    console.log('🔍 MagicLinkHandler - Simple token detection:', {
-      hasMagicLinkTokens,
-      currentDomain: window.location.hostname,
-      fullUrl: window.location.href
-    });
-    
-    if (hasMagicLinkTokens) {
-      console.log('✅ Magic link detected, letting Supabase handle authentication');
-      setIsProcessingMagicLink(true);
+    try {
+      // Check if window object is available (DOM ready)
+      if (typeof window === 'undefined') {
+        console.log('🔍 MagicLinkHandler - Window not available, skipping magic link detection');
+        return;
+      }
+
+      const urlHash = window.location?.hash || '';
+      const urlSearch = window.location?.search || '';
       
-      // Clean URL and prepare for redirect after short delay
-      setTimeout(() => {
-        const cleanUrl = `${window.location.origin}${window.location.pathname}${window.location.search}`;
-        window.history.replaceState({}, document.title, cleanUrl);
-        console.log('🧹 Magic link URL cleaned');
+      // Simple check for magic link tokens in URL
+      const hasMagicLinkTokens = urlHash.includes('access_token=') || urlSearch.includes('access_token=');
+      
+      console.log('🔍 MagicLinkHandler - Simple token detection:', {
+        hasMagicLinkTokens,
+        currentDomain: window.location?.hostname || 'unknown',
+        fullUrl: window.location?.href || 'unknown'
+      });
+      
+      if (hasMagicLinkTokens) {
+        console.log('✅ Magic link detected, letting Supabase handle authentication');
+        setIsProcessingMagicLink(true);
         
-        setIsProcessingMagicLink(false);
-        setShouldRedirect(true);
-      }, 2000);
+        // Clean URL and prepare for redirect after short delay
+        setTimeout(() => {
+          try {
+            const cleanUrl = `${window.location.origin}${window.location.pathname}${window.location.search}`;
+            window.history?.replaceState({}, document.title, cleanUrl);
+            console.log('🧹 Magic link URL cleaned');
+            
+            setIsProcessingMagicLink(false);
+            setShouldRedirect(true);
+          } catch (cleanupError) {
+            console.error('🚨 MagicLinkHandler - Error cleaning URL:', cleanupError);
+            // Still proceed with redirect even if cleanup fails
+            setIsProcessingMagicLink(false);
+            setShouldRedirect(true);
+          }
+        }, 2000);
+      }
+    } catch (error) {
+      console.error('🚨 MagicLinkHandler - Error in magic link detection:', error);
+      // If there's an error, just proceed normally without magic link processing
+      setIsProcessingMagicLink(false);
     }
   }, []);
 

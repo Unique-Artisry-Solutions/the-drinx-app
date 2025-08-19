@@ -55,8 +55,8 @@ const App: React.FC = () => {
 
   initDebug.log('App routes rendered');
   return (
-    <MagicLinkHandler>
-      <ImpersonationErrorBoundary>
+    <ImpersonationErrorBoundary>
+      <MagicLinkHandler>
         <div className="min-h-screen bg-white">
           {/* Global impersonation banner */}
           <ImpersonationBanner />
@@ -122,8 +122,8 @@ const App: React.FC = () => {
           {/* Impersonation Widget */}
           <ImpersonationWidget />
         </div>
-      </ImpersonationErrorBoundary>
-    </MagicLinkHandler>
+      </MagicLinkHandler>
+    </ImpersonationErrorBoundary>
   );
 };
 
