@@ -24,7 +24,7 @@ const StandardPageLayout: React.FC<StandardLayoutProps> = ({
   }
 
   return (
-    <div className={mergeClassNames("min-h-screen bg-gray-50", className)}>
+    <div className={mergeClassNames("min-h-screen bg-gray-50 pt-16", className)}>
       <div className={mergeClassNames("container mx-auto px-4 pt-4 pb-6", maxWidthClass)}>
         {config.showBreadcrumbs && (
           <div className="mb-4">
