@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Store, Megaphone, Shield, User, LogOut, Zap } from 'lucide-react';
 import { useDevelopmentMode } from '@/contexts/DevelopmentModeContext';
 import type { TestUserType } from '@/contexts/DevelopmentModeContext';
+import { debugDevBypassState } from '@/utils/devBypassDebug';
 
 interface DevBypassProps {
   variant?: 'full' | 'compact' | 'inline';
@@ -29,7 +30,33 @@ const DevBypass: React.FC<DevBypassProps> = ({
     isLoading
   } = useDevelopmentMode();
 
-  if (!isDevelopment) return null;
+  const filteredUserTypes = showOnlyUserTypes 
+    ? availableUserTypes.filter(userType => showOnlyUserTypes.includes(userType.type))
+    : availableUserTypes;
+
+  // Debug logging and state inspection
+  console.log('🔧 DevBypass Component - Render state:', {
+    isDevelopment,
+    devMode,
+    isDevModeActive,
+    isLoading,
+    variant,
+    availableUserTypes: availableUserTypes.length,
+    showOnlyUserTypes,
+    filteredUserTypes: filteredUserTypes?.length
+  });
+
+  // Run comprehensive debug check
+  React.useEffect(() => {
+    if (isDevelopment && variant === 'full') {
+      debugDevBypassState();
+    }
+  }, [isDevelopment, variant]);
+
+  if (!isDevelopment) {
+    console.log('🔧 DevBypass Component - Not in development mode, hiding');
+    return null;
+  }
 
   const getUserTypeIcon = (type: TestUserType) => {
     switch (type) {
@@ -61,16 +88,24 @@ const DevBypass: React.FC<DevBypassProps> = ({
     }
   };
 
-  const filteredUserTypes = showOnlyUserTypes 
-    ? availableUserTypes.filter(userType => showOnlyUserTypes.includes(userType.type))
-    : availableUserTypes;
-
   const handleSwitchUser = async (userType: TestUserType) => {
-    await switchToUserType(userType);
+    console.log(`🔧 DevBypass Component - Button clicked for ${userType}`);
+    try {
+      await switchToUserType(userType);
+    } catch (error) {
+      console.error(`🔧 DevBypass Component - Error switching to ${userType}:`, error);
+      alert(`❌ Failed to switch to ${userType}: ${error}`);
+    }
   };
 
   const handleLogout = async () => {
-    await exitDevMode();
+    console.log('🔧 DevBypass Component - Logout button clicked');
+    try {
+      await exitDevMode();
+    } catch (error) {
+      console.error('🔧 DevBypass Component - Error logging out:', error);
+      alert(`❌ Failed to logout: ${error}`);
+    }
   };
 
   if (variant === 'inline') {
@@ -84,10 +119,11 @@ const DevBypass: React.FC<DevBypassProps> = ({
               variant="outline"
               size="sm"
               onClick={() => handleSwitchUser(userType.type)}
-              className={`text-xs ${getUserTypeColor(userType.type)} ${
-                devMode === userType.type ? 'ring-2 ring-orange-400' : ''
-              }`}
-              disabled={devMode === userType.type || isLoading}
+                className={`text-xs ${getUserTypeColor(userType.type)} ${
+                  devMode === userType.type ? 'ring-2 ring-orange-400 bg-orange-100' : ''
+                }`}
+                disabled={isLoading}
+                title={devMode === userType.type ? `Currently logged in as ${userType.type}` : `Switch to ${userType.type}`}
             >
               <IconComponent className="h-3 w-3 mr-1" />
               {userType.type}
@@ -141,9 +177,10 @@ const DevBypass: React.FC<DevBypassProps> = ({
                   size="sm"
                   onClick={() => handleSwitchUser(userType.type)}
                   className={`justify-start text-xs ${getUserTypeColor(userType.type)} ${
-                    devMode === userType.type ? 'ring-2 ring-orange-400' : ''
+                    devMode === userType.type ? 'ring-2 ring-orange-400 bg-orange-100' : ''
                   }`}
-                  disabled={devMode === userType.type || isLoading}
+                  disabled={isLoading}
+                  title={devMode === userType.type ? `Currently logged in as ${userType.type}` : `Switch to ${userType.type}`}
                 >
                   <IconComponent className="h-3 w-3 mr-2" />
                   {userType.label}
@@ -213,9 +250,10 @@ const DevBypass: React.FC<DevBypassProps> = ({
                 size="sm"
                 onClick={() => handleSwitchUser(userType.type)}
                 className={`justify-start border-2 ${getUserTypeColor(userType.type)} font-medium ${
-                  devMode === userType.type ? 'ring-2 ring-orange-400' : ''
+                  devMode === userType.type ? 'ring-2 ring-orange-400 bg-orange-100' : ''
                 }`}
-                disabled={devMode === userType.type || isLoading}
+                disabled={isLoading}
+                title={devMode === userType.type ? `Currently logged in as ${userType.type}` : `Switch to ${userType.type}`}
               >
                 <IconComponent className="h-4 w-4 mr-2" />
                 {userType.label}

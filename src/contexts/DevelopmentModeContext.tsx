@@ -81,38 +81,64 @@ export const DevelopmentModeProvider: React.FC<{ children: React.ReactNode }> = 
     }
   ];
 
-  // Auto-login functionality
+  // Auto-login functionality with comprehensive debugging
   const autoLogin = useCallback(async (userType: TestUserType): Promise<{ success: boolean; error?: string }> => {
+    console.log(`🔧 DevBypass - Starting auto-login for ${userType}`);
+    
     if (!checkDevelopmentMode()) {
-      return { success: false, error: 'Not in development mode' };
+      const msg = 'Not in development mode';
+      console.error('🔧 DevBypass - Error:', msg);
+      return { success: false, error: msg };
     }
 
     const credentials = TEST_CREDENTIALS[userType];
     if (!credentials) {
-      return { success: false, error: `No credentials found for user type: ${userType}` };
+      const msg = `No credentials found for user type: ${userType}`;
+      console.error('🔧 DevBypass - Error:', msg);
+      return { success: false, error: msg };
     }
 
+    console.log(`🔧 DevBypass - Using credentials for ${userType}:`, { email: credentials.email });
+
     try {
+      // First, check if we need to sign out current user
+      const { data: currentSession } = await supabase.auth.getSession();
+      if (currentSession?.session?.user) {
+        console.log('🔧 DevBypass - Current user detected, signing out first:', currentSession.session.user.email);
+        await supabase.auth.signOut();
+        // Wait a bit for cleanup
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+
+      console.log('🔧 DevBypass - Attempting sign in...');
       const { data, error } = await supabase.auth.signInWithPassword({
         email: credentials.email,
         password: credentials.password,
       });
 
       if (error) {
-        console.error('Auto-login error:', error);
-        return { success: false, error: error.message };
+        const msg = `Auth error: ${error.message}`;
+        console.error('🔧 DevBypass - Sign in error:', error);
+        return { success: false, error: msg };
       }
 
       if (data.user) {
         setCurrentDevUserType(userType);
-        console.log(`Auto-login successful for ${userType}:`, credentials.email);
+        console.log(`🔧 DevBypass - Login successful for ${userType}:`, {
+          email: credentials.email,
+          userId: data.user.id,
+          userType: data.user.user_metadata?.user_type
+        });
         return { success: true };
       }
 
-      return { success: false, error: 'Login failed - no user returned' };
+      const msg = 'Login failed - no user returned from Supabase';
+      console.error('🔧 DevBypass - Error:', msg);
+      return { success: false, error: msg };
     } catch (error: any) {
-      console.error('Auto-login exception:', error);
-      return { success: false, error: error.message || 'Unknown error' };
+      const msg = error.message || 'Unknown exception during auto-login';
+      console.error('🔧 DevBypass - Exception:', error);
+      return { success: false, error: msg };
     }
   }, [checkDevelopmentMode, setCurrentDevUserType]);
 
@@ -210,36 +236,79 @@ export const DevelopmentModeProvider: React.FC<{ children: React.ReactNode }> = 
   }, [navigate, location.pathname]);
 
   const switchToUserType = useCallback(async (userType: DevUserType) => {
-    if (!isDevelopment || devMode === userType) return;
+    console.log(`🔧 DevBypass - switchToUserType called:`, { 
+      userType, 
+      isDevelopment, 
+      currentDevMode: devMode,
+      isAlreadyThisUser: devMode === userType
+    });
+
+    if (!isDevelopment) {
+      console.warn('🔧 DevBypass - Not in development mode, ignoring switch request');
+      return;
+    }
+
+    if (devMode === userType) {
+      console.log(`🔧 DevBypass - Already logged in as ${userType}, ignoring`);
+      return;
+    }
     
-    console.log('🔧 DevelopmentModeProvider - Switching to user type:', userType);
     setIsLoading(true);
     
     try {
       if (userType) {
         // Use integrated auto-login functionality
+        console.log(`🔧 DevBypass - Initiating login process for ${userType}`);
         const result = await autoLogin(userType);
+        
         if (result.success) {
+          console.log(`🔧 DevBypass - Login successful, updating state and navigation`);
           setDevMode(userType);
           navigateToUserDashboard(userType);
-          debouncedToast.success(
-            'Development Login',
-            `Logged in as ${userType}`,
-            3000
-          );
+          
+          // Use simple browser alert for development instead of toast
+          console.log(`✅ Development Login Successful: Logged in as ${userType}`);
+          
+          // Try toast but don't fail if it errors
+          try {
+            debouncedToast.success(
+              'Development Login',
+              `Logged in as ${userType}`,
+              3000
+            );
+          } catch (toastError) {
+            console.warn('🔧 DevBypass - Toast failed, using fallback:', toastError);
+            alert(`✅ Development Login: Logged in as ${userType}`);
+          }
         } else {
-          console.error('Failed to switch user type:', result.error);
-          debouncedToast.error(
-            'Development Login Failed',
-            result.error || 'Unknown error',
-            5000
-          );
+          console.error('🔧 DevBypass - Login failed:', result.error);
+          
+          // Use simple browser alert for development errors
+          const errorMsg = `❌ Development Login Failed: ${result.error}`;
+          console.error(errorMsg);
+          alert(errorMsg);
+          
+          // Try toast but don't fail if it errors
+          try {
+            debouncedToast.error(
+              'Development Login Failed',
+              result.error || 'Unknown error',
+              5000
+            );
+          } catch (toastError) {
+            console.warn('🔧 DevBypass - Error toast failed:', toastError);
+          }
         }
       } else {
+        console.log('🔧 DevBypass - Logging out and returning to landing');
         await logout();
         setDevMode(null);
         navigate('/landing', { replace: true });
       }
+    } catch (error: any) {
+      const errorMsg = `🔧 DevBypass - Exception in switchToUserType: ${error.message}`;
+      console.error(errorMsg, error);
+      alert(`❌ ${errorMsg}`);
     } finally {
       setIsLoading(false);
     }
