@@ -14,7 +14,7 @@ const StandardPageHeader: React.FC<StandardHeaderProps> = ({
   children
 }) => {
   return (
-    <div className={mergeClassNames("mb-8", className)}>
+    <div className={mergeClassNames("mb-6", className)}>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div className="flex-1 min-w-0">
           <h1 className="text-3xl font-bold text-gray-900 truncate">
