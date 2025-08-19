@@ -17,7 +17,8 @@ export const debugDevBypassState = () => {
   console.log('Is Development Mode:', 
     process.env.NODE_ENV === 'development' || 
     window.location.hostname === 'localhost' ||
-    window.location.hostname.includes('lovableproject.com')
+    window.location.hostname.includes('lovableproject.com') ||
+    window.location.hostname.includes('lovable.app')
   );
   
   // Supabase client check

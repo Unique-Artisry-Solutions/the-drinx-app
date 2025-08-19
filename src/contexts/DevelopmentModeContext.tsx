@@ -38,7 +38,8 @@ export const DevelopmentModeProvider: React.FC<{ children: React.ReactNode }> = 
   const checkDevelopmentMode = useCallback(() => {
     return process.env.NODE_ENV === 'development' || 
            window.location.hostname === 'localhost' ||
-           window.location.hostname.includes('lovableproject.com');
+           window.location.hostname.includes('lovableproject.com') ||
+           window.location.hostname.includes('lovable.app');
   }, []);
 
   // Storage helpers
