@@ -18,6 +18,8 @@ import AdminSystemOverviewPage from '@/pages/admin/AdminSystemOverviewPage';
 import AdminToolsPage from '@/pages/admin/AdminToolsPage';
 import AdminRewardsPage from '@/pages/admin/AdminRewardsPage';
 import SystemAnalyticsPage from '@/pages/admin/SystemAnalyticsPage';
+import AdminLogsPage from '@/pages/admin/AdminLogsPage';
+import ContentModerationPage from '@/pages/admin/ContentModerationPage';
 
 // Lazy loaded components
 const AdminDashboard = lazy(() => import('@/pages/admin/AdminDashboard'));
@@ -61,6 +63,10 @@ export const adminRoutes: RouteObject[] = [
       // Content Management
       { path: 'establishments', element: <AdminEstablishmentsPage /> },
       { path: 'photo-moderation', element: <PhotoModerationPage /> },
+      { path: 'content-moderation', element: <ContentModerationPage /> },
+      
+      // Logs & Monitoring
+      { path: 'logs', element: <AdminLogsPage /> },
       
       // System Tools
       { path: 'component-catalog', element: <AdminToolsPage /> },
