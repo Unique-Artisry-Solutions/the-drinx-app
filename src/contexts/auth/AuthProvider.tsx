@@ -7,7 +7,6 @@ import { sessionPersistenceService } from '@/services/SessionPersistenceService'
 import { authCache } from './authCache';
 import { debouncedToast } from '@/utils/debouncedToast';
 import { inferUserType } from '@/utils/auth/admin';
-import { DevAutoLoginService } from '@/services/DevAutoLoginService';
 import { validateImpersonationState, ensureImpersonationFlags, clearImpersonationFlags } from '@/utils/impersonationValidator';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -357,29 +356,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           } else {
             console.log('🔐 AuthProvider - Magic link detected but skipping processing (session exists or no tokens)');
           }
-        } else if (DevAutoLoginService.isDevelopmentMode()) {
-          console.log('🔐 AuthProvider - Development mode detected, initializing auto-login');
-          
-          // Check if there's a stored dev user type, otherwise default to admin
-          const storedDevType = DevAutoLoginService.getCurrentDevUserType();
-          if (!storedDevType) {
-            console.log('🔐 AuthProvider - No stored dev user type, auto-logging in as admin');
-            await DevAutoLoginService.autoLogin('admin');
-          } else {
-            console.log('🔐 AuthProvider - Found stored dev user type, initializing auto-login');
-            await DevAutoLoginService.initializeAutoLogin();
-          }
-          
-          // After auto-login attempt, check for session again
-          const { data: { session: devSession } } = await supabase.auth.getSession();
-          if (devSession?.user) {
-            console.log('🔐 AuthProvider - Dev auto-login successful, setting auth state');
-            setSession(devSession);
-            setUser(devSession.user);
-            setUserType(inferUserType(devSession.user));
-            setIsEmailVerified(devSession.user.email_confirmed_at !== null);
-            sessionPersistenceService.updateSession(devSession, devSession.user);
-          }
+        } else {
+          console.log('🔐 AuthProvider - Normal initialization, checking for existing session');
         }
       }
 

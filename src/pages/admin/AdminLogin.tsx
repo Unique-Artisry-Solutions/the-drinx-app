@@ -7,15 +7,14 @@ import { debouncedToast } from '@/utils/debouncedToast';
 import { useAuth } from '@/contexts/auth/AuthProvider';
 import { useDevelopmentMode } from '@/contexts/DevelopmentModeContext';
 import GuestTopNavigation from '@/components/navigation/GuestTopNavigation';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Info, Zap } from 'lucide-react';
+import DevBypass from '@/components/development/DevBypass';
 
 const AdminLogin: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { signIn, user, userType, isAuthenticated, isLoading, navigationReady } = useAuth();
-  const { isDevelopment, isDevModeActive, devMode, switchToUserType } = useDevelopmentMode();
+  const { isDevelopment } = useDevelopmentMode();
 
   // Pre-fill credentials in development mode
   useEffect(() => {
@@ -33,10 +32,6 @@ const AdminLogin: React.FC = () => {
     }
   }, [isAuthenticated, user, userType]);
 
-  const handleDevModeBypass = () => {
-    console.log('AdminLogin: Activating dev mode admin bypass');
-    switchToUserType('admin');
-  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -103,26 +98,14 @@ const AdminLogin: React.FC = () => {
             </CardDescription>
           </CardHeader>
           
-          {/* Development Mode Alert */}
+          {/* Development Mode Bypass */}
           {isDevelopment && (
             <div className="px-6 pb-4">
-              <Alert className="bg-orange-50 border-orange-200">
-                <Info className="h-4 w-4 text-orange-500" />
-                <AlertDescription className="text-orange-700">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Development mode detected</span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleDevModeBypass}
-                      className="text-orange-600 border-orange-300 hover:bg-orange-100"
-                    >
-                      <Zap className="h-3 w-3 mr-1" />
-                      Dev Bypass
-                    </Button>
-                  </div>
-                </AlertDescription>
-              </Alert>
+              <DevBypass 
+                variant="compact"
+                showOnlyUserTypes={['admin']}
+                showLogoutButton={false}
+              />
             </div>
           )}
 

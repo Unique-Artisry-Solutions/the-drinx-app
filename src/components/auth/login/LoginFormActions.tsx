@@ -1,15 +1,16 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { isPreviewEnvironment } from '@/utils/environment';
+import DevBypass from '@/components/development/DevBypass';
+import { useDevelopmentMode } from '@/contexts/DevelopmentModeContext';
+import type { TestUserType } from '@/contexts/DevelopmentModeContext';
 
 interface LoginFormActionsProps {
   isSubmitting: boolean;
   isLoading: boolean;
   isAdminLogin: boolean;
-  userType?: 'individual' | 'establishment' | 'promoter';
+  userType?: TestUserType;
   onClose?: () => void;
-  onBypassLogin?: (type: 'individual' | 'establishment' | 'promoter' | 'admin') => Promise<void>;
 }
 
 const LoginFormActions: React.FC<LoginFormActionsProps> = ({
@@ -17,10 +18,16 @@ const LoginFormActions: React.FC<LoginFormActionsProps> = ({
   isLoading,
   isAdminLogin,
   userType = 'individual',
-  onClose,
-  onBypassLogin
+  onClose
 }) => {
-  const showBypassButtons = isPreviewEnvironment() || process.env.NODE_ENV === 'development';
+  const { isDevelopment } = useDevelopmentMode();
+
+  // Determine which user types to show based on context
+  const getContextualUserTypes = (): TestUserType[] => {
+    if (isAdminLogin) return ['admin'];
+    if (userType) return [userType, 'establishment', 'promoter'];
+    return ['individual', 'establishment', 'promoter'];
+  };
 
   return (
     <div className="w-full space-y-4">
@@ -43,38 +50,14 @@ const LoginFormActions: React.FC<LoginFormActionsProps> = ({
         </Button>
       )}
       
-      {showBypassButtons && onBypassLogin && (
+      {isDevelopment && (
         <div className="pt-2 border-t border-gray-200">
           <p className="text-xs text-gray-500 mb-2">Development Bypass Login</p>
-          <div className="grid grid-cols-2 gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="text-xs"
-              onClick={() => onBypassLogin(isAdminLogin ? 'admin' : 'individual')}
-            >
-              {isAdminLogin ? 'Admin' : 'Individual'} Bypass
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="text-xs"
-              onClick={() => onBypassLogin('establishment')}
-            >
-              Establishment Bypass
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="text-xs w-full col-span-2"
-              onClick={() => onBypassLogin('promoter')}
-            >
-              Promoter Bypass
-            </Button>
-          </div>
+          <DevBypass 
+            variant="inline"
+            showOnlyUserTypes={getContextualUserTypes()}
+            showLogoutButton={false}
+          />
         </div>
       )}
     </div>
