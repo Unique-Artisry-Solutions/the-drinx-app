@@ -26,7 +26,8 @@ const ActionSchema = z.object({
   action: z.enum([
     'getVapidKey','getNotifications','updateNotification','markAllAsRead','createNotification',
     'saveVapidKeys','testPushNotification','getPromoterNotifications','updatePromoterPreferences',
-    'getEstablishmentNotifications','updateEstablishmentPreferences','healthCheck'
+    'getEstablishmentNotifications','updateEstablishmentPreferences','healthCheck',
+    'sendSMSNotification','testSMSNotification','getSMSDeliveryStatus'
   ]),
   params: z.unknown().optional()
 }).strict();
@@ -183,6 +184,15 @@ serve(async (req) => {
           return createErrorResponse('Establishment ID and preferences are required', 400, cors);
         }
         return await handleUpdateEstablishmentPreferences(pEstPref, cors);
+
+      case 'sendSMSNotification':
+        return await handleSendSMSNotification(params, cors);
+
+      case 'testSMSNotification':
+        return await handleTestSMSNotification(params, cors);
+
+      case 'getSMSDeliveryStatus':
+        return await handleGetSMSDeliveryStatus(params, cors);
 
       default:
         return createErrorResponse('Invalid action', 400, cors);
@@ -497,5 +507,90 @@ async function handleUpdateEstablishmentPreferences(params: any, cors: Record<st
     );
   } catch (error) {
     return createErrorResponse(`Error updating establishment preferences: ${error.message}`, 500, cors);
+  }
+}
+
+// SMS notification handlers
+async function handleSendSMSNotification(params: any, cors: Record<string, string>) {
+  try {
+    if (!params.phoneNumber || !params.message) {
+      return createErrorResponse('Phone number and message are required', 400, cors);
+    }
+
+    // Call the SMS service
+    const smsResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/sms-notifications`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`
+      },
+      body: JSON.stringify({
+        action: 'sendSMS',
+        params: {
+          phoneNumber: params.phoneNumber,
+          message: params.message,
+          userId: params.userId,
+          priority: params.priority || 'medium',
+          notificationId: params.notificationId
+        }
+      })
+    });
+
+    const result = await smsResponse.json();
+
+    if (!smsResponse.ok) {
+      throw new Error(result.error || 'Failed to send SMS');
+    }
+
+    return new Response(
+      JSON.stringify(result),
+      { headers: { ...cors, 'Content-Type': 'application/json' } }
+    );
+  } catch (error: any) {
+    return createErrorResponse(`Error sending SMS notification: ${error.message}`, 500, cors);
+  }
+}
+
+async function handleTestSMSNotification(params: any, cors: Record<string, string>) {
+  try {
+    if (!params.phoneNumber) {
+      return createErrorResponse('Phone number is required', 400, cors);
+    }
+
+    const testMessage = `Test SMS notification from ${new URL(Deno.env.get('SUPABASE_URL') || '').hostname} at ${new Date().toLocaleTimeString()}`;
+
+    return await handleSendSMSNotification({
+      phoneNumber: params.phoneNumber,
+      message: testMessage,
+      userId: params.userId,
+      priority: 'low'
+    }, cors);
+  } catch (error: any) {
+    return createErrorResponse(`Error sending test SMS: ${error.message}`, 500, cors);
+  }
+}
+
+async function handleGetSMSDeliveryStatus(params: any, cors: Record<string, string>) {
+  try {
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
+    const { data, error } = await supabaseClient
+      .from('sms_delivery_logs')
+      .select('*')
+      .eq('user_id', params.userId)
+      .order('created_at', { ascending: false })
+      .limit(params.limit || 50);
+
+    if (error) throw error;
+
+    return new Response(
+      JSON.stringify({ data }),
+      { headers: { ...cors, 'Content-Type': 'application/json' } }
+    );
+  } catch (error: any) {
+    return createErrorResponse(`Error fetching SMS delivery status: ${error.message}`, 500, cors);
   }
 }

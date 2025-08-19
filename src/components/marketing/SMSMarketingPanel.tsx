@@ -8,8 +8,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MessageSquare, Users, Clock, TrendingUp } from 'lucide-react';
+import { MessageSquare, Users, Clock, TrendingUp, Phone, CheckCircle, XCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useSMSCampaigns } from '@/hooks/sms/useSMSCampaigns';
+import { useSMSNotifications } from '@/hooks/sms/useSMSNotifications';
 
 interface SMSCampaign {
   id: string;
@@ -33,6 +35,9 @@ interface SMSMarketingPanelProps {
 
 export default function SMSMarketingPanel({ campaignId, onSMSCampaignCreate }: SMSMarketingPanelProps) {
   const { toast } = useToast();
+  const { campaigns, createCampaign, campaignStats, isLoading } = useSMSCampaigns();
+  const { testSMS } = useSMSNotifications();
+  
   const [activeTab, setActiveTab] = useState('create');
   const [smsData, setSmsData] = useState({
     name: '',
@@ -41,31 +46,13 @@ export default function SMSMarketingPanel({ campaignId, onSMSCampaignCreate }: S
     scheduledFor: '',
     sendNow: true
   });
-
-  const [campaigns] = useState<SMSCampaign[]>([
-    {
-      id: '1',
-      name: 'Event Reminder',
-      message: 'Don\'t forget! Your event starts in 2 hours. See you there! 🎉',
-      targetAudience: 'ticket_holders',
-      status: 'sent',
-      metrics: { sent: 150, delivered: 148, clicked: 23, replies: 5 }
-    },
-    {
-      id: '2',
-      name: 'Last Chance Tickets',
-      message: 'Only 10 tickets left for tonight\'s event! Grab yours now: [link]',
-      targetAudience: 'interested_users',
-      status: 'scheduled',
-      scheduledFor: '2024-01-15T18:00:00',
-      metrics: { sent: 0, delivered: 0, clicked: 0, replies: 0 }
-    }
-  ]);
+  
+  const [testPhoneNumber, setTestPhoneNumber] = useState('');
 
   const characterCount = smsData.message.length;
   const smsCount = Math.ceil(characterCount / 160);
 
-  const handleCreateSMS = () => {
+  const handleCreateSMS = async () => {
     if (!smsData.name || !smsData.message || !smsData.targetAudience) {
       toast({
         title: 'Missing Information',
@@ -75,29 +62,56 @@ export default function SMSMarketingPanel({ campaignId, onSMSCampaignCreate }: S
       return;
     }
 
-    onSMSCampaignCreate({
-      name: smsData.name,
-      message: smsData.message,
-      targetAudience: smsData.targetAudience,
-      scheduledFor: smsData.sendNow ? undefined : smsData.scheduledFor,
-      status: smsData.sendNow ? 'sent' : 'scheduled'
-    });
+    try {
+      await createCampaign.mutateAsync({
+        name: smsData.name,
+        message: smsData.message,
+        targetAudience: smsData.targetAudience,
+        scheduledFor: smsData.sendNow ? undefined : smsData.scheduledFor,
+        sendNow: smsData.sendNow
+      });
 
-    toast({
-      title: 'SMS Campaign Created',
-      description: smsData.sendNow ? 'SMS messages are being sent' : 'SMS campaign scheduled successfully'
-    });
+      // Call the original callback for backward compatibility
+      if (onSMSCampaignCreate) {
+        onSMSCampaignCreate({
+          name: smsData.name,
+          message: smsData.message,
+          targetAudience: smsData.targetAudience,
+          scheduledFor: smsData.sendNow ? undefined : smsData.scheduledFor,
+          status: smsData.sendNow ? 'sent' : 'scheduled'
+        });
+      }
 
-    setSmsData({
-      name: '',
-      message: '',
-      targetAudience: '',
-      scheduledFor: '',
-      sendNow: true
-    });
+      setSmsData({
+        name: '',
+        message: '',
+        targetAudience: '',
+        scheduledFor: '',
+        sendNow: true
+      });
+    } catch (error) {
+      // Error is handled by the mutation's onError
+    }
   };
 
-  const getStatusColor = (status: SMSCampaign['status']) => {
+  const handleTestSMS = async () => {
+    if (!testPhoneNumber) {
+      toast({
+        title: 'Phone Number Required',
+        description: 'Please enter a phone number for testing',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    try {
+      await testSMS.mutateAsync(testPhoneNumber);
+    } catch (error) {
+      // Error is handled by the mutation's onError
+    }
+  };
+
+  const getStatusColor = (status: string) => {
     switch (status) {
       case 'sent': return 'default';
       case 'scheduled': return 'secondary';
@@ -117,9 +131,10 @@ export default function SMSMarketingPanel({ campaignId, onSMSCampaignCreate }: S
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="create">Create SMS Campaign</TabsTrigger>
           <TabsTrigger value="campaigns">SMS Campaigns</TabsTrigger>
+          <TabsTrigger value="test">Test SMS</TabsTrigger>
         </TabsList>
 
         <TabsContent value="create" className="space-y-6">
@@ -207,73 +222,126 @@ export default function SMSMarketingPanel({ campaignId, onSMSCampaignCreate }: S
                 </div>
               )}
 
-              <Button onClick={handleCreateSMS} className="w-full">
-                {smsData.sendNow ? 'Send SMS Campaign' : 'Schedule SMS Campaign'}
+              <Button 
+                onClick={handleCreateSMS} 
+                className="w-full"
+                disabled={createCampaign.isPending}
+              >
+                {createCampaign.isPending ? 'Creating...' : 
+                 smsData.sendNow ? 'Send SMS Campaign' : 'Schedule SMS Campaign'}
               </Button>
             </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="campaigns" className="space-y-6">
-          <div className="grid gap-4">
-            {campaigns.map((campaign) => (
-              <Card key={campaign.id}>
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg">{campaign.name}</CardTitle>
-                    <div className="flex items-center gap-2">
-                      <Badge variant={getStatusColor(campaign.status)}>
-                        {campaign.status === 'scheduled' && <Clock className="h-3 w-3 mr-1" />}
-                        {campaign.status}
-                      </Badge>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="mb-4">
-                    <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded">
-                      {campaign.message}
+          {isLoading ? (
+            <div className="text-center py-8">Loading campaigns...</div>
+          ) : (
+            <div className="grid gap-4">
+              {campaigns.length === 0 ? (
+                <Card>
+                  <CardContent className="pt-6">
+                    <p className="text-center text-muted-foreground">
+                      No SMS campaigns yet. Create your first campaign above.
                     </p>
-                  </div>
-                  
-                  {campaign.status === 'sent' && (
-                    <div className="grid grid-cols-4 gap-4 text-center">
-                      <div>
-                        <div className="text-xl font-bold text-blue-600">{campaign.metrics.sent}</div>
-                        <div className="text-xs text-gray-600">Sent</div>
+                  </CardContent>
+                </Card>
+              ) : (
+                campaigns.map((campaign) => (
+                  <Card key={campaign.id}>
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-lg">{campaign.name}</CardTitle>
+                        <div className="flex items-center gap-2">
+                          <Badge variant={getStatusColor(campaign.status)}>
+                            {campaign.status === 'scheduled' && <Clock className="h-3 w-3 mr-1" />}
+                            {campaign.status}
+                          </Badge>
+                        </div>
                       </div>
-                      <div>
-                        <div className="text-xl font-bold text-green-600">{campaign.metrics.delivered}</div>
-                        <div className="text-xs text-gray-600">Delivered</div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="mb-4">
+                        <p className="text-sm text-muted-foreground bg-muted p-3 rounded">
+                          {campaign.message_body}
+                        </p>
                       </div>
-                      <div>
-                        <div className="text-xl font-bold text-purple-600">{campaign.metrics.clicked}</div>
-                        <div className="text-xs text-gray-600">Clicked</div>
-                      </div>
-                      <div>
-                        <div className="text-xl font-bold text-orange-600">{campaign.metrics.replies}</div>
-                        <div className="text-xs text-gray-600">Replies</div>
-                      </div>
-                    </div>
-                  )}
+                      
+                      {campaign.status === 'sent' && (
+                        <div className="grid grid-cols-4 gap-4 text-center">
+                          <div>
+                            <div className="text-xl font-bold text-blue-600">{campaign.messages_sent}</div>
+                            <div className="text-xs text-muted-foreground">Sent</div>
+                          </div>
+                          <div>
+                            <div className="text-xl font-bold text-green-600">{campaign.messages_delivered}</div>
+                            <div className="text-xs text-muted-foreground">Delivered</div>
+                          </div>
+                          <div>
+                            <div className="text-xl font-bold text-orange-600">{campaign.messages_failed}</div>
+                            <div className="text-xs text-muted-foreground">Failed</div>
+                          </div>
+                          <div>
+                            <div className="text-xl font-bold text-purple-600">${campaign.campaign_cost.toFixed(2)}</div>
+                            <div className="text-xs text-muted-foreground">Cost</div>
+                          </div>
+                        </div>
+                      )}
 
-                  {campaign.status === 'scheduled' && campaign.scheduledFor && (
-                    <div className="text-sm text-gray-600">
-                      Scheduled for: {new Date(campaign.scheduledFor).toLocaleString()}
-                    </div>
-                  )}
+                      {campaign.status === 'scheduled' && campaign.scheduled_for && (
+                        <div className="text-sm text-muted-foreground">
+                          Scheduled for: {new Date(campaign.scheduled_for).toLocaleString()}
+                        </div>
+                      )}
 
-                  <div className="flex gap-2 mt-4">
-                    <Button variant="outline" size="sm">Edit</Button>
-                    {campaign.status === 'scheduled' && (
-                      <Button variant="outline" size="sm">Cancel</Button>
-                    )}
-                    <Button variant="outline" size="sm">View Details</Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                      <div className="flex gap-2 mt-4">
+                        <Button variant="outline" size="sm">Edit</Button>
+                        {campaign.status === 'scheduled' && (
+                          <Button variant="outline" size="sm">Cancel</Button>
+                        )}
+                        <Button variant="outline" size="sm">View Details</Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="test" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Phone className="h-5 w-5" />
+                Test SMS Notification
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="test-phone">Test Phone Number</Label>
+                <Input
+                  id="test-phone"
+                  value={testPhoneNumber}
+                  onChange={(e) => setTestPhoneNumber(e.target.value)}
+                  placeholder="+1 (555) 123-4567"
+                />
+              </div>
+              
+              <Button 
+                onClick={handleTestSMS} 
+                className="w-full"
+                disabled={testSMS.isPending}
+              >
+                {testSMS.isPending ? 'Sending Test...' : 'Send Test SMS'}
+              </Button>
+              
+              <div className="text-sm text-muted-foreground">
+                This will send a test message to verify SMS functionality.
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

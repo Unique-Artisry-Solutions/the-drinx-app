@@ -9,3 +9,6 @@ verify_jwt = true
 [functions.impersonation-diagnostics]
 verify_jwt = true
 
+[functions.sms-notifications]
+verify_jwt = false
+

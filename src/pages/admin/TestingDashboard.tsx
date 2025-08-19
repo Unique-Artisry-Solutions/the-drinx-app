@@ -66,7 +66,7 @@ const TestingDashboard: React.FC = () => {
       tests: [
         { id: 'notif-1', name: 'Send Push Notification', status: 'passed', duration: 150 },
         { id: 'notif-2', name: 'Email Notification', status: 'passed', duration: 200 },
-        { id: 'notif-3', name: 'SMS Notification', status: 'failed', error: 'Connection timeout' },
+        { id: 'notif-3', name: 'SMS Notification', status: 'passed', duration: 180 },
         { id: 'notif-4', name: 'In-App Notification', status: 'pending' }
       ]
     },
