@@ -235,24 +235,37 @@ export const DevelopmentModeProvider: React.FC<{ children: React.ReactNode }> = 
     
     console.log(`🔧 DevBypass - Target path: ${targetPath}, Current path: ${location.pathname}`);
     
-    // For admin routes, add a small delay to ensure auth state propagates
+    // **CRITICAL FIX**: Enhanced admin navigation with multiple fallback attempts
     if (userType === 'admin') {
-      console.log('🔧 DevBypass - Admin navigation, waiting for auth state to stabilize...');
+      console.log('🔧 DevBypass - Admin navigation starting, implementing robust navigation strategy');
       
-      // Wait for auth state to propagate from Supabase to AuthProvider
-      await new Promise(resolve => setTimeout(resolve, 200));
-      
-      // Try navigation with force replace to bypass any stale route protection
-      console.log(`🔧 DevBypass - Navigating to admin dashboard: ${targetPath}`);
+      // Strategy 1: Immediate navigation attempt
+      console.log(`🔧 DevBypass - Strategy 1: Direct navigation to ${targetPath}`);
       navigate(targetPath, { replace: true });
       
-      // Fallback: if we're still on admin login after delay, force navigate again
+      // Strategy 2: Wait for auth state and try again if still on login page  
       setTimeout(() => {
-        if (location.pathname === '/admin/login') {
-          console.log('🔧 DevBypass - Still on admin login, force navigating again');
+        const currentPath = window.location.pathname;
+        console.log(`🔧 DevBypass - Strategy 2: Post-delay check, current path: ${currentPath}`);
+        
+        if (currentPath === '/admin/login') {
+          console.log('🔧 DevBypass - Still on admin login, attempting navigation again');
           navigate(targetPath, { replace: true });
         }
-      }, 500);
+      }, 300);
+      
+      // Strategy 3: Final fallback after longer delay
+      setTimeout(() => {
+        const currentPath = window.location.pathname;
+        console.log(`🔧 DevBypass - Strategy 3: Final fallback check, current path: ${currentPath}`);
+        
+        if (currentPath === '/admin/login') {
+          console.warn('🔧 DevBypass - Still stuck on admin login after multiple attempts, using window.location');
+          window.location.href = targetPath;
+        } else {
+          console.log('🔧 DevBypass - Admin navigation successful');
+        }
+      }, 1000);
     } else {
       // For non-admin routes, navigate immediately
       if (location.pathname !== targetPath) {

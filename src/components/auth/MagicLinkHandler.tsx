@@ -12,12 +12,26 @@ export const MagicLinkHandler: React.FC<{ children: React.ReactNode }> = ({ chil
   const { isAuthenticated, authStable, userType, isTransitioning, authStateStable } = useAuthenticatedUser();
   const navigate = useNavigate();
 
-  // Simplified magic link detection with error handling - only check URL for processing state
+  // Simplified magic link detection with DevTools bypass
   useEffect(() => {
     try {
       // Check if window object is available (DOM ready)
       if (typeof window === 'undefined') {
         console.log('🔍 MagicLinkHandler - Window not available, skipping magic link detection');
+        return;
+      }
+
+      // **CRITICAL FIX**: Detect DevTools login flows and skip processing
+      const isDevToolsLogin = localStorage.getItem('dev_auto_login_user_type');
+      const currentPath = window.location?.pathname || '';
+      const isAdminLogin = currentPath === '/admin/login';
+      
+      if (isDevToolsLogin || isAdminLogin) {
+        console.log('🔧 MagicLinkHandler - DevTools login detected, skipping magic link processing:', {
+          isDevToolsLogin: !!isDevToolsLogin,
+          isAdminLogin,
+          currentPath
+        });
         return;
       }
 
@@ -61,8 +75,16 @@ export const MagicLinkHandler: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, []);
 
-  // Enhanced redirect handling with state stabilization awareness
+  // Enhanced redirect handling with DevTools bypass
   useEffect(() => {
+    // **CRITICAL FIX**: Skip redirect handling for DevTools flows
+    const isDevToolsLogin = localStorage.getItem('dev_auto_login_user_type');
+    if (isDevToolsLogin && shouldRedirect) {
+      console.log('🔧 MagicLinkHandler - DevTools login detected, cancelling magic link redirect');
+      setShouldRedirect(false);
+      return;
+    }
+
     // Wait for auth state to be stable and not transitioning
     if (!shouldRedirect || !authStable || !authStateStable || isTransitioning || !isAuthenticated || !userType) {
       return;
@@ -100,7 +122,11 @@ export const MagicLinkHandler: React.FC<{ children: React.ReactNode }> = ({ chil
   }, [shouldRedirect, authStable, authStateStable, isTransitioning, isAuthenticated, userType, navigate]);
 
   // Show loading while processing magic link or during auth transitions
-  if (isProcessingMagicLink || (shouldRedirect && (isTransitioning || !authStateStable))) {
+  // **CRITICAL FIX**: Don't show loading for DevTools flows
+  const isDevToolsLogin = localStorage.getItem('dev_auto_login_user_type');
+  const shouldShowLoading = !isDevToolsLogin && (isProcessingMagicLink || (shouldRedirect && (isTransitioning || !authStateStable)));
+  
+  if (shouldShowLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">

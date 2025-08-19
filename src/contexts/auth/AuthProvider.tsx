@@ -137,15 +137,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         sessionPersistenceService.updateSession(currentSession, currentSession.user);
         
         console.log('🔐 AuthProvider - Auth state set successfully');
-      } else {
-        console.log('🔐 AuthProvider - No session found, checking for dev auto-login');
-        
-        // Clear auth state first
-        setSession(null);
-        setUser(null);
-        setUserType('individual');
-        setIsEmailVerified(false);
-        sessionPersistenceService.clearSession();
+        } else {
+          console.log('🔐 AuthProvider - No session found, checking for dev auto-login');
+          
+          // **CRITICAL FIX**: Don't clear auth state if DevTools login is in progress
+          const isDevToolsLogin = localStorage.getItem('dev_auto_login_user_type');
+          if (!isDevToolsLogin) {
+            // Clear auth state first
+            setSession(null);
+            setUser(null);
+            setUserType('individual');
+            setIsEmailVerified(false);
+            sessionPersistenceService.clearSession();
+          } else {
+            console.log('🔧 AuthProvider - DevTools login detected, preserving potential auth state');
+          }
         
         // **RECOVERY MECHANISM**: Check for interrupted magic link processing
         const interruptedProcessing = localStorage.getItem('magic_link_processing') === 'true';
@@ -184,6 +190,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         }
         
+        // **CRITICAL FIX**: Check DevTools login first to avoid magic link interference
+        const devToolsLoginCheck = localStorage.getItem('dev_auto_login_user_type');
+        if (devToolsLoginCheck) {
+          console.log('🔧 AuthProvider - DevTools login detected, skipping magic link processing entirely');
+          return;
+        }
+
         // Check if we're processing a magic link (skip dev auto-login in that case)
         const urlHash = window.location.hash;
         const urlSearch = window.location.search;

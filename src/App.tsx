@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthenticatedUser } from '@/hooks/useAuthenticatedUser';
 import { DevRoleSwitcher, ImpersonationWidget } from '@/components/development';
@@ -16,36 +16,86 @@ import MagicLinkHandler from '@/components/auth/MagicLinkHandler';
 import { initDebug } from '@/utils/initDebug';
 
 const App: React.FC = () => {
-  const { isReady, isAuthenticated, userType, isLoading, authStable } = useAuthenticatedUser();
-  const [forceReady, setForceReady] = useState(false);
+  const { 
+    isReady, 
+    isAuthenticated, 
+    userType, 
+    isLoading, 
+    authStable, 
+    authStateStable, 
+    isTransitioning 
+  } = useAuthenticatedUser();
+  
+  const [timeoutExceeded, setTimeoutExceeded] = useState(false);
 
-  initDebug.log('App render', { isReady, isAuthenticated, userType, isLoading, authStable, forceReady });
+  initDebug.log('App render', { 
+    isReady, 
+    isAuthenticated, 
+    userType, 
+    isLoading, 
+    authStable, 
+    authStateStable, 
+    isTransitioning,
+    timeoutExceeded 
+  });
 
-  // Timeout mechanism to prevent infinite loading
+  // Enhanced timeout mechanism with DevTools bypass
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      if (!isReady && !forceReady) {
-        initDebug.warn('App loading timeout - forcing ready state');
-        setForceReady(true);
+      if (!isReady && !timeoutExceeded) {
+        initDebug.warn('App loading timeout exceeded - enabling fallback');
+        setTimeoutExceeded(true);
       }
     }, 8000); // 8 second timeout
 
     return () => clearTimeout(timeoutId);
-  }, [isReady, forceReady]);
+  }, [isReady, timeoutExceeded]);
 
-  // Use forceReady if timeout has passed or isReady is true
-  const effectiveIsReady = isReady || forceReady;
+  // **CRITICAL FIX**: Enhanced app readiness check with DevTools bypass
+  const isAppReady = useMemo(() => {
+    const basic = authStable && !isLoading;
+    
+    // **CRITICAL FIX**: For DevTools flows, use simplified readiness check
+    const isDevToolsLogin = localStorage.getItem('dev_auto_login_user_type');
+    if (isDevToolsLogin) {
+      initDebug.log('DevTools app readiness check:', {
+        authStable,
+        isLoading,
+        isAuthenticated,
+        basic,
+        isDevToolsLogin,
+        timeoutExceeded
+      });
+      return basic || timeoutExceeded;
+    }
+    
+    // For authenticated users (including impersonation), also check authStateStable
+    const fullReady = isAuthenticated ? (basic && authStateStable && !isTransitioning) : basic;
+    
+    initDebug.log('Standard app readiness check:', {
+      authStable,
+      authStateStable,
+      isLoading,
+      isAuthenticated,
+      isTransitioning,
+      basic,
+      fullReady,
+      timeoutExceeded
+    });
+    
+    return fullReady || timeoutExceeded;
+  }, [authStable, authStateStable, isLoading, isAuthenticated, isTransitioning, timeoutExceeded]);
 
-  if (!effectiveIsReady) {
-    initDebug.log('App loading screen shown', { forceReady });
+  if (!isAppReady) {
+    initDebug.log('App loading screen shown', { timeoutExceeded });
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-spiritless-pink border-t-transparent rounded-full animate-spin mx-auto"></div>
           <p className="mt-4 text-gray-600">
-            {forceReady ? 'Starting app...' : 'Loading...'}
+            {timeoutExceeded ? 'Starting app...' : 'Loading...'}
           </p>
-          {forceReady && (
+          {timeoutExceeded && (
             <p className="mt-2 text-xs text-gray-500">Taking longer than expected</p>
           )}
         </div>
