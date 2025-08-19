@@ -4,11 +4,14 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ChevronDown, ChevronUp, Settings, User, Store, Megaphone, Shield, Move, Bug, TestTube, ExternalLink } from 'lucide-react';
+import { ChevronDown, ChevronUp, Settings, User, Store, Megaphone, Shield, Move, Bug, TestTube, ExternalLink, UserX, ArrowLeft } from 'lucide-react';
 import { useDevelopmentMode } from '@/contexts/DevelopmentModeContext';
 import { useAuth } from '@/contexts/auth/AuthProvider';
 import { useAuthenticatedUser } from '@/hooks/useAuthenticatedUser';
+import { useImpersonationState } from '@/hooks/useImpersonationState';
+import { restoreImpersonation } from '@/utils/impersonation';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
 
 type Position = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
 
@@ -18,6 +21,7 @@ const DevRoleSwitcher: React.FC = () => {
   const { isDevelopment, devMode, switchToUserType, exitDevMode, isDevModeActive } = useDevelopmentMode();
   const [isExpanded, setIsExpanded] = useState(false);
   const [position, setPosition] = useState<Position>('bottom-right');
+  const { toast } = useToast();
   
   // Auth testing data
     const { user, isAuthenticated, isLoading } = useAuth();
@@ -26,6 +30,9 @@ const DevRoleSwitcher: React.FC = () => {
     isAuthenticated: devIsAuthenticated, 
     userType: devUserType 
   } = useAuthenticatedUser();
+
+  // Impersonation state
+  const { isImpersonating, currentUser, adminUserId, isLoading: impersonationLoading } = useImpersonationState();
 
   if (!isDevelopment) return null;
 
@@ -70,6 +77,23 @@ const DevRoleSwitcher: React.FC = () => {
     const currentIndex = positions.indexOf(position);
     const nextIndex = (currentIndex + 1) % positions.length;
     setPosition(positions[nextIndex]);
+  };
+
+  const handleEndImpersonation = async () => {
+    try {
+      toast({
+        title: "Ending impersonation...",
+        description: "Returning to admin account",
+      });
+      await restoreImpersonation();
+    } catch (error) {
+      console.error('Failed to end impersonation:', error);
+      toast({
+        title: "Failed to end impersonation",
+        description: error instanceof Error ? error.message : "Unknown error occurred",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -127,9 +151,10 @@ const DevRoleSwitcher: React.FC = () => {
           </CardHeader>
           <CardContent className="pt-0">
             <Tabs defaultValue="roles" className="w-full">
-              <TabsList className="grid w-full grid-cols-3 bg-orange-100">
+              <TabsList className="grid w-full grid-cols-4 bg-orange-100">
                 <TabsTrigger value="roles" className="text-xs">Roles</TabsTrigger>
-                <TabsTrigger value="auth" className="text-xs">Auth & Routes</TabsTrigger>
+                <TabsTrigger value="auth" className="text-xs">Auth</TabsTrigger>
+                <TabsTrigger value="impersonation" className="text-xs">Imperson</TabsTrigger>
                 <TabsTrigger value="testing" className="text-xs">Testing</TabsTrigger>
               </TabsList>
               
@@ -219,6 +244,65 @@ const DevRoleSwitcher: React.FC = () => {
                       ))}
                     </div>
                   </div>
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="impersonation" className="mt-3">
+                <div className="space-y-3">
+                  <div className="text-sm font-medium text-orange-800 flex items-center gap-1">
+                    <UserX className="h-3 w-3" />
+                    Impersonation Control
+                  </div>
+                  
+                  {impersonationLoading ? (
+                    <div className="flex items-center gap-2 text-xs text-orange-600">
+                      <div className="w-3 h-3 border border-orange-400 border-t-transparent rounded-full animate-spin"></div>
+                      Loading impersonation state...
+                    </div>
+                  ) : isImpersonating ? (
+                    <div className="space-y-3">
+                      <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                        <div className="flex items-center gap-2 mb-2">
+                          <UserX className="h-4 w-4 text-red-600" />
+                          <span className="text-sm font-medium text-red-800">Currently Impersonating</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-1 text-xs">
+                          <div className="text-red-700">Target User:</div>
+                          <div className="font-mono text-red-800 truncate">
+                            {currentUser?.email || 'Unknown'}
+                          </div>
+                          <div className="text-red-700">Target ID:</div>
+                          <div className="font-mono text-red-800 truncate">
+                            {currentUser?.id?.slice(0, 8) || 'Unknown'}...
+                          </div>
+                          <div className="text-red-700">Admin ID:</div>
+                          <div className="font-mono text-red-800 truncate">
+                            {adminUserId?.slice(0, 8) || 'Unknown'}...
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleEndImpersonation}
+                        className="w-full text-xs border-red-300 text-red-700 hover:bg-red-100"
+                      >
+                        <ArrowLeft className="h-3 w-3 mr-1" />
+                        End Impersonation
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <div className="flex items-center gap-2 mb-1">
+                        <User className="h-4 w-4 text-green-600" />
+                        <span className="text-sm font-medium text-green-800">Normal Session</span>
+                      </div>
+                      <p className="text-xs text-green-700">
+                        Not currently impersonating. Use admin panel to start impersonation.
+                      </p>
+                    </div>
+                  )}
                 </div>
               </TabsContent>
               

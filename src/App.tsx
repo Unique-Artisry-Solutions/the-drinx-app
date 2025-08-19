@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthenticatedUser } from '@/hooks/useAuthenticatedUser';
-import { DevRoleSwitcher } from '@/components/development';
+import { DevRoleSwitcher, ImpersonationWidget } from '@/components/development';
 import { publicRoutes } from '@/routes/config/publicRoutes';
 import { individualRoutes } from '@/routes/config/individualRoutes';
 import { profileRoutes } from '@/routes/config/profileRoutes';
@@ -118,6 +118,9 @@ const App: React.FC = () => {
       
           {/* Development Tools */}
           <DevRoleSwitcher />
+          
+          {/* Impersonation Widget */}
+          <ImpersonationWidget />
         </div>
       </ImpersonationErrorBoundary>
     </MagicLinkHandler>
