@@ -65,6 +65,9 @@ export const adminRoutes: RouteObject[] = [
       { path: 'photo-moderation', element: <PhotoModerationPage /> },
       { path: 'content-moderation', element: <ContentModerationPage /> },
       
+      // Test route to isolate issue
+      { path: 'content-moderation-test', element: <div>CONTENT MODERATION TEST PAGE WORKS</div> },
+      
       // Logs & Monitoring
       { path: 'logs', element: <AdminLogsPage /> },
       

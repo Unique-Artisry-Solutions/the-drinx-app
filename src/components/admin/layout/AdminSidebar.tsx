@@ -24,7 +24,13 @@ const AdminSidebar: React.FC = () => {
   };
 
   const handleNavigation = (path: string) => {
-    console.log('Navigating to:', path);
+    console.log('AdminSidebar: Navigation attempted to:', path);
+    console.log('AdminSidebar: Current location:', location.pathname);
+    
+    if (path === '/admin/content-moderation') {
+      console.log('AdminSidebar: Content Moderation navigation detected');
+    }
+    
     startTransition(() => {
       navigate(path);
     });

@@ -57,6 +57,12 @@ export const adminNavItems: UnifiedNavItem[] = [
     showInNav: true,
   },
   {
+    label: 'Content Test',
+    path: '/admin/content-moderation-test',
+    icon: Image,
+    showInNav: true,
+  },
+  {
     label: 'Rewards',
     path: '/admin/rewards',
     icon: Award,

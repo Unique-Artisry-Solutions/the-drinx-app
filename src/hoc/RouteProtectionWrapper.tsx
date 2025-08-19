@@ -22,6 +22,17 @@ export const RouteProtectionWrapper: React.FC<RouteProtectionWrapperProps> = ({
 const { user, session, userType, isLoading, authStable, isAuthenticated } = useAuthenticatedUser();
   const location = useLocation();
 
+  // Debug logging for route protection
+  console.log('RouteProtectionWrapper:', {
+    pathname: location.pathname,
+    requireAuth,
+    allowedUserTypes,
+    isAuthenticated,
+    userType,
+    isLoading,
+    authStable
+  });
+
 // Wait for initialization/loading
   if (isLoading) {
     return (
