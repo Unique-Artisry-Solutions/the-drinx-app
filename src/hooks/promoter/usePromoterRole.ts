@@ -25,14 +25,14 @@ export const usePromoterRole = () => {
         .eq('user_id', user.id)
         .eq('role', 'promoter')
         .eq('is_active', true)
-        .single();
+        .maybeSingle();
 
       if (activeRole) {
         console.log('Promoter role is already active');
         return true;
       }
 
-      if (activeRoleError && !activeRoleError.message.includes('No rows found')) {
+      if (activeRoleError) {
         console.error('Error checking active role:', activeRoleError);
         throw new Error("Unable to verify promoter status");
       }
@@ -58,7 +58,7 @@ export const usePromoterRole = () => {
         .select('is_active')
         .eq('user_id', user.id)
         .eq('role', 'promoter')
-        .single();
+        .maybeSingle();
         
       if (verifyError || !verifyData || !verifyData.is_active) {
         console.error('Role activation verification failed:', verifyError || 'Role not active');
