@@ -19,6 +19,9 @@ export const UsersAdminTable: React.FC = () => {
           <User className="h-4 w-4 text-muted-foreground" />
           <div>
             <div className="font-medium">{value || item.username || 'Unknown User'}</div>
+            {item.username && item.username !== value && (
+              <div className="text-xs text-muted-foreground font-mono">@{item.username}</div>
+            )}
             {item.bio && (
               <div className="text-sm text-muted-foreground truncate max-w-[200px]">
                 {item.bio}
@@ -26,13 +29,6 @@ export const UsersAdminTable: React.FC = () => {
             )}
           </div>
         </div>
-      )
-    },
-    {
-      key: 'username',
-      label: 'Username',
-      render: (value: string) => (
-        <span className="text-sm font-mono">{value || '-'}</span>
       )
     },
     {
