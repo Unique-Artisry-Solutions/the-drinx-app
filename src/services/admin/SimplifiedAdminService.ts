@@ -124,6 +124,7 @@ export class SimplifiedAdminService {
 
         console.log('✅ Data retrieved successfully:', dataResult.data?.length || 0, 'users');
         console.log('📊 Total count retrieved:', countResult.data?.length || 0);
+        console.log('🔍 First user data sample:', JSON.stringify(dataResult.data?.[0], null, 2));
 
         const result = {
           data: dataResult.data || [],
