@@ -9089,6 +9089,20 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      get_admin_users_with_roles: {
+        Args: { limit_val?: number; offset_val?: number; search_term?: string }
+        Returns: {
+          active_roles: string[]
+          bio: string
+          created_at: string
+          display_name: string
+          establishment_name: string
+          id: string
+          phone: string
+          user_type: string
+          username: string
+        }[]
+      }
       get_current_ticket_price: {
         Args: {
           p_event_id?: string

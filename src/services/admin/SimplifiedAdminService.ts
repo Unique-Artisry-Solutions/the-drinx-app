@@ -81,87 +81,53 @@ export class SimplifiedAdminService {
 
         const offset = (page - 1) * limit;
 
-        let query = supabase
-          .from('profiles')
-          .select(`
-            id, 
-            display_name, 
-            username, 
-            user_type, 
-            phone, 
-            bio, 
-            created_at,
-            user_roles(role),
-            establishments(name)
-          `);
+        console.log('🔍 Executing admin users query with RPC function:', {
+          offset,
+          limit,
+          search
+        });
 
-        // Add search filter if provided
-        if (search) {
-          console.log('🔍 Adding search filter:', search);
-          query = query.or(`display_name.ilike.%${search}%,username.ilike.%${search}%`);
-        }
-
-        console.log('📊 Getting total count...');
-        // Get total count with timeout
-        const countPromise = supabase
-          .from('profiles')
-          .select('*', { count: 'exact', head: true });
-        
-        const countResult = await Promise.race([
-          countPromise,
-          new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Count query timeout')), 10000)
-          )
-        ]) as any;
-
-        if (countResult.error) {
-          console.error('❌ Error getting count:', countResult.error);
-          throw new Error(`Count query failed: ${countResult.error.message}`);
-        }
-
-        console.log('📊 Total count retrieved:', countResult.count);
-
-        console.log('📋 Getting paginated data...');
-        // Get paginated data with timeout
-        const dataPromise = query
-          .range(offset, offset + limit - 1)
-          .order('created_at', { ascending: false });
-
+        // Use the database function that properly joins the tables
         const dataResult = await Promise.race([
-          dataPromise,
+          supabase.rpc('get_admin_users_with_roles', {
+            search_term: search || null,
+            limit_val: limit,
+            offset_val: offset
+          }),
           new Promise((_, reject) => 
             setTimeout(() => reject(new Error('Data query timeout')), 15000)
           )
         ]) as any;
 
         if (dataResult.error) {
-          console.error('❌ Error getting data:', dataResult.error);
-          throw new Error(`Data query failed: ${dataResult.error.message}`);
+          console.error('❌ Error fetching users with RPC:', dataResult.error);
+          throw dataResult.error;
+        }
+
+        // Get total count for pagination using the same search logic
+        console.log('📊 Getting total count with RPC function...');
+        const countResult = await Promise.race([
+          supabase.rpc('get_admin_users_with_roles', {
+            search_term: search || null,
+            limit_val: 999999, // Large number to get all results for counting
+            offset_val: 0
+          }),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Count query timeout')), 10000)
+          )
+        ]) as any;
+
+        if (countResult.error) {
+          console.error('❌ Error getting user count:', countResult.error);
+          throw countResult.error;
         }
 
         console.log('✅ Data retrieved successfully:', dataResult.data?.length || 0, 'users');
-
-        // Transform the data to include active roles and establishment name
-        const transformedData = (dataResult.data || []).map((user: any) => {
-          // Extract active roles from the user_roles array
-          const activeRoles = user.user_roles?.filter((ur: any) => ur.role)?.map((ur: any) => ur.role) || [];
-          
-          // Get establishment name (first one if multiple)
-          const establishmentName = user.establishments?.[0]?.name || null;
-          
-          return {
-            ...user,
-            active_roles: activeRoles,
-            establishment_name: establishmentName,
-            // Remove the nested objects to keep the interface clean
-            user_roles: undefined,
-            establishments: undefined
-          };
-        });
+        console.log('📊 Total count retrieved:', countResult.data?.length || 0);
 
         const result = {
-          data: transformedData,
-          total: countResult.count || 0,
+          data: dataResult.data || [],
+          total: countResult.data?.length || 0,
           page,
           limit
         };
