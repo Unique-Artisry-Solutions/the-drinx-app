@@ -95,7 +95,7 @@ export class SimplifiedAdminService {
             offset_val: offset
           }),
           new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Data query timeout')), 15000)
+            setTimeout(() => reject(new Error('Data query timeout')), 10000)
           )
         ]) as any;
 
@@ -104,16 +104,21 @@ export class SimplifiedAdminService {
           throw dataResult.error;
         }
 
-        // Get total count for pagination using the same search logic
-        console.log('📊 Getting total count with RPC function...');
+        // Get efficient count using direct query on profiles table
+        console.log('📊 Getting total count with direct query...');
+        let countQuery = supabase
+          .from('profiles')
+          .select('id', { count: 'exact', head: true });
+        
+        // Apply same search filter if provided
+        if (search) {
+          countQuery = countQuery.or(`display_name.ilike.%${search}%,username.ilike.%${search}%,user_type.ilike.%${search}%`);
+        }
+        
         const countResult = await Promise.race([
-          supabase.rpc('get_admin_users_with_roles', {
-            search_term: search || null,
-            limit_val: 999999, // Large number to get all results for counting
-            offset_val: 0
-          }),
+          countQuery,
           new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Count query timeout')), 10000)
+            setTimeout(() => reject(new Error('Count query timeout')), 5000)
           )
         ]) as any;
 
@@ -123,12 +128,12 @@ export class SimplifiedAdminService {
         }
 
         console.log('✅ Data retrieved successfully:', dataResult.data?.length || 0, 'users');
-        console.log('📊 Total count retrieved:', countResult.data?.length || 0);
+        console.log('📊 Total count retrieved:', countResult.count || 0);
         console.log('🔍 First user data sample:', JSON.stringify(dataResult.data?.[0], null, 2));
 
         const result = {
           data: dataResult.data || [],
-          total: countResult.data?.length || 0,
+          total: countResult.count || 0,
           page,
           limit
         };
