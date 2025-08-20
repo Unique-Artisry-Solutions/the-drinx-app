@@ -5,6 +5,7 @@ import { VenueContact } from '@/hooks/promoter/types';
 import { usePromoterContacts } from '@/hooks/promoter/usePromoterContacts';
 import { usePromoterRole } from '@/hooks/promoter/usePromoterRole';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/lib/supabase';
 import MessageComposer from '../promoter/communication/messages/MessageComposer';
 
 interface ChatWidgetProps {
@@ -41,8 +42,14 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({
         threadId = createdThreadId;
       }
 
-      // Adding the venue ID as the third argument
-      await sendMessage(threadId, content, venueId);
+      // Get the current user ID for sending the message
+      const user = await supabase.auth.getUser();
+      if (!user.data.user?.id) {
+        throw new Error("User not authenticated");
+      }
+
+      // Pass the correct userId (sender) instead of venueId
+      await sendMessage(threadId, content, user.data.user.id);
       
       toast({
         title: "Message Sent",

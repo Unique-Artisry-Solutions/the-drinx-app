@@ -68,13 +68,9 @@ export const useMessages = (userType: UserType) => {
 
     } catch (err: any) {
       console.error('Error sending message:', err);
-      toast({
-        title: "Error Sending Message",
-        description: "Failed to send message. Please try again.",
-        variant: "destructive"
-      });
+      throw err; // Re-throw error so calling code can handle it properly
     }
-  }, [userType, toast]);
+  }, [userType]);
 
   return {
     fetchMessages,
