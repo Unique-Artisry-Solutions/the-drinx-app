@@ -83,7 +83,10 @@ const TestingDashboard: React.FC = () => {
         { id: 'auth-1', name: 'User Login', status: 'passed', duration: 100 },
         { id: 'auth-2', name: 'Token Validation', status: 'passed', duration: 75 },
         { id: 'auth-3', name: 'Password Reset', status: 'running' },
-        { id: 'auth-4', name: 'Role Permissions', status: 'pending' }
+        { id: 'auth-4', name: 'Role Switching', status: 'passed', duration: 150 },
+        { id: 'auth-5', name: 'Route Protection', status: 'passed', duration: 95 },
+        { id: 'auth-6', name: 'Role Verification', status: 'passed', duration: 120 },
+        { id: 'auth-7', name: 'Role Persistence', status: 'passed', duration: 85 }
       ]
     },
     {

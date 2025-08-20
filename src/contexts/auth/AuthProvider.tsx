@@ -677,6 +677,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
+  const switchRole = useCallback(async (role: 'individual' | 'establishment' | 'promoter') => {
+    if (!user) {
+      throw new Error('No authenticated user');
+    }
+
+    try {
+      setIsTransitioning(true);
+      
+      // Call the database function to switch roles
+      const { error } = await supabase.rpc('switch_active_role', { 
+        role_to_activate: role 
+      });
+      
+      if (error) throw error;
+      
+      // Update local state immediately for better UX
+      setUserType(role);
+      
+      // Clear and update cache
+      authCache.clearUserCache(user.id);
+      authCache.setUserType(user.id, role);
+      
+      console.log(`✅ Role switched to: ${role}`);
+      
+    } catch (error: any) {
+      console.error('Role switch error:', error);
+      setAuthError(error);
+      throw error;
+    } finally {
+      setIsTransitioning(false);
+    }
+  }, [user]);
+
   const value: AuthContextType = {
     // State
     session,
@@ -701,6 +734,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     sendVerificationEmail,
     updateUserProfile,
     updatePassword,
+    switchRole,
   };
 
   return (

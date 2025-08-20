@@ -38,6 +38,7 @@ export interface AuthActions {
   sendVerificationEmail: (email: string) => Promise<void>;
   updateUserProfile: (data: any) => Promise<void>;
   updatePassword: (newPassword: string) => Promise<void>;
+  switchRole: (role: 'individual' | 'establishment' | 'promoter') => Promise<void>;
 }
 
 export interface AuthContextType extends AuthState, AuthActions {}

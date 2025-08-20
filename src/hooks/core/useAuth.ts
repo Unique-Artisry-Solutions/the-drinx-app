@@ -137,8 +137,7 @@ export function useAuth(): { state: AuthState; actions: AuthActions } {
     switchRole: useCallback(async (role: SwitchableUserRole) => {
       try {
         setError(null);
-        const { error } = await supabase.rpc('switch_active_role', { role_to_activate: role });
-        if (error) throw error;
+        await authContext.switchRole(role);
         toast({
           title: 'Success',
           description: `Switched to ${role} role`,
@@ -152,7 +151,7 @@ export function useAuth(): { state: AuthState; actions: AuthActions } {
           variant: 'destructive',
         });
       }
-    }, [toast])
+    }, [authContext, toast])
   };
 
   return { state, actions };
