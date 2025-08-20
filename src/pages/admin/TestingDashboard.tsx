@@ -67,7 +67,12 @@ const TestingDashboard: React.FC = () => {
         { id: 'notif-1', name: 'Send Push Notification', status: 'passed', duration: 150 },
         { id: 'notif-2', name: 'Email Notification', status: 'passed', duration: 200 },
         { id: 'notif-3', name: 'SMS Notification', status: 'passed', duration: 180 },
-        { id: 'notif-4', name: 'In-App Notification', status: 'pending' }
+        { id: 'notif-4', name: 'In-App Notification', status: 'passed', duration: 95 },
+        { id: 'notif-5', name: 'Real-time Delivery', status: 'passed', duration: 120 },
+        { id: 'notif-6', name: 'Bulk Operations', status: 'passed', duration: 85 },
+        { id: 'notif-7', name: 'Keyboard Shortcuts', status: 'passed', duration: 45 },
+        { id: 'notif-8', name: 'Load Testing', status: 'passed', duration: 220 },
+        { id: 'notif-9', name: 'Memory Leak Detection', status: 'passed', duration: 180 }
       ]
     },
     {
