@@ -31,6 +31,7 @@ export function getSecurityConfig(environment: string = 'production'): SecurityC
       ? [
           'https://*.lovableproject.com',
           'https://*.lovable.app',
+          'https://*.sandbox.lovable.dev',
           'https://f6fbe853-0047-490f-9d7f-c7bab9534659.lovableproject.com',
           'https://id-preview--f6fbe853-0047-490f-9d7f-c7bab9534659.lovable.app',
           'https://dvifibvzwunnpcsihpxq.lovableproject.com',
@@ -40,6 +41,7 @@ export function getSecurityConfig(environment: string = 'production'): SecurityC
       : [
           'https://*.lovableproject.com',
           'https://*.lovable.app',
+          'https://*.sandbox.lovable.dev',
           'https://f6fbe853-0047-490f-9d7f-c7bab9534659.lovableproject.com',
           'https://id-preview--f6fbe853-0047-490f-9d7f-c7bab9534659.lovable.app',
           'http://localhost:3000',
