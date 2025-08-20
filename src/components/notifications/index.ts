@@ -14,3 +14,6 @@ export { EnhancedTestControls } from './testing/EnhancedTestControls';
 
 // Diagnostics
 export { NotificationSystemDiagnostics } from './diagnostics/NotificationSystemDiagnostics';
+
+// Enhanced components (Phase 2)
+export * from './enhanced';
