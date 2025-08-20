@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Users, UserPlus, Search, Filter } from 'lucide-react';
 import { useUsers } from '@/hooks/admin/useUsers';
 import { startImpersonation } from '@/utils/impersonationSimplified';
@@ -98,7 +99,8 @@ const AdminUsersPage: React.FC = () => {
 
   return (
     <AdminPageLayout config={pageConfig} actions={pageActions}>
-      <div className="space-y-6">
+      <TooltipProvider>
+        <div className="space-y-6">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {userStats.map((stat, index) => (
@@ -165,7 +167,19 @@ const AdminUsersPage: React.FC = () => {
                     <TableRow key={user.id}>
                       <TableCell>
                         <div>
-                          <div className="font-medium">{user.display_name || user.username || 'No name'}</div>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="font-medium cursor-help">{user.display_name || user.username || 'No name'}</div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <div className="space-y-1">
+                                {user.username && <div><strong>Username:</strong> {user.username}</div>}
+                                {user.display_name && <div><strong>Display Name:</strong> {user.display_name}</div>}
+                                <div><strong>Full ID:</strong> {user.id}</div>
+                                <div><strong>Joined:</strong> {new Date(user.created_at).toLocaleDateString()}</div>
+                              </div>
+                            </TooltipContent>
+                          </Tooltip>
                           <div className="text-sm text-muted-foreground">ID: {user.id.slice(0, 8)}...</div>
                         </div>
                       </TableCell>
@@ -200,7 +214,8 @@ const AdminUsersPage: React.FC = () => {
             )}
           </CardContent>
         </Card>
-      </div>
+        </div>
+      </TooltipProvider>
     </AdminPageLayout>
   );
 };
