@@ -181,6 +181,11 @@ const AdminUsersPage: React.FC = () => {
                             </TooltipContent>
                           </Tooltip>
                           <div className="text-sm text-muted-foreground">ID: {user.id.slice(0, 8)}...</div>
+                          {user.establishment_name && (
+                            <div className="text-sm text-blue-600 font-medium mt-1">
+                              🏢 {user.establishment_name}
+                            </div>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell>{getRoleBadge(user.user_type || 'individual')}</TableCell>

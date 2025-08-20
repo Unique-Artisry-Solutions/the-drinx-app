@@ -12,6 +12,8 @@ export interface AdminUser {
   created_at: string;
   bio: string | null;
   avatar_url: string | null;
+  active_roles: string[];
+  establishment_name: string | null;
 }
 
 interface UseUsersState {
@@ -56,33 +58,41 @@ export const useUsers = () => {
         throw new Error('Access denied: Admin privileges required');
       }
 
-      // Fetch all profiles with user auth data
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('*')
+      // Fetch users with roles and establishment info using the RPC function
+      const { data: usersWithRoles, error: usersError } = await supabase
+        .rpc('get_admin_users_with_roles')
         .order('created_at', { ascending: false });
 
-      if (profilesError) throw profilesError;
+      if (usersError) throw usersError;
 
       // Transform the data
-      const users: AdminUser[] = profiles?.map(profile => ({
-        id: profile.id,
-        display_name: profile.display_name,
-        username: profile.username,
-        user_type: profile.user_type,
-        phone: profile.phone,
-        created_at: profile.created_at,
-        bio: profile.bio,
-        avatar_url: profile.avatar_url
+      const users: AdminUser[] = usersWithRoles?.map(user => ({
+        id: user.id,
+        display_name: user.display_name,
+        username: user.username,
+        user_type: user.user_type,
+        phone: user.phone,
+        created_at: user.created_at,
+        bio: user.bio,
+        avatar_url: null, // RPC function doesn't return avatar_url
+        active_roles: user.active_roles || [],
+        establishment_name: user.establishment_name
       })) || [];
 
-      // Calculate stats
+      // Calculate stats - need to handle unique users since establishment owners may appear multiple times
+      const uniqueUsers = users.reduce((acc, user) => {
+        if (!acc.find(u => u.id === user.id)) {
+          acc.push(user);
+        }
+        return acc;
+      }, [] as AdminUser[]);
+
       const stats = {
-        total: users.length,
-        active: users.filter(u => u.display_name || u.username).length, // Users with some identity
-        pending: users.filter(u => !u.display_name && !u.username).length, // Users without identity
+        total: uniqueUsers.length,
+        active: uniqueUsers.filter(u => u.display_name || u.username).length, // Users with some identity
+        pending: uniqueUsers.filter(u => !u.display_name && !u.username).length, // Users without identity
         suspended: 0, // We don't have suspension data in current schema
-        byRole: users.reduce((acc, user) => {
+        byRole: uniqueUsers.reduce((acc, user) => {
           const role = user.user_type || 'individual';
           acc[role] = (acc[role] || 0) + 1;
           return acc;
