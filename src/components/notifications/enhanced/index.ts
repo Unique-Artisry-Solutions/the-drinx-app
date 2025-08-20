@@ -1,4 +1,4 @@
-// Enhanced Notifications Module - Phase 2: In-App Display System
+// Enhanced Notifications Module - Phases 2 & 3: Complete Notification System
 // Consolidated exports for all enhanced notification components
 
 // Core Provider and Context
@@ -24,3 +24,12 @@ export {
 
 // Settings and Controls
 export { AudioVisualSettings } from './AudioVisualSystem';
+export { NotificationPreferencesPanel } from './NotificationPreferencesPanel';
+
+// Phase 3: User Interaction Features
+export { BulkActionPanel } from './BulkActionPanel';
+export { BulkSelectionProvider, useBulkSelection } from './BulkSelectionManager';
+export { QuickActionMenu } from './QuickActionMenu';
+export { ToastActionButtons } from './ToastActionButtons';
+export { ActionableNotification } from './ActionableNotification';
+export { KeyboardShortcutHelp } from './KeyboardShortcutHelp';
