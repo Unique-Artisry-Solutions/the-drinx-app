@@ -9137,6 +9137,10 @@ export type Database = {
           streak_type: string
         }[]
       }
+      has_active_role: {
+        Args: { p_role: string; p_user_id: string }
+        Returns: boolean
+      }
       initialize_admin_roles: {
         Args: Record<PropertyKey, never>
         Returns: undefined
