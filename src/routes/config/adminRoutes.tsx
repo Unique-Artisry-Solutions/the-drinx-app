@@ -25,7 +25,7 @@ import ContentModerationPage from '@/pages/admin/ContentModerationPage';
 const AdminDashboard = lazy(() => import('@/pages/admin/AdminDashboard'));
 const RewardSystemMonitorPage = lazy(() => import('@/pages/admin/RewardSystemMonitorPage'));
 const RewardsAdminPage = lazy(() => import('@/pages/admin/RewardsAdminPage'));
-const AdminUsersPage = lazy(() => import('@/pages/admin/SimplifiedAdminUsersPage'));
+const AdminUsersPage = lazy(() => import('@/pages/admin/AdminUsersPage'));
 
 
 
