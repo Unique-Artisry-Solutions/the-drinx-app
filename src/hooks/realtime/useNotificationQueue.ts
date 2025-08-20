@@ -72,15 +72,15 @@ export const useNotificationQueue = ({
 
     setIsProcessing(true);
 
-    try {
-      // Get notifications ready for processing (not exceeded max retries)
-      const pendingNotifications = queue.filter(n => n.retryCount < n.maxRetries);
-      
-      if (pendingNotifications.length === 0) {
-        setIsProcessing(false);
-        return;
-      }
+    // Get notifications ready for processing (not exceeded max retries)
+    const pendingNotifications = queue.filter(n => n.retryCount < n.maxRetries);
+    
+    if (pendingNotifications.length === 0) {
+      setIsProcessing(false);
+      return;
+    }
 
+    try {
       console.log(`Processing ${pendingNotifications.length} queued notifications`);
 
       // Process notifications
