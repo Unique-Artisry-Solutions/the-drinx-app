@@ -36,7 +36,10 @@ export const useImpersonationState = () => {
           // Check if impersonation is flagged as active
           const activeImpersonation = state.isActive;
           
-          finalImpersonating = basicImpersonation || activeImpersonation;
+          // Also check if we have a target email (indicating an active impersonation session)
+          const hasTargetEmail = !!(state.targetEmail);
+          
+          finalImpersonating = basicImpersonation || activeImpersonation || hasTargetEmail;
           
           console.log('🎭 useImpersonationState - Simplified check:', {
             hasBackup: true,
@@ -49,7 +52,11 @@ export const useImpersonationState = () => {
             currentUserId: user?.id,
             currentUserEmail: user?.email,
             targetEmail: state.targetEmail,
-            stateAge: backup.created_at ? Date.now() - backup.created_at : null
+            stateAge: backup.created_at ? Date.now() - backup.created_at : null,
+            // Additional impersonation context
+            isActiveState: state.isActive,
+            backupEmail: backup.email,
+            shouldBeImpersonating: backup && (backup.user_id !== user?.id || state.isActive)
           });
         }
 

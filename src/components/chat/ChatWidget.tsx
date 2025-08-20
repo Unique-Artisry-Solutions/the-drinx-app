@@ -31,71 +31,101 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({
     console.log('🚀 Starting message send process for venue:', venueId, 'impersonating:', isImpersonating);
     
     try {
-      if (!user?.id) {
-        throw new Error("User not authenticated");
+      // Validate venue ID format and ensure it exists
+      console.log('🏢 Validating venue ID:', venueId);
+      if (!venueId || typeof venueId !== 'string' || venueId.trim() === '') {
+        throw new Error("Invalid venue ID: Empty or invalid format");
       }
 
-      // Validate venue ID
-      if (!venueId || typeof venueId !== 'string') {
-        throw new Error("Invalid venue selected");
+      // UUID validation
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(venueId)) {
+        throw new Error("Invalid venue ID: Must be a valid UUID format");
       }
 
-      // Skip role activation during impersonation
+      // Verify venue exists in our contacts
+      const venueExists = contacts.some(contact => contact.venueId === venueId);
+      if (!venueExists && contacts.length > 0) {
+        console.warn('⚠️ Venue not found in contacts list, but proceeding with message send');
+      }
+
+      if (!user) {
+        throw new Error("Authentication required to send messages");
+      }
+
+      // Handle role activation differently for impersonation vs normal user
       if (!isImpersonating) {
         console.log('🔐 Activating promoter role for normal user');
-        // First activate the promoter role for normal users
-        await ensurePromoterRole();
-        
-        // Add a delay to ensure role switch is propagated
-        await new Promise(resolve => setTimeout(resolve, 1000));
-      } else {
-        console.log('👤 Skipping role activation during impersonation');
-      }
-      
-      let threadId = existingThreadId;
-      
-      if (!threadId) {
-        console.log('🧵 Creating new thread for venue:', venueId);
-        const createdThreadId = await createThread(venueId);
-        if (!createdThreadId) {
-          throw new Error("Failed to create conversation thread");
+        try {
+          await ensurePromoterRole();
+        } catch (roleError: any) {
+          console.error('❌ Role activation failed:', roleError);
+          throw new Error("Failed to activate promoter role. Please try again.");
         }
-        threadId = createdThreadId;
-        console.log('🧵 Thread created:', threadId);
       } else {
-        console.log('🧵 Using existing thread:', threadId);
+        console.log('🎭 Skipping role activation for impersonated user');
       }
 
-      // Send the message using the authenticated user's ID
+      console.log('🧵 Creating new thread for venue:', venueId);
+      let threadId: string;
+      
+      try {
+        threadId = await createThread(venueId);
+        console.log('✅ Thread created successfully:', threadId);
+      } catch (threadError: any) {
+        console.error('❌ Thread creation failed:', threadError);
+        
+        // More specific thread creation error handling
+        if (threadError.message?.includes('promoter')) {
+          throw new Error("Unable to verify promoter permissions for thread creation");
+        } else if (threadError.message?.includes('venue')) {
+          throw new Error("Selected venue is not available for messaging");
+        } else {
+          throw new Error("Failed to create conversation thread");
+        }
+      }
+      
+      if (!threadId) {
+        throw new Error("Failed to create conversation thread - no thread ID returned");
+      }
+
       console.log('💬 Sending message to thread:', threadId);
-      await sendMessage(threadId, content, user.id);
+      try {
+        await sendMessage(threadId, content, user.id);
+        console.log('✅ Message sent successfully');
+      } catch (messageError: any) {
+        console.error('❌ Message sending failed:', messageError);
+        throw new Error("Failed to send message to thread");
+      }
       
       toast({
         title: "Message Sent",
-        description: "Your message was sent successfully.",
+        description: "Your message has been sent successfully!",
+        variant: "default"
       });
       
-      console.log('✅ Message sent successfully');
       onClose();
-    } catch (err: any) {
-      console.error('❌ Error in message sending flow:', err);
+    } catch (error: any) {
+      console.error('❌ Error in message sending flow:', error);
       
-      let errorDescription = "There was a problem sending your message. Please try again.";
+      let errorMessage = "Failed to send message. Please try again.";
       
-      // Provide more specific error messages based on the error
-      if (err.message?.includes('Invalid venue')) {
-        errorDescription = "Please select a valid venue and try again.";
-      } else if (err.message?.includes('not authenticated')) {
-        errorDescription = "Please log in and try again.";
-      } else if (err.message?.includes('conversation thread')) {
-        errorDescription = "Could not start conversation. Please try selecting a different venue.";
-      } else if (err.message?.includes('Invalid conversation')) {
-        errorDescription = "Conversation error. Please try starting a new conversation.";
+      // More specific error messages based on error type
+      if (error.message?.includes('Invalid venue ID')) {
+        errorMessage = "Invalid venue selected. Please try selecting a different venue.";
+      } else if (error.message?.includes('promoter')) {
+        errorMessage = "Unable to verify promoter status. Please try again or contact support.";
+      } else if (error.message?.includes('thread')) {
+        errorMessage = "Failed to create conversation. Please try again.";
+      } else if (error.message?.includes('Authentication required')) {
+        errorMessage = "Please log in to send messages.";
+      } else if (error.message?.includes('role')) {
+        errorMessage = "Unable to activate required permissions. Please try again.";
       }
       
       toast({
         title: "Error Sending Message",
-        description: errorDescription,
+        description: errorMessage,
         variant: "destructive"
       });
     }

@@ -17,10 +17,12 @@ export const usePromoterContacts = () => {
     baseDelay: 1000,
     maxDelay: 5000,
     onRetry: (attempt, error) => {
-      console.log(`🔄 Retrying contact fetch (attempt ${attempt}):`, error.message);
+      const errorMessage = error?.message || error?.toString() || 'Unknown error';
+      console.log(`🔄 Retrying contact fetch (attempt ${attempt}):`, errorMessage);
     },
     onFailure: (error) => {
-      console.error('❌ All contact fetch attempts failed:', error);
+      const errorMessage = error?.message || error?.toString() || 'Unknown error';
+      console.error('❌ All contact fetch attempts failed:', errorMessage);
       setError('Failed to load venue contacts after multiple attempts');
     }
   });
@@ -124,14 +126,15 @@ export const usePromoterContacts = () => {
         return;
       }
       
-      console.error('Error fetching promoter contacts:', err);
+      const errorMessage = err?.message || err?.toString() || 'Unknown error';
+      console.error('Error fetching promoter contacts:', errorMessage);
       
       // Use cached contacts if available on error
       if (cachedContacts.length > 0 && !forceRefresh) {
         console.log('📱 Using cached contacts due to error');
         setContacts(cachedContacts);
       } else {
-        setError(err.message || 'Failed to load venue contacts');
+        setError(errorMessage);
       }
     } finally {
       setIsLoading(false);
