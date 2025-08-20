@@ -54,12 +54,15 @@ Deno.serve(async (req) => {
           hostname: url.hostname,
           origin: url.origin,
           isLovableApp: url.hostname.includes('lovable.app'),
-          isLovableProject: url.hostname.includes('lovableproject.com')
+          isLovableProject: url.hostname.includes('lovableproject.com'),
+          isSandboxDev: url.hostname.includes('sandbox.lovable.dev')
         })
         
         // CRITICAL: Use the EXACT same domain format as the request origin
         // This prevents cross-domain redirects that cause token loss
-        if (url.hostname.includes('lovable.app') || url.hostname.includes('lovableproject.com')) {
+        if (url.hostname.includes('lovable.app') || 
+            url.hostname.includes('lovableproject.com') || 
+            url.hostname.includes('sandbox.lovable.dev')) {
           redirectTo = url.origin
           console.log(`✅ Using exact origin domain for impersonation: ${redirectTo}`)
         } else {
