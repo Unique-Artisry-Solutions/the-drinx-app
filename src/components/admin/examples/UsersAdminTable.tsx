@@ -13,7 +13,7 @@ export const UsersAdminTable: React.FC = () => {
   const columns = [
     {
       key: 'display_name',
-      label: 'User',
+      label: 'Full Name',
       render: (value: string, item: AdminUser) => (
         <div className="flex items-center gap-2">
           <User className="h-4 w-4 text-muted-foreground" />
@@ -29,12 +29,43 @@ export const UsersAdminTable: React.FC = () => {
       )
     },
     {
+      key: 'username',
+      label: 'Username',
+      render: (value: string) => (
+        <span className="text-sm font-mono">{value || '-'}</span>
+      )
+    },
+    {
       key: 'user_type',
-      label: 'Type',
+      label: 'User Type',
       render: (value: string) => (
         <Badge variant="secondary">
           {value?.charAt(0).toUpperCase() + value?.slice(1) || 'User'}
         </Badge>
+      )
+    },
+    {
+      key: 'active_roles',
+      label: 'Active Roles',
+      render: (value: string[], item: AdminUser) => (
+        <div className="flex flex-wrap gap-1">
+          {value && value.length > 0 ? (
+            value.map((role, index) => (
+              <Badge key={index} variant="outline" className="text-xs">
+                {role}
+              </Badge>
+            ))
+          ) : (
+            <span className="text-xs text-muted-foreground">None</span>
+          )}
+        </div>
+      )
+    },
+    {
+      key: 'establishment_name',
+      label: 'Establishment',
+      render: (value: string) => (
+        <span className="text-sm">{value || '-'}</span>
       )
     },
     {

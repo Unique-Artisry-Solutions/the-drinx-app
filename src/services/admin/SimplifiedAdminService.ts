@@ -1,7 +1,7 @@
 
 // Primary admin service - simplified implementation without complex inheritance
 
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 
 // Type definitions for admin entities
 export interface AdminUser {
@@ -12,6 +12,8 @@ export interface AdminUser {
   phone?: string;
   bio?: string;
   created_at?: string;
+  active_roles?: string[];
+  establishment_name?: string;
 }
 
 export interface AdminEstablishment {
@@ -81,7 +83,17 @@ export class SimplifiedAdminService {
 
         let query = supabase
           .from('profiles')
-          .select('id, display_name, username, user_type, phone, bio, created_at');
+          .select(`
+            id, 
+            display_name, 
+            username, 
+            user_type, 
+            phone, 
+            bio, 
+            created_at,
+            user_roles(role),
+            establishments(name)
+          `);
 
         // Add search filter if provided
         if (search) {
@@ -129,8 +141,26 @@ export class SimplifiedAdminService {
 
         console.log('✅ Data retrieved successfully:', dataResult.data?.length || 0, 'users');
 
+        // Transform the data to include active roles and establishment name
+        const transformedData = (dataResult.data || []).map((user: any) => {
+          // Extract active roles from the user_roles array
+          const activeRoles = user.user_roles?.filter((ur: any) => ur.role)?.map((ur: any) => ur.role) || [];
+          
+          // Get establishment name (first one if multiple)
+          const establishmentName = user.establishments?.[0]?.name || null;
+          
+          return {
+            ...user,
+            active_roles: activeRoles,
+            establishment_name: establishmentName,
+            // Remove the nested objects to keep the interface clean
+            user_roles: undefined,
+            establishments: undefined
+          };
+        });
+
         const result = {
-          data: dataResult.data || [],
+          data: transformedData,
           total: countResult.count || 0,
           page,
           limit
