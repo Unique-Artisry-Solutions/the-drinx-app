@@ -1,12 +1,13 @@
 
 import { useState } from 'react';
+import { debugLogger } from '@/utils/debugLogger';
 
 export const useServiceWorkerCheck = () => {
   const [isCheckingServiceWorker, setIsCheckingServiceWorker] = useState(true);
 
   const checkServiceWorkerSupport = async () => {
     try {
-      console.log('Checking service worker support...');
+      debugLogger.debug('service-worker', 'Checking service worker support...');
       
       if (!('serviceWorker' in navigator)) {
         throw new Error('Service Worker not supported in this browser');
@@ -14,7 +15,7 @@ export const useServiceWorkerCheck = () => {
       
       return true;
     } catch (error) {
-      console.error('Service worker not supported:', error);
+      debugLogger.error('service-worker', 'Service worker not supported:', error);
       throw error;
     }
   };

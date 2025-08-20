@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { debugLogger } from '@/utils/debugLogger';
 
 const STORAGE_KEY = 'impersonation_backup';
 const SESSION_KEY = 'impersonation_active';
@@ -27,6 +28,8 @@ class SimplifiedImpersonationManager {
   private static instance: SimplifiedImpersonationManager;
   private currentState: ImpersonationState | null = null;
   private stateValidated = false;
+  private lastValidation = 0;
+  private static readonly VALIDATION_THROTTLE = 5000; // Only validate every 5 seconds
 
   static getInstance(): SimplifiedImpersonationManager {
     if (!SimplifiedImpersonationManager.instance) {
@@ -36,12 +39,18 @@ class SimplifiedImpersonationManager {
   }
 
   /**
-   * Get current impersonation state with validation
+   * Get current impersonation state with validation (throttled)
    */
   getState(): ImpersonationState {
-    if (!this.stateValidated || !this.currentState) {
+    const now = Date.now();
+    const needsValidation = !this.stateValidated || 
+                           !this.currentState || 
+                           (now - this.lastValidation) > SimplifiedImpersonationManager.VALIDATION_THROTTLE;
+    
+    if (needsValidation) {
       this.currentState = this.validateAndGetState();
       this.stateValidated = true;
+      this.lastValidation = now;
     }
     return this.currentState;
   }
@@ -59,7 +68,7 @@ class SimplifiedImpersonationManager {
    */
   async startImpersonation(targetUserId: string): Promise<{ ok: boolean; error?: string }> {
     try {
-      console.log('🎭 Starting simplified impersonation for:', targetUserId);
+      debugLogger.info('impersonation', `Starting simplified impersonation for: ${targetUserId}`);
       
       // Clear any existing state
       this.clearState();
@@ -93,7 +102,7 @@ class SimplifiedImpersonationManager {
         sessionStorage.setItem('impersonation_target_email', data.target_email);
       }
 
-      console.log('✅ Impersonation setup complete, redirecting...');
+      debugLogger.info('impersonation', 'Impersonation setup complete, redirecting...');
       
       // Update internal state
       this.currentState = {
@@ -108,7 +117,7 @@ class SimplifiedImpersonationManager {
       return { ok: true };
 
     } catch (error: any) {
-      console.error('❌ Impersonation failed:', error);
+      debugLogger.error('impersonation', 'Impersonation failed:', error);
       this.clearState();
       return { 
         ok: false, 
@@ -122,7 +131,7 @@ class SimplifiedImpersonationManager {
    */
   async restoreSession(): Promise<void> {
     try {
-      console.log('🔄 Restoring admin session...');
+      debugLogger.info('impersonation', 'Restoring admin session...');
       
       const state = this.getState();
       if (!state.backup) {
@@ -146,18 +155,18 @@ class SimplifiedImpersonationManager {
 
       if (error || !data?.action_link) {
         // Fallback to manual navigation
-        console.warn('⚠️ Edge function restore failed, using manual fallback');
+        debugLogger.warn('impersonation', 'Edge function restore failed, using manual fallback');
         this.clearState();
         window.location.href = '/admin/users';
         return;
       }
 
-      console.log('✅ Restore link received, redirecting...');
+      debugLogger.info('impersonation', 'Restore link received, redirecting...');
       this.clearState();
       window.location.href = data.action_link;
 
     } catch (error: any) {
-      console.error('❌ Failed to restore session:', error);
+      debugLogger.error('impersonation', 'Failed to restore session:', error);
       this.clearState();
       
       // Always provide manual fallback
@@ -171,7 +180,7 @@ class SimplifiedImpersonationManager {
    */
   clearState(): void {
     try {
-      console.log('🧹 Clearing impersonation state...');
+      debugLogger.debug('impersonation', 'Clearing impersonation state...');
       
       // Clear localStorage
       localStorage.removeItem(STORAGE_KEY);
@@ -197,10 +206,10 @@ class SimplifiedImpersonationManager {
       };
       this.stateValidated = true;
       
-      console.log('✅ Impersonation state cleared');
+      debugLogger.debug('impersonation', 'Impersonation state cleared');
       
     } catch (error) {
-      console.error('❌ Failed to clear state:', error);
+      debugLogger.error('impersonation', 'Failed to clear state:', error);
     }
   }
 
@@ -213,7 +222,7 @@ class SimplifiedImpersonationManager {
       const session = data.session;
 
       if (!session?.access_token || !session?.refresh_token || !session.user) {
-        console.error('❌ No valid session to backup');
+        debugLogger.error('impersonation', 'No valid session to backup');
         return null;
       }
 
@@ -227,11 +236,11 @@ class SimplifiedImpersonationManager {
       };
 
       localStorage.setItem(STORAGE_KEY, JSON.stringify(backup));
-      console.log('✅ Admin session backed up');
+      debugLogger.debug('impersonation', 'Admin session backed up');
       return backup;
 
     } catch (error) {
-      console.error('❌ Failed to save session backup:', error);
+      debugLogger.error('impersonation', 'Failed to save session backup:', error);
       return null;
     }
   }
@@ -265,7 +274,7 @@ class SimplifiedImpersonationManager {
         startTime
       };
 
-      console.log('🔍 Validated impersonation state:', {
+      debugLogger.debug('impersonation', 'Validated impersonation state:', {
         isActive,
         hasBackup: !!backup,
         hasFlags: isActiveFlag,
@@ -277,7 +286,7 @@ class SimplifiedImpersonationManager {
       return state;
 
     } catch (error) {
-      console.error('❌ Failed to validate state:', error);
+      debugLogger.error('impersonation', 'Failed to validate state:', error);
       return { isActive: false, backup: null };
     }
   }

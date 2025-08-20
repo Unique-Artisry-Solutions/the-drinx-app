@@ -2,8 +2,9 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useServiceWorkerCheck } from './useServiceWorkerCheck';
 import { debouncedToast } from '@/utils/debouncedToast';
+import { debugLogger } from '@/utils/debugLogger';
 
-const STATUS_CHECK_INTERVAL = 30000; // 30 seconds
+const STATUS_CHECK_INTERVAL = 300000; // 5 minutes (reduced from 30 seconds)
 
 export const useServiceWorkerStatus = () => {
   const [hasServiceWorker, setHasServiceWorker] = useState(false);
@@ -24,18 +25,27 @@ export const useServiceWorkerStatus = () => {
 
     if ('Notification' in window) {
       const currentPermission = Notification.permission;
+      const previousPermission = permissionStatus;
+      
       setPermissionStatus(currentPermission);
       setLastPermissionCheck(now);
       lastStatusCheck.current = now;
-      console.log('Permission status refreshed:', currentPermission, now.toISOString());
+      
+      // Only log when permission actually changes or in debug mode
+      if (currentPermission !== previousPermission) {
+        debugLogger.info('service-worker', `Permission status changed: ${previousPermission} → ${currentPermission}`);
+      } else {
+        debugLogger.debug('service-worker', `Permission status refreshed: ${currentPermission}`);
+      }
+      
       return currentPermission;
     }
     return null;
-  }, []);
+  }, [permissionStatus]);
 
   useEffect(() => {
     const handlePermissionChange = () => {
-      console.log('Permission change detected, refreshing status...');
+      debugLogger.info('service-worker', 'Permission change detected, refreshing status...');
       refreshPermissionStatus();
       
       if ('serviceWorker' in navigator) {

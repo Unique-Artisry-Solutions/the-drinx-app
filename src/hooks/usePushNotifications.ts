@@ -6,6 +6,7 @@ import { PushSubscription, DbPushSubscription } from '@/types/notification/PushN
 import { useServiceWorkerStatus } from './service-worker/useServiceWorkerStatus';
 import { useServiceWorkerRegistration } from './notifications/useServiceWorkerRegistration';
 import { usePushSubscription } from './notifications/usePushSubscription';
+import { debugLogger } from '@/utils/debugLogger';
 
 // Avoid name conflict with browser's Notification API
 export function usePushNotifications() {
@@ -28,7 +29,7 @@ export function usePushNotifications() {
       const hasNotificationSupport = 'Notification' in window;
       
       const isSupported = hasServiceWorkerSupport && hasPushManagerSupport && hasNotificationSupport;
-      console.log('Push notification support check:', { 
+      debugLogger.debug('notifications', 'Push notification support check:', { 
         hasServiceWorkerSupport, 
         hasPushManagerSupport,
         hasNotificationSupport,
@@ -37,7 +38,7 @@ export function usePushNotifications() {
       
       return isSupported;
     } catch (err) {
-      console.error('Error checking push support:', err);
+      debugLogger.error('notifications', 'Error checking push support:', err);
       return false;
     }
   }, []);
@@ -45,7 +46,7 @@ export function usePushNotifications() {
   const checkPermissions = useCallback(() => {
     if ('Notification' in window) {
       const currentPermission = Notification.permission;
-      console.log('Checking permission status:', currentPermission);
+      debugLogger.debug('notifications', `Checking permission status: ${currentPermission}`);
       setPermissionStatus(currentPermission);
       return currentPermission;
     }
@@ -63,7 +64,7 @@ export function usePushNotifications() {
       
       setIsLoading(false);
     } catch (error) {
-      console.error('Error during subscription reset:', error);
+      debugLogger.error('notifications', 'Error during subscription reset:', error);
       setError(error instanceof Error ? error.message : 'Failed to reset subscription state');
       setIsLoading(false);
     }
@@ -83,7 +84,7 @@ export function usePushNotifications() {
       setIsSupported(true);
       
       const currentPermission = checkPermissions();
-      console.log('Current permission status:', currentPermission);
+      debugLogger.debug('notifications', `Current permission status: ${currentPermission}`);
       
       if (currentPermission === 'denied') {
         throw new Error('Notification permission denied: Please enable notifications in your browser settings');
@@ -96,7 +97,7 @@ export function usePushNotifications() {
       
       const registration = await registerServiceWorker();
       setHasServiceWorker(true);
-      console.log('Service worker ready:', registration);
+      debugLogger.debug('notifications', 'Service worker ready:', registration);
       
       const savedSubscription = await createPushSubscription(registration, user.id);
       
@@ -109,7 +110,7 @@ export function usePushNotifications() {
         description: "Successfully subscribed to push notifications!",
       });
     } catch (error: any) {
-      console.error('Push Notification Setup Error:', error);
+      debugLogger.error('notifications', 'Push Notification Setup Error:', error);
       
       const errorMessage = error.message || "Failed to set up push notifications";
       setError(errorMessage);
@@ -191,7 +192,7 @@ export function usePushNotifications() {
       } catch (err) {
         if (isMounted) {
           setError(err instanceof Error ? err.message : "Failed to initialize push notifications");
-          console.error('Error initializing push notifications:', err);
+          debugLogger.error('notifications', 'Error initializing push notifications:', err);
         }
       } finally {
         if (isMounted) {
