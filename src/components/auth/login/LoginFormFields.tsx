@@ -45,11 +45,13 @@ const LoginFormFields: React.FC<LoginFormFieldsProps> = ({
         </label>
         <Input
           id="identifier"
+          name="identifier"
           type="text"
           placeholder="Enter your email or username"
           value={identifier}
           onChange={(e) => setIdentifier(e.target.value)}
           required
+          autoComplete="username"
           className="border-spiritless-pink/20 focus-visible:ring-spiritless-pink"
         />
       </div>
@@ -65,11 +67,13 @@ const LoginFormFields: React.FC<LoginFormFieldsProps> = ({
         </div>
         <Input
           id="password"
+          name="password"
           type="password"
           placeholder="Enter your password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
+          autoComplete="current-password"
           className="border-spiritless-pink/20 focus-visible:ring-spiritless-pink"
         />
       </div>

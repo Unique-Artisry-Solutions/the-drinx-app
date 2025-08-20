@@ -51,8 +51,11 @@ export const CommentForm: React.FC<CommentFormProps> = ({ onSubmit, isLoading = 
             <FormItem>
               <FormControl>
                 <Textarea 
+                  id="comment-text"
+                  name="comment"
                   placeholder="Share your thoughts about this mocktail..."
                   rows={4}
+                  autoComplete="off"
                   {...field}
                 />
               </FormControl>

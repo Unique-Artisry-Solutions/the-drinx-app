@@ -274,8 +274,10 @@ if (typeof window !== 'undefined') {
     });
   }, 2000);
 
-  // Cleanup on page unload
-  window.addEventListener('beforeunload', () => {
-    analyticsMonitor.destroy();
+  // Cleanup on page visibility change
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+      analyticsMonitor.destroy();
+    }
   });
 }

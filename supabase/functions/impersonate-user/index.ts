@@ -1,9 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+import { getSecurityConfig, getCorsHeaders, isOriginAllowed } from '../_shared/security.ts'
 
 interface RequestBody {
   target_user_id: string;
@@ -11,8 +7,12 @@ interface RequestBody {
 
 Deno.serve(async (req) => {
   // Handle CORS preflight requests
+  const origin = req.headers.get('origin')
+  const securityConfig = getSecurityConfig('production')
+  const secureHeaders = getCorsHeaders(origin, securityConfig)
+  
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: secureHeaders })
   }
 
   try {
@@ -27,7 +27,7 @@ Deno.serve(async (req) => {
     if (!target_user_id) {
       return new Response(
         JSON.stringify({ error: 'target_user_id is required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...secureHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
@@ -80,7 +80,7 @@ Deno.serve(async (req) => {
       console.error('User lookup error:', userError)
       return new Response(
         JSON.stringify({ error: 'User not found or inaccessible' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 404, headers: { ...secureHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
@@ -111,7 +111,7 @@ Deno.serve(async (req) => {
             serviceKey: !!Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
           }
         }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 500, headers: { ...secureHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
@@ -131,7 +131,7 @@ Deno.serve(async (req) => {
           error: 'Magic link generation failed - no action link returned',
           debugData: data
         }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 500, headers: { ...secureHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
@@ -151,7 +151,7 @@ Deno.serve(async (req) => {
       }),
       { 
         status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: { ...secureHeaders, 'Content-Type': 'application/json' }
       }
     )
 
@@ -159,7 +159,7 @@ Deno.serve(async (req) => {
     console.error('Impersonation error:', error)
     return new Response(
       JSON.stringify({ error: 'Internal server error' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 500, headers: { ...secureHeaders, 'Content-Type': 'application/json' } }
     )
   }
 })

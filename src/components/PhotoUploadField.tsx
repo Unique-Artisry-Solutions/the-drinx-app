@@ -113,6 +113,8 @@ const PhotoUploadField: React.FC<PhotoUploadFieldProps> = ({
   return (
     <div className={className}>
       <input
+        id="photo-upload"
+        name="photo"
         type="file"
         ref={fileInputRef}
         onChange={handleFileChange}

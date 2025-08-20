@@ -27,10 +27,13 @@ export const LocationSearch: React.FC<LocationSearchProps> = ({ onSearch }) => {
       <div className="relative">
         <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-material-on-surface-variant" size={18} />
         <Input
+          id="location-search"
+          name="location"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Search for locations..."
           className="w-full pl-10 pr-16 py-2"
+          autoComplete="off"
         />
         {searchQuery && (
           <button

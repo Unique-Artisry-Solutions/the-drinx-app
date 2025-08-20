@@ -1,9 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.4'
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+import { getSecurityConfig, getCorsHeaders, isOriginAllowed } from '../_shared/security.ts'
 
 interface RestoreRequest {
   admin_user_id: string;
@@ -13,8 +9,12 @@ interface RestoreRequest {
 
 Deno.serve(async (req) => {
   // Handle CORS preflight requests
+  const origin = req.headers.get('origin')
+  const securityConfig = getSecurityConfig('production')
+  const secureHeaders = getCorsHeaders(origin, securityConfig)
+  
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: secureHeaders })
   }
 
   try {
@@ -43,7 +43,7 @@ Deno.serve(async (req) => {
           error: 'Admin user not found',
           fallback_available: true
         }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
+        { headers: { ...secureHeaders, 'Content-Type': 'application/json' }, status: 404 }
       )
     }
 
@@ -170,7 +170,7 @@ Deno.serve(async (req) => {
           fallback_methods_available: ['magic_link', 'session_refresh'],
           manual_fallback_url: `${redirectTo}/admin/users`
         }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { headers: { ...secureHeaders, 'Content-Type': 'application/json' } }
       )
     } else {
       console.error('❌ All restoration methods failed:', errors)
@@ -183,7 +183,7 @@ Deno.serve(async (req) => {
           manual_fallback_url: `${redirectTo}/admin/users`,
           instructions: 'Please navigate to the admin panel manually and log in again'
         }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+        { headers: { ...secureHeaders, 'Content-Type': 'application/json' }, status: 500 }
       )
     }
 
@@ -197,7 +197,7 @@ Deno.serve(async (req) => {
         manual_fallback_url: '/admin/users',
         instructions: 'Please navigate to the admin panel manually'
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      { headers: { ...secureHeaders, 'Content-Type': 'application/json' }, status: 500 }
     )
   }
 })

@@ -81,7 +81,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       };
       
-      window.addEventListener('beforeunload', handleBeforeUnload);
+      window.addEventListener('visibilitychange', handleBeforeUnload);
       
       // Check if we're recovering from HMR
       if (localStorage.getItem('hmr_impersonation_preserved') === 'true') {
@@ -89,7 +89,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         localStorage.removeItem('hmr_impersonation_preserved');
       }
       
-      return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+      return () => window.removeEventListener('visibilitychange', handleBeforeUnload);
     }
   }, []);
 
