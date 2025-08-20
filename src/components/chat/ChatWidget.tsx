@@ -5,7 +5,7 @@ import { VenueContact } from '@/hooks/promoter/types';
 import { usePromoterContacts } from '@/hooks/promoter/usePromoterContacts';
 import { usePromoterRole } from '@/hooks/promoter/usePromoterRole';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/lib/supabase';
+import { requireAuthentication } from '@/utils/impersonationAuth';
 import MessageComposer from '../promoter/communication/messages/MessageComposer';
 
 interface ChatWidgetProps {
@@ -26,6 +26,8 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({
 
   const handleSendMessage = async (venueId: string, content: string) => {
     try {
+      console.log('🚀 Starting message send process...');
+      
       // First activate the promoter role
       await ensurePromoterRole();
       
@@ -35,21 +37,25 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({
       let threadId = existingThreadId;
       
       if (!threadId) {
+        console.log('📝 Creating new thread for venue:', venueId);
         const createdThreadId = await createThread(venueId);
         if (!createdThreadId) {
           throw new Error("Failed to create conversation thread");
         }
         threadId = createdThreadId;
+        console.log('✅ Thread created:', threadId);
+      } else {
+        console.log('📝 Using existing thread:', threadId);
       }
 
-      // Get the current user ID for sending the message
-      const user = await supabase.auth.getUser();
-      if (!user.data.user?.id) {
-        throw new Error("User not authenticated");
-      }
+      // Get the current user ID with impersonation awareness
+      console.log('🔐 Getting authenticated user ID...');
+      const userId = await requireAuthentication();
+      console.log('✅ Authenticated user ID:', userId);
 
-      // Pass the correct userId (sender) instead of venueId
-      await sendMessage(threadId, content, user.data.user.id);
+      // Send the message
+      console.log('📤 Sending message to thread:', threadId);
+      await sendMessage(threadId, content, userId);
       
       toast({
         title: "Message Sent",
@@ -58,10 +64,22 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({
       
       onClose();
     } catch (err: any) {
-      console.error('Error sending message:', err);
+      console.error('❌ Error sending message:', err);
+      
+      // Create more descriptive error message
+      let errorDescription = "There was a problem sending your message. Please try again.";
+      
+      if (err.message?.includes('not authenticated')) {
+        errorDescription = "Authentication issue detected. Please refresh the page and try again.";
+      } else if (err.message?.includes('RLS')) {
+        errorDescription = "Permission denied. Please check your authentication status.";
+      } else if (err.message?.includes('thread')) {
+        errorDescription = "Failed to create conversation thread. Please try again.";
+      }
+      
       toast({
         title: "Error Sending Message",
-        description: "There was a problem sending your message. Please try again.",
+        description: errorDescription,
         variant: "destructive"
       });
     }
