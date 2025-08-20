@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/auth';
 import { useToast } from '@/hooks/use-toast';
+import { useImpersonationState } from '@/hooks/useImpersonationState';
 
 /**
  * Hook to get the establishment ID associated with the current user
@@ -13,10 +14,14 @@ export function useUserEstablishment() {
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
   const { toast } = useToast();
+  const { isImpersonating, currentUser } = useImpersonationState();
+  
+  // Use impersonated user if impersonating, otherwise use auth user
+  const effectiveUser = isImpersonating ? currentUser : user;
 
   useEffect(() => {
     const fetchEstablishmentId = async () => {
-      if (!user) {
+      if (!effectiveUser) {
         setIsLoading(false);
         setError("User not authenticated");
         return;
@@ -51,11 +56,11 @@ export function useUserEstablishment() {
           }
         }
 
-        // Regular flow - fetch the establishment owned by the current user
+        // Regular flow - fetch the establishment owned by the effective user (could be impersonated)
         const { data, error } = await supabase
           .from('establishments')
           .select('id')
-          .eq('owner_id', user.id)
+          .eq('owner_id', effectiveUser.id)
           .maybeSingle();
 
         if (error) throw error;
@@ -97,7 +102,7 @@ export function useUserEstablishment() {
     };
 
     fetchEstablishmentId();
-  }, [user, toast]);
+  }, [effectiveUser, toast, isImpersonating]);
 
   return {
     establishmentId,

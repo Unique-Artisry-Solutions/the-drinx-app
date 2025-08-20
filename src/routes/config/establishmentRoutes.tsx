@@ -9,6 +9,9 @@ const EstablishmentProfile = lazy(() => import('@/pages/establishment/Establishm
 const EstablishmentEvents = lazy(() => import('@/pages/establishment/EstablishmentEvents'));
 const EstablishmentCommunicationPage = lazy(() => import('@/pages/establishment/CommunicationPage'));
 const EstablishmentAllActionsPage = lazy(() => import('@/pages/establishment/EstablishmentAllActionsPage'));
+const EstablishmentReviewsPage = lazy(() => import('@/pages/establishment/EstablishmentReviewsPage'));
+const EstablishmentMocktailSuggestionsPage = lazy(() => import('@/pages/establishment/EstablishmentMocktailSuggestionsPage'));
+const EstablishmentBarCrawlRequestsPage = lazy(() => import('@/pages/establishment/EstablishmentBarCrawlRequestsPage'));
 
 export const establishmentRoutes: RouteObject[] = [
   {
@@ -80,6 +83,42 @@ export const establishmentRoutes: RouteObject[] = [
         redirectTo="/login"
       >
         <EstablishmentAllActionsPage />
+      </RouteProtectionWrapper>
+    )
+  },
+  {
+    path: '/establishment/reviews',
+    element: (
+      <RouteProtectionWrapper 
+        requireAuth={true} 
+        allowedUserTypes={['establishment']}
+        redirectTo="/login"
+      >
+        <EstablishmentReviewsPage />
+      </RouteProtectionWrapper>
+    )
+  },
+  {
+    path: '/establishment/mocktail-suggestions',
+    element: (
+      <RouteProtectionWrapper 
+        requireAuth={true} 
+        allowedUserTypes={['establishment']}
+        redirectTo="/login"
+      >
+        <EstablishmentMocktailSuggestionsPage />
+      </RouteProtectionWrapper>
+    )
+  },
+  {
+    path: '/establishment/bar-crawl-requests',
+    element: (
+      <RouteProtectionWrapper 
+        requireAuth={true} 
+        allowedUserTypes={['establishment']}
+        redirectTo="/login"
+      >
+        <EstablishmentBarCrawlRequestsPage />
       </RouteProtectionWrapper>
     )
   }
