@@ -2,14 +2,23 @@
 import { UserType } from '@/types/navigation/NavigationTypes';
 
 /**
- * Get the appropriate home path based on user type
+ * Get the appropriate home path based on user type, considering impersonation
  */
-export const getHomePathByUserType = (userType: UserType | null, isAuthenticated: boolean): string => {
-  if (!isAuthenticated || !userType) {
+export const getHomePathByUserType = (
+  userType: UserType | null, 
+  isAuthenticated: boolean,
+  isImpersonating?: boolean,
+  impersonatedUserType?: UserType | null
+): string => {
+  // Use impersonated user type if impersonating
+  const effectiveUserType = isImpersonating && impersonatedUserType ? impersonatedUserType : userType;
+  const effectiveIsAuthenticated = isImpersonating ? true : isAuthenticated;
+  
+  if (!effectiveIsAuthenticated || !effectiveUserType) {
     return '/landing';
   }
   
-  switch (userType) {
+  switch (effectiveUserType) {
     case 'establishment':
       return '/establishment/dashboard';
     case 'promoter':
@@ -24,14 +33,23 @@ export const getHomePathByUserType = (userType: UserType | null, isAuthenticated
 };
 
 /**
- * Get the appropriate home label based on user type
+ * Get the appropriate home label based on user type, considering impersonation
  */
-export const getHomeLabelByUserType = (userType: UserType | null, isAuthenticated: boolean): string => {
-  if (!isAuthenticated || !userType) {
+export const getHomeLabelByUserType = (
+  userType: UserType | null, 
+  isAuthenticated: boolean,
+  isImpersonating?: boolean,
+  impersonatedUserType?: UserType | null
+): string => {
+  // Use impersonated user type if impersonating
+  const effectiveUserType = isImpersonating && impersonatedUserType ? impersonatedUserType : userType;
+  const effectiveIsAuthenticated = isImpersonating ? true : isAuthenticated;
+  
+  if (!effectiveIsAuthenticated || !effectiveUserType) {
     return 'Home';
   }
   
-  switch (userType) {
+  switch (effectiveUserType) {
     case 'establishment':
     case 'promoter':
     case 'admin':

@@ -8,6 +8,7 @@ const EstablishmentDashboardPage = lazy(() => import('@/pages/establishment/Esta
 const EstablishmentProfile = lazy(() => import('@/pages/establishment/EstablishmentProfile'));
 const EstablishmentEvents = lazy(() => import('@/pages/establishment/EstablishmentEvents'));
 const EstablishmentCommunicationPage = lazy(() => import('@/pages/establishment/CommunicationPage'));
+const EstablishmentAllActionsPage = lazy(() => import('@/pages/establishment/EstablishmentAllActionsPage'));
 
 export const establishmentRoutes: RouteObject[] = [
   {
@@ -67,6 +68,18 @@ export const establishmentRoutes: RouteObject[] = [
         redirectTo="/login"
       >
         <EstablishmentCommunicationPage />
+      </RouteProtectionWrapper>
+    )
+  },
+  {
+    path: '/establishment/all-actions',
+    element: (
+      <RouteProtectionWrapper 
+        requireAuth={true} 
+        allowedUserTypes={['establishment']}
+        redirectTo="/login"
+      >
+        <EstablishmentAllActionsPage />
       </RouteProtectionWrapper>
     )
   }

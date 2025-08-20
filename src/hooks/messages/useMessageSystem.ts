@@ -2,6 +2,7 @@
 import { useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuthenticatedUser } from '@/hooks/useAuthenticatedUser';
+import { useImpersonationState } from '@/hooks/useImpersonationState';
 import { MessageThread, UserType } from './types';
 import { useThreads } from './useThreads';
 import { useMessages } from './useMessages';
@@ -11,9 +12,14 @@ import { useThreadSelection } from './useThreadSelection';
 
 export const useMessageSystem = (userType: UserType) => {
   const { user } = useAuthenticatedUser();
-  const { threads, setThreads, loading, error, fetchThreads } = useThreads(userType, user?.id);
+  const { isImpersonating, currentUser } = useImpersonationState();
+  
+  // Use the impersonated user's ID if impersonating, otherwise use current user
+  const effectiveUserId = isImpersonating ? currentUser?.id : user?.id;
+  
+  const { threads, setThreads, loading, error, fetchThreads } = useThreads(userType, effectiveUserId);
   const { fetchMessages, sendMessage } = useMessages(userType);
-  const { updateThreadReadStatus, markThreadAsRead, subscribeToReadStatusUpdates } = useThreadReadStatus(user?.id);
+  const { updateThreadReadStatus, markThreadAsRead, subscribeToReadStatusUpdates } = useThreadReadStatus(effectiveUserId);
   const { createThread, isCreating } = useThreadCreation();
   
   const { selectedThreadId, setSelectedThreadId } = useThreadSelection(
@@ -33,7 +39,7 @@ export const useMessageSystem = (userType: UserType) => {
 
   // Subscribe to read status updates for real-time updates
   useEffect(() => {
-    if (threads.length === 0 || !user?.id) return;
+    if (threads.length === 0 || !effectiveUserId) return;
 
     const threadIds = threads.map(t => t.id);
     const channel = subscribeToReadStatusUpdates(threadIds, () => {
@@ -48,15 +54,15 @@ export const useMessageSystem = (userType: UserType) => {
         supabase.removeChannel(channel);
       }
     };
-  }, [threads.map(t => t.id).join(','), user?.id]); // Depend on thread IDs string
+  }, [threads.map(t => t.id).join(','), effectiveUserId]); // Depend on thread IDs string
 
   // Subscribe to new messages for real-time thread updates
   useEffect(() => {
-    if (!user?.id) return;
+    if (!effectiveUserId) return;
 
     const filterColumn = userType === 'promoter' ? 'promoter_id' : 'venue_id';
     const channel = supabase
-      .channel(`messages-${userType}-${user.id}`)
+      .channel(`messages-${userType}-${effectiveUserId}`)
       .on(
         'postgres_changes',
         {
@@ -72,7 +78,7 @@ export const useMessageSystem = (userType: UserType) => {
             .from('promoter_venue_threads')
             .select('id, venue_id, promoter_id')
             .eq('id', payload.new.thread_id)
-            .eq(filterColumn, user.id)
+            .eq(filterColumn, effectiveUserId)
             .single();
 
           if (threadData) {
@@ -86,7 +92,7 @@ export const useMessageSystem = (userType: UserType) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user?.id, userType, fetchThreads]);
+  }, [effectiveUserId, userType, fetchThreads]);
 
   const refetchThreads = useCallback(async () => {
     await fetchThreads();

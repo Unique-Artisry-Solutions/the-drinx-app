@@ -3,6 +3,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useDevelopmentMode } from './DevelopmentModeContext';
 import { useAuthenticatedUser } from '@/hooks/useAuthenticatedUser';
+import { useImpersonationState } from '@/hooks/useImpersonationState';
 import { UnifiedNavItem, UserType } from '@/types/navigation/NavigationTypes';
 import { getGuestNavItems } from '@/components/navigation/mobile/GuestNavItems';
 import { getUserNavItems } from '@/components/navigation/mobile/UserNavItems';
@@ -22,6 +23,7 @@ const NavigationContext = createContext<NavigationContextType | undefined>(undef
 export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
   const { isDevelopment, isInitialized } = useDevelopmentMode();
+  const { isImpersonating, currentUser } = useImpersonationState();
   
   // Safely get auth state with fallback for hot reload scenarios
   let authState;
@@ -33,6 +35,12 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   }
   
   const { userType, isAuthenticated, authStable } = authState;
+  
+  // Use impersonated user's type and authentication if impersonating
+  const effectiveUserType = isImpersonating && currentUser ? 
+    (currentUser.user_metadata?.user_type as UserType) || userType : 
+    userType;
+  const effectiveIsAuthenticated = isImpersonating ? !!currentUser : isAuthenticated;
   
   const [navigationState, setNavigationState] = useState<NavigationContextType>({
     currentPath: location.pathname,
@@ -52,20 +60,20 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     let canAccess = true;
     if (isProtected) {
       if (location.pathname.startsWith('/admin')) {
-        canAccess = userType === 'admin' && isAuthenticated;
+        canAccess = effectiveUserType === 'admin' && effectiveIsAuthenticated;
       } else if (location.pathname.startsWith('/establishment')) {
-        canAccess = userType === 'establishment' && isAuthenticated;
+        canAccess = effectiveUserType === 'establishment' && effectiveIsAuthenticated;
       } else if (location.pathname.startsWith('/promoter')) {
-        canAccess = userType === 'promoter' && isAuthenticated;
+        canAccess = effectiveUserType === 'promoter' && effectiveIsAuthenticated;
       }
     }
 
-    // Get navigation items based on user state
+    // Get navigation items based on effective user state (considering impersonation)
     let navigationItems: UnifiedNavItem[];
-    if (userType === 'admin' && isAuthenticated) {
+    if (effectiveUserType === 'admin' && effectiveIsAuthenticated) {
       navigationItems = getAdminNavItems();
-    } else if (isAuthenticated && userType) {
-      navigationItems = getUserNavItems(userType);
+    } else if (effectiveIsAuthenticated && effectiveUserType) {
+      navigationItems = getUserNavItems(effectiveUserType);
     } else {
       navigationItems = getGuestNavItems();
     }
@@ -75,10 +83,10 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       isProtectedRoute: isProtected,
       canAccess,
       navigationItems,
-      userType,
-      isAuthenticated
+      userType: effectiveUserType,
+      isAuthenticated: effectiveIsAuthenticated
     });
-  }, [location.pathname, userType, isAuthenticated, isInitialized, authStable]);
+  }, [location.pathname, effectiveUserType, effectiveIsAuthenticated, isInitialized, authStable, isImpersonating]);
 
   return (
     <NavigationContext.Provider value={navigationState}>
