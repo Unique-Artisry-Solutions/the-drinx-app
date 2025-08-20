@@ -26,7 +26,7 @@ interface LeakDetectionResult {
   suspiciousComponents: string[];
 }
 
-class MemoryLeakDetector {
+class MemoryLeakDetectorService {
   private snapshots: MemorySnapshot[] = [];
   private componentCounts = new Map<string, number>();
   private eventListenerCounts = new Map<string, number>();
@@ -230,9 +230,9 @@ class MemoryLeakDetector {
 }
 
 // Global instance
-const memoryDetector = new MemoryLeakDetector();
+const memoryDetector = new MemoryLeakDetectorService();
 
-const MemoryLeakDetector: React.FC = () => {
+const MemoryLeakDetectorComponent: React.FC = () => {
   const [snapshots, setSnapshots] = useState<MemorySnapshot[]>([]);
   const [analysis, setAnalysis] = useState<LeakDetectionResult | null>(null);
   const [isMonitoring, setIsMonitoring] = useState(false);
@@ -583,5 +583,5 @@ const MemoryLeakDetector: React.FC = () => {
   );
 };
 
-export default MemoryLeakDetector;
+export default MemoryLeakDetectorComponent;
 export { memoryDetector };

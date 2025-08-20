@@ -6,14 +6,14 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import TopNavigation from '@/components/TopNavigation';
 import NotificationLoadTester from '@/components/notifications/testing/NotificationLoadTester';
 import NotificationCache from '@/components/notifications/performance/NotificationCache';
-import MemoryLeakDetector from '@/components/notifications/performance/MemoryLeakDetector';
+import MemoryLeakDetectorComponent from '@/components/notifications/performance/MemoryLeakDetector';
 import { Activity, Database, Shield, Zap, TrendingUp, Settings } from 'lucide-react';
-import { useDevelopmentMode } from '@/hooks/useDevelopmentMode';
+import { useDevelopmentMode } from '@/contexts/DevelopmentModeContext';
 
 const Phase4TestingPage: React.FC = () => {
-  const { isDevelopmentMode } = useDevelopmentMode();
+  const { isDevelopment } = useDevelopmentMode();
 
-  if (!isDevelopmentMode) {
+  if (!isDevelopment) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
         <TopNavigation />
@@ -137,7 +137,7 @@ const Phase4TestingPage: React.FC = () => {
                   </p>
                 </div>
                 
-                <MemoryLeakDetector />
+                <MemoryLeakDetectorComponent />
               </TabsContent>
             </Tabs>
           </CardContent>
