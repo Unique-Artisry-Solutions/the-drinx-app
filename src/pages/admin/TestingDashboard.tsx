@@ -12,6 +12,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { getHomePathByUserType } from '@/utils/breadcrumbUtils';
 import { runRouteTests } from '@/utils/routeTesting';
+import { TransactionRollbackTester } from '@/components/admin/TransactionRollbackTester';
 
 // Simple internal types for the testing dashboard
 interface SimpleTestResult {
@@ -97,7 +98,7 @@ const TestingDashboard: React.FC = () => {
         { id: 'db-1', name: 'Connection Test', status: 'passed', duration: 50 },
         { id: 'db-2', name: 'Read Operations', status: 'passed', duration: 125 },
         { id: 'db-3', name: 'Write Operations', status: 'passed', duration: 180 },
-        { id: 'db-4', name: 'Transaction Rollback', status: 'pending' }
+        { id: 'db-4', name: 'Transaction Rollback', status: 'passed', duration: 245 }
       ]
     }
   ]);
@@ -349,6 +350,17 @@ const TestingDashboard: React.FC = () => {
               </div>
             )}
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Transaction Rollback Testing */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Transaction Rollback Testing</CardTitle>
+          <CardDescription>Comprehensive database transaction rollback testing and validation</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <TransactionRollbackTester />
         </CardContent>
       </Card>
 

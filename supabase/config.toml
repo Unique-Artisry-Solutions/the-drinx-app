@@ -1,5 +1,14 @@
 project_id = "dvifibvzwunnpcsihpxq"
 
+[functions.test-transaction-rollback]
+verify_jwt = false
+
+[functions.validate-database-integrity]
+verify_jwt = false
+
+[functions.cleanup-test-data]
+verify_jwt = false
+
 [functions.seed-dev-data]
 verify_jwt = false
 
