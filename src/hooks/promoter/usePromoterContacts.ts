@@ -21,10 +21,11 @@ export const usePromoterContacts = () => {
     setError(null);
     
     try {
-      // Get establishments
+      // Get only establishments that have owners (real users)
       const { data: establishments, error: establishmentsError } = await supabase
         .from('establishments')
         .select('id, name, owner_id')
+        .not('owner_id', 'is', null)
         .order('name');
         
       if (establishmentsError) throw establishmentsError;
