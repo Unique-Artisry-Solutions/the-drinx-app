@@ -1,5 +1,8 @@
 project_id = "dvifibvzwunnpcsihpxq"
 
+[functions.restore-impersonation]
+verify_jwt = true
+
 [functions.test-transaction-rollback]
 verify_jwt = false
 
