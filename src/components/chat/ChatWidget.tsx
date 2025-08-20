@@ -6,6 +6,7 @@ import { usePromoterContacts } from '@/hooks/promoter/usePromoterContacts';
 import { usePromoterRole } from '@/hooks/promoter/usePromoterRole';
 import { useToast } from '@/hooks/use-toast';
 import { useAuthenticatedUser } from '@/hooks/useAuthenticatedUser';
+import { useImpersonationState } from '@/hooks/useImpersonationState';
 import MessageComposer from '../promoter/communication/messages/MessageComposer';
 
 interface ChatWidgetProps {
@@ -24,6 +25,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({
   const { ensurePromoterRole } = usePromoterRole();
   const { toast } = useToast();
   const { user } = useAuthenticatedUser();
+  const { isImpersonating } = useImpersonationState();
 
   const handleSendMessage = async (venueId: string, content: string) => {
     try {
@@ -31,11 +33,14 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({
         throw new Error("User not authenticated");
       }
 
-      // First activate the promoter role
-      await ensurePromoterRole();
-      
-      // Add a delay to ensure role switch is propagated
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Skip role activation during impersonation
+      if (!isImpersonating) {
+        // First activate the promoter role for normal users
+        await ensurePromoterRole();
+        
+        // Add a delay to ensure role switch is propagated
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
       
       let threadId = existingThreadId;
       
