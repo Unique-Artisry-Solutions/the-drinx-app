@@ -9,7 +9,7 @@ import { useDevelopmentMode } from '@/contexts/DevelopmentModeContext';
 import { useAuth } from '@/contexts/auth/AuthProvider';
 import { useAuthenticatedUser } from '@/hooks/useAuthenticatedUser';
 import { useImpersonationState } from '@/hooks/useImpersonationState';
-import { restoreImpersonation } from '@/utils/impersonation';
+import { restoreImpersonation } from '@/utils/impersonationSimplified';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 

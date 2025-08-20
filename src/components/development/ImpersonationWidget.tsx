@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChevronDown, ChevronUp, UserX, ArrowLeft, Move, User } from 'lucide-react';
 import { useImpersonationState } from '@/hooks/useImpersonationState';
-import { restoreImpersonation } from '@/utils/impersonation';
+import { restoreImpersonation } from '@/utils/impersonationSimplified';
 import { useToast } from '@/hooks/use-toast';
 
 type Position = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
@@ -14,7 +14,7 @@ const ImpersonationWidget: React.FC = () => {
   const { toast } = useToast();
   
   // Impersonation state
-  const { isImpersonating, currentUser, adminUserId, isLoading: impersonationLoading } = useImpersonationState();
+  const { isImpersonating, currentUser, adminUserId, targetEmail, isLoading: impersonationLoading } = useImpersonationState();
 
   // Don't render if not impersonating
   if (!isImpersonating || impersonationLoading) return null;
@@ -74,7 +74,7 @@ const ImpersonationWidget: React.FC = () => {
             <UserX className="h-4 w-4 text-red-600" />
             <span className="text-sm font-medium text-red-800">Impersonating</span>
             <span className="text-xs text-red-600 truncate max-w-24">
-              {currentUser?.email?.split('@')[0] || 'User'}
+              {targetEmail?.split('@')[0] || currentUser?.email?.split('@')[0] || 'User'}
             </span>
           </div>
           <div className="flex items-center gap-1">
@@ -121,7 +121,7 @@ const ImpersonationWidget: React.FC = () => {
               <div className="grid grid-cols-2 gap-1 text-xs">
                 <div className="text-red-700">Target User:</div>
                 <div className="font-mono text-red-800 truncate">
-                  {currentUser?.email || 'Unknown'}
+                  {targetEmail || currentUser?.email || 'Unknown'}
                 </div>
                 <div className="text-red-700">Target ID:</div>
                 <div className="font-mono text-red-800 truncate">
@@ -147,7 +147,7 @@ const ImpersonationWidget: React.FC = () => {
               </Button>
               
               <div className="text-xs text-red-600 bg-red-100 p-2 rounded border">
-                <strong>Note:</strong> You are viewing the app as {currentUser?.email}. All actions are performed as this user.
+                <strong>Note:</strong> You are viewing the app as {targetEmail || currentUser?.email}. All actions are performed as this user.
               </div>
             </div>
           </CardContent>

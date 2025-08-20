@@ -1,15 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useAuthenticatedUser } from '@/hooks/useAuthenticatedUser';
-import { getImpersonationBackup } from '@/utils/impersonation';
+import { impersonationManager, getImpersonationState } from '@/utils/impersonationSimplified';
 
 /**
- * Hook to manage impersonation state safely
+ * Simplified hook to manage impersonation state safely
  */
 export const useImpersonationState = () => {
   const { user, isAuthenticated, authStable } = useAuthenticatedUser();
   const [isImpersonating, setIsImpersonating] = useState(false);
   const [impersonationBackup, setImpersonationBackup] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [targetEmail, setTargetEmail] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authStable) {
@@ -18,46 +19,50 @@ export const useImpersonationState = () => {
     }
 
     const checkImpersonation = () => {
-      const backup = getImpersonationBackup();
-      
-      // Simplified impersonation detection - streamlined for better reliability
-      let finalImpersonating = false;
-      
-      if (backup) {
-        // Method 1: Basic impersonation (different user IDs)
-        const basicImpersonation = !!(user && backup.user_id !== user.id);
+      try {
+        // Force refresh state after auth changes
+        impersonationManager.refreshState();
         
-        // Method 2: Magic link impersonation (backup exists + any impersonation flag + authenticated)
-        const hasImpersonationFlag = !!(
-          sessionStorage.getItem('impersonation_active') ||
-          sessionStorage.getItem('impersonation_magic_link') ||
-          localStorage.getItem('impersonation_active_backup')
-        );
+        const state = getImpersonationState();
+        const backup = state.backup;
         
-        const magicLinkImpersonation = !!(isAuthenticated && hasImpersonationFlag);
+        // Determine if we're impersonating
+        let finalImpersonating = false;
         
-        finalImpersonating = basicImpersonation || magicLinkImpersonation;
-        
-        console.log('🎭 useImpersonationState - Streamlined impersonation check:', {
-          hasBackup: true,
-          basicImpersonation,
-          magicLinkImpersonation,
-          finalImpersonating,
-          hasUser: !!user,
-          isAuthenticated,
-          backupUserId: backup.user_id,
-          currentUserId: user?.id,
-          currentUserEmail: user?.email,
-          impersonationFlags: {
-            sessionActive: !!sessionStorage.getItem('impersonation_active'),
-            sessionMagicLink: !!sessionStorage.getItem('impersonation_magic_link'),
-            localBackup: !!localStorage.getItem('impersonation_active_backup')
-          }
-        });
-      }
+        if (backup && isAuthenticated) {
+          // Check if current user is different from backup user (basic impersonation)
+          const basicImpersonation = !!(user && backup.user_id !== user.id);
+          
+          // Check if impersonation is flagged as active
+          const activeImpersonation = state.isActive;
+          
+          finalImpersonating = basicImpersonation || activeImpersonation;
+          
+          console.log('🎭 useImpersonationState - Simplified check:', {
+            hasBackup: true,
+            basicImpersonation,
+            activeImpersonation,
+            finalImpersonating,
+            hasUser: !!user,
+            isAuthenticated,
+            backupUserId: backup.user_id,
+            currentUserId: user?.id,
+            currentUserEmail: user?.email,
+            targetEmail: state.targetEmail,
+            stateAge: backup.created_at ? Date.now() - backup.created_at : null
+          });
+        }
 
-      setIsImpersonating(finalImpersonating);
-      setImpersonationBackup(backup);
+        setIsImpersonating(finalImpersonating);
+        setImpersonationBackup(backup);
+        setTargetEmail(state.targetEmail || null);
+        
+      } catch (error) {
+        console.error('❌ Error checking impersonation state:', error);
+        setIsImpersonating(false);
+        setImpersonationBackup(null);
+        setTargetEmail(null);
+      }
     };
 
     checkImpersonation();
@@ -69,7 +74,9 @@ export const useImpersonationState = () => {
     impersonationBackup,
     isLoading: isLoading || !authStable,
     currentUser: user,
-    adminUserId: impersonationBackup?.user_id || null
+    adminUserId: impersonationBackup?.user_id || null,
+    targetEmail,
+    isStable: authStable && !isLoading
   };
 };
 

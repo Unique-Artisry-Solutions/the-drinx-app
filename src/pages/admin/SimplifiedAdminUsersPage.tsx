@@ -4,7 +4,7 @@ import { useSimpleAdmin } from '@/hooks/admin/useSimpleAdmin';
 import { UnifiedAdminTable } from '@/components/admin/tables/UnifiedAdminTable';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { impersonateUser } from '@/utils/impersonation';
+import { startImpersonation } from '@/utils/impersonationSimplified';
 import { toast } from 'sonner';
 import { useAuthenticatedUser } from '@/hooks/useAuthenticatedUser';
 const SimplifiedAdminUsersPage: React.FC = () => {
@@ -67,7 +67,7 @@ const SimplifiedAdminUsersPage: React.FC = () => {
           variant="outline"
           size="sm"
           onClick={async () => {
-            const res = await impersonateUser(item.id);
+            const res = await startImpersonation(item.id);
             if (!res.ok) {
               toast.error(res.error || 'Impersonation failed');
             } else {
@@ -93,7 +93,7 @@ const SimplifiedAdminUsersPage: React.FC = () => {
             const targetId = window.prompt('Enter target user ID to impersonate:');
             if (!targetId) return;
             toast.message('Generating impersonation link...');
-            const res = await impersonateUser(targetId.trim());
+            const res = await startImpersonation(targetId.trim());
             if (!res.ok) {
               toast.error(res.error || 'Impersonation failed');
             } else {

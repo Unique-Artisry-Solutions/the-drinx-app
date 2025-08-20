@@ -3,18 +3,26 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Plus, Users, RefreshCw, AlertCircle } from 'lucide-react';
+import { Search, Plus, Users, RefreshCw, AlertCircle, Clock } from 'lucide-react';
 import { usePromoterContacts } from '@/hooks/promoter/usePromoterContacts';
 import { VenueContact } from '@/hooks/promoter/types';
 import { useMessageSystem } from '@/hooks/messages/useMessageSystem';
 import { useToast } from '@/hooks/use-toast';
+import ErrorBoundary from '@/components/common/ErrorBoundary';
 
 interface ContactsListProps {
   onThreadCreated?: (threadId: string) => void;
 }
 
 const ContactsList: React.FC<ContactsListProps> = ({ onThreadCreated }) => {
-  const { contacts: initialContacts, isLoading, error: contactsError, refetch } = usePromoterContacts();
+  const { 
+    contacts: initialContacts, 
+    isLoading, 
+    error: contactsError, 
+    refetch, 
+    attempts,
+    hasCache 
+  } = usePromoterContacts();
   const [contacts, setContacts] = useState<VenueContact[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [processingContact, setProcessingContact] = useState<string | null>(null);
@@ -56,22 +64,36 @@ const ContactsList: React.FC<ContactsListProps> = ({ onThreadCreated }) => {
   };
 
   const handleRefresh = () => {
-    refetch();
+    refetch(true); // Force refresh
   };
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5" />
-            <span>Venue Contacts</span>
-          </CardTitle>
-          <Button variant="ghost" size="sm" onClick={handleRefresh} disabled={isLoading}>
-            <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-            <span className="sr-only">Refresh</span>
-          </Button>
-        </div>
+    <ErrorBoundary>
+      <Card className="w-full">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              <span>Venue Contacts</span>
+              {hasCache && (
+                <span className="text-xs bg-muted px-2 py-1 rounded-full">
+                  Cached
+                </span>
+              )}
+            </CardTitle>
+            <div className="flex items-center gap-2">
+              {attempts > 1 && (
+                <span className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  Attempt {attempts}
+                </span>
+              )}
+              <Button variant="ghost" size="sm" onClick={handleRefresh} disabled={isLoading}>
+                <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+                <span className="sr-only">Refresh</span>
+              </Button>
+            </div>
+          </div>
         <div className="relative">
           <Search className="absolute left-2 top-3 h-4 w-4 text-muted-foreground" />
           <Input
@@ -149,6 +171,7 @@ const ContactsList: React.FC<ContactsListProps> = ({ onThreadCreated }) => {
         </div>
       </CardContent>
     </Card>
+    </ErrorBoundary>
   );
 };
 

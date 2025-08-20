@@ -6,7 +6,7 @@ import { User, Phone } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { AdminUser } from '@/services/admin';
-import { impersonateUser } from '@/utils/impersonation';
+import { startImpersonation } from '@/utils/impersonationSimplified';
 export const UsersAdminTable: React.FC = () => {
   const { state, actions } = useSimpleAdmin<AdminUser>('users');
 

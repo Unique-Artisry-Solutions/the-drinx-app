@@ -15,7 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, UserPlus, Search, Filter } from 'lucide-react';
 import { useUsers } from '@/hooks/admin/useUsers';
-import { impersonateUser } from '@/utils/impersonation';
+import { startImpersonation } from '@/utils/impersonationSimplified';
 import { toast } from 'sonner';
 
 const AdminUsersPage: React.FC = () => {
@@ -181,7 +181,7 @@ const AdminUsersPage: React.FC = () => {
                             variant="outline" 
                             size="sm"
                             onClick={async () => {
-                              const res = await impersonateUser(user.id);
+                              const res = await startImpersonation(user.id);
                               if (!res.ok) {
                                 toast.error(res.error || 'Impersonation failed');
                               } else {
