@@ -111,51 +111,73 @@ export const RealTimeNotificationProvider: React.FC<RealTimeNotificationProvider
     });
   }, [unifiedNotifications.notifications, enableDeliveryTracking, deliveryStatus]);
 
-  // Cross-tab notification synchronization
+  // Cross-tab notification synchronization with origin safety
   const broadcastNotification = (notification: Notification) => {
     if (!enableTabSync) return;
 
-    const broadcastChannel = new BroadcastChannel('notifications');
-    broadcastChannel.postMessage({
-      type: 'new_notification',
-      notification,
-      tabId
-    });
+    try {
+      const broadcastChannel = new BroadcastChannel('notifications');
+      const message = {
+        type: 'new_notification',
+        notification,
+        tabId,
+        origin: window.location.origin // Include origin for validation
+      };
+      
+      broadcastChannel.postMessage(message);
+      broadcastChannel.close(); // Clean up immediately
+    } catch (error) {
+      console.warn('Failed to broadcast notification:', error);
+    }
   };
 
-  // Listen for cross-tab notifications
+  // Listen for cross-tab notifications with origin validation
   useEffect(() => {
     if (!enableTabSync) return;
 
     const broadcastChannel = new BroadcastChannel('notifications');
     
     broadcastChannel.onmessage = (event) => {
-      const { type, notification, tabId: senderTabId } = event.data;
-      
-      // Ignore messages from the same tab
-      if (senderTabId === tabId) return;
-      
-      if (type === 'new_notification') {
-        // Handle notification from another tab
-        console.log('Received notification from another tab:', notification);
+      try {
+        const { type, notification, tabId: senderTabId, origin } = event.data;
         
-        // Show subtle indicator that notification was received in another tab
-        toast({
-          title: "Notification received",
-          description: "Check other tab for new notification",
-          duration: 2000
-        });
-      } else if (type === 'notification_read') {
-        // Sync read status across tabs
-        setDeliveryStatus(prev => ({
-          ...prev,
-          [notification.id]: 'read'
-        }));
+        // Validate origin if provided
+        if (origin && origin !== window.location.origin) {
+          console.warn('Cross-tab message from different origin:', { origin, currentOrigin: window.location.origin });
+          return;
+        }
+        
+        // Ignore messages from the same tab
+        if (senderTabId === tabId) return;
+        
+        if (type === 'new_notification') {
+          // Handle notification from another tab
+          console.log('Received notification from another tab:', notification);
+          
+          // Show subtle indicator that notification was received in another tab
+          toast({
+            title: "Notification received",
+            description: "Check other tab for new notification",
+            duration: 2000
+          });
+        } else if (type === 'notification_read') {
+          // Sync read status across tabs
+          setDeliveryStatus(prev => ({
+            ...prev,
+            [notification.id]: 'read'
+          }));
+        }
+      } catch (error) {
+        console.warn('Error processing cross-tab message:', error);
       }
     };
 
     return () => {
-      broadcastChannel.close();
+      try {
+        broadcastChannel.close();
+      } catch (error) {
+        console.warn('Error closing broadcast channel:', error);
+      }
     };
   }, [enableTabSync, tabId, toast]);
 
@@ -170,14 +192,20 @@ export const RealTimeNotificationProvider: React.FC<RealTimeNotificationProvider
       }));
     }
 
-    // Broadcast read status to other tabs
+    // Broadcast read status to other tabs with origin safety
     if (enableTabSync) {
-      const broadcastChannel = new BroadcastChannel('notifications');
-      broadcastChannel.postMessage({
-        type: 'notification_read',
-        notification: { id },
-        tabId
-      });
+      try {
+        const broadcastChannel = new BroadcastChannel('notifications');
+        broadcastChannel.postMessage({
+          type: 'notification_read',
+          notification: { id },
+          tabId,
+          origin: window.location.origin
+        });
+        broadcastChannel.close();
+      } catch (error) {
+        console.warn('Failed to broadcast read status:', error);
+      }
     }
   };
 

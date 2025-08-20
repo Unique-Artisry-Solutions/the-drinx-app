@@ -74,6 +74,19 @@ export const useImpersonationState = () => {
 
     checkImpersonation();
     setIsLoading(false);
+
+    // Cleanup and prevent callback queue buildup
+    return () => {
+      try {
+        // Force refresh state cleanup
+        impersonationManager.refreshState();
+        
+        // Clear any pending state checks
+        setIsLoading(false);
+      } catch (e) {
+        console.warn('Error cleaning up impersonation state:', e);
+      }
+    };
   }, [user, isAuthenticated, authStable]);
 
   return {

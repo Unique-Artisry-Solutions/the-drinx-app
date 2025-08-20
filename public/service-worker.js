@@ -96,40 +96,95 @@ self.addEventListener('error', function(event) {
 
 // ====== Client Communication Module ======
 const clientCommunication = {
-  // Send message to all connected clients
-  notifyAll: (clients, message) => {
+  // Get safe origin for postMessage
+  getSafeOrigin: () => {
     try {
+      // Support multiple Lovable domains
+      const allowedOrigins = [
+        'https://lovable.dev',
+        'https://sandbox.lovable.dev',
+        'https://lovable.app',
+        'https://lovableproject.com'
+      ];
+      
+      // Get current origin from clients if possible
+      return self.clients.matchAll().then(clients => {
+        if (clients.length > 0) {
+          try {
+            const clientUrl = new URL(clients[0].url);
+            const origin = clientUrl.origin;
+            
+            // Check if it's a known Lovable domain pattern
+            if (allowedOrigins.some(allowed => origin.includes(allowed.replace('https://', '')))) {
+              return origin;
+            }
+          } catch (e) {
+            swLogger.debug('Error parsing client URL:', { error: e.toString() });
+          }
+        }
+        return '*'; // Fallback to wildcard
+      });
+    } catch (error) {
+      swLogger.debug('Error determining safe origin:', { error: error.toString() });
+      return Promise.resolve('*');
+    }
+  },
+
+  // Send message to all connected clients with origin safety
+  notifyAll: async (clients, message) => {
+    try {
+      const safeOrigin = await clientCommunication.getSafeOrigin();
+      
       clients.forEach(client => {
-        client.postMessage(message);
-        swLogger.debug(`Sent message to client: ${client.id}`, { messageType: message.type });
+        try {
+          if (client && typeof client.postMessage === 'function') {
+            client.postMessage(message, safeOrigin);
+            swLogger.debug(`Sent message to client: ${client.id}`, { messageType: message.type });
+          }
+        } catch (clientError) {
+          // Skip individual client errors but log them
+          swLogger.debug('Failed to send to individual client:', { 
+            error: clientError.toString(),
+            clientId: client?.id 
+          });
+        }
       });
     } catch (error) {
       swLogger.error('Error notifying clients:', { error: error.toString() });
     }
   },
 
-  // Send message to specific client
-  notifyClient: (client, message) => {
+  // Send message to specific client with origin safety
+  notifyClient: async (client, message) => {
     try {
       if (client && typeof client.postMessage === 'function') {
-        client.postMessage(message);
+        const safeOrigin = await clientCommunication.getSafeOrigin();
+        client.postMessage(message, safeOrigin);
         swLogger.debug(`Sent message to client: ${client.id}`, { messageType: message.type });
         return true;
       }
       return false;
     } catch (error) {
-      swLogger.error('Error sending message to client:', { error: error.toString() });
+      swLogger.debug('Error sending message to client:', { 
+        error: error.toString(),
+        clientId: client?.id 
+      });
       return false;
     }
   },
 
   // Send response back to client
   sendResponse: (event, response) => {
-    if (event.ports?.[0]) {
-      event.ports[0].postMessage(response);
-      return true;
+    try {
+      if (event.ports?.[0]) {
+        event.ports[0].postMessage(response);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      swLogger.debug('Error sending response:', { error: error.toString() });
+      return false;
     }
-    return false;
   }
 };
 
@@ -255,12 +310,16 @@ self.addEventListener('notificationclick', function(event) {
             }
           }
           
-          // Notify the client that this notification was clicked
-          client.postMessage({
-            type: 'PUSH_NOTIFICATION_CLICKED',
-            notificationId: notificationData?.id || event.notification.tag,
-            timestamp: new Date().toISOString()
-          });
+          // Notify the client that this notification was clicked with origin safety
+          try {
+            client.postMessage({
+              type: 'PUSH_NOTIFICATION_CLICKED',
+              notificationId: notificationData?.id || event.notification.tag,
+              timestamp: new Date().toISOString()
+            });
+          } catch (postError) {
+            swLogger.debug('Failed to notify client of notification click:', { error: postError.toString() });
+          }
           
           return client.focus();
         }
@@ -368,11 +427,15 @@ self.addEventListener('message', function(event) {
       
       // Send error response if possible
       if (event.ports?.[0]) {
-        event.ports[0].postMessage({
-          success: false,
-          error: `Action not supported: ${action}`,
-          timestamp: new Date().toISOString()
-        });
+        try {
+          event.ports[0].postMessage({
+            success: false,
+            error: `Action not supported: ${action}`,
+            timestamp: new Date().toISOString()
+          });
+        } catch (postError) {
+          swLogger.debug('Failed to send error response:', { error: postError.toString() });
+        }
       }
     }
   } catch (error) {
@@ -381,7 +444,7 @@ self.addEventListener('message', function(event) {
       data: event.data 
     });
     
-    // Try to send error response
+    // Try to send error response with safety
     if (event.ports?.[0]) {
       try {
         event.ports[0].postMessage({
@@ -390,22 +453,24 @@ self.addEventListener('message', function(event) {
           timestamp: new Date().toISOString()
         });
       } catch (responseError) {
-        swLogger.error('Failed to send error response', { error: responseError.toString() });
+        swLogger.debug('Failed to send error response:', { error: responseError.toString() });
       }
     }
   }
 });
 
-// Periodic ping to keep service worker alive (every 25 minutes)
+// Periodic ping to keep service worker alive (every 25 minutes) with safe messaging
 setInterval(() => {
   swLogger.debug('Sending periodic keep-alive ping');
   self.clients.matchAll().then(clients => {
-    clientCommunication.notifyAll(clients, {
-      type: 'SW_PING',
-      timestamp: new Date().toISOString()
-    });
+    if (clients.length > 0) {
+      clientCommunication.notifyAll(clients, {
+        type: 'SW_PING',
+        timestamp: new Date().toISOString()
+      });
+    }
   }).catch(error => {
-    swLogger.error('Error sending keep-alive ping', { error: error.toString() });
+    swLogger.debug('Error sending keep-alive ping', { error: error.toString() });
   });
 }, 25 * 60 * 1000);
 
