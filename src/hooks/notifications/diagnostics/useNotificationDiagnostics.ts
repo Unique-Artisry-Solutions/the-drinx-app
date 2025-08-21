@@ -38,13 +38,11 @@ export function useNotificationDiagnostics() {
     try {
       await checkServiceWorker();
       
-      if (navigator.serviceWorker.controller) {
-        // Send diagnostic command to service worker
-        navigator.serviceWorker.controller.postMessage({
-          action: 'diagnostics',
-          timestamp: new Date().toISOString()
-        });
-      }
+      const { safePostMessage } = await import('@/utils/serviceWorkerErrorHandler');
+      safePostMessage({
+        action: 'diagnostics',
+        timestamp: new Date().toISOString()
+      });
     } catch (err) {
       console.error('Diagnostics error:', err);
       setError(err instanceof Error ? err.message : 'Failed to run diagnostics');

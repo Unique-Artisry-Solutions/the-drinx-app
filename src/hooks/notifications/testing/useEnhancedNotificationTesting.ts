@@ -76,7 +76,8 @@ export function useEnhancedNotificationTesting() {
         }
       };
 
-      navigator.serviceWorker.controller.postMessage({
+      const { safePostMessage } = await import('@/utils/serviceWorkerErrorHandler');
+      safePostMessage({
         action: 'showTestNotification',
         title: config.category,
         options: notificationOptions

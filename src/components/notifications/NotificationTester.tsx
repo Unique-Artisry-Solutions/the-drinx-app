@@ -111,14 +111,15 @@ const NotificationTester = () => {
                 size="sm"
                 variant="outline"
                 onClick={() => {
-                  if (navigator.serviceWorker.controller) {
-                    navigator.serviceWorker.controller.postMessage({
+                  import('@/utils/serviceWorkerErrorHandler').then(({ safePostMessage }) => {
+                    const success = safePostMessage({
                       action: 'setDebugLevel',
                       level: 'DEBUG'
                     });
-                  } else {
-                    console.error('No service worker controller');
-                  }
+                    if (!success) {
+                      console.error('Failed to send debug level message to service worker');
+                    }
+                  });
                 }}
               >
                 <Settings className="h-3 w-3 mr-1" />
@@ -129,13 +130,14 @@ const NotificationTester = () => {
                 size="sm"
                 variant="outline"
                 onClick={() => {
-                  if (navigator.serviceWorker.controller) {
-                    navigator.serviceWorker.controller.postMessage({
+                  import('@/utils/serviceWorkerErrorHandler').then(({ safePostMessage }) => {
+                    const success = safePostMessage({
                       action: 'healthCheck'
                     });
-                  } else {
-                    console.error('No service worker controller');
-                  }
+                    if (!success) {
+                      console.error('Failed to send health check message to service worker');
+                    }
+                  });
                 }}
               >
                 <Settings className="h-3 w-3 mr-1" />

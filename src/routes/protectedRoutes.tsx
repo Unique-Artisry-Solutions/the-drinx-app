@@ -2,6 +2,8 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuthenticatedUser } from '@/hooks/useAuthenticatedUser';
+import { useImpersonationState } from '@/hooks/useImpersonationState';
+import { clearImpersonationFlags } from '@/utils/impersonationValidator';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -19,15 +21,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   fallbackComponent = null
 }) => {
   const { user, session, userType, isLoading, authStable, isAuthenticated } = useAuthenticatedUser();
+  const { isImpersonating, isStable: impersonationStable } = useImpersonationState();
   const location = useLocation();
-
-  // Check impersonation state for route access
-  const isImpersonating = !!(
-    localStorage.getItem('impersonation_backup') &&
-    (sessionStorage.getItem('impersonation_active') || 
-     sessionStorage.getItem('impersonation_magic_link') ||
-     window.location.hash.includes('access_token='))
-  );
 
   console.log('RouteProtectionWrapper:', {
     pathname: location.pathname,
@@ -36,7 +31,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     isAuthenticated,
     userType,
     isImpersonating,
-    hasBackup: !!localStorage.getItem('impersonation_backup'),
+    impersonationStable,
     authStable
   });
 
@@ -52,8 +47,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     );
   }
 
-  // Wait for auth to stabilize
-  if (!authStable) {
+  // Wait for auth and impersonation to stabilize
+  if (!authStable || !impersonationStable) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -75,22 +70,36 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <Navigate to={fallbackPath} replace />;
   }
 
-  // Check user type restrictions - handle impersonation
+  // Check user type restrictions - handle impersonation with strict validation
   if (allowedUserTypes.length > 0 && isAuthenticated) {
     let currentUserType = userType || 'individual';
+    let hasValidAccess = false;
     
-    // If impersonating and accessing establishment routes, allow access
-    if (isImpersonating && location.pathname.startsWith('/establishment/')) {
-      currentUserType = 'establishment';
-      console.log('🎭 Allowing establishment access during impersonation');
+    // Validate impersonation for establishment access
+    if (location.pathname.startsWith('/establishment/')) {
+      if (isImpersonating) {
+        // Valid impersonation allows establishment access
+        currentUserType = 'establishment';
+        hasValidAccess = allowedUserTypes.includes('establishment');
+        console.log('🎭 Allowing establishment access during valid impersonation');
+      } else if (userType === 'admin') {
+        // Admin without impersonation should not access establishment routes
+        console.log('🚫 Admin user attempting establishment access without impersonation');
+        clearImpersonationFlags(); // Clean up any orphaned state
+        return <Navigate to="/admin/system-breakdown" replace />;
+      }
+    } else {
+      // For non-establishment routes, use the actual user type
+      hasValidAccess = allowedUserTypes.includes(currentUserType);
     }
     
-    if (!allowedUserTypes.includes(currentUserType)) {
+    // Check if user has valid access
+    if (!hasValidAccess) {
       if (fallbackComponent) {
         return <>{fallbackComponent}</>;
       }
       
-      // Redirect to appropriate dashboard based on user type
+      // Redirect to appropriate dashboard based on actual user type (not impersonated)
       const userTypeDashboards: Record<string, string> = {
         admin: '/admin/system-breakdown',
         establishment: '/establishment/dashboard',
@@ -98,7 +107,9 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
         individual: '/explore'
       };
       
-      return <Navigate to={userTypeDashboards[currentUserType] || fallbackPath} replace />;
+      const actualUserType = userType || 'individual';
+      console.log(`🔄 Redirecting ${actualUserType} user to appropriate dashboard`);
+      return <Navigate to={userTypeDashboards[actualUserType] || fallbackPath} replace />;
     }
   }
 

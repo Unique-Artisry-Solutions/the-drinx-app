@@ -64,7 +64,8 @@ export function useNotificationDiagnostics({ resetSubscriptionState }: { resetSu
             }, 1000);
           });
           
-          navigator.serviceWorker.controller.postMessage({
+          const { safePostMessage } = await import('@/utils/serviceWorkerErrorHandler');
+          safePostMessage({
             action: 'ping',
             timestamp: new Date().toISOString()
           }, [messageChannel.port2]);

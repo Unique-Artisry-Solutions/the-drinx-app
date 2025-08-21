@@ -116,16 +116,13 @@ export const RealTimeNotificationProvider: React.FC<RealTimeNotificationProvider
     if (!enableTabSync) return;
 
     try {
-      const broadcastChannel = new BroadcastChannel('notifications');
-      const message = {
-        type: 'new_notification',
-        notification,
-        tabId,
-        origin: window.location.origin // Include origin for validation
-      };
-      
-      broadcastChannel.postMessage(message);
-      broadcastChannel.close(); // Clean up immediately
+      import('@/utils/serviceWorkerErrorHandler').then(({ safeBroadcastMessage }) => {
+        safeBroadcastMessage('notifications', {
+          type: 'new_notification',
+          notification,
+          tabId
+        });
+      });
     } catch (error) {
       console.warn('Failed to broadcast notification:', error);
     }
@@ -194,18 +191,13 @@ export const RealTimeNotificationProvider: React.FC<RealTimeNotificationProvider
 
     // Broadcast read status to other tabs with origin safety
     if (enableTabSync) {
-      try {
-        const broadcastChannel = new BroadcastChannel('notifications');
-        broadcastChannel.postMessage({
+      import('@/utils/serviceWorkerErrorHandler').then(({ safeBroadcastMessage }) => {
+        safeBroadcastMessage('notifications', {
           type: 'notification_read',
           notification: { id },
-          tabId,
-          origin: window.location.origin
+          tabId
         });
-        broadcastChannel.close();
-      } catch (error) {
-        console.warn('Failed to broadcast read status:', error);
-      }
+      });
     }
   };
 

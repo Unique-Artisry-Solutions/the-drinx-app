@@ -200,6 +200,8 @@ export const clearImpersonationFlags = (): void => {
   sessionStorage.removeItem('impersonation_active');
   sessionStorage.removeItem('impersonation_magic_link');
   sessionStorage.removeItem('impersonation_target_email');
+  sessionStorage.removeItem('impersonation_start_time');
+  sessionStorage.removeItem('impersonation_expecting_magic_link');
   localStorage.removeItem('impersonation_active_backup');
   
   // Also clear backup if restoration is complete
@@ -208,4 +210,25 @@ export const clearImpersonationFlags = (): void => {
     localStorage.removeItem('impersonation_backup');
     sessionStorage.removeItem('impersonation_restore_requested');
   }
+};
+
+/**
+ * Clear all impersonation state completely (for cleanup purposes)
+ */
+export const clearAllImpersonationState = (): void => {
+  console.log('🧹 Clearing ALL impersonation state');
+  
+  // Clear all sessionStorage items
+  sessionStorage.removeItem('impersonation_active');
+  sessionStorage.removeItem('impersonation_magic_link');
+  sessionStorage.removeItem('impersonation_target_email');
+  sessionStorage.removeItem('impersonation_start_time');
+  sessionStorage.removeItem('impersonation_expecting_magic_link');
+  sessionStorage.removeItem('impersonation_restore_requested');
+  
+  // Clear all localStorage items
+  localStorage.removeItem('impersonation_backup');
+  localStorage.removeItem('impersonation_active_backup');
+  localStorage.removeItem('impersonation_magic_link_backup');
+  localStorage.removeItem('impersonation_magic_link_tokens_backup');
 };
