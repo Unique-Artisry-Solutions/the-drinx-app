@@ -5305,6 +5305,48 @@ export type Database = {
         }
         Relationships: []
       }
+      promoter_subscriptions: {
+        Row: {
+          billing_cycle_days: number | null
+          created_at: string | null
+          expires_at: string | null
+          features: Json | null
+          id: string
+          is_active: boolean
+          metadata: Json | null
+          promoter_id: string
+          started_at: string | null
+          subscription_tier: string
+          updated_at: string | null
+        }
+        Insert: {
+          billing_cycle_days?: number | null
+          created_at?: string | null
+          expires_at?: string | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean
+          metadata?: Json | null
+          promoter_id: string
+          started_at?: string | null
+          subscription_tier?: string
+          updated_at?: string | null
+        }
+        Update: {
+          billing_cycle_days?: number | null
+          created_at?: string | null
+          expires_at?: string | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean
+          metadata?: Json | null
+          promoter_id?: string
+          started_at?: string | null
+          subscription_tier?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       promoter_venue_messages: {
         Row: {
           content: string

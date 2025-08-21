@@ -91,6 +91,24 @@ const DevBypass: React.FC<DevBypassProps> = ({
   const handleSwitchUser = async (userType: TestUserType) => {
     console.log(`🔧 DevBypass Component - Button clicked for ${userType}`);
     
+    // Session stability check before switching
+    try {
+      const { validateSessionState } = await import('@/utils/session/validation');
+      const sessionCheck = await validateSessionState();
+      
+      if (!sessionCheck.isValid && sessionCheck.errorDetails) {
+        console.warn('🔧 DevBypass - Session instability detected before user switch:', sessionCheck);
+        
+        // Attempt session recovery
+        const { recoverFromStuckState } = await import('@/utils/session/recovery');
+        await recoverFromStuckState();
+        return;
+      }
+    } catch (sessionError) {
+      console.warn('🔧 DevBypass - Session check failed:', sessionError);
+      // Continue with user switch despite session check failure
+    }
+    
     // Add visual feedback for navigation in progress
     if (userType === 'admin') {
       console.log('🔧 DevBypass Component - Admin login starting, expect navigation delay...');
@@ -99,22 +117,45 @@ const DevBypass: React.FC<DevBypassProps> = ({
     try {
       await switchToUserType(userType);
       
-      // For admin, add additional navigation status logging
-      if (userType === 'admin') {
-        setTimeout(() => {
-          const currentPath = window.location.pathname;
-          console.log(`🔧 DevBypass Component - Post-admin-login navigation check: ${currentPath}`);
+      // Enhanced post-switch validation
+      setTimeout(async () => {
+        const currentPath = window.location.pathname;
+        console.log(`🔧 DevBypass Component - Post-switch navigation check: ${currentPath}`);
+        
+        // Check if we're still on the login page or in an unexpected state
+        if (currentPath === '/login' || currentPath === '/admin/login') {
+          console.warn('🔧 DevBypass Component - Navigation may have failed, attempting recovery');
           
-          if (currentPath === '/admin/login') {
-            console.warn('🔧 DevBypass Component - Still on admin login page, navigation may have failed');
-            // Try one more navigation attempt
-            window.location.href = '/admin/system-breakdown';
+          // Import session recovery
+          try {
+            const { handlePotentialStuckState } = await import('@/utils/session/recovery');
+            handlePotentialStuckState(3000, true); // Auto-recovery enabled
+          } catch (recoveryError) {
+            console.error('🔧 DevBypass - Recovery import failed:', recoveryError);
+            window.location.reload(); // Fallback refresh
           }
-        }, 1000);
-      }
+        }
+      }, 1500);
     } catch (error) {
       console.error(`🔧 DevBypass Component - Error switching to ${userType}:`, error);
-      alert(`❌ Failed to switch to ${userType}: ${error}`);
+      
+      // Enhanced error handling with session recovery
+      const errorMessage = `❌ Failed to switch to ${userType}: ${error}`;
+      console.error(errorMessage);
+      
+      // Attempt automatic recovery for session-related errors
+      const errorString = String(error).toLowerCase();
+      if (errorString.includes('session') || errorString.includes('auth') || errorString.includes('token')) {
+        try {
+          const { recoverFromStuckState } = await import('@/utils/session/recovery');
+          await recoverFromStuckState();
+        } catch (recoveryError) {
+          console.error('🔧 DevBypass - Recovery failed:', recoveryError);
+          alert(errorMessage + '\n\nPlease refresh the page and try again.');
+        }
+      } else {
+        alert(errorMessage);
+      }
     }
   };
 

@@ -10,6 +10,7 @@ import { promoterRoutes } from '@/routes/config/promoterRoutes';
 import { establishmentRoutes } from '@/routes/config/establishmentRoutes';
 import { testingRoutes } from '@/routes/testingRoutes';
 import MagicLinkHandler from '@/components/auth/MagicLinkHandler';
+import AppProviders from '@/components/providers/AppProviders';
 import { initDebug } from '@/utils/initDebug';
 
 const App: React.FC = () => {

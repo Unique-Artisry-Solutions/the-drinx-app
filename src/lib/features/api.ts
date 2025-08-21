@@ -2,9 +2,12 @@ import { supabase } from '@/lib/supabase';
 import { FEATURES, FeatureId } from './registry';
 import { getCachedFeatureAccess, cacheFeatureAccess } from './cache';
 
+// Debouncing map to prevent excessive calls
+const featureAccessDebounceMap = new Map<string, Promise<boolean>>();
+
 /**
  * Check if a feature flag is enabled for the current user
- * (Optimized version with caching)
+ * (Optimized version with caching and debouncing)
  */
 export async function checkFeatureAccess(featureId: FeatureId): Promise<boolean> {
   try {
@@ -15,31 +18,60 @@ export async function checkFeatureAccess(featureId: FeatureId): Promise<boolean>
     }
 
     const userId = session.user.id;
+    const debounceKey = `${userId}:${featureId}`;
+    
+    // Check if there's already a pending request for this feature
+    if (featureAccessDebounceMap.has(debounceKey)) {
+      console.log(`🚀 Feature access debounced for ${featureId}`);
+      return await featureAccessDebounceMap.get(debounceKey)!;
+    }
     
     // Check cache first
     const cachedAccess = getCachedFeatureAccess(userId, featureId);
     if (cachedAccess !== null) {
+      console.log(`🚀 Feature access cache hit for ${featureId}: ${cachedAccess}`);
       return cachedAccess;
     }
 
-    // Call the database function to check feature access
-    const { data, error } = await supabase.rpc(
-      'check_feature_access',
-      { p_feature_name: featureId }
-    );
+    // Create the promise for this request
+    const requestPromise = (async () => {
+      try {
+        console.log(`🚀 Feature access API call for ${featureId}`);
+        
+        // Call the database function to check feature access
+        const { data, error } = await supabase.rpc(
+          'check_feature_access',
+          { p_feature_name: featureId }
+        );
 
-    if (error) {
-      console.error('Error checking feature access:', error);
-      return false;
-    }
+        if (error) {
+          console.error('Error checking feature access:', error);
+          return false;
+        }
 
-    // Cache the result
-    const hasAccess = !!data;
-    cacheFeatureAccess(userId, featureId, hasAccess);
+        // Cache the result
+        const hasAccess = !!data;
+        cacheFeatureAccess(userId, featureId, hasAccess);
+        
+        console.log(`🚀 Feature access result for ${featureId}: ${hasAccess}`);
+        return hasAccess;
+      } finally {
+        // Clean up the debounce map after the request completes
+        featureAccessDebounceMap.delete(debounceKey);
+      }
+    })();
+
+    // Store the promise in the debounce map
+    featureAccessDebounceMap.set(debounceKey, requestPromise);
     
-    return hasAccess;
+    return await requestPromise;
   } catch (error) {
     console.error('Error in checkFeatureAccess:', error);
+    // Clean up debounce map on error
+    const userId = (await supabase.auth.getSession()).data.session?.user?.id;
+    if (userId) {
+      featureAccessDebounceMap.delete(`${userId}:${featureId}`);
+    }
     return false;
   }
 }

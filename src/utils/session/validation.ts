@@ -7,15 +7,34 @@ export const SESSION_VALIDATION_KEY = 'last_session_validation';
 export const MAX_SESSION_AGE_MS = 1000 * 60 * 30; // 30 minutes
 
 /**
- * Simplified session validation - always validate, less complex
+ * Enhanced session validation with frequency control to prevent excessive API calls
  */
 export function isSessionValidationDue(): boolean {
-  // Simplified - just return true to always validate when needed
-  return true;
+  try {
+    const lastValidation = localStorage.getItem(SESSION_VALIDATION_KEY);
+    if (!lastValidation) return true;
+    
+    const lastValidationTime = parseInt(lastValidation, 10);
+    if (isNaN(lastValidationTime)) return true;
+    
+    const timeSinceLastValidation = Date.now() - lastValidationTime;
+    const shouldValidate = timeSinceLastValidation > (5 * 60 * 1000); // 5 minutes minimum between validations
+    
+    console.log('🔍 Session validation frequency check:', {
+      lastValidation: new Date(lastValidationTime).toISOString(),
+      timeSinceLastValidation: Math.round(timeSinceLastValidation / 1000) + 's',
+      shouldValidate
+    });
+    
+    return shouldValidate;
+  } catch (error) {
+    console.warn('🔍 Session validation frequency check failed:', error);
+    return true; // Default to validating if there's an error
+  }
 }
 
 /**
- * Validates the current session state using only Supabase - simplified and timeout protected
+ * Validates the current session state using only Supabase - optimized with frequency control
  */
 export async function validateSessionState(): Promise<SessionValidationResult> {
   const result: SessionValidationResult = {
@@ -53,6 +72,13 @@ export async function validateSessionState(): Promise<SessionValidationResult> {
     // Session is valid if Supabase has a session
     result.isValid = hasSupabaseSession;
     result.hasMismatch = false; // No localStorage to mismatch with
+    
+    // Update last validation timestamp on successful validation
+    try {
+      localStorage.setItem(SESSION_VALIDATION_KEY, Date.now().toString());
+    } catch (error) {
+      console.warn('🔍 Failed to update validation timestamp:', error);
+    }
     
     console.log('🔍 Session validation result:', result);
     return result;
