@@ -58,7 +58,6 @@ export const useMessageSystem = (userType: UserType) => {
   useEffect(() => {
     if (!effectiveUserId) return;
 
-    const filterColumn = userType === 'promoter' ? 'promoter_id' : 'venue_id';
     const channel = supabase
       .channel(`messages-${userType}-${effectiveUserId}`)
       .on(
@@ -72,12 +71,32 @@ export const useMessageSystem = (userType: UserType) => {
           console.log('New message received:', payload);
           
           // Check if this message belongs to one of our threads
-          const { data: threadData } = await supabase
-            .from('promoter_venue_threads')
-            .select('id, venue_id, promoter_id')
-            .eq('id', payload.new.thread_id)
-            .eq(filterColumn, effectiveUserId)
-            .single();
+          let threadData = null;
+          
+          if (userType === 'promoter') {
+            // For promoters, check if thread's promoter_id matches user
+            const { data } = await supabase
+              .from('promoter_venue_threads')
+              .select('id, venue_id, promoter_id')
+              .eq('id', payload.new.thread_id)
+              .eq('promoter_id', effectiveUserId)
+              .single();
+            threadData = data;
+          } else {
+            // For establishments, check if thread's venue is owned by user
+            const { data } = await supabase
+              .from('promoter_venue_threads')
+              .select(`
+                id, 
+                venue_id, 
+                promoter_id,
+                establishments!venue_id(owner_id)
+              `)
+              .eq('id', payload.new.thread_id)
+              .eq('establishments.owner_id', effectiveUserId)
+              .single();
+            threadData = data;
+          }
 
           if (threadData) {
             // Refresh threads to get updated last message and timestamp

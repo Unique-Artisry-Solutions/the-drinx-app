@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Notification } from '@/types/notification';
 import { 
   Bell, AlertCircle, MessageCircle, 
@@ -8,9 +9,34 @@ import {
 
 interface NotificationContentProps {
   notification: Notification;
+  onClick?: () => void;
 }
 
-const NotificationContent: React.FC<NotificationContentProps> = ({ notification }) => {
+const NotificationContent: React.FC<NotificationContentProps> = ({ notification, onClick }) => {
+  const navigate = useNavigate();
+  
+  const handleClick = () => {
+    // Handle navigation for message-related notifications
+    const isMessageNotification = 
+      notification.metadata?.type === 'promoter_message' || 
+      notification.metadata?.type === 'venue_message' ||
+      notification.metadata?.thread_id ||
+      notification.title?.includes('Message from');
+      
+    if (isMessageNotification) {
+      navigate('/establishment/all-actions');
+    }
+    
+    // Call the optional onClick prop
+    if (onClick) {
+      onClick();
+    }
+  };
+  
+  const isClickable = notification.metadata?.type === 'promoter_message' || 
+                     notification.metadata?.type === 'venue_message' ||
+                     notification.metadata?.thread_id ||
+                     notification.title?.includes('Message from');
   const getNotificationIcon = () => {
     const type = notification.metadata?.type;
     
@@ -58,7 +84,10 @@ const NotificationContent: React.FC<NotificationContentProps> = ({ notification 
   };
 
   return (
-    <div className="flex items-start gap-3">
+    <div 
+      className={`flex items-start gap-3 ${isClickable ? 'cursor-pointer hover:bg-gray-50 p-2 rounded -m-2' : ''}`}
+      onClick={isClickable ? handleClick : undefined}
+    >
       <div className="mt-0.5" aria-hidden="true">
         {getNotificationIcon()}
       </div>
@@ -76,6 +105,9 @@ const NotificationContent: React.FC<NotificationContentProps> = ({ notification 
           <span className="sr-only">{getTypeDescription()}:</span>
           {notification.content}
         </p>
+        {isClickable && (
+          <p className="text-xs text-blue-600 mt-1">Click to view message</p>
+        )}
       </div>
     </div>
   );

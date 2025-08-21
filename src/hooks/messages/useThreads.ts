@@ -19,27 +19,53 @@ export const useThreads = (userType: UserType, userId: string | undefined) => {
     setError(null);
 
     try {
-      // Determine the column to filter by based on user type
-      const filterColumn = userType === 'promoter' ? 'promoter_id' : 'venue_id';
+      let threadsData, threadsError;
       
-      const { data: threadsData, error: threadsError } = await executeWithRetry(async () =>
-        supabase
-          .from('promoter_venue_threads')
-          .select(`
-            id,
-            promoter_id,
-            venue_id,
-            subject,
-            is_archived,
-            last_message_at,
-            created_at,
-            updated_at,
-            establishments!venue_id(id, name),
-            profiles!promoter_id(id, display_name, username)
-          `)
-          .eq(filterColumn, userId)
-          .order('last_message_at', { ascending: false })
-      );
+      if (userType === 'promoter') {
+        // For promoters, filter by promoter_id directly
+        const result = await executeWithRetry(async () =>
+          supabase
+            .from('promoter_venue_threads')
+            .select(`
+              id,
+              promoter_id,
+              venue_id,
+              subject,
+              is_archived,
+              last_message_at,
+              created_at,
+              updated_at,
+              establishments!venue_id(id, name),
+              profiles!promoter_id(id, display_name, username)
+            `)
+            .eq('promoter_id', userId)
+            .order('last_message_at', { ascending: false })
+        );
+        threadsData = result.data;
+        threadsError = result.error;
+      } else {
+        // For establishments, join with establishments table and filter by owner_id
+        const result = await executeWithRetry(async () =>
+          supabase
+            .from('promoter_venue_threads')
+            .select(`
+              id,
+              promoter_id,
+              venue_id,
+              subject,
+              is_archived,
+              last_message_at,
+              created_at,
+              updated_at,
+              establishments!venue_id(id, name),
+              profiles!promoter_id(id, display_name, username)
+            `)
+            .eq('establishments.owner_id', userId)
+            .order('last_message_at', { ascending: false })
+        );
+        threadsData = result.data;
+        threadsError = result.error;
+      }
 
       if (threadsError) throw threadsError;
 

@@ -11,12 +11,14 @@ interface NotificationItemProps {
   notification: Notification;
   onMarkAsRead: (id: string) => void;
   tabIndex?: number;
+  onNotificationClick?: () => void;
 }
 
 const NotificationItem: React.FC<NotificationItemProps> = ({ 
   notification, 
   onMarkAsRead,
-  tabIndex = 0
+  tabIndex = 0,
+  onNotificationClick
 }) => {
   const isUnread = !notification.is_read;
   const formattedTime = formatDistanceToNow(new Date(notification.created_at), { addSuffix: true });
@@ -62,7 +64,10 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
       aria-label={`${priorityLabel} notification - ${isUnread ? 'Unread' : 'Read'}`}
     >
       <div className="flex justify-between items-start">
-        <NotificationContent notification={notification} />
+        <NotificationContent 
+          notification={notification} 
+          onClick={onNotificationClick}
+        />
         <div className="flex flex-col items-end gap-2">
           <time 
             className="text-xs text-gray-400"
