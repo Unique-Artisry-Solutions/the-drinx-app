@@ -21,6 +21,25 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const { user, session, userType, isLoading, authStable, isAuthenticated } = useAuthenticatedUser();
   const location = useLocation();
 
+  // Check impersonation state for route access
+  const isImpersonating = !!(
+    localStorage.getItem('impersonation_backup') &&
+    (sessionStorage.getItem('impersonation_active') || 
+     sessionStorage.getItem('impersonation_magic_link') ||
+     window.location.hash.includes('access_token='))
+  );
+
+  console.log('RouteProtectionWrapper:', {
+    pathname: location.pathname,
+    requireAuth,
+    allowedUserTypes,
+    isAuthenticated,
+    userType,
+    isImpersonating,
+    hasBackup: !!localStorage.getItem('impersonation_backup'),
+    authStable
+  });
+
 // Wait for loading to finish
   if (isLoading) {
     return (
@@ -56,9 +75,16 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <Navigate to={fallbackPath} replace />;
   }
 
-  // Check user type restrictions
+  // Check user type restrictions - handle impersonation
   if (allowedUserTypes.length > 0 && isAuthenticated) {
-    const currentUserType = userType || 'individual';
+    let currentUserType = userType || 'individual';
+    
+    // If impersonating and accessing establishment routes, allow access
+    if (isImpersonating && location.pathname.startsWith('/establishment/')) {
+      currentUserType = 'establishment';
+      console.log('🎭 Allowing establishment access during impersonation');
+    }
+    
     if (!allowedUserTypes.includes(currentUserType)) {
       if (fallbackComponent) {
         return <>{fallbackComponent}</>;

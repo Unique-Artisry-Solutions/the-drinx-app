@@ -97,12 +97,19 @@ class SimplifiedImpersonationManager {
         };
       }
 
-      // Store target email if provided
+      // Store target email and user ID if provided
       if (data.target_email) {
         sessionStorage.setItem('impersonation_target_email', data.target_email);
       }
+      if (data.target_user_id) {
+        sessionStorage.setItem('impersonation_target_user_id', data.target_user_id);
+      }
 
-      debugLogger.info('impersonation', 'Impersonation setup complete, redirecting...');
+      debugLogger.info('impersonation', 'Impersonation setup complete, redirecting...', {
+        targetEmail: data.target_email,
+        targetUserId: data.target_user_id,
+        actionLink: data.action_link.substring(0, 100) + '...'
+      });
       
       // Update internal state
       this.currentState = {

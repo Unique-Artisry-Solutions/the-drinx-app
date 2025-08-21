@@ -14,6 +14,7 @@ import ImpersonationBanner from '@/components/auth/ImpersonationBanner';
 import ImpersonationErrorBoundary from '@/components/auth/ImpersonationErrorBoundary';
 import MagicLinkHandler from '@/components/auth/MagicLinkHandler';
 import { initDebug } from '@/utils/initDebug';
+import { debugImpersonationState } from '@/utils/impersonationDebugger';
 
 const App: React.FC = () => {
   const { 
@@ -27,6 +28,13 @@ const App: React.FC = () => {
   } = useAuthenticatedUser();
   
   const [timeoutExceeded, setTimeoutExceeded] = useState(false);
+
+  // Debug impersonation state in development
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      setTimeout(debugImpersonationState, 3000);
+    }
+  }, []);
 
   initDebug.log('App render', { 
     isReady, 

@@ -38,7 +38,7 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   
   // Use impersonated user's type and authentication if impersonating
   const effectiveUserType = isImpersonating && currentUser ? 
-    (currentUser.user_metadata?.user_type as UserType) || userType : 
+    (currentUser.user_metadata?.user_type as UserType) || 'establishment' : 
     userType;
   const effectiveIsAuthenticated = isImpersonating ? !!currentUser : isAuthenticated;
   

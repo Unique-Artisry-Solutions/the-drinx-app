@@ -316,42 +316,50 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                   
                   // **CRITICAL FIX**: Enhanced impersonation validation after manual auth
                   if (parsedBackup) {
-                    console.log('🎭 AuthProvider - Validating impersonation state after manual auth');
-                    
-                    const currentFlags = {
-                      active: sessionStorage.getItem('impersonation_active'),
-                      magicLink: sessionStorage.getItem('impersonation_magic_link'),
-                      backup: localStorage.getItem('impersonation_active_backup'),
-                      targetEmail: sessionStorage.getItem('impersonation_target_email')
-                    };
-                    
-                    console.log('🔍 AuthProvider - Current impersonation flags:', currentFlags);
-                    
-                    // **SESSION VALIDATION**: Check if authenticated user matches expected target
-                    const expectedTargetFromBackup = currentFlags.targetEmail || parsedBackup.email;
-                    const actualUserEmail = sessionData.session.user.email;
-                    const actualUserId = sessionData.session.user.id;
-                    
-                    console.log('🎯 AuthProvider - Session validation:', {
-                      expectedEmail: expectedTargetFromBackup,
-                      actualEmail: actualUserEmail,
-                      actualUserId,
-                      backupUserId: parsedBackup.user_id,
-                      isValidImpersonation: actualUserId !== parsedBackup.user_id
-                    });
-                    
-                    // Validate impersonation using enhanced validation with processing context
-                    const validation = validateImpersonationState(actualUserId, actualUserEmail || '', true);
-                    
-                    console.log('🔍 AuthProvider - Manual auth validation result:', validation);
-                    
-                    if (validation.shouldClear) {
-                      console.log('🧹 AuthProvider - Clearing impersonation state after manual auth:', validation.reason);
-                      clearImpersonationFlags();
-                    } else if (validation.shouldPersist && validation.isValid) {
-                      console.log('✅ AuthProvider - Maintaining impersonation state after manual auth:', validation.reason);
-                      ensureImpersonationFlags(actualUserEmail || expectedTargetFromBackup || '');
-                    }
+                   console.log('🎭 AuthProvider - Validating impersonation state after manual auth');
+                   
+                   const currentFlags = {
+                     active: sessionStorage.getItem('impersonation_active'),
+                     magicLink: sessionStorage.getItem('impersonation_magic_link'),
+                     backup: localStorage.getItem('impersonation_active_backup'),
+                     targetEmail: sessionStorage.getItem('impersonation_target_email')
+                   };
+                   
+                   console.log('🔍 AuthProvider - Current impersonation flags:', currentFlags);
+                   
+                   // **SESSION VALIDATION**: Check if authenticated user matches expected target
+                   const expectedTargetFromBackup = currentFlags.targetEmail || parsedBackup.email;
+                   const actualUserEmail = sessionData.session.user.email;
+                   const actualUserId = sessionData.session.user.id;
+                   
+                   console.log('🎯 AuthProvider - Session validation:', {
+                     expectedEmail: expectedTargetFromBackup,
+                     actualEmail: actualUserEmail,
+                     actualUserId,
+                     backupUserId: parsedBackup.user_id,
+                     isValidImpersonation: actualUserId !== parsedBackup.user_id
+                   });
+                   
+                   // Enhanced validation with longer grace period during magic link processing
+                   const validation = validateImpersonationState(actualUserId, actualUserEmail || '', true);
+                   
+                   console.log('🔍 AuthProvider - Manual auth validation result:', validation);
+                   
+                   // **CRITICAL FIX**: Be more lenient during magic link processing
+                   if (validation.shouldClear && actualUserId === parsedBackup.user_id) {
+                     console.log('🔄 AuthProvider - User IDs match during processing, delaying validation');
+                     // Don't clear immediately - allow time for proper session switch
+                     setTimeout(() => {
+                       const retryValidation = validateImpersonationState(actualUserId, actualUserEmail || '', false);
+                       if (retryValidation.shouldClear) {
+                         console.log('🧹 AuthProvider - Delayed clearing after failed impersonation');
+                         clearImpersonationFlags();
+                       }
+                     }, 3000); // 3 second delay
+                   } else if (validation.shouldPersist && validation.isValid) {
+                     console.log('✅ AuthProvider - Maintaining impersonation state after manual auth:', validation.reason);
+                     ensureImpersonationFlags(actualUserEmail || expectedTargetFromBackup || '');
+                   }
                   }
                   
                   // **CRITICAL FIX**: Clear processing flags after successful processing

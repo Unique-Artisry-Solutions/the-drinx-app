@@ -70,11 +70,13 @@ export const validateImpersonationState = (
         const isActuallyImpersonating = backup.user_id !== currentUserId;
         
         if (!isActuallyImpersonating) {
+          console.log('🔍 During processing: User IDs match, but allowing for transition period');
+          // During magic link processing, allow some time for user ID to change
           return {
-            isValid: false,
-            shouldPersist: false,
-            shouldClear: true,
-            reason: 'User IDs match - not actually impersonating (during processing)'
+            isValid: true,
+            shouldPersist: true,
+            shouldClear: false,
+            reason: 'User IDs match but allowing transition during magic link processing'
           };
         }
         

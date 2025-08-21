@@ -89,13 +89,14 @@ Deno.serve(async (req) => {
 
     console.log(`Target user found: ${targetUser.user.email}`)
 
-    // Generate magic link for the target user
-    console.log(`🔗 Generating magic link with redirect: ${redirectTo}`)
+    // Generate magic link for the target user with establishment dashboard redirect
+    const establishmentRedirectTo = `${redirectTo}/establishment/dashboard`
+    console.log(`🔗 Generating magic link with redirect: ${establishmentRedirectTo}`)
     const { data, error } = await supabaseClient.auth.admin.generateLink({
       type: 'magiclink',
       email: targetUser.user.email!,
       options: {
-        redirectTo: redirectTo
+        redirectTo: establishmentRedirectTo
       }
     })
 
@@ -148,9 +149,10 @@ Deno.serve(async (req) => {
       JSON.stringify({ 
         hasActionLink: true,
         action_link: actionLink,
-        redirect_to: redirectTo,
+        redirect_to: establishmentRedirectTo,
         target_email: targetUser.user.email,
-        linkDomain: linkDomain
+        linkDomain: linkDomain,
+        target_user_id: target_user_id
       }),
       { 
         status: 200,
