@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Search, MessageSquarePlus, RefreshCw, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/auth';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { useAuthenticatedMessageSystem } from '@/hooks/messages/useAuthenticatedMessageSystem';
+import { useEstablishmentMessageSystem } from '@/hooks/establishment/useMessageSystem';
 import MessageThreadList from '@/components/promoter/communication/MessageThreadList';
 
 interface EstablishmentInboxProps {
@@ -21,11 +21,9 @@ const EstablishmentInbox: React.FC<EstablishmentInboxProps> = ({ onSelectThread 
     threads,
     loading,
     error,
-    authError,
-    debugInfo,
     markThreadAsRead,
     refetchThreads
-  } = useAuthenticatedMessageSystem('establishment');
+  } = useEstablishmentMessageSystem('establishment');
 
   // **PHASE 4 FIX**: Enhanced authentication debugging
   useEffect(() => {
@@ -92,8 +90,6 @@ const EstablishmentInbox: React.FC<EstablishmentInboxProps> = ({ onSelectThread 
               {process.env.NODE_ENV === 'development' && (
                 <div className="mt-2 text-xs opacity-75 space-y-1">
                   <div>Debug: Auth stable but no user. Check DevBypass login.</div>
-                  {authError && <div className="text-red-600">Auth Error: {authError}</div>}
-                  <div>Debug Info: {JSON.stringify(debugInfo, null, 2)}</div>
                 </div>
               )}
             </AlertDescription>

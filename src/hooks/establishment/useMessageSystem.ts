@@ -54,41 +54,61 @@ export const useEstablishmentMessageSystem = (userType: UserType = 'establishmen
     };
   }, [threads.map(t => t.id).join(','), effectiveUserId]); // Depend on thread IDs string
 
-  // Subscribe to new messages for real-time thread updates
+  // Initial fetch when user is available
+  useEffect(() => {
+    if (effectiveUserId) {
+      console.log('🔧 useEstablishmentMessageSystem - Initial fetch for user:', effectiveUserId);
+      fetchThreads();
+    }
+  }, [effectiveUserId, fetchThreads]);
+
+  // Subscribe to new messages for real-time thread updates (optional)
   useEffect(() => {
     if (!effectiveUserId) return;
 
-    const filterColumn = userType === 'promoter' ? 'promoter_id' : 'venue_id';
-    const channel = supabase
-      .channel(`messages-${userType}-${effectiveUserId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'promoter_venue_messages'
-        },
-        async (payload) => {
-          console.log('New message received:', payload);
-          
-          // Check if this message belongs to one of our threads
-          const { data: threadData } = await supabase
-            .from('promoter_venue_threads')
-            .select('id, venue_id, promoter_id')
-            .eq('id', payload.new.thread_id)
-            .eq(filterColumn, effectiveUserId)
-            .single();
+    let channel: any;
+    
+    try {
+      const filterColumn = userType === 'promoter' ? 'promoter_id' : 'venue_id';
+      channel = supabase
+        .channel(`messages-${userType}-${effectiveUserId}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'promoter_venue_messages'
+          },
+          async (payload) => {
+            console.log('New message received:', payload);
+            
+            // Check if this message belongs to one of our threads
+            const { data: threadData } = await supabase
+              .from('promoter_venue_threads')
+              .select('id, venue_id, promoter_id')
+              .eq('id', payload.new.thread_id)
+              .eq(filterColumn, effectiveUserId)
+              .single();
 
-          if (threadData) {
-            // Refresh threads to get updated last message and timestamp
-            fetchThreads();
+            if (threadData) {
+              // Refresh threads to get updated last message and timestamp
+              fetchThreads();
+            }
           }
-        }
-      )
-      .subscribe();
+        )
+        .subscribe();
+    } catch (error) {
+      console.warn('🚨 Real-time subscription failed, messages will still load on refresh:', error);
+    }
 
     return () => {
-      supabase.removeChannel(channel);
+      if (channel) {
+        try {
+          supabase.removeChannel(channel);
+        } catch (error) {
+          console.warn('Error cleaning up channel:', error);
+        }
+      }
     };
   }, [effectiveUserId, userType, fetchThreads]);
 

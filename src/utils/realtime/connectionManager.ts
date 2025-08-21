@@ -21,8 +21,9 @@ class RealtimeConnectionManager {
    */
   getChannel(channelName: string, config?: any): RealtimeChannel {
     if (this.channels.has(channelName)) {
+      const existingChannel = this.channels.get(channelName)!;
       console.log(`🔄 Reusing existing channel: ${channelName}`);
-      return this.channels.get(channelName)!;
+      return existingChannel;
     }
 
     if (this.channels.size >= this.maxConnections) {
@@ -42,13 +43,21 @@ class RealtimeConnectionManager {
    */
   async subscribeToChannel(config: ChannelConfig): Promise<RealtimeChannel> {
     const { name, handler, options } = config;
-    const channel = this.getChannel(name, options);
+    
+    // Check if channel already exists and is subscribed
+    if (this.channels.has(name)) {
+      const existingChannel = this.channels.get(name)!;
+      console.log(`🔄 Channel ${name} already exists and subscribed`);
+      return existingChannel;
+    }
 
     const attempts = this.connectionAttempts.get(name) || 0;
     if (attempts >= this.maxRetries) {
       console.error(`🚨 Max retries reached for channel: ${name}`);
       throw new Error(`Max retries reached for channel: ${name}`);
     }
+
+    const channel = this.getChannel(name, options);
 
     try {
       await new Promise((resolve, reject) => {
