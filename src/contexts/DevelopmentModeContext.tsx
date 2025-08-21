@@ -102,7 +102,7 @@ export const DevelopmentModeProvider: React.FC<{ children: React.ReactNode }> = 
     console.log(`🔧 DevBypass - Using credentials for ${userType}:`, { email: credentials.email });
 
     try {
-      // **PHASE 3 FIX**: Set DevTools state persistence BEFORE authentication
+      // **PHASE 1 FIX**: Set DevTools state persistence BEFORE authentication
       setCurrentDevUserType(userType);
       localStorage.setItem('dev_auto_login_timestamp', Date.now().toString());
       console.log('🔧 DevBypass - DevTools state set, timestamp:', Date.now());
@@ -112,8 +112,8 @@ export const DevelopmentModeProvider: React.FC<{ children: React.ReactNode }> = 
       if (currentSession?.session?.user) {
         console.log('🔧 DevBypass - Current user detected, signing out first:', currentSession.session.user.email);
         await supabase.auth.signOut();
-        // Wait a bit for cleanup
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Wait for auth state to stabilize
+        await new Promise(resolve => setTimeout(resolve, 1000));
       }
 
       console.log('🔧 DevBypass - Attempting sign in...');
@@ -131,21 +131,40 @@ export const DevelopmentModeProvider: React.FC<{ children: React.ReactNode }> = 
         return { success: false, error: msg };
       }
 
-      if (data.user) {
+      if (data.user && data.session) {
         console.log(`🔧 DevBypass - Login successful for ${userType}:`, {
           email: credentials.email,
           userId: data.user.id,
           userType: data.user.user_metadata?.user_type,
+          sessionExists: !!data.session,
           timestamp: Date.now()
         });
         
-        // **PHASE 3 FIX**: Refresh timestamp after successful login
+        // **PHASE 1 FIX**: Wait for auth state to propagate and validate session
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Validate the session was actually established
+        const { data: sessionCheck } = await supabase.auth.getSession();
+        if (!sessionCheck?.session?.user) {
+          const msg = 'Session validation failed - authentication did not persist';
+          console.error('🔧 DevBypass - Session validation error:', msg);
+          localStorage.removeItem('dev_auto_login_user_type');
+          localStorage.removeItem('dev_auto_login_timestamp');
+          return { success: false, error: msg };
+        }
+        
+        console.log('🔧 DevBypass - Session validation successful:', {
+          sessionUserId: sessionCheck.session.user.id,
+          sessionUserEmail: sessionCheck.session.user.email
+        });
+        
+        // **PHASE 1 FIX**: Refresh timestamp after successful validation
         localStorage.setItem('dev_auto_login_timestamp', Date.now().toString());
         
         return { success: true };
       }
 
-      const msg = 'Login failed - no user returned from Supabase';
+      const msg = 'Login failed - no user or session returned from Supabase';
       console.error('🔧 DevBypass - Error:', msg);
       // Clear DevTools state on error
       localStorage.removeItem('dev_auto_login_user_type');
@@ -331,7 +350,7 @@ export const DevelopmentModeProvider: React.FC<{ children: React.ReactNode }> = 
     
     try {
       if (userType) {
-        // **PHASE 3 FIX**: Enhanced login tracking and debugging
+        // **PHASE 2 FIX**: Enhanced login tracking and auth state synchronization
         console.log(`🔧 DevBypass - Initiating login process for ${userType} with enhanced tracking`);
         const startTime = Date.now();
         
@@ -343,7 +362,27 @@ export const DevelopmentModeProvider: React.FC<{ children: React.ReactNode }> = 
           
           setDevMode(userType);
           
-          // **PHASE 3 FIX**: Add retry logic for navigation
+          // **PHASE 2 FIX**: Wait for auth system to fully synchronize
+          const syncStartTime = Date.now();
+          let authSynced = false;
+          const maxSyncWait = 3000; // 3 seconds max wait
+          
+          while (!authSynced && (Date.now() - syncStartTime) < maxSyncWait) {
+            const { data: sessionCheck } = await supabase.auth.getSession();
+            if (sessionCheck?.session?.user) {
+              authSynced = true;
+              console.log(`🔧 DevBypass - Auth sync completed in ${Date.now() - syncStartTime}ms`);
+            } else {
+              console.log('🔧 DevBypass - Waiting for auth sync...');
+              await new Promise(resolve => setTimeout(resolve, 200));
+            }
+          }
+          
+          if (!authSynced) {
+            console.warn('🔧 DevBypass - Auth sync timeout, proceeding anyway');
+          }
+          
+          // **PHASE 2 FIX**: Add retry logic for navigation
           console.log(`🔧 DevBypass - Beginning navigation process for ${userType}`);
           const navigationStartTime = Date.now();
           
@@ -365,7 +404,7 @@ export const DevelopmentModeProvider: React.FC<{ children: React.ReactNode }> = 
               );
             } catch (toastError) {
               console.warn('🔧 DevBypass - Toast failed, using fallback:', toastError);
-              alert(`✅ Development Login: Logged in as ${userType}`);
+              // Don't show alert on successful login
             }
           } catch (navigationError: any) {
             // **PHASE 4 FIX**: Navigation error recovery

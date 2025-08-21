@@ -34,6 +34,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setAuthError(null);
 
     try {
+      // **PHASE 1 FIX**: Check for DevBypass session recovery before normal initialization
+      const shouldRecover = await (async () => {
+        try {
+          const { shouldAttemptSessionRecovery } = await import('@/utils/auth/sessionRecovery');
+          return shouldAttemptSessionRecovery();
+        } catch (importError) {
+          console.warn('🔐 AuthProvider - Session recovery module not available:', importError);
+          return false;
+        }
+      })();
+
+      if (shouldRecover) {
+        console.log('🔐 AuthProvider - Attempting DevBypass session recovery');
+        try {
+          const { recoverDevBypassSession } = await import('@/utils/auth/sessionRecovery');
+          const recoveryResult = await recoverDevBypassSession();
+          
+          console.log('🔐 AuthProvider - Session recovery result:', recoveryResult);
+          
+          if (recoveryResult.success) {
+            console.log('🔐 AuthProvider - Session recovery successful, continuing with normal initialization');
+          } else {
+            console.warn('🔐 AuthProvider - Session recovery failed:', recoveryResult.error);
+          }
+        } catch (recoveryError) {
+          console.error('🔐 AuthProvider - Session recovery error:', recoveryError);
+        }
+      }
+
       const { data: { session: currentSession }, error } = await supabase.auth.getSession();
       
       if (error) {

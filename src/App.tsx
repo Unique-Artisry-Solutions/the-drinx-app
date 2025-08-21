@@ -84,6 +84,15 @@ const App: React.FC = () => {
     return fullReady || timeoutExceeded;
   }, [authStable, authStateStable, isLoading, isAuthenticated, isTransitioning, timeoutExceeded]);
 
+  // **PHASE 4 FIX**: Start session monitoring in development mode
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      import('@/utils/auth/sessionMonitor').then(({ sessionMonitor }) => {
+        sessionMonitor.startMonitoring(15000); // Check every 15 seconds in dev mode
+      });
+    }
+  }, []);
+
   if (!isAppReady) {
     initDebug.log('App loading screen shown', { timeoutExceeded });
     return (

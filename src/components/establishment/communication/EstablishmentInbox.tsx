@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Search, MessageSquarePlus, RefreshCw, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/auth';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { useMessageSystem } from '@/hooks/messages/useMessageSystem';
+import { useAuthenticatedMessageSystem } from '@/hooks/messages/useAuthenticatedMessageSystem';
 import MessageThreadList from '@/components/promoter/communication/MessageThreadList';
 
 interface EstablishmentInboxProps {
@@ -16,21 +16,47 @@ interface EstablishmentInboxProps {
 
 const EstablishmentInbox: React.FC<EstablishmentInboxProps> = ({ onSelectThread }) => {
   const [searchQuery, setSearchQuery] = useState('');
-  const { user } = useAuth();
+  const { user, session, isAuthenticated, authStable } = useAuth();
   const {
     threads,
     loading,
     error,
+    authError,
+    debugInfo,
     markThreadAsRead,
     refetchThreads
-  } = useMessageSystem('establishment');
+  } = useAuthenticatedMessageSystem('establishment');
 
-  // Check authentication status
+  // **PHASE 4 FIX**: Enhanced authentication debugging
   useEffect(() => {
-    if (!user) {
-      console.log('User not authenticated');
+    console.log('🔧 EstablishmentInbox - Auth state:', {
+      user: !!user,
+      userId: user?.id,
+      userEmail: user?.email,
+      session: !!session,
+      isAuthenticated,
+      authStable,
+      userMetadata: user?.user_metadata,
+      timestamp: Date.now()
+    });
+    
+    if (!user && authStable) {
+      console.warn('🔧 EstablishmentInbox - User not authenticated but auth is stable');
+      
+      // **PHASE 4 FIX**: Check for session mismatch
+      import('@/lib/supabase').then(({ supabase }) => {
+        supabase.auth.getSession().then(({ data, error }) => {
+          console.log('🔧 EstablishmentInbox - Direct session check:', {
+            hasSession: !!data?.session,
+            hasUser: !!data?.session?.user,
+            sessionUserId: data?.session?.user?.id,
+            sessionUserEmail: data?.session?.user?.email,
+            error: error?.message
+          });
+        });
+      });
     }
-  }, [user]);
+  }, [user, session, isAuthenticated, authStable]);
 
   const filteredThreads = threads.filter(
     conv => 
@@ -50,7 +76,8 @@ const EstablishmentInbox: React.FC<EstablishmentInboxProps> = ({ onSelectThread 
     refetchThreads();
   };
 
-  if (!user) {
+  // **PHASE 4 FIX**: Enhanced authentication check with debug info
+  if (!user && authStable) {
     return (
       <Card className="w-full">
         <CardHeader>
@@ -62,8 +89,32 @@ const EstablishmentInbox: React.FC<EstablishmentInboxProps> = ({ onSelectThread 
             <AlertTitle>You must be logged in</AlertTitle>
             <AlertDescription>
               Please log in to view your messages and communicate with promoters.
+              {process.env.NODE_ENV === 'development' && (
+                <div className="mt-2 text-xs opacity-75 space-y-1">
+                  <div>Debug: Auth stable but no user. Check DevBypass login.</div>
+                  {authError && <div className="text-red-600">Auth Error: {authError}</div>}
+                  <div>Debug Info: {JSON.stringify(debugInfo, null, 2)}</div>
+                </div>
+              )}
             </AlertDescription>
           </Alert>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // **PHASE 4 FIX**: Show loading state while auth is not stable
+  if (!authStable) {
+    return (
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">Loading...</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center p-4">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <span className="ml-2">Initializing authentication...</span>
+          </div>
         </CardContent>
       </Card>
     );
