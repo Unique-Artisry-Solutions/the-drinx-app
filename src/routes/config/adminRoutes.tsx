@@ -26,6 +26,7 @@ const AdminDashboard = lazy(() => import('@/pages/admin/AdminDashboard'));
 const RewardSystemMonitorPage = lazy(() => import('@/pages/admin/RewardSystemMonitorPage'));
 const RewardsAdminPage = lazy(() => import('@/pages/admin/RewardsAdminPage'));
 const AdminUsersPage = lazy(() => import('@/pages/admin/AdminUsersPage'));
+const AdminUserProfile = lazy(() => import('@/pages/admin/AdminUserProfile'));
 
 
 
@@ -59,6 +60,7 @@ export const adminRoutes: RouteObject[] = [
       
       // User Management
       { path: 'users', element: <AdminUsersPage /> },
+      { path: 'users/:id', element: <AdminUserProfile /> },
       
       // Content Management
       { path: 'establishments', element: <AdminEstablishmentsPage /> },

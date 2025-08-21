@@ -64,7 +64,7 @@ const SimplifiedAdminUsersPage: React.FC = () => {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => toast.info('User details view coming soon')}
+          onClick={() => window.location.href = `/admin/users/${item.id}`}
         >
           View Details
         </Button>

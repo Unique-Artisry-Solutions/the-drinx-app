@@ -162,7 +162,42 @@ export class SimplifiedAdminService {
   }
 
   static async getUserById(id: string): Promise<AdminUser | null> {
-    return null;
+    try {
+      console.log('🔍 SimplifiedAdminService.getUserById called with id:', id);
+      
+      // Check authentication first
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) {
+        throw new Error('User not authenticated');
+      }
+
+      // Use the same RPC function but filter for specific user
+      const { data, error } = await supabase.rpc('get_admin_users_with_roles', {
+        search_term: null,
+        limit_val: 999999,
+        offset_val: 0
+      });
+
+      if (error) {
+        console.error('❌ Error fetching user by ID:', error);
+        throw error;
+      }
+
+      // Find the specific user by ID
+      const userData = data?.find((user: AdminUser) => user.id === id);
+      
+      if (!userData) {
+        console.log('❌ User not found with ID:', id);
+        return null;
+      }
+
+      console.log('✅ User found:', userData);
+      return userData;
+
+    } catch (error: any) {
+      console.error('❌ Error in getUserById:', error);
+      throw error;
+    }
   }
 
   static async createUser(data: any): Promise<AdminUser | null> {
