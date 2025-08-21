@@ -6,8 +6,9 @@ import { Badge } from '@/components/ui/badge';
 import { Calendar, MessageSquare, Star, Clock, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
-import { useEstablishmentMessageSystem } from '@/hooks/establishment/useMessageSystem';
+import { useMessageSystem } from '@/hooks/messages/useMessageSystem';
 import { useAuth } from '@/contexts/auth';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import EstablishmentInbox from '@/components/establishment/communication/EstablishmentInbox';
 
 const EstablishmentAllActionsPage: React.FC = () => {
@@ -19,14 +20,16 @@ const EstablishmentAllActionsPage: React.FC = () => {
     threads, 
     loading: messagesLoading, 
     error: messagesError 
-  } = useEstablishmentMessageSystem('establishment');
+  } = useMessageSystem('establishment');
 
   const handleBackToDashboard = () => {
     navigate('/establishment/dashboard');
   };
 
-  const pendingMessages = threads.filter(thread => !thread.isRead).length;
-  const totalMessages = threads.length;
+  // Safe data handling with null checks and defaults
+  const safeThreads = threads || [];
+  const pendingMessages = safeThreads.filter(thread => !thread.isRead).length;
+  const totalMessages = safeThreads.length;
 
   return (
     <Layout>
@@ -128,7 +131,34 @@ const EstablishmentAllActionsPage: React.FC = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <EstablishmentInbox />
+                <ErrorBoundary
+                  fallback={
+                    <div className="text-center py-8">
+                      <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                      <h3 className="text-lg font-medium text-muted-foreground">Unable to load messages</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Please refresh the page to try again
+                      </p>
+                    </div>
+                  }
+                >
+                  {messagesLoading ? (
+                    <div className="text-center py-8">
+                      <Clock className="h-12 w-12 text-muted-foreground mx-auto mb-4 animate-spin" />
+                      <h3 className="text-lg font-medium text-muted-foreground">Loading messages...</h3>
+                    </div>
+                  ) : messagesError ? (
+                    <div className="text-center py-8">
+                      <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                      <h3 className="text-lg font-medium text-muted-foreground">Error loading messages</h3>
+                      <p className="text-sm text-muted-foreground">
+                        {messagesError}
+                      </p>
+                    </div>
+                  ) : (
+                    <EstablishmentInbox />
+                  )}
+                </ErrorBoundary>
               </CardContent>
             </Card>
           </TabsContent>
