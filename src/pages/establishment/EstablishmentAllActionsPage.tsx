@@ -8,17 +8,12 @@ import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { useEstablishmentMessageSystem } from '@/hooks/establishment/useMessageSystem';
 import { useAuth } from '@/contexts/auth';
-import { useImpersonationState } from '@/hooks/useImpersonationState';
 import EstablishmentInbox from '@/components/establishment/communication/EstablishmentInbox';
 
 const EstablishmentAllActionsPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { isImpersonating, currentUser } = useImpersonationState();
   const [activeTab, setActiveTab] = useState('messages');
-  
-  // Use the impersonated user's ID if impersonating, otherwise use current user
-  const effectiveUserId = isImpersonating ? currentUser?.id : user?.id;
   
   const { 
     threads, 
@@ -43,11 +38,6 @@ const EstablishmentAllActionsPage: React.FC = () => {
             <p className="text-muted-foreground mt-2">
               Manage all pending items that require your attention
             </p>
-            {isImpersonating && (
-              <Badge variant="secondary" className="mt-2">
-                Impersonating: {currentUser?.email}
-              </Badge>
-            )}
           </div>
           <Button variant="outline" onClick={handleBackToDashboard}>
             Back to Dashboard

@@ -16,7 +16,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Users, UserPlus, Search, Filter } from 'lucide-react';
 import { useUsers } from '@/hooks/admin/useUsers';
-import { startImpersonation } from '@/utils/impersonationSimplified';
 import { toast } from 'sonner';
 
 const AdminUsersPage: React.FC = () => {
@@ -195,20 +194,6 @@ const AdminUsersPage: React.FC = () => {
                         <div className="flex space-x-2">
                           <Button variant="outline" size="sm" asChild>
                             <Link to={`/admin/users/${user.id}`}>View</Link>
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={async () => {
-                              const res = await startImpersonation(user.id);
-                              if (!res.ok) {
-                                toast.error(res.error || 'Impersonation failed');
-                              } else {
-                                toast.success('Impersonation link generated. Redirecting...');
-                              }
-                            }}
-                          >
-                            Impersonate
                           </Button>
                         </div>
                       </TableCell>

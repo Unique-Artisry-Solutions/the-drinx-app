@@ -2,16 +2,14 @@
 import React from 'react';
 import Layout from '@/components/Layout';
 import EstablishmentDashboard from '@/components/establishment/EstablishmentDashboard';
-import { useImpersonationState } from '@/hooks/useImpersonationState';
 import { useUserEstablishment } from '@/hooks/establishment/useUserEstablishment';
 
 const EstablishmentDashboardPage = () => {
-  const { isImpersonating, currentUser } = useImpersonationState();
   const { establishmentId: userEstablishmentId, isLoading } = useUserEstablishment();
   
-  // During impersonation, use the impersonated user's data
+  // Use establishment data
   const establishmentName = localStorage.getItem('establishment_name') || 'Your Establishment';
-  const establishmentId = userEstablishmentId || currentUser?.id || '';
+  const establishmentId = userEstablishmentId || '';
 
   if (isLoading) {
     return (

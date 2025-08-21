@@ -2,8 +2,6 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuthenticatedUser } from '@/hooks/useAuthenticatedUser';
-import { useImpersonationState } from '@/hooks/useImpersonationState';
-import { clearImpersonationFlags } from '@/utils/impersonationValidator';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -21,7 +19,6 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   fallbackComponent = null
 }) => {
   const { user, session, userType, isLoading, authStable, isAuthenticated } = useAuthenticatedUser();
-  const { isImpersonating, isStable: impersonationStable } = useImpersonationState();
   const location = useLocation();
 
   console.log('RouteProtectionWrapper:', {
@@ -30,8 +27,6 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     allowedUserTypes,
     isAuthenticated,
     userType,
-    isImpersonating,
-    impersonationStable,
     authStable
   });
 
@@ -47,8 +42,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     );
   }
 
-  // Wait for auth and impersonation to stabilize
-  if (!authStable || !impersonationStable) {
+  // Wait for auth to stabilize
+  if (!authStable) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -70,28 +65,10 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <Navigate to={fallbackPath} replace />;
   }
 
-  // Check user type restrictions - handle impersonation with strict validation
+  // Check user type restrictions
   if (allowedUserTypes.length > 0 && isAuthenticated) {
-    let currentUserType = userType || 'individual';
-    let hasValidAccess = false;
-    
-    // Validate impersonation for establishment access
-    if (location.pathname.startsWith('/establishment/')) {
-      if (isImpersonating) {
-        // Valid impersonation allows establishment access
-        currentUserType = 'establishment';
-        hasValidAccess = allowedUserTypes.includes('establishment');
-        console.log('🎭 Allowing establishment access during valid impersonation');
-      } else if (userType === 'admin') {
-        // Admin without impersonation should not access establishment routes
-        console.log('🚫 Admin user attempting establishment access without impersonation');
-        clearImpersonationFlags(); // Clean up any orphaned state
-        return <Navigate to="/admin/system-breakdown" replace />;
-      }
-    } else {
-      // For non-establishment routes, use the actual user type
-      hasValidAccess = allowedUserTypes.includes(currentUserType);
-    }
+    const currentUserType = userType || 'individual';
+    const hasValidAccess = allowedUserTypes.includes(currentUserType);
     
     // Check if user has valid access
     if (!hasValidAccess) {
@@ -99,7 +76,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
         return <>{fallbackComponent}</>;
       }
       
-      // Redirect to appropriate dashboard based on actual user type (not impersonated)
+      // Redirect to appropriate dashboard based on user type
       const userTypeDashboards: Record<string, string> = {
         admin: '/admin/system-breakdown',
         establishment: '/establishment/dashboard',
@@ -107,9 +84,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
         individual: '/explore'
       };
       
-      const actualUserType = userType || 'individual';
-      console.log(`🔄 Redirecting ${actualUserType} user to appropriate dashboard`);
-      return <Navigate to={userTypeDashboards[actualUserType] || fallbackPath} replace />;
+      console.log(`🔄 Redirecting ${currentUserType} user to appropriate dashboard`);
+      return <Navigate to={userTypeDashboards[currentUserType] || fallbackPath} replace />;
     }
   }
 

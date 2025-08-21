@@ -4,7 +4,6 @@ import { useSimpleAdmin } from '@/hooks/admin/useSimpleAdmin';
 import { UnifiedAdminTable } from '@/components/admin/tables/UnifiedAdminTable';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { startImpersonation } from '@/utils/impersonationSimplified';
 import { toast } from 'sonner';
 import { useAuthenticatedUser } from '@/hooks/useAuthenticatedUser';
 const SimplifiedAdminUsersPage: React.FC = () => {
@@ -66,16 +65,9 @@ const SimplifiedAdminUsersPage: React.FC = () => {
         <Button
           variant="outline"
           size="sm"
-          onClick={async () => {
-            const res = await startImpersonation(item.id);
-            if (!res.ok) {
-              toast.error(res.error || 'Impersonation failed');
-            } else {
-              toast.message('Impersonation link generated. Redirecting...');
-            }
-          }}
+          onClick={() => toast.info('User management actions coming soon')}
         >
-          Impersonate
+          Manage
         </Button>
       )
     }
@@ -83,27 +75,6 @@ const SimplifiedAdminUsersPage: React.FC = () => {
 
   return (
     <div className="container mx-auto p-6">
-      <div className="mb-4 flex items-center justify-end">
-        <Button
-          variant="secondary"
-          size="sm"
-          disabled={!canImpersonate}
-          title={!canImpersonate ? 'Requires admin role' : undefined}
-          onClick={async () => {
-            const targetId = window.prompt('Enter target user ID to impersonate:');
-            if (!targetId) return;
-            toast.message('Generating impersonation link...');
-            const res = await startImpersonation(targetId.trim());
-            if (!res.ok) {
-              toast.error(res.error || 'Impersonation failed');
-            } else {
-              toast.message('Impersonation link generated. Redirecting...');
-            }
-          }}
-        >
-          Impersonate by ID
-        </Button>
-      </div>
       <UnifiedAdminTable
         title="Users Management"
         items={state.items}

@@ -2,7 +2,6 @@
 import { useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuthenticatedUser } from '@/hooks/useAuthenticatedUser';
-import { useImpersonationState } from '@/hooks/useImpersonationState';
 import { MessageThread, UserType } from './types';
 import { useThreads } from './useThreads';
 import { useMessages } from './useMessages';
@@ -12,10 +11,9 @@ import { useThreadSelection } from './useThreadSelection';
 
 export const useMessageSystem = (userType: UserType) => {
   const { user } = useAuthenticatedUser();
-  const { isImpersonating, currentUser } = useImpersonationState();
   
-  // Use the impersonated user's ID if impersonating, otherwise use current user
-  const effectiveUserId = isImpersonating ? currentUser?.id : user?.id;
+  // Use the current user's ID directly
+  const effectiveUserId = user?.id;
   
   const { threads, setThreads, loading, error, fetchThreads } = useThreads(userType, effectiveUserId);
   const { fetchMessages, sendMessage } = useMessages(userType);
