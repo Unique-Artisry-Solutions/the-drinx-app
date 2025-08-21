@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef, startTransition } from 'react';
 import { Session, User, AuthError } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
@@ -7,46 +6,8 @@ import { sessionPersistenceService } from '@/services/SessionPersistenceService'
 import { authCache } from './authCache';
 import { debouncedToast } from '@/utils/debouncedToast';
 import { inferUserType } from '@/utils/auth/admin';
-import { validateImpersonationState, ensureImpersonationFlags, clearImpersonationFlags } from '@/utils/impersonationValidator';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-// Utility function to extract tokens from URL hash
-const extractTokensFromUrl = (): { access_token?: string; refresh_token?: string } | null => {
-  try {
-    const hash = window.location.hash;
-    const params = new URLSearchParams(hash.substring(1));
-    
-    const accessToken = params.get('access_token');
-    const refreshToken = params.get('refresh_token');
-    
-    if (accessToken) {
-      console.log('🔑 Token extraction - Found tokens in URL hash');
-      return {
-        access_token: accessToken,
-        refresh_token: refreshToken || undefined
-      };
-    }
-    
-    return null;
-  } catch (error) {
-    console.error('🔑 Token extraction failed:', error);
-    return null;
-  }
-};
-
-// Utility function to clean tokens from URL
-const cleanTokensFromUrl = () => {
-  try {
-    if (window.location.hash.includes('access_token=')) {
-      const newUrl = window.location.pathname + window.location.search;
-      window.history.replaceState({}, document.title, newUrl);
-      console.log('🔑 URL cleaned - Tokens removed from hash');
-    }
-  } catch (error) {
-    console.error('🔑 URL cleanup failed:', error);
-  }
-};
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
@@ -62,38 +23,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [authStateStable, setAuthStateStable] = useState(false);
   
   const initializationRef = useRef(false);
-  const tokenProcessingRef = useRef(false); // Prevent multiple token processing attempts
-  const stabilizationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  
-  // HMR Protection: Preserve impersonation state during development reloads
-  useEffect(() => {
-    if (process.env.NODE_ENV === 'development') {
-      const handleBeforeUnload = () => {
-        const backup = localStorage.getItem('impersonation_backup');
-        const hasFlags = !!(
-          sessionStorage.getItem('impersonation_active') ||
-          sessionStorage.getItem('impersonation_magic_link')
-        );
-        
-        if (backup && hasFlags) {
-          console.log('🔄 HMR Protection: Preserving impersonation state during reload');
-          localStorage.setItem('hmr_impersonation_preserved', 'true');
-        }
-      };
-      
-      window.addEventListener('visibilitychange', handleBeforeUnload);
-      
-      // Check if we're recovering from HMR
-      if (localStorage.getItem('hmr_impersonation_preserved') === 'true') {
-        console.log('🔄 HMR Recovery: Detected preserved impersonation state');
-        localStorage.removeItem('hmr_impersonation_preserved');
-      }
-      
-      return () => window.removeEventListener('visibilitychange', handleBeforeUnload);
-    }
-  }, []);
 
-  // Initialize auth state - simplified and more robust with dev auto-login
+  // Initialize auth state
   const initializeAuth = useCallback(async () => {
     if (initializationRef.current) return;
     initializationRef.current = true;
@@ -103,30 +34,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setAuthError(null);
 
     try {
-      // **PHASE 1 FIX**: Enhanced DevTools login detection with grace period
-      const devToolsUserType = localStorage.getItem('dev_auto_login_user_type');
-      const devToolsLoginTimestamp = localStorage.getItem('dev_auto_login_timestamp');
-      const isActiveDevToolsLogin = devToolsUserType && devToolsLoginTimestamp && 
-        (Date.now() - parseInt(devToolsLoginTimestamp)) < 10000; // 10 second grace period
-
-      console.log('🔧 AuthProvider - DevTools state check:', {
-        devToolsUserType,
-        devToolsLoginTimestamp,
-        isActiveDevToolsLogin,
-        timeSinceLogin: devToolsLoginTimestamp ? Date.now() - parseInt(devToolsLoginTimestamp) : 'N/A'
-      });
-
-      // Get current session with timeout
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Session fetch timeout')), 5000)
-      );
-      
-      const sessionPromise = supabase.auth.getSession();
-      
-      const { data: { session: currentSession }, error } = await Promise.race([
-        sessionPromise,
-        timeoutPromise
-      ]) as any;
+      const { data: { session: currentSession }, error } = await supabase.auth.getSession();
       
       if (error) {
         console.error('🔐 AuthProvider - Session fetch error:', error);
@@ -135,286 +43,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (currentSession?.user) {
         console.log('🔐 AuthProvider - Session found, setting auth state');
-        
-        // **PHASE 1 FIX**: If this is a DevTools login, set timestamp for protection
-        if (devToolsUserType && !devToolsLoginTimestamp) {
-          localStorage.setItem('dev_auto_login_timestamp', Date.now().toString());
-          console.log('🔧 AuthProvider - DevTools login detected, setting protection timestamp');
-        }
-        
-        // Set session and user
         setSession(currentSession);
         setUser(currentSession.user);
-        
-        // Determine user type
         setUserType(inferUserType(currentSession.user));
-        
-        // Set email verification status
         setIsEmailVerified(currentSession.user.email_confirmed_at !== null);
-        
-        // Update persistence service
         sessionPersistenceService.updateSession(currentSession, currentSession.user);
-        
         console.log('🔐 AuthProvider - Auth state set successfully');
-        } else {
-          console.log('🔐 AuthProvider - No session found, checking for dev auto-login');
-          
-          // **PHASE 1 FIX**: Enhanced DevTools protection - don't clear auth state during active DevTools login
-          if (!isActiveDevToolsLogin) {
-            // Clear auth state first
-            setSession(null);
-            setUser(null);
-            setUserType('individual');
-            setIsEmailVerified(false);
-            sessionPersistenceService.clearSession();
-          } else {
-            console.log('🔧 AuthProvider - Active DevTools login detected, preserving auth state for grace period');
-            return; // Exit early to prevent further processing
-          }
-        
-        // **RECOVERY MECHANISM**: Check for interrupted magic link processing
-        const interruptedProcessing = localStorage.getItem('magic_link_processing') === 'true';
-        const processingTimestamp = localStorage.getItem('magic_link_processing_timestamp');
-        const impersonationBackup = localStorage.getItem('impersonation_backup');
-        
-        if (interruptedProcessing && processingTimestamp && impersonationBackup) {
-          const age = Date.now() - parseInt(processingTimestamp);
-          if (age < 60000) { // Less than 1 minute old
-            console.log('🔄 AuthProvider - Detecting interrupted magic link processing, attempting recovery');
-            
-            try {
-              const backup = JSON.parse(impersonationBackup);
-              
-              // Restore impersonation flags if they're missing
-              const hasFlags = !!(
-                sessionStorage.getItem('impersonation_active') ||
-                sessionStorage.getItem('impersonation_magic_link') ||
-                localStorage.getItem('impersonation_active_backup')
-              );
-              
-              if (!hasFlags && backup.email) {
-                console.log('🔄 AuthProvider - Restoring impersonation flags after interruption');
-                sessionStorage.setItem('impersonation_active', 'true');
-                sessionStorage.setItem('impersonation_magic_link', 'true');
-                localStorage.setItem('impersonation_active_backup', 'true');
-                sessionStorage.setItem('impersonation_target_email', backup.email);
-              }
-            } catch (error) {
-              console.warn('❌ Failed to parse impersonation backup during recovery:', error);
-            }
-          } else {
-            console.log('🧹 AuthProvider - Clearing stale interrupted processing flags');
-            localStorage.removeItem('magic_link_processing');
-            localStorage.removeItem('magic_link_processing_timestamp');
-          }
-        }
-        
-        // **CRITICAL FIX**: Check DevTools login first to avoid magic link interference
-        const devToolsLoginCheck = localStorage.getItem('dev_auto_login_user_type');
-        if (devToolsLoginCheck) {
-          console.log('🔧 AuthProvider - DevTools login detected, skipping magic link processing entirely');
-          return;
-        }
-
-        // Check if we're processing a magic link (skip dev auto-login in that case)
-        const urlHash = window.location.hash;
-        const urlSearch = window.location.search;
-        const hasMagicLinkTokens = urlHash.includes('access_token=') || urlSearch.includes('access_token=');
-        const isMagicLinkProcessing = typeof window !== 'undefined' && window.sessionStorage.getItem('processing_magic_link') === 'true';
-        const expectingMagicLink = typeof window !== 'undefined' && window.sessionStorage.getItem('expecting_magic_link') === 'true';
-        
-        console.log('🔍 AuthProvider - Magic link detection:', {
-          hasMagicLinkTokens,
-          isMagicLinkProcessing,
-          expectingMagicLink,
-          urlHash: urlHash.substring(0, 50) + '...',
-          currentDomain: window.location.hostname
-        });
-        
-        if (hasMagicLinkTokens || isMagicLinkProcessing || expectingMagicLink) {
-          console.log('🔐 AuthProvider - Magic link tokens detected or processing, checking for manual processing');
-          
-          // Try manual token processing if tokens are present but no session exists
-          if (hasMagicLinkTokens && !currentSession && !tokenProcessingRef.current) {
-            tokenProcessingRef.current = true; // Prevent multiple processing attempts
-            console.log('🔑 AuthProvider - Attempting manual magic link token processing');
-            
-            try {
-              const tokens = extractTokensFromUrl();
-              
-              if (tokens?.access_token) {
-                console.log('🔑 AuthProvider - Extracted tokens, setting session manually');
-                
-                // Check if we have impersonation backup
-                const impersonationBackup = localStorage.getItem('impersonation_backup');
-                let parsedBackup = null;
-                try {
-                  parsedBackup = impersonationBackup ? JSON.parse(impersonationBackup) : null;
-                } catch (e) {
-                  console.warn('Failed to parse impersonation backup:', e);
-                }
-                
-                const hasExistingImpersonationFlags = !!(
-                  sessionStorage.getItem('impersonation_magic_link') ||
-                  sessionStorage.getItem('impersonation_active') ||
-                  localStorage.getItem('impersonation_active_backup')
-                );
-                
-                console.log('🎭 AuthProvider - Pre-authentication impersonation check:', {
-                  hasBackup: !!parsedBackup,
-                  hasExistingFlags: hasExistingImpersonationFlags,
-                  backupEmail: parsedBackup?.email
-                });
-                
-                // **CRITICAL FIX**: Set persistent magic link processing flag to survive refreshes
-                localStorage.setItem('magic_link_processing', 'true');
-                localStorage.setItem('magic_link_processing_timestamp', Date.now().toString());
-                
-                // **CRITICAL FIX**: If we have backup but no flags, set them BEFORE authentication
-                if (parsedBackup && !hasExistingImpersonationFlags) {
-                  console.log('🎯 AuthProvider - Setting impersonation flags before authentication');
-                  sessionStorage.setItem('impersonation_active', 'true');
-                  sessionStorage.setItem('impersonation_magic_link', 'true');
-                  localStorage.setItem('impersonation_active_backup', 'true');
-                  
-                  // Store target email from backup for validation
-                  if (parsedBackup.email) {
-                    sessionStorage.setItem('impersonation_target_email', parsedBackup.email);
-                  }
-                }
-                
-                // Set session using manual tokens
-                const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
-                  access_token: tokens.access_token,
-                  refresh_token: tokens.refresh_token || ''
-                });
-                
-                if (sessionError) {
-                  console.error('🔑 AuthProvider - Manual session setting failed:', sessionError);
-                  throw sessionError;
-                }
-                
-                 if (sessionData.session?.user) {
-                   console.log('✅ AuthProvider - Manual magic link processing successful');
-                   
-                 // **CRITICAL FIX**: Batch state updates to prevent DOM race conditions
-                 startTransition(() => {
-                   console.log('🔄 AuthProvider - Applying batched auth state updates');
-                   
-                   // Set transitioning state first
-                   setIsTransitioning(true);
-                   setAuthStateStable(false);
-                   
-                   // Set auth state in a single batch to prevent race conditions
-                   setSession(sessionData.session);
-                   setUser(sessionData.session.user);
-                   setUserType(inferUserType(sessionData.session.user));
-                   setIsEmailVerified(sessionData.session.user.email_confirmed_at !== null);
-                 });
-                   
-                   sessionPersistenceService.updateSession(sessionData.session, sessionData.session.user);
-                  
-                  // **CRITICAL FIX**: Enhanced impersonation validation after manual auth
-                  if (parsedBackup) {
-                   console.log('🎭 AuthProvider - Validating impersonation state after manual auth');
-                   
-                   const currentFlags = {
-                     active: sessionStorage.getItem('impersonation_active'),
-                     magicLink: sessionStorage.getItem('impersonation_magic_link'),
-                     backup: localStorage.getItem('impersonation_active_backup'),
-                     targetEmail: sessionStorage.getItem('impersonation_target_email')
-                   };
-                   
-                   console.log('🔍 AuthProvider - Current impersonation flags:', currentFlags);
-                   
-                   // **SESSION VALIDATION**: Check if authenticated user matches expected target
-                   const expectedTargetFromBackup = currentFlags.targetEmail || parsedBackup.email;
-                   const actualUserEmail = sessionData.session.user.email;
-                   const actualUserId = sessionData.session.user.id;
-                   
-                   console.log('🎯 AuthProvider - Session validation:', {
-                     expectedEmail: expectedTargetFromBackup,
-                     actualEmail: actualUserEmail,
-                     actualUserId,
-                     backupUserId: parsedBackup.user_id,
-                     isValidImpersonation: actualUserId !== parsedBackup.user_id
-                   });
-                   
-                   // Enhanced validation with longer grace period during magic link processing
-                   const validation = validateImpersonationState(actualUserId, actualUserEmail || '', true);
-                   
-                   console.log('🔍 AuthProvider - Manual auth validation result:', validation);
-                   
-                   // **CRITICAL FIX**: Be more lenient during magic link processing
-                   if (validation.shouldClear && actualUserId === parsedBackup.user_id) {
-                     console.log('🔄 AuthProvider - User IDs match during processing, delaying validation');
-                     // Don't clear immediately - allow time for proper session switch
-                     setTimeout(() => {
-                       const retryValidation = validateImpersonationState(actualUserId, actualUserEmail || '', false);
-                       if (retryValidation.shouldClear) {
-                         console.log('🧹 AuthProvider - Delayed clearing after failed impersonation');
-                         clearImpersonationFlags();
-                       }
-                     }, 3000); // 3 second delay
-                   } else if (validation.shouldPersist && validation.isValid) {
-                     console.log('✅ AuthProvider - Maintaining impersonation state after manual auth:', validation.reason);
-                     ensureImpersonationFlags(actualUserEmail || expectedTargetFromBackup || '');
-                   }
-                  }
-                  
-                  // **CRITICAL FIX**: Clear processing flags after successful processing
-                  localStorage.removeItem('magic_link_processing');
-                  localStorage.removeItem('magic_link_processing_timestamp');
-                  
-                  console.log('🔐 AuthProvider - Immediate manual auth processing complete');
-                  
-                  // Clean up URL tokens immediately (safe DOM operation)
-                  cleanTokensFromUrl();
-                  
-                } else {
-                  console.warn('🔑 AuthProvider - Manual session setting returned no user');
-                }
-              } else {
-                console.warn('🔑 AuthProvider - No valid tokens found for manual processing');
-              }
-            } catch (tokenError: any) {
-              console.error('🔑 AuthProvider - Manual token processing failed:', tokenError);
-              setAuthError(new Error(`Manual token processing failed: ${tokenError.message}`));
-              
-              // **CRITICAL FIX**: Clear processing flags on error
-              localStorage.removeItem('magic_link_processing');
-              localStorage.removeItem('magic_link_processing_timestamp');
-              
-              // Clean up URL on error
-              cleanTokensFromUrl();
-            } finally {
-              // Reset the processing flag
-              tokenProcessingRef.current = false;
-            }
-          } else if (hasMagicLinkTokens && tokenProcessingRef.current) {
-            console.log('🔑 AuthProvider - Token processing already in progress, skipping duplicate attempt');
-          } else {
-            console.log('🔐 AuthProvider - Magic link detected but skipping processing (session exists or no tokens)');
-          }
-        } else {
-          console.log('🔐 AuthProvider - Normal initialization, checking for existing session');
-        }
+      } else {
+        console.log('🔐 AuthProvider - No session found');
+        setSession(null);
+        setUser(null);
+        setUserType('individual');
+        setIsEmailVerified(false);
+        sessionPersistenceService.clearSession();
       }
 
     } catch (error: any) {
       console.error('🔐 AuthProvider - Initialization failed:', error);
-      // Don't set auth error for timeout - just proceed with no auth
-      if (!error.message.includes('timeout')) {
-        setAuthError(new Error(`Initialization failed: ${error.message}`));
-      }
-      // Clear auth state on error
+      setAuthError(new Error(`Initialization failed: ${error.message}`));
       setSession(null);
       setUser(null);
       setUserType('individual');
       setIsEmailVerified(false);
       sessionPersistenceService.clearSession();
     } finally {
-      // ALWAYS set these flags to true after initialization attempt
       setIsLoading(false);
       setAuthStable(true);
       setNavigationReady(true);
@@ -423,101 +75,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
-  // Handle auth state changes - enhanced for impersonation and DevTools protection
+  // Handle auth state changes
   useEffect(() => {
     console.log('🔐 AuthProvider - Setting up auth state listener');
     
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, newSession) => {
       console.log('🔐 AuthProvider - Auth state changed:', event, !!newSession);
       
-      // **PHASE 1 FIX**: Enhanced DevTools protection in auth state changes
-      const devToolsUserType = localStorage.getItem('dev_auto_login_user_type');
-      const devToolsLoginTimestamp = localStorage.getItem('dev_auto_login_timestamp');
-      const isActiveDevToolsLogin = devToolsUserType && devToolsLoginTimestamp && 
-        (Date.now() - parseInt(devToolsLoginTimestamp)) < 10000; // 10 second grace period
-      
-      console.log('🔧 AuthProvider - DevTools protection check during state change:', {
-        event,
-        devToolsUserType,
-        isActiveDevToolsLogin,
-        hasSession: !!newSession
-      });
-      
-      // **CRITICAL FIX**: Prevent sign-out during active DevTools login
-      if (event === 'SIGNED_OUT' && isActiveDevToolsLogin && newSession === null) {
-        console.log('🔧 AuthProvider - Blocking SIGNED_OUT event during active DevTools login');
-        return; // Exit early to prevent clearing auth state
-      }
-      
       if (event === 'SIGNED_IN' && newSession?.user) {
         console.log('🔐 AuthProvider - User signed in successfully');
         
-        // **CRITICAL FIX**: If this is a DevTools login, set timestamp for protection
-        if (devToolsUserType && !devToolsLoginTimestamp) {
-          localStorage.setItem('dev_auto_login_timestamp', Date.now().toString());
-          console.log('🔧 AuthProvider - DevTools login detected, setting protection timestamp');
-        }
-        
-        // **CRITICAL FIX**: Check if we're in magic link processing mode (using persistent storage)
-        const isMagicLinkProcessing = localStorage.getItem('magic_link_processing') === 'true';
-        const processingTimestamp = localStorage.getItem('magic_link_processing_timestamp');
-        
-        // **RECOVERY MECHANISM**: Clear stale processing flags (older than 30 seconds)
-        if (isMagicLinkProcessing && processingTimestamp) {
-          const age = Date.now() - parseInt(processingTimestamp);
-          if (age > 30000) { // 30 seconds
-            console.log('🧹 AuthProvider - Clearing stale magic link processing flags');
-            localStorage.removeItem('magic_link_processing');
-            localStorage.removeItem('magic_link_processing_timestamp');
-          }
-        }
-        
-        console.log('🎭 AuthProvider - Auth state change context:', {
-          event,
-          isMagicLinkProcessing,
-          userId: newSession.user.id,
-          userEmail: newSession.user.email
+        startTransition(() => {
+          setIsTransitioning(true);
+          setAuthStateStable(false);
+          setSession(newSession);
+          setUser(newSession.user);
+          setUserType(inferUserType(newSession.user));
+          setIsEmailVerified(newSession.user.email_confirmed_at !== null);
+          setAuthError(null);
         });
-        
-        // **CRITICAL FIX**: Enhanced validation with processing context
-        const validation = validateImpersonationState(
-          newSession.user.id, 
-          newSession.user.email || '', 
-          isMagicLinkProcessing
-        );
-        
-        console.log('🔍 AuthProvider - Impersonation validation result:', validation);
-        
-          // **CRITICAL FIX**: Batch state updates to prevent DOM race conditions
-          startTransition(() => {
-            console.log('🔍 AuthProvider - Batching impersonation validation state updates');
-            
-            // Set transitioning state first
-            setIsTransitioning(true);
-            setAuthStateStable(false);
-            
-            if (validation.shouldClear && !isMagicLinkProcessing) {
-              console.log('🧹 AuthProvider - Clearing impersonation state:', validation.reason);
-              clearImpersonationFlags();
-            } else if (validation.shouldPersist && validation.isValid) {
-              console.log('✅ AuthProvider - Maintaining impersonation state:', validation.reason);
-              ensureImpersonationFlags(newSession.user.email || '');
-            } else if (isMagicLinkProcessing) {
-              console.log('⏳ AuthProvider - Deferring validation during magic link processing');
-            }
-            
-            setSession(newSession);
-            setUser(newSession.user);
-            setUserType(inferUserType(newSession.user));
-            setIsEmailVerified(newSession.user.email_confirmed_at !== null);
-            setAuthError(null);
-          });
          
-         sessionPersistenceService.updateSession(newSession, newSession.user);
-         
-         // Mark auth as stable for sign-ins (important for impersonation)
-         setAuthStable(true);
-         setNavigationReady(true);
+        sessionPersistenceService.updateSession(newSession, newSession.user);
+        setAuthStable(true);
+        setNavigationReady(true);
         
       } else if (event === 'SIGNED_OUT') {
         console.log('🔐 AuthProvider - User signed out, clearing state');
@@ -550,7 +130,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     });
 
-    // Initialize auth state
     initializeAuth();
 
     return () => {
@@ -558,30 +137,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, [initializeAuth]);
 
-  // State stabilization mechanism - prevents premature navigation decisions
+  // State stabilization mechanism
   useEffect(() => {
-    // Clear any existing stabilization timeout
-    if (stabilizationTimeoutRef.current) {
-      clearTimeout(stabilizationTimeoutRef.current);
-    }
-
-    // If we're in a transitioning state, set timeout to stabilize
     if (isTransitioning) {
       console.log('🔄 AuthProvider - Starting state stabilization period');
-      stabilizationTimeoutRef.current = setTimeout(() => {
+      const timeout = setTimeout(() => {
         console.log('✅ AuthProvider - State stabilization complete');
         setAuthStateStable(true);
         setIsTransitioning(false);
-      }, 100); // Brief stabilization delay
+      }, 100);
+      
+      return () => clearTimeout(timeout);
     } else {
       setAuthStateStable(true);
     }
-
-    return () => {
-      if (stabilizationTimeoutRef.current) {
-        clearTimeout(stabilizationTimeoutRef.current);
-      }
-    };
   }, [isTransitioning, session, user, userType]);
 
   // Auth actions
@@ -693,17 +262,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setIsTransitioning(true);
       
-      // Call the database function to switch roles
       const { error } = await supabase.rpc('switch_active_role', { 
         role_to_activate: role 
       });
       
       if (error) throw error;
       
-      // Update local state immediately for better UX
       setUserType(role);
-      
-      // Clear and update cache
       authCache.clearUserCache(user.id);
       authCache.setUserType(user.id, role);
       
@@ -719,7 +284,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [user]);
 
   const value: AuthContextType = {
-    // State
     session,
     user,
     isAuthenticated: !!session && !!user,
@@ -732,8 +296,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     navigationReady,
     isTransitioning,
     authStateStable,
-    
-    // Actions
     signIn,
     signUp,
     signOut,
@@ -755,18 +317,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    const errorMessage = 'useAuth must be used within an AuthProvider';
-    
-    // During development hot reloads, provide more helpful debugging
-    if (process.env.NODE_ENV === 'development') {
-      console.error(errorMessage, {
-        currentContext: context,
-        hasAuthContext: !!AuthContext,
-        stackTrace: new Error().stack
-      });
-    }
-    
-    throw new Error(errorMessage);
+    throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
 };

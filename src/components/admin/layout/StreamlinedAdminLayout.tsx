@@ -1,30 +1,23 @@
-
 import React from 'react';
 import { Outlet } from 'react-router-dom';
-import { AdminLayoutProvider } from './AdminLayoutProvider';
-import AdminSidebar from './AdminSidebar';
-import TopNavigation from '@/components/TopNavigation';
-import ImpersonationErrorBoundary from '@/components/admin/ImpersonationErrorBoundary';
+import { Toaster } from '@/components/ui/toaster';
+import DevBypass from '@/components/development/DevBypass';
 
-interface StreamlinedAdminLayoutProps {
-  children?: React.ReactNode;
-}
-
-const StreamlinedAdminLayout: React.FC<StreamlinedAdminLayoutProps> = ({ children }) => {
+const StreamlinedAdminLayout: React.FC = () => {
   return (
-    <ImpersonationErrorBoundary>
-      <AdminLayoutProvider>
-        <div className="flex h-screen bg-gray-50">
-          <AdminSidebar />
-          <div className="flex-1 flex flex-col overflow-hidden">
-            <TopNavigation />
-            <main className="flex-1 overflow-y-auto">
-              {children || <Outlet />}
-            </main>
-          </div>
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto p-4">
+        <div className="flex gap-6">
+          <main className="flex-1">
+            <Outlet />
+          </main>
+          <aside className="w-80 space-y-4">
+            <DevBypass variant="compact" />
+          </aside>
         </div>
-      </AdminLayoutProvider>
-    </ImpersonationErrorBoundary>
+      </div>
+      <Toaster />
+    </div>
   );
 };
 

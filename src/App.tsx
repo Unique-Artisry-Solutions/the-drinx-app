@@ -1,8 +1,7 @@
-
 import React, { useEffect, useState, useMemo } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthenticatedUser } from '@/hooks/useAuthenticatedUser';
-import { DevRoleSwitcher, ImpersonationWidget } from '@/components/development';
+import { DevRoleSwitcher } from '@/components/development';
 import { publicRoutes } from '@/routes/config/publicRoutes';
 import { individualRoutes } from '@/routes/config/individualRoutes';
 import { profileRoutes } from '@/routes/config/profileRoutes';
@@ -10,11 +9,8 @@ import { adminRoutes } from '@/routes/config/adminRoutes';
 import { promoterRoutes } from '@/routes/config/promoterRoutes';
 import { establishmentRoutes } from '@/routes/config/establishmentRoutes';
 import { testingRoutes } from '@/routes/testingRoutes';
-import ImpersonationBanner from '@/components/auth/ImpersonationBanner';
-import ImpersonationErrorBoundary from '@/components/auth/ImpersonationErrorBoundary';
 import MagicLinkHandler from '@/components/auth/MagicLinkHandler';
 import { initDebug } from '@/utils/initDebug';
-import { debugImpersonationState } from '@/utils/impersonationDebugger';
 
 const App: React.FC = () => {
   const { 
@@ -28,13 +24,6 @@ const App: React.FC = () => {
   } = useAuthenticatedUser();
   
   const [timeoutExceeded, setTimeoutExceeded] = useState(false);
-
-  // Debug impersonation state in development
-  useEffect(() => {
-    if (process.env.NODE_ENV === 'development') {
-      setTimeout(debugImpersonationState, 3000);
-    }
-  }, []);
 
   initDebug.log('App render', { 
     isReady, 
@@ -59,11 +48,11 @@ const App: React.FC = () => {
     return () => clearTimeout(timeoutId);
   }, [isReady, timeoutExceeded]);
 
-  // **CRITICAL FIX**: Enhanced app readiness check with DevTools bypass
+  // Enhanced app readiness check with DevTools bypass
   const isAppReady = useMemo(() => {
     const basic = authStable && !isLoading;
     
-    // **CRITICAL FIX**: For DevTools flows, use simplified readiness check
+    // For DevTools flows, use simplified readiness check
     const isDevToolsLogin = localStorage.getItem('dev_auto_login_user_type');
     if (isDevToolsLogin) {
       initDebug.log('DevTools app readiness check:', {
@@ -77,7 +66,7 @@ const App: React.FC = () => {
       return basic || timeoutExceeded;
     }
     
-    // For authenticated users (including impersonation), also check authStateStable
+    // For authenticated users, also check authStateStable
     const fullReady = isAuthenticated ? (basic && authStateStable && !isTransitioning) : basic;
     
     initDebug.log('Standard app readiness check:', {
@@ -113,75 +102,68 @@ const App: React.FC = () => {
 
   initDebug.log('App routes rendered');
   return (
-    <ImpersonationErrorBoundary>
-      <MagicLinkHandler>
-        <div className="min-h-screen bg-white">
-          {/* Global impersonation banner */}
-          <ImpersonationBanner />
-          <Routes>
-            {/* Public Routes */}
-            {publicRoutes.map((route, index) => (
-              <Route key={index} path={route.path} element={route.element} />
-            ))}
+    <MagicLinkHandler>
+      <div className="min-h-screen bg-white">
+        <Routes>
+          {/* Public Routes */}
+          {publicRoutes.map((route, index) => (
+            <Route key={index} path={route.path} element={route.element} />
+          ))}
 
-            {/* Individual User Routes */}
-            {individualRoutes.map((route, index) => (
-              <Route key={index} path={route.path} element={route.element} />
-            ))}
+          {/* Individual User Routes */}
+          {individualRoutes.map((route, index) => (
+            <Route key={index} path={route.path} element={route.element} />
+          ))}
 
-            {/* Profile Routes */}
-            {profileRoutes.map((route, index) => (
-              <Route key={index} path={route.path} element={route.element} />
-            ))}
+          {/* Profile Routes */}
+          {profileRoutes.map((route, index) => (
+            <Route key={index} path={route.path} element={route.element} />
+          ))}
 
-            {/* Admin Routes */}
-            {adminRoutes.map((route, index) => (
-              <Route 
-                key={index} 
-                path={route.path} 
-                element={route.element}
-              >
-                {route.children?.map((childRoute, childIndex) => (
-                  <Route 
-                    key={childIndex}
-                    path={childRoute.path}
-                    index={childRoute.index}
-                    element={childRoute.element}
-                  />
-                ))}
-              </Route>
-            ))}
+          {/* Admin Routes */}
+          {adminRoutes.map((route, index) => (
+            <Route 
+              key={index} 
+              path={route.path} 
+              element={route.element}
+            >
+              {route.children?.map((childRoute, childIndex) => (
+                <Route 
+                  key={childIndex}
+                  path={childRoute.path}
+                  index={childRoute.index}
+                  element={childRoute.element}
+                />
+              ))}
+            </Route>
+          ))}
 
-            {/* Promoter Routes */}
-            {promoterRoutes.map((route, index) => (
-              <Route key={index} path={route.path} element={route.element} />
-            ))}
+          {/* Promoter Routes */}
+          {promoterRoutes.map((route, index) => (
+            <Route key={index} path={route.path} element={route.element} />
+          ))}
 
-            {/* Establishment Routes */}
-            {establishmentRoutes.map((route, index) => (
-              <Route key={index} path={route.path} element={route.element} />
-            ))}
-            
-            {/* Testing Routes */}
-            {testingRoutes}
-
-            {/* Fallback Route - Redirect based on user type */}
-            <Route path="*" element={<Navigate to={
-              isAuthenticated ?
-                (userType === 'admin' ? '/admin/system-breakdown' :
-                  (userType === 'establishment' ? '/establishment/dashboard' :
-                    (userType === 'promoter' ? '/promoter/dashboard' : '/explore'))) :
-                '/landing'} replace />} />
-          </Routes>
-      
-          {/* Development Tools */}
-          <DevRoleSwitcher />
+          {/* Establishment Routes */}
+          {establishmentRoutes.map((route, index) => (
+            <Route key={index} path={route.path} element={route.element} />
+          ))}
           
-          {/* Impersonation Widget */}
-          <ImpersonationWidget />
-        </div>
-      </MagicLinkHandler>
-    </ImpersonationErrorBoundary>
+          {/* Testing Routes */}
+          {testingRoutes}
+
+          {/* Fallback Route - Redirect based on user type */}
+          <Route path="*" element={<Navigate to={
+            isAuthenticated ?
+              (userType === 'admin' ? '/admin/system-breakdown' :
+                (userType === 'establishment' ? '/establishment/dashboard' :
+                  (userType === 'promoter' ? '/promoter/dashboard' : '/explore'))) :
+              '/landing'} replace />} />
+        </Routes>
+    
+        {/* Development Tools */}
+        <DevRoleSwitcher />
+      </div>
+    </MagicLinkHandler>
   );
 };
 

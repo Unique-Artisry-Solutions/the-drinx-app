@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/auth';
 import { useToast } from '@/hooks/use-toast';
-import { useImpersonationState } from '@/hooks/useImpersonationState';
 
 /**
  * Hook to get the establishment ID associated with the current user
@@ -14,10 +13,9 @@ export function useUserEstablishment() {
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
   const { toast } = useToast();
-  const { isImpersonating, currentUser } = useImpersonationState();
   
-  // Use impersonated user if impersonating, otherwise use auth user
-  const effectiveUser = isImpersonating ? currentUser : user;
+  // Use auth user directly
+  const effectiveUser = user;
 
   useEffect(() => {
     const fetchEstablishmentId = async () => {
@@ -102,7 +100,7 @@ export function useUserEstablishment() {
     };
 
     fetchEstablishmentId();
-  }, [effectiveUser, toast, isImpersonating]);
+  }, [effectiveUser, toast]);
 
   return {
     establishmentId,

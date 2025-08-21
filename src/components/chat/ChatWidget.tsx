@@ -6,7 +6,6 @@ import { usePromoterContacts } from '@/hooks/promoter/usePromoterContacts';
 import { usePromoterRole } from '@/hooks/promoter/usePromoterRole';
 import { useToast } from '@/hooks/use-toast';
 import { useAuthenticatedUser } from '@/hooks/useAuthenticatedUser';
-import { useImpersonationState } from '@/hooks/useImpersonationState';
 import MessageComposer from '../promoter/communication/messages/MessageComposer';
 
 interface ChatWidgetProps {
@@ -25,10 +24,9 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({
   const { ensurePromoterRole } = usePromoterRole();
   const { toast } = useToast();
   const { user } = useAuthenticatedUser();
-  const { isImpersonating } = useImpersonationState();
 
   const handleSendMessage = async (venueId: string, content: string) => {
-    console.log('🚀 Starting message send process for venue:', venueId, 'impersonating:', isImpersonating);
+    console.log('🚀 Starting message send process for venue:', venueId);
     
     try {
       // Validate venue ID format and ensure it exists
@@ -53,17 +51,13 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({
         throw new Error("Authentication required to send messages");
       }
 
-      // Handle role activation differently for impersonation vs normal user
-      if (!isImpersonating) {
-        console.log('🔐 Activating promoter role for normal user');
-        try {
-          await ensurePromoterRole();
-        } catch (roleError: any) {
-          console.error('❌ Role activation failed:', roleError);
-          throw new Error("Failed to activate promoter role. Please try again.");
-        }
-      } else {
-        console.log('🎭 Skipping role activation for impersonated user');
+      // Activate promoter role
+      console.log('🔐 Activating promoter role');
+      try {
+        await ensurePromoterRole();
+      } catch (roleError: any) {
+        console.error('❌ Role activation failed:', roleError);
+        throw new Error("Failed to activate promoter role. Please try again.");
       }
 
       console.log('🧵 Creating new thread for venue:', venueId);

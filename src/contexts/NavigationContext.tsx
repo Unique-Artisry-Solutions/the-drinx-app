@@ -3,7 +3,6 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useDevelopmentMode } from './DevelopmentModeContext';
 import { useAuthenticatedUser } from '@/hooks/useAuthenticatedUser';
-import { useImpersonationState } from '@/hooks/useImpersonationState';
 import { UnifiedNavItem, UserType } from '@/types/navigation/NavigationTypes';
 import { getGuestNavItems } from '@/components/navigation/mobile/GuestNavItems';
 import { getUserNavItems } from '@/components/navigation/mobile/UserNavItems';
@@ -23,7 +22,6 @@ const NavigationContext = createContext<NavigationContextType | undefined>(undef
 export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
   const { isDevelopment, isInitialized } = useDevelopmentMode();
-  const { isImpersonating, currentUser } = useImpersonationState();
   
   // Safely get auth state with fallback for hot reload scenarios
   let authState;
@@ -36,11 +34,9 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   
   const { userType, isAuthenticated, authStable } = authState;
   
-  // Use impersonated user's type and authentication if impersonating
-  const effectiveUserType = isImpersonating && currentUser ? 
-    (currentUser.user_metadata?.user_type as UserType) || 'establishment' : 
-    userType;
-  const effectiveIsAuthenticated = isImpersonating ? !!currentUser : isAuthenticated;
+  // Use current user type and authentication directly
+  const effectiveUserType = userType;
+  const effectiveIsAuthenticated = isAuthenticated;
   
   const [navigationState, setNavigationState] = useState<NavigationContextType>({
     currentPath: location.pathname,
@@ -86,7 +82,7 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       userType: effectiveUserType,
       isAuthenticated: effectiveIsAuthenticated
     });
-  }, [location.pathname, effectiveUserType, effectiveIsAuthenticated, isInitialized, authStable, isImpersonating]);
+  }, [location.pathname, effectiveUserType, effectiveIsAuthenticated, isInitialized, authStable]);
 
   return (
     <NavigationContext.Provider value={navigationState}>
