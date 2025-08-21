@@ -109,15 +109,6 @@ export const MagicLinkHandler: React.FC<{ children: React.ReactNode }> = ({ chil
       authStateStable 
     });
     
-    // Check if this is an impersonation flow
-    const isImpersonation = sessionStorage.getItem('magic_link_impersonation') === 'true' ||
-                           sessionStorage.getItem('impersonation_active') === 'true';
-    
-    if (isImpersonation) {
-      console.log('🎭 MagicLinkHandler: Impersonation detected, redirecting to target user dashboard');
-      sessionStorage.removeItem('magic_link_impersonation');
-    }
-    
     const dashboardPath = 
       userType === 'admin' ? '/admin/system-breakdown' :
       userType === 'establishment' ? '/establishment/dashboard' :
@@ -125,9 +116,7 @@ export const MagicLinkHandler: React.FC<{ children: React.ReactNode }> = ({ chil
     
     console.log('🎯 MagicLinkHandler: Final redirect decision:', {
       userType,
-      dashboardPath,
-      isImpersonation,
-      targetEmail: sessionStorage.getItem('impersonation_target_email')
+      dashboardPath
     });
     
     navigate(dashboardPath, { replace: true });

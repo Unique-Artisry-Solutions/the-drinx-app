@@ -11,7 +11,6 @@ const SimplifiedAdminUsersPage: React.FC = () => {
   
   const { state, actions } = useSimpleAdmin('users');
   const { userType } = useAuthenticatedUser();
-  const canImpersonate = userType === 'admin';
 
   console.log('📊 SimplifiedAdminUsersPage state:', { 
     itemsCount: state.items?.length || 0, 
@@ -65,9 +64,9 @@ const SimplifiedAdminUsersPage: React.FC = () => {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => toast.info('User management actions coming soon')}
+          onClick={() => toast.info('User details view coming soon')}
         >
-          Manage
+          View Details
         </Button>
       )
     }
