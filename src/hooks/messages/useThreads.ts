@@ -35,7 +35,7 @@ export const useThreads = (userType: UserType, userId: string | undefined) => {
               last_message_at,
               created_at,
               updated_at,
-              establishments!venue_id(id, name),
+              establishments!fk_promoter_venue_threads_venue_id(id, name),
               profiles!promoter_id(id, display_name, username)
             `)
             .eq('promoter_id', userId)
@@ -73,7 +73,7 @@ export const useThreads = (userType: UserType, userId: string | undefined) => {
                 last_message_at,
                 created_at,
                 updated_at,
-                establishments!venue_id(id, name),
+                establishments!fk_promoter_venue_threads_venue_id(id, name),
                 profiles!promoter_id(id, display_name, username)
               `)
               .in('venue_id', establishmentIds)
