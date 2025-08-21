@@ -8,7 +8,7 @@ import { Search, MessageSquarePlus, RefreshCw, AlertCircle } from 'lucide-react'
 import { useAuth } from '@/contexts/auth';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useEstablishmentMessageSystem } from '@/hooks/establishment/useMessageSystem';
-import MessageThreadList from '@/components/promoter/communication/MessageThreadList';
+import EnhancedMessageThreadList from './EnhancedMessageThreadList';
 
 interface EstablishmentInboxProps {
   onSelectThread?: (threadId: string) => void;
@@ -22,6 +22,7 @@ const EstablishmentInbox: React.FC<EstablishmentInboxProps> = ({ onSelectThread 
     loading,
     error,
     markThreadAsRead,
+    sendMessage,
     refetchThreads
   } = useEstablishmentMessageSystem('establishment');
 
@@ -72,6 +73,11 @@ const EstablishmentInbox: React.FC<EstablishmentInboxProps> = ({ onSelectThread 
 
   const handleRefresh = () => {
     refetchThreads();
+  };
+
+  const handleSendMessage = async (threadId: string, content: string) => {
+    await sendMessage(threadId, content, user?.id || '');
+    refetchThreads(); // Refresh to show updated threads
   };
 
   // **PHASE 4 FIX**: Enhanced authentication check with debug info
@@ -149,29 +155,35 @@ const EstablishmentInbox: React.FC<EstablishmentInboxProps> = ({ onSelectThread 
           </TabsList>
           
           <TabsContent value="all">
-            <MessageThreadList 
+            <EnhancedMessageThreadList 
               conversations={filteredThreads} 
               onSelectConversation={handleSelectConversation}
+              onSendMessage={handleSendMessage}
               isLoading={loading}
               error={error}
+              userId={user?.id}
             />
           </TabsContent>
 
           <TabsContent value="unread">
-            <MessageThreadList 
+            <EnhancedMessageThreadList 
               conversations={filteredThreads.filter(c => !c.isRead)} 
               onSelectConversation={handleSelectConversation}
+              onSendMessage={handleSendMessage}
               isLoading={loading}
               error={error}
+              userId={user?.id}
             />
           </TabsContent>
 
           <TabsContent value="archived">
-            <MessageThreadList 
+            <EnhancedMessageThreadList 
               conversations={filteredThreads.filter(c => c.isArchived)} 
               onSelectConversation={handleSelectConversation}
+              onSendMessage={handleSendMessage}
               isLoading={loading}
               error={error}
+              userId={user?.id}
             />
           </TabsContent>
         </Tabs>
