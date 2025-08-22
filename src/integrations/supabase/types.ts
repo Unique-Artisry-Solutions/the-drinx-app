@@ -9205,6 +9205,13 @@ export type Database = {
         Args: { user_email: string }
         Returns: boolean
       }
+      merge_duplicate_threads: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          deleted_threads: string[]
+          merged_count: number
+        }[]
+      }
       purge_old_logs: {
         Args: Record<PropertyKey, never>
         Returns: undefined
