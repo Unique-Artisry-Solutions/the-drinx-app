@@ -1,7 +1,6 @@
 import React from 'react';
 import { useParams } from 'react-router-dom';
 import Layout from '@/components/Layout';
-import Breadcrumbs from '@/components/navigation/breadcrumbs/Breadcrumbs';
 import ThreadDetailView from '@/components/establishment/communication/ThreadDetailView';
 
 const MessageThreadPage: React.FC = () => {
@@ -23,7 +22,6 @@ const MessageThreadPage: React.FC = () => {
   return (
     <Layout>
       <div className="container mx-auto px-4 py-6">
-        <Breadcrumbs />
         <ThreadDetailView threadId={threadId} />
       </div>
     </Layout>

@@ -36,6 +36,7 @@ const ROUTE_CONFIGS = [
   { path: '/profile', label: 'Profile' },
   { path: '/admin', label: 'Admin' },
   { path: '/establishment', label: 'Establishment' },
+  { path: '/establishment/messages', label: 'Messages' },
   { path: '/promoter', label: 'Dashboard' },
   { path: '/promoter/settings', label: 'Settings' },
   { path: '/promoter/profile', label: 'Profile' },
@@ -120,6 +121,15 @@ export const buildBreadcrumbs = (
         currentPath === '/establishment/dashboard' || 
         currentPath === '/admin/system-breakdown' || 
         currentPath === '/explore') {
+      return;
+    }
+    
+    // Handle dynamic message thread routes
+    if (currentPath.match(/^\/establishment\/messages\/[a-zA-Z0-9-]+$/)) {
+      breadcrumbs.push({
+        path: currentPath,
+        label: 'Message Thread'
+      });
       return;
     }
     
