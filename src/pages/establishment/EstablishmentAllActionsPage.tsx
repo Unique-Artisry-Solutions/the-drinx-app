@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, MessageSquare, Star, Utensils, Tag, Route } from 'lucide-react';
+import { Calendar, MessageSquare, Star } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { useMessageSystem } from '@/hooks/messages/useMessageSystem';
@@ -25,22 +25,6 @@ const EstablishmentAllActionsPage: React.FC = () => {
     navigate('/establishment/dashboard');
   };
 
-  const handleTabChange = (tab: string) => {
-    // Navigation logic for quick action cards
-    switch (tab) {
-      case 'menu':
-        navigate('/establishment/menu');
-        break;
-      case 'promotions':
-        navigate('/establishment/promotions');
-        break;
-      case 'barCrawls':
-        navigate('/establishment/bar-crawls');
-        break;
-      default:
-        break;
-    }
-  };
 
   // Safe data handling with null checks and defaults
   const safeThreads = threads || [];
@@ -113,70 +97,22 @@ const EstablishmentAllActionsPage: React.FC = () => {
           </Card>
         </div>
 
-        {/* Main Content Layout */}
-        <div className={`${isMobile ? 'space-y-6' : 'grid grid-cols-1 lg:grid-cols-2 gap-6'}`}>
-          {/* Quick Actions Section */}
-          <div className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  Quick Actions
-                </CardTitle>
-                <CardDescription>
-                  Access establishment management features
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 gap-4">
-                  <Card className="p-4 hover:bg-accent cursor-pointer transition-colors" onClick={() => handleTabChange('menu')}>
-                    <div className="flex items-center gap-3">
-                      <Utensils className="h-5 w-5 text-primary" />
-                      <div>
-                        <h3 className="font-medium">Update Menu</h3>
-                        <p className="text-sm text-muted-foreground">Manage your establishment's menu items</p>
-                      </div>
-                    </div>
-                  </Card>
-                  <Card className="p-4 hover:bg-accent cursor-pointer transition-colors" onClick={() => handleTabChange('promotions')}>
-                    <div className="flex items-center gap-3">
-                      <Tag className="h-5 w-5 text-primary" />
-                      <div>
-                        <h3 className="font-medium">Manage Promotions</h3>
-                        <p className="text-sm text-muted-foreground">Create and edit promotional offers</p>
-                      </div>
-                    </div>
-                  </Card>
-                  <Card className="p-4 hover:bg-accent cursor-pointer transition-colors" onClick={() => handleTabChange('barCrawls')}>
-                    <div className="flex items-center gap-3">
-                      <Route className="h-5 w-5 text-primary" />
-                      <div>
-                        <h3 className="font-medium">Review Swig Circuit Requests</h3>
-                        <p className="text-sm text-muted-foreground">Manage bar crawl participation requests</p>
-                      </div>
-                    </div>
-                  </Card>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Messages Section */}
-          <div className="space-y-4">
-            <Card className="h-[600px]">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <MessageSquare className="h-5 w-5" />
-                  Messages
-                </CardTitle>
-                <CardDescription>
-                  Communicate with promoters and event organizers
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-0 h-[calc(100%-80px)]">
-                <MessagingSplitView />
-              </CardContent>
-            </Card>
-          </div>
+        {/* Messages Section - Full Width */}
+        <div className="space-y-4">
+          <Card className="h-[600px]">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MessageSquare className="h-5 w-5" />
+                Messages
+              </CardTitle>
+              <CardDescription>
+                Communicate with promoters and event organizers
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-0 h-[calc(100%-80px)]">
+              <MessagingSplitView />
+            </CardContent>
+          </Card>
         </div>
       </div>
     </Layout>
