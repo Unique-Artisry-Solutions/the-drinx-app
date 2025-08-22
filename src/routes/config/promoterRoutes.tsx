@@ -23,11 +23,13 @@ const NotificationTestingPage = lazy(() => import('@/pages/promoter/notification
 const PromoterFollowersPage = lazy(() => import('@/pages/promoter/PromoterFollowersPage'));
 const PromoterSubscribersPage = lazy(() => import('@/pages/promoter/PromoterSubscribersPage'));
 const PromoterAllActionsPage = lazy(() => import('@/pages/promoter/PromoterAllActionsPage'));
+const PromoterMessageThreadPage = lazy(() => import('@/pages/promoter/PromoterMessageThreadPage'));
 
 export const promoterRoutes: RouteObject[] = [
   { path: '/promoter', element: <PromoterDashboardPage /> }, // Dashboard is now the root
   { path: '/promoter/dashboard', element: <Navigate to="/promoter" replace /> }, // Redirect for backward compatibility
   { path: '/promoter/all-actions', element: <PromoterAllActionsPage /> },
+  { path: '/promoter/messages/:threadId', element: <PromoterMessageThreadPage /> },
   { path: '/promoter/profile', element: <PromoterProfile /> },
   { path: '/promoter/profile/edit', element: <PromoterProfileEdit /> },
   { path: '/promoter/settings', element: <PromoterSettingsPage /> },

@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/auth';
 import { Notification } from '@/types/notification';
 import { 
   Bell, AlertCircle, MessageCircle, 
@@ -14,6 +15,7 @@ interface NotificationContentProps {
 
 const NotificationContent: React.FC<NotificationContentProps> = ({ notification, onClick }) => {
   const navigate = useNavigate();
+  const { userType } = useAuth();
   
   const handleClick = () => {
     // Handle navigation for message-related notifications
@@ -24,7 +26,41 @@ const NotificationContent: React.FC<NotificationContentProps> = ({ notification,
       notification.title?.includes('Message from');
       
     if (isMessageNotification) {
-      navigate('/establishment/all-actions');
+      // Extract thread ID if available
+      const threadId = notification.metadata?.thread_id;
+      
+      // Navigate based on user type and thread availability
+      if (threadId) {
+        // Direct navigation to specific thread
+        switch (userType) {
+          case 'establishment':
+            navigate(`/establishment/messages/${threadId}`);
+            break;
+          case 'promoter':
+            navigate(`/promoter/messages/${threadId}`);
+            break;
+          case 'admin':
+            navigate('/admin/all-actions');
+            break;
+          default:
+            navigate('/individual/all-actions');
+        }
+      } else {
+        // Fallback to all-actions page with embedded messaging
+        switch (userType) {
+          case 'establishment':
+            navigate('/establishment/all-actions');
+            break;
+          case 'promoter':
+            navigate('/promoter/all-actions');
+            break;
+          case 'admin':
+            navigate('/admin/all-actions');
+            break;
+          default:
+            navigate('/individual/all-actions');
+        }
+      }
     }
     
     // Call the optional onClick prop
