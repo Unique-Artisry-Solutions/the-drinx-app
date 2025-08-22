@@ -1,20 +1,19 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, MessageSquare, Star, Clock, Eye } from 'lucide-react';
+import { Calendar, MessageSquare, Star, Utensils, Tag, Route } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { useMessageSystem } from '@/hooks/messages/useMessageSystem';
 import { useAuth } from '@/contexts/auth';
-import { ErrorBoundary } from '@/components/ErrorBoundary';
-import EstablishmentInbox from '@/components/establishment/communication/EstablishmentInbox';
+import MessagingSplitView from '@/components/establishment/communication/MessagingSplitView';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const EstablishmentAllActionsPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState('messages');
+  const isMobile = useIsMobile();
   
   const { 
     threads, 
@@ -24,6 +23,23 @@ const EstablishmentAllActionsPage: React.FC = () => {
 
   const handleBackToDashboard = () => {
     navigate('/establishment/dashboard');
+  };
+
+  const handleTabChange = (tab: string) => {
+    // Navigation logic for quick action cards
+    switch (tab) {
+      case 'menu':
+        navigate('/establishment/menu');
+        break;
+      case 'promotions':
+        navigate('/establishment/promotions');
+        break;
+      case 'barCrawls':
+        navigate('/establishment/bar-crawls');
+        break;
+      default:
+        break;
+    }
   };
 
   // Safe data handling with null checks and defaults
@@ -39,7 +55,7 @@ const EstablishmentAllActionsPage: React.FC = () => {
           <div>
             <h1 className="text-3xl font-bold text-foreground">All Actions</h1>
             <p className="text-muted-foreground mt-2">
-              Manage all pending items that require your attention
+              Manage all pending items and communications
             </p>
           </div>
           <Button variant="outline" onClick={handleBackToDashboard}>
@@ -97,118 +113,71 @@ const EstablishmentAllActionsPage: React.FC = () => {
           </Card>
         </div>
 
-        {/* Main Content Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="messages" className="flex items-center gap-2">
-              <MessageSquare className="h-4 w-4" />
-              Messages
-              {pendingMessages > 0 && (
-                <Badge variant="destructive" className="ml-1 px-1 py-0 text-xs">
-                  {pendingMessages}
-                </Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="bar-crawls" className="flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              Swig Circuits
-            </TabsTrigger>
-            <TabsTrigger value="reviews" className="flex items-center gap-2">
-              <Star className="h-4 w-4" />
-              Reviews  
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="messages" className="space-y-4">
+        {/* Main Content Layout */}
+        <div className={`${isMobile ? 'space-y-6' : 'grid grid-cols-1 lg:grid-cols-2 gap-6'}`}>
+          {/* Quick Actions Section */}
+          <div className="space-y-4">
             <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  Quick Actions
+                </CardTitle>
+                <CardDescription>
+                  Access establishment management features
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 gap-4">
+                  <Card className="p-4 hover:bg-accent cursor-pointer transition-colors" onClick={() => handleTabChange('menu')}>
+                    <div className="flex items-center gap-3">
+                      <Utensils className="h-5 w-5 text-primary" />
+                      <div>
+                        <h3 className="font-medium">Update Menu</h3>
+                        <p className="text-sm text-muted-foreground">Manage your establishment's menu items</p>
+                      </div>
+                    </div>
+                  </Card>
+                  <Card className="p-4 hover:bg-accent cursor-pointer transition-colors" onClick={() => handleTabChange('promotions')}>
+                    <div className="flex items-center gap-3">
+                      <Tag className="h-5 w-5 text-primary" />
+                      <div>
+                        <h3 className="font-medium">Manage Promotions</h3>
+                        <p className="text-sm text-muted-foreground">Create and edit promotional offers</p>
+                      </div>
+                    </div>
+                  </Card>
+                  <Card className="p-4 hover:bg-accent cursor-pointer transition-colors" onClick={() => handleTabChange('barCrawls')}>
+                    <div className="flex items-center gap-3">
+                      <Route className="h-5 w-5 text-primary" />
+                      <div>
+                        <h3 className="font-medium">Review Swig Circuit Requests</h3>
+                        <p className="text-sm text-muted-foreground">Manage bar crawl participation requests</p>
+                      </div>
+                    </div>
+                  </Card>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Messages Section */}
+          <div className="space-y-4">
+            <Card className="h-[600px]">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <MessageSquare className="h-5 w-5" />
-                  Promoter Messages
+                  Messages
                 </CardTitle>
                 <CardDescription>
-                  Manage communications with promoters and event organizers
+                  Communicate with promoters and event organizers
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <ErrorBoundary
-                  fallback={
-                    <div className="text-center py-8">
-                      <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                      <h3 className="text-lg font-medium text-muted-foreground">Unable to load messages</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Please refresh the page to try again
-                      </p>
-                    </div>
-                  }
-                >
-                  {messagesLoading ? (
-                    <div className="text-center py-8">
-                      <Clock className="h-12 w-12 text-muted-foreground mx-auto mb-4 animate-spin" />
-                      <h3 className="text-lg font-medium text-muted-foreground">Loading messages...</h3>
-                    </div>
-                  ) : messagesError ? (
-                    <div className="text-center py-8">
-                      <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                      <h3 className="text-lg font-medium text-muted-foreground">Error loading messages</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {messagesError}
-                      </p>
-                    </div>
-                  ) : (
-                    <EstablishmentInbox />
-                  )}
-                </ErrorBoundary>
+              <CardContent className="p-0 h-[calc(100%-80px)]">
+                <MessagingSplitView />
               </CardContent>
             </Card>
-          </TabsContent>
-
-          <TabsContent value="bar-crawls" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5" />
-                  Swig Circuit Requests
-                </CardTitle>
-                <CardDescription>
-                  Review and manage bar crawl event requests
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="text-center py-8">
-                  <Clock className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-muted-foreground">No pending requests</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Bar crawl requests will appear here when submitted by promoters
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="reviews" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Star className="h-5 w-5" />
-                  Customer Reviews
-                </CardTitle>
-                <CardDescription>
-                  View and respond to customer feedback and ratings
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="text-center py-8">
-                  <Eye className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-muted-foreground">No new reviews</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Customer reviews and ratings will appear here
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+          </div>
+        </div>
       </div>
     </Layout>
   );
