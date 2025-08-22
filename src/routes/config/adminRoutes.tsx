@@ -20,6 +20,7 @@ import AdminRewardsPage from '@/pages/admin/AdminRewardsPage';
 import SystemAnalyticsPage from '@/pages/admin/SystemAnalyticsPage';
 import AdminLogsPage from '@/pages/admin/AdminLogsPage';
 import ContentModerationPage from '@/pages/admin/ContentModerationPage';
+import AdminAllActionsPage from '@/pages/admin/AdminAllActionsPage';
 
 // Lazy loaded components
 const AdminDashboard = lazy(() => import('@/pages/admin/AdminDashboard'));
@@ -54,6 +55,7 @@ export const adminRoutes: RouteObject[] = [
       // Dashboard & System
       { index: true, element: <AdminSystemOverviewPage /> },
       { path: 'dashboard', element: <AdminDashboard /> },
+      { path: 'all-actions', element: <AdminAllActionsPage /> },
       { path: 'analytics', element: <SystemAnalyticsPage /> },
       { path: 'system-breakdown', element: <AdminSystemOverviewPage /> },
       { path: 'system-configuration', element: <SystemConfigurationPage /> },

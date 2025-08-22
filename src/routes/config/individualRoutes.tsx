@@ -8,6 +8,7 @@ import Explore from '@/pages/Explore';
 import ProfilePage from '@/pages/ProfilePage';
 import NotificationsPage from '@/pages/notifications/NotificationsPage';
 import PromoterDetailsPage from '@/pages/promoter/PromoterDetailsPage';
+import IndividualAllActionsPage from '@/pages/individual/IndividualAllActionsPage';
 
 export const individualRoutes: RouteObject[] = [
   {
@@ -15,6 +16,14 @@ export const individualRoutes: RouteObject[] = [
     element: (
       <ProtectedRoute requireAuth={true} fallbackPath="/">
         <Explore />
+      </ProtectedRoute>
+    )
+  },
+  {
+    path: '/individual/all-actions',
+    element: (
+      <ProtectedRoute requireAuth={true} fallbackPath="/">
+        <IndividualAllActionsPage />
       </ProtectedRoute>
     )
   },
