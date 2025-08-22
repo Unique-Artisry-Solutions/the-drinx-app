@@ -1,17 +1,63 @@
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '../use-toast';
 import { useRetry } from '../useRetry';
 import { MessageThread } from './types';
 
+// Cache to prevent concurrent thread creation for the same venue
+const threadCreationCache = new Map<string, Promise<string | null>>();
+
 export const useThreadCreation = () => {
   const { toast } = useToast();
   const { executeWithRetry } = useRetry();
   const [isCreating, setIsCreating] = useState(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const createThread = async (venueId: string): Promise<string | null> => {
+    // Create cache key for this venue and user combination
+    const user = await supabase.auth.getUser();
+    if (!user.data.user) {
+      toast({
+        title: "Authentication Error",
+        description: "You must be logged in to start a conversation.",
+        variant: "destructive"
+      });
+      return null;
+    }
+
+    const cacheKey = `${user.data.user.id}-${venueId}`;
+    
+    // Check if there's already a thread creation in progress for this venue
+    if (threadCreationCache.has(cacheKey)) {
+      console.log('🧵 Thread creation already in progress, waiting for result...');
+      return threadCreationCache.get(cacheKey)!;
+    }
+
+    // Create the thread creation promise
+    const threadCreationPromise = createThreadInternal(venueId, user.data.user.id);
+    
+    // Cache the promise to prevent concurrent requests
+    threadCreationCache.set(cacheKey, threadCreationPromise);
+    
+    try {
+      const result = await threadCreationPromise;
+      return result;
+    } finally {
+      // Clean up cache after completion (success or failure)
+      threadCreationCache.delete(cacheKey);
+    }
+  };
+
+  const createThreadInternal = async (venueId: string, userId: string): Promise<string | null> => {
     setIsCreating(true);
+    
+    // Cancel any previous request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    
+    abortControllerRef.current = new AbortController();
     
     console.log('🧵 Creating thread for venue:', venueId);
     
@@ -27,38 +73,14 @@ export const useThreadCreation = () => {
         throw new Error("Venue ID must be a valid UUID");
       }
 
-      const user = await supabase.auth.getUser();
-      if (!user.data.user) {
-        throw new Error("User not authenticated");
-      }
+      console.log('🧵 Creating thread with user:', userId, 'venue:', venueId);
 
-      console.log('🧵 Creating thread with user:', user.data.user.id, 'venue:', venueId);
-
-      // Check if thread already exists
-      const { data: existingThread } = await supabase
-        .from('promoter_venue_threads')
-        .select('id')
-        .eq('venue_id', venueId)
-        .eq('promoter_id', user.data.user.id)
-        .eq('is_archived', false)
-        .maybeSingle();
-
-      if (existingThread) {
-        console.log('🧵 Thread already exists:', existingThread.id);
-        return existingThread.id;
-      }
-
-      // Create new thread with retry logic
-      const { data, error } = await executeWithRetry(async () =>
-        supabase
-          .from('promoter_venue_threads')
-          .insert({
-            venue_id: venueId,
-            promoter_id: user.data.user.id,
-            is_archived: false
-          })
-          .select()
-          .single()
+      // Use the new database function to safely get or create thread
+      const { data: threadId, error } = await executeWithRetry(async () =>
+        supabase.rpc('get_or_create_thread', {
+          p_promoter_id: userId,
+          p_venue_id: venueId
+        })
       );
 
       if (error) {
@@ -66,8 +88,12 @@ export const useThreadCreation = () => {
         throw error;
       }
 
-      console.log('🧵 Thread created successfully:', data.id);
-      return data.id;
+      if (!threadId) {
+        throw new Error("Failed to create or retrieve thread");
+      }
+
+      console.log('🧵 Thread obtained successfully:', threadId);
+      return threadId;
     } catch (err: any) {
       console.error('🧵 Error creating thread:', err);
       
@@ -82,6 +108,10 @@ export const useThreadCreation = () => {
         errorMessage = "Venue not found. Please try selecting a different venue.";
       } else if (err.code?.startsWith('23')) {
         errorMessage = "Database constraint error. Please contact support.";
+      } else if (err.name === 'AbortError') {
+        // Don't show error for aborted requests
+        console.log('🧵 Thread creation aborted');
+        return null;
       }
       
       toast({
@@ -92,6 +122,7 @@ export const useThreadCreation = () => {
       return null;
     } finally {
       setIsCreating(false);
+      abortControllerRef.current = null;
     }
   };
 

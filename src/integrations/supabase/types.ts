@@ -9165,6 +9165,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_or_create_thread: {
+        Args: { p_promoter_id: string; p_venue_id: string }
+        Returns: string
+      }
       get_user_retention: {
         Args: { p_end_date: string; p_start_date: string }
         Returns: {
