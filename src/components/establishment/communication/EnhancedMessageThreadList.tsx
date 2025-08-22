@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { MessageThread } from '@/hooks/messages/types';
@@ -23,6 +24,7 @@ const EnhancedMessageThreadList: React.FC<EnhancedMessageThreadListProps> = ({
   error = null,
   userId
 }) => {
+  const navigate = useNavigate();
   const [expandedThreads, setExpandedThreads] = useState<Set<string>>(new Set());
 
   const handleToggleExpand = useCallback((threadId: string, e: React.MouseEvent) => {
@@ -143,7 +145,7 @@ const EnhancedMessageThreadList: React.FC<EnhancedMessageThreadListProps> = ({
                   size="sm"
                   onClick={(e) => {
                     e.stopPropagation();
-                    onSelectConversation(conversation.id);
+                    navigate(`/establishment/messages/${conversation.id}`);
                   }}
                   className="flex items-center gap-1 text-muted-foreground hover:text-foreground"
                 >

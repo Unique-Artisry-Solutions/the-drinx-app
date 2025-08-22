@@ -12,6 +12,7 @@ const EstablishmentAllActionsPage = lazy(() => import('@/pages/establishment/Est
 const EstablishmentReviewsPage = lazy(() => import('@/pages/establishment/EstablishmentReviewsPage'));
 const EstablishmentMocktailSuggestionsPage = lazy(() => import('@/pages/establishment/EstablishmentMocktailSuggestionsPage'));
 const EstablishmentBarCrawlRequestsPage = lazy(() => import('@/pages/establishment/EstablishmentBarCrawlRequestsPage'));
+const MessageThreadPage = lazy(() => import('@/pages/establishment/MessageThreadPage'));
 
 export const establishmentRoutes: RouteObject[] = [
   {
@@ -119,6 +120,18 @@ export const establishmentRoutes: RouteObject[] = [
         redirectTo="/login"
       >
         <EstablishmentBarCrawlRequestsPage />
+      </RouteProtectionWrapper>
+    )
+  },
+  {
+    path: '/establishment/messages/:threadId',
+    element: (
+      <RouteProtectionWrapper 
+        requireAuth={true} 
+        allowedUserTypes={['establishment']}
+        redirectTo="/login"
+      >
+        <MessageThreadPage />
       </RouteProtectionWrapper>
     )
   }
