@@ -18,7 +18,7 @@ interface ThreadDetailViewProps {
 
 const ThreadDetailView: React.FC<ThreadDetailViewProps> = ({ threadId }) => {
   const navigate = useNavigate();
-  const { user } = useAuthenticatedUser();
+  const { user, userType } = useAuthenticatedUser();
   
   const {
     messages,
@@ -30,8 +30,8 @@ const ThreadDetailView: React.FC<ThreadDetailViewProps> = ({ threadId }) => {
     retryFetch
   } = useMessageThread(threadId);
 
-  // Setup message sending with establishment system
-  const { sendMessage: establishmentSendMessage } = useEstablishmentMessageSystem('establishment');
+  // Setup message sending with user-type aware system
+  const { sendMessage: establishmentSendMessage } = useEstablishmentMessageSystem(userType);
 
   const handleSendMessage = useCallback(async (content: string) => {
     if (!threadId || !content.trim()) return;
@@ -50,7 +50,7 @@ const ThreadDetailView: React.FC<ThreadDetailViewProps> = ({ threadId }) => {
   }, [fetchMessages]);
 
   const handleBackToAllActions = () => {
-    navigate('/establishment/all-actions');
+    navigate(`/${userType}/all-actions`);
   };
 
   const handleRefresh = () => {
