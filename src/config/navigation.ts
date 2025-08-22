@@ -1,5 +1,5 @@
 import { UnifiedNavItem } from '@/types/navigation/NavigationTypes';
-import { Home, Search, User, Settings, Bell, Calendar, MapPin, Users, BarChart3, Shield, Target, Route, UserCheck, DollarSign, Timer, TrendingUp, Mail, UserPlus } from 'lucide-react';
+import { Home, Search, User, Settings, Bell, Calendar, MapPin, Users, BarChart3, Shield, Target, Route, UserCheck, DollarSign, Timer, TrendingUp, Mail, UserPlus, MessageSquare } from 'lucide-react';
 
 export const guestNavItems: UnifiedNavItem[] = [
   {
@@ -87,6 +87,11 @@ export const establishmentNavItems: UnifiedNavItem[] = [
     label: 'Events',
     path: '/establishment/events',
     icon: Calendar
+  },
+  {
+    label: 'Messages',
+    path: '/establishment/communication',
+    icon: MessageSquare
   }
 ];
 

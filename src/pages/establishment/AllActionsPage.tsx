@@ -3,7 +3,7 @@ import Layout from '@/components/Layout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
-import { CalendarClock, Users, Award, GlassWater, Clock, TagIcon, ArrowRight } from 'lucide-react';
+import { CalendarClock, Users, Award, GlassWater, Clock, TagIcon, ArrowRight, MessageSquare } from 'lucide-react';
 
 const AllActionsPage = () => {
   return (
@@ -29,6 +29,14 @@ const AllActionsPage = () => {
             icon={<GlassWater className="h-5 w-5" />}
             to="/establishment/mocktail-menu"
             completion={60}
+          />
+          
+          <ActionCard 
+            title="Communication Hub"
+            description="Manage conversations with promoters and partners"
+            icon={<MessageSquare className="h-5 w-5" />}
+            to="/establishment/communication"
+            count={3}
           />
           
           <ActionCard 

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { buttonVariants } from '@/components/ui/button';
-import { BarChart4, Store, Route, Utensils, Tag, Settings } from 'lucide-react';
+import { BarChart4, Store, Route, Utensils, Tag, Settings, MessageSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
 
@@ -25,6 +25,7 @@ const QuickNavigation: React.FC<QuickNavigationProps> = ({
   // Quick navigation links for establishment
   const quickLinks = [
     { label: 'All Actions', section: 'allActions', icon: Store },
+    { label: 'Messages', section: 'communication', icon: MessageSquare, path: '/establishment/communication' },
     { label: 'Analytics', section: 'analytics', icon: BarChart4 },
     { label: 'Mocktail Menu', section: 'menu', icon: Utensils, tab: 'menu' },
     { label: 'Promotions', section: 'promotions', icon: Tag, tab: 'promotions' },
@@ -33,8 +34,12 @@ const QuickNavigation: React.FC<QuickNavigationProps> = ({
   ];
 
   const handleLinkClick = (link: any) => {
+    // If it has a path property, navigate to that path
+    if (link.path) {
+      navigate(link.path);
+    }
     // If it has a tab property, use the tab change handler
-    if (link.tab) {
+    else if (link.tab) {
       handleTabChange(link.tab);
     } 
     // Otherwise use the section click handler for in-page navigation
