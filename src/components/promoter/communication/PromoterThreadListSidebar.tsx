@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -23,8 +23,17 @@ const PromoterThreadListSidebar: React.FC<PromoterThreadListSidebarProps> = ({
     threads, 
     loading, 
     error, 
-    markThreadAsRead
+    markThreadAsRead,
+    refetchThreads
   } = useMessageSystem('promoter');
+
+  // Fetch threads when component mounts or user changes
+  useEffect(() => {
+    if (user?.id) {
+      console.log('🔄 PromoterThreadListSidebar: Fetching threads for user:', user.id);
+      refetchThreads();
+    }
+  }, [user?.id, refetchThreads]);
 
   const handleThreadClick = async (threadId: string) => {
     try {
@@ -36,7 +45,8 @@ const PromoterThreadListSidebar: React.FC<PromoterThreadListSidebarProps> = ({
   };
 
   const handleRefresh = () => {
-    // Refresh functionality can be added later
+    console.log('🔄 PromoterThreadListSidebar: Manual refresh requested');
+    refetchThreads();
   };
 
   return (
