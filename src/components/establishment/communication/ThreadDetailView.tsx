@@ -1,10 +1,10 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { useMessageThread } from '@/hooks/messages/useMessageThread';
-import { useMessageSending } from '@/hooks/messages/useMessageSending';
+import { useEstablishmentMessageSystem } from '@/hooks/establishment/useMessageSystem';
 import { useAuthenticatedUser } from '@/hooks/useAuthenticatedUser';
 import ThreadHeader from '@/components/promoter/communication/messages/ThreadHeader';
 import MessageList from '@/components/promoter/communication/messages/MessageList';
@@ -30,19 +30,20 @@ const ThreadDetailView: React.FC<ThreadDetailViewProps> = ({ threadId }) => {
     retryFetch
   } = useMessageThread(threadId);
 
-  // Setup message sending
-  const sendMessage = async (threadId: string, content: string, userId: string) => {
-    // Implementation would use the establishment message system to send message
-    console.log('Sending message:', { threadId, content, userId });
-  };
+  // Setup message sending with establishment system
+  const { sendMessage: establishmentSendMessage } = useEstablishmentMessageSystem('establishment');
 
-  const handleSendMessage = useMessageSending(
-    sendMessage,
-    user?.id,
-    async () => {
-      await fetchMessages();
+  const handleSendMessage = useCallback(async (content: string) => {
+    if (!threadId || !content.trim()) return;
+    
+    try {
+      await establishmentSendMessage(threadId, content);
+      // Messages will be updated via real-time subscription
+    } catch (error) {
+      // Error handling is done in the hook
+      console.error('Error in thread detail send message:', error);
     }
-  );
+  }, [threadId, establishmentSendMessage]);
 
   useEffect(() => {
     fetchMessages();
@@ -56,9 +57,8 @@ const ThreadDetailView: React.FC<ThreadDetailViewProps> = ({ threadId }) => {
     fetchMessages();
   };
 
-  const handleSendMessageWrapper = async (content: string) => {
-    await handleSendMessage(threadId, content);
-  };
+  // Updated to use the direct handler
+  const handleSendMessageWrapper = handleSendMessage;
 
   return (
     <div className="max-w-4xl mx-auto">

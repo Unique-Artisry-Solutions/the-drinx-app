@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { MessageThread } from '@/hooks/messages/types';
+import { useMessages } from '@/hooks/messages/useMessages';
+import { useEnhancedThreadSubscription } from '@/hooks/messages/useEnhancedThreadSubscription';
 import { AlertCircle, ChevronDown, ChevronRight, MessageSquare, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import ThreadQuickReply from './ThreadQuickReply';
@@ -26,6 +28,16 @@ const EnhancedMessageThreadList: React.FC<EnhancedMessageThreadListProps> = ({
 }) => {
   const navigate = useNavigate();
   const [expandedThreads, setExpandedThreads] = useState<Set<string>>(new Set());
+  const { fetchMessages } = useMessages('establishment');
+  
+  // Get the currently expanded thread (only one can be expanded at a time)
+  const expandedThreadId = Array.from(expandedThreads)[0] || null;
+  
+  // Set up enhanced real-time subscription for the expanded thread
+  const { messageStatuses } = useEnhancedThreadSubscription(expandedThreadId, () => {
+    // Re-fetch conversations when new messages arrive
+    window.location.reload(); // Simple refresh for now - could be optimized
+  }, userId);
 
   const handleToggleExpand = useCallback((threadId: string, e: React.MouseEvent) => {
     e.stopPropagation();

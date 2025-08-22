@@ -76,7 +76,7 @@ const EstablishmentInbox: React.FC<EstablishmentInboxProps> = ({ onSelectThread 
   };
 
   const handleSendMessage = async (threadId: string, content: string) => {
-    await sendMessage(threadId, content, user?.id || '');
+    await sendMessage(threadId, content);
     refetchThreads(); // Refresh to show updated threads
   };
 
