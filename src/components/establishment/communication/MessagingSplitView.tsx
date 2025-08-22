@@ -40,7 +40,7 @@ const MessagingSplitView: React.FC = () => {
 
   // Desktop: split view
   return (
-    <div className="flex h-[calc(100vh-200px)] gap-4">
+    <div className="flex h-full gap-4">
       {/* Left Sidebar - Thread List */}
       <div className="w-96 flex-shrink-0">
         <EstablishmentThreadListSidebar 

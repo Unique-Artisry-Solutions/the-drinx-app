@@ -3,98 +3,109 @@ import Layout from '@/components/Layout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
-import { CalendarClock, Users, Award, GlassWater, Clock, TagIcon, ArrowRight, MessageSquare } from 'lucide-react';
+import { CalendarClock, Users, Award, GlassWater, Clock, TagIcon, ArrowRight } from 'lucide-react';
+import MessagingSplitView from '@/components/establishment/communication/MessagingSplitView';
 
 const AllActionsPage = () => {
   return (
     <Layout>
       <div className="container mx-auto p-4">
         <div className="flex flex-col items-start mb-6">
-          <h1 className="text-2xl font-bold">Establishment Actions</h1>
-          <p className="text-muted-foreground">Manage all actions related to your establishment</p>
+          <h1 className="text-2xl font-bold">Establishment Dashboard</h1>
+          <p className="text-muted-foreground">Manage your establishment and communications in one place</p>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-          <ActionCard 
-            title="Update Profile"
-            description="Complete or update your establishment profile information"
-            icon={<Users className="h-5 w-5" />}
-            to="/establishment/profile"
-            completion={85}
-          />
+        {/* Two-column layout on desktop, stacked on mobile */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Left Column - Quick Actions */}
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-4">
+                <ActionCard 
+                  title="Update Profile"
+                  description="Complete or update your establishment profile information"
+                  icon={<Users className="h-5 w-5" />}
+                  to="/establishment/profile"
+                  completion={85}
+                />
+                
+                <ActionCard 
+                  title="Mocktail Menu"
+                  description="Update your mocktail menu offerings"
+                  icon={<GlassWater className="h-5 w-5" />}
+                  to="/establishment/mocktail-menu"
+                  completion={60}
+                />
+                
+                <ActionCard 
+                  title="Promotional Offers"
+                  description="Create and manage special promotions"
+                  icon={<TagIcon className="h-5 w-5" />}
+                  to="/establishment/promotions"
+                  count={2}
+                />
+                
+                <ActionCard 
+                  title="Swig Circuit Requests"
+                  description="Review and manage Swig Circuit participation requests"
+                  icon={<CalendarClock className="h-5 w-5" />}
+                  to="/establishment/bar-crawl-requests"
+                  count={1}
+                  isHighlighted
+                />
+                
+                <ActionCard 
+                  title="View Analytics"
+                  description="Check visitor statistics and engagement"
+                  icon={<Award className="h-5 w-5" />}
+                  to="/establishment/analytics"
+                />
+                
+                <ActionCard 
+                  title="Operating Hours"
+                  description="Set your establishment's operating hours"
+                  icon={<Clock className="h-5 w-5" />}
+                  to="/establishment/profile"
+                />
+              </div>
+            </div>
+            
+            <div>
+              <h3 className="text-lg font-medium mb-4">Recent Notifications</h3>
+              <div className="space-y-4">
+                <NotificationCard
+                  title="New Swig Circuit Request"
+                  description="Your establishment has been included in 'Holiday Mocktail Crawl'"
+                  time="2 hours ago"
+                  to="/establishment/bar-crawl-requests"
+                  isNew
+                />
+                
+                <NotificationCard
+                  title="Profile Completion Reminder"
+                  description="Complete your profile to increase visibility to potential customers"
+                  time="1 day ago"
+                  to="/establishment/profile"
+                />
+                
+                <NotificationCard
+                  title="New Mocktail Suggestion"
+                  description="A customer suggested a new mocktail for your menu"
+                  time="3 days ago"
+                  to="/establishment/mocktail-suggestions"
+                />
+              </div>
+            </div>
+          </div>
           
-          <ActionCard 
-            title="Mocktail Menu"
-            description="Update your mocktail menu offerings"
-            icon={<GlassWater className="h-5 w-5" />}
-            to="/establishment/mocktail-menu"
-            completion={60}
-          />
-          
-          <ActionCard 
-            title="Communication Hub"
-            description="Manage conversations with promoters and partners"
-            icon={<MessageSquare className="h-5 w-5" />}
-            to="/establishment/communication"
-            count={3}
-          />
-          
-          <ActionCard 
-            title="Promotional Offers"
-            description="Create and manage special promotions"
-            icon={<TagIcon className="h-5 w-5" />}
-            to="/establishment/promotions"
-            count={2}
-          />
-          
-          <ActionCard 
-            title="Swig Circuit Requests"
-            description="Review and manage Swig Circuit participation requests"
-            icon={<CalendarClock className="h-5 w-5" />}
-            to="/establishment/bar-crawl-requests"
-            count={1}
-            isHighlighted
-          />
-          
-          <ActionCard 
-            title="View Analytics"
-            description="Check visitor statistics and engagement"
-            icon={<Award className="h-5 w-5" />}
-            to="/establishment/analytics"
-          />
-          
-          <ActionCard 
-            title="Operating Hours"
-            description="Set your establishment's operating hours"
-            icon={<Clock className="h-5 w-5" />}
-            to="/establishment/profile"
-          />
-        </div>
-        
-        <h3 className="text-lg font-medium mb-4 text-left">Recent Notifications</h3>
-        
-        <div className="space-y-4">
-          <NotificationCard
-            title="New Swig Circuit Request"
-            description="Your establishment has been included in 'Holiday Mocktail Crawl'"
-            time="2 hours ago"
-            to="/establishment/bar-crawl-requests"
-            isNew
-          />
-          
-          <NotificationCard
-            title="Profile Completion Reminder"
-            description="Complete your profile to increase visibility to potential customers"
-            time="1 day ago"
-            to="/establishment/profile"
-          />
-          
-          <NotificationCard
-            title="New Mocktail Suggestion"
-            description="A customer suggested a new mocktail for your menu"
-            time="3 days ago"
-            to="/establishment/mocktail-suggestions"
-          />
+          {/* Right Column - Messaging Interface */}
+          <div className="space-y-4">
+            <h2 className="text-xl font-semibold">Messages</h2>
+            <div className="h-[800px]">
+              <MessagingSplitView />
+            </div>
+          </div>
         </div>
       </div>
     </Layout>
