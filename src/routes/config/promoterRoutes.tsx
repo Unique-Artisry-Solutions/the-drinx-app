@@ -29,6 +29,7 @@ export const promoterRoutes: RouteObject[] = [
   { path: '/promoter', element: <PromoterDashboardPage /> }, // Dashboard is now the root
   { path: '/promoter/dashboard', element: <Navigate to="/promoter" replace /> }, // Redirect for backward compatibility
   { path: '/promoter/all-actions', element: <PromoterAllActionsPage /> },
+  { path: '/promoter/messages', element: <Navigate to="/promoter/all-actions" replace /> }, // Redirect to all-actions for messaging
   { path: '/promoter/messages/:threadId', element: <PromoterMessageThreadPage /> },
   { path: '/promoter/profile', element: <PromoterProfile /> },
   { path: '/promoter/profile/edit', element: <PromoterProfileEdit /> },

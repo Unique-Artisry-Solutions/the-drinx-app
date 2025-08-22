@@ -31,7 +31,11 @@ const ThreadDetailView: React.FC<ThreadDetailViewProps> = ({ threadId }) => {
   } = useMessageThread(threadId);
 
   // Setup message sending with user-type aware system
-  const { sendMessage: establishmentSendMessage } = useEstablishmentMessageSystem(userType);
+  // Cast userType to the expected MessageSystem UserType (only 'promoter' | 'establishment')
+  const messageSystemUserType = (userType === 'promoter' || userType === 'establishment') 
+    ? userType 
+    : 'establishment'; // fallback to establishment for other user types
+  const { sendMessage: establishmentSendMessage } = useEstablishmentMessageSystem(messageSystemUserType);
 
   const handleSendMessage = useCallback(async (content: string) => {
     if (!threadId || !content.trim()) return;
