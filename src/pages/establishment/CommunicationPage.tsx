@@ -1,8 +1,7 @@
 
 import React from 'react';
 import ResponsiveLayout from '@/components/layout/ResponsiveLayout';
-import { Card, CardContent } from '@/components/ui/card';
-import EstablishmentInbox from '@/components/establishment/communication/EstablishmentInbox';
+import MessagingSplitView from '@/components/establishment/communication/MessagingSplitView';
 import { useUserEstablishment } from '@/hooks/establishment/useUserEstablishment';
 import { AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -12,9 +11,9 @@ const EstablishmentCommunicationPage: React.FC = () => {
 
   return (
     <ResponsiveLayout>
-      <div className="container mx-auto px-4 py-8 space-y-6 max-w-6xl">
+      <div className="container mx-auto px-4 py-8 space-y-6 max-w-7xl">
         <h1 className="text-2xl font-bold">Communication Hub</h1>
-        <p className="text-gray-600">
+        <p className="text-muted-foreground">
           Manage your conversations with promoters interested in your venue.
         </p>
         
@@ -29,13 +28,12 @@ const EstablishmentCommunicationPage: React.FC = () => {
         )}
         
         {isLoading ? (
-          <Card>
-            <CardContent className="p-6 text-center">
-              <p className="text-gray-500">Loading your communications...</p>
-            </CardContent>
-          </Card>
+          <div className="flex items-center justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <span className="ml-2">Loading your communications...</span>
+          </div>
         ) : (
-          <EstablishmentInbox />
+          <MessagingSplitView />
         )}
       </div>
     </ResponsiveLayout>
