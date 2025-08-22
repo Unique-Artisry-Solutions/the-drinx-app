@@ -13,6 +13,9 @@ export interface Message {
     display_name: string;
     username: string;
   };
+  status?: 'sending' | 'sent' | 'delivered' | 'read' | 'failed';
+  isOptimistic?: boolean;
+  read_at?: string;
 }
 
 export interface MessageThread {

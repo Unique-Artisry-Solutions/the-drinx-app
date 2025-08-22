@@ -48,8 +48,16 @@ export const useOptimisticMessages = () => {
       )
     );
 
-    // Combine and sort by timestamp
-    const combined = [...realMessages, ...pendingOptimistic];
+    // Convert real messages to OptimisticMessage format and combine
+    const realAsOptimistic: OptimisticMessage[] = realMessages.map(msg => ({
+      ...msg,
+      status: (['sending', 'sent', 'failed'].includes(msg.status || '')) 
+        ? (msg.status as 'sending' | 'sent' | 'failed') 
+        : 'sent',
+      isOptimistic: false
+    }));
+
+    const combined = [...realAsOptimistic, ...pendingOptimistic];
     return combined.sort((a, b) => new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime());
   }, [optimisticMessages]);
 

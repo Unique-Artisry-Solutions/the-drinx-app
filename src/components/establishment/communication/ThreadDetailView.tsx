@@ -95,7 +95,11 @@ const ThreadDetailView: React.FC<ThreadDetailViewProps> = ({ threadId }) => {
                   <p className="text-muted-foreground">No messages in this conversation yet.</p>
                 </div>
               ) : (
-                <MessageList messages={messages} userId={user?.id} />
+                <MessageList 
+                  messages={messages} 
+                  userId={user?.id} 
+                  showDeliveryStatus={true}
+                />
               )}
             </div>
           </MessageErrorBoundary>
@@ -105,6 +109,8 @@ const ThreadDetailView: React.FC<ThreadDetailViewProps> = ({ threadId }) => {
             <MessageInput 
               onSendMessage={handleSendMessageWrapper}
               disabled={loading}
+              threadId={threadId}
+              placeholder="Type your message..."
             />
           </div>
         </CardContent>

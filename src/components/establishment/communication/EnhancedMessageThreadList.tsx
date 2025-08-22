@@ -7,7 +7,7 @@ import { useMessages } from '@/hooks/messages/useMessages';
 import { useEnhancedThreadSubscription } from '@/hooks/messages/useEnhancedThreadSubscription';
 import { AlertCircle, ChevronDown, ChevronRight, MessageSquare, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import ThreadQuickReply from './ThreadQuickReply';
+import EnhancedThreadQuickReply from './EnhancedThreadQuickReply';
 
 interface EnhancedMessageThreadListProps {
   conversations: MessageThread[];
@@ -170,10 +170,13 @@ const EnhancedMessageThreadList: React.FC<EnhancedMessageThreadListProps> = ({
             {/* Expanded Reply Section */}
             {isExpanded && (
               <div className="border-t bg-muted/30">
-                <ThreadQuickReply
+                <EnhancedThreadQuickReply
                   threadId={conversation.id}
-                  userId={userId}
                   onSendMessage={handleSendReply}
+                  isExpanded={isExpanded}
+                  onToggleExpand={() => handleToggleExpand(conversation.id, {} as React.MouseEvent)}
+                  onClose={() => setExpandedThreads(new Set())}
+                  userId={userId}
                 />
               </div>
             )}
