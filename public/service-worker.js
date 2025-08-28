@@ -1,5 +1,16 @@
 // Service Worker Configuration
-const SW_VERSION = '1.1.0';
+const SW_VERSION = '1.2.0';
+const CACHE_VERSION = 'v1.2.0';
+const CACHE_STATIC = `static-${CACHE_VERSION}`;
+const CACHE_RUNTIME = `runtime-${CACHE_VERSION}`;
+
+// Assets to precache
+const PRECACHE_ASSETS = [
+  '/',
+  '/offline.html',
+  '/favicon.ico',
+  '/manifest.json'
+];
 
 // ====== Debugging System ======
 const DEBUG_LEVELS = {
@@ -58,34 +69,59 @@ swLogger.info('Service Worker initialization started', { version: SW_VERSION });
 
 // ====== Lifecycle Management ======
 
-// Install: Set up service worker
+// Install: Set up service worker and precache assets
 self.addEventListener('install', event => {
-  swLogger.info('Installing Service Worker');
-  // Force activation
-  self.skipWaiting();
-  swLogger.info('Skip waiting called - will activate immediately');
-});
-
-// Activate: Take control of clients
-self.addEventListener('activate', event => {
-  swLogger.info('Service Worker activated');
+  swLogger.info('Installing Service Worker', { version: SW_VERSION });
   
   event.waitUntil(
-    self.clients.claim()
-      .then(() => {
-        swLogger.info('Successfully claimed all clients');
-        return self.clients.matchAll();
-      })
-      .then(clients => {
-        clientCommunication.notifyAll(clients, {
-          type: 'SW_ACTIVATED',
-          timestamp: new Date().toISOString()
-        });
-        swLogger.info(`Notified ${clients.length} clients about activation`);
-      })
-      .catch(err => {
-        swLogger.error('Error claiming clients:', { error: err.toString() });
-      })
+    Promise.all([
+      // Precache essential assets
+      caches.open(CACHE_STATIC).then(cache => {
+        swLogger.info('Precaching static assets');
+        return cache.addAll(PRECACHE_ASSETS);
+      }),
+      // Force activation
+      self.skipWaiting()
+    ]).then(() => {
+      swLogger.info('Service Worker installation complete');
+    }).catch(error => {
+      swLogger.error('Service Worker installation failed', { error: error.toString() });
+    })
+  );
+});
+
+// Activate: Take control of clients and clean up old caches
+self.addEventListener('activate', event => {
+  swLogger.info('Service Worker activated', { version: SW_VERSION });
+  
+  event.waitUntil(
+    Promise.all([
+      // Clean up old caches
+      caches.keys().then(cacheNames => {
+        return Promise.all(
+          cacheNames.map(cacheName => {
+            if (!cacheName.includes(CACHE_VERSION)) {
+              swLogger.info('Deleting old cache', { cacheName });
+              return caches.delete(cacheName);
+            }
+          })
+        );
+      }),
+      // Take control of clients
+      self.clients.claim()
+    ]).then(() => {
+      swLogger.info('Successfully claimed all clients and cleaned old caches');
+      return self.clients.matchAll();
+    }).then(clients => {
+      clientCommunication.notifyAll(clients, {
+        type: 'SW_ACTIVATED',
+        timestamp: new Date().toISOString(),
+        version: SW_VERSION
+      });
+      swLogger.info(`Notified ${clients.length} clients about activation`);
+    }).catch(err => {
+      swLogger.error('Error during activation:', { error: err.toString() });
+    })
   );
 });
 
@@ -185,6 +221,22 @@ const clientCommunication = {
       swLogger.debug('Error sending response:', { error: error.toString() });
       return false;
     }
+  },
+  
+  // Relay notification data to clients
+  relayNotificationToClients: async (data) => {
+    try {
+      const clients = await self.clients.matchAll();
+      if (clients.length > 0) {
+        await clientCommunication.notifyAll(clients, {
+          type: 'PUSH_NOTIFICATION_RECEIVED',
+          data,
+          timestamp: new Date().toISOString()
+        });
+      }
+    } catch (error) {
+      swLogger.error('Error relaying notification to clients:', { error: error.toString() });
+    }
   }
 };
 
@@ -199,6 +251,26 @@ const notificationHelpers = {
     vibrate: [200, 100, 200],
     requireInteraction: true
   }),
+  
+  // Parse notification data from push event
+  parseNotificationData: (event) => {
+    let title = 'New Notification';
+    let options = notificationHelpers.createDefaultOptions();
+    let data = null;
+    
+    try {
+      if (event.data) {
+        const payload = event.data.json();
+        title = payload.title || title;
+        options = { ...options, ...payload.options };
+        data = payload.data;
+      }
+    } catch (error) {
+      swLogger.warn('Failed to parse push event data', { error: error.toString() });
+    }
+    
+    return { title, options, data };
+  },
   
   // Show a notification with diagnostic info
   showNotification: async (title, options) => {
@@ -474,6 +546,84 @@ setInterval(() => {
   });
 }, 25 * 60 * 1000);
 
+// ====== Caching Strategies ======
+
+// Helper to determine if request is for navigation
+const isNavigationRequest = (request) => {
+  return request.mode === 'navigate' || 
+         (request.method === 'GET' && request.headers.get('accept')?.includes('text/html'));
+};
+
+// Helper to determine if request is for static asset
+const isStaticAsset = (url) => {
+  const staticExtensions = ['.js', '.css', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.woff', '.woff2'];
+  return staticExtensions.some(ext => url.pathname.endsWith(ext));
+};
+
+// Fetch event handler with caching strategies
+self.addEventListener('fetch', event => {
+  const { request } = event;
+  const url = new URL(request.url);
+  
+  // Skip non-GET requests and cross-origin requests
+  if (request.method !== 'GET' || url.origin !== location.origin) {
+    return;
+  }
+  
+  if (isNavigationRequest(request)) {
+    // Network-first strategy for HTML pages
+    event.respondWith(
+      fetch(request)
+        .then(response => {
+          // Clone and cache successful responses
+          if (response.status === 200) {
+            const responseClone = response.clone();
+            caches.open(CACHE_RUNTIME).then(cache => {
+              cache.put(request, responseClone);
+            });
+          }
+          return response;
+        })
+        .catch(() => {
+          // Try cache first, then offline fallback
+          return caches.match(request)
+            .then(cachedResponse => {
+              if (cachedResponse) {
+                return cachedResponse;
+              }
+              // Return offline page for navigation requests
+              return caches.match('/offline.html');
+            });
+        })
+    );
+  } else if (isStaticAsset(url)) {
+    // Cache-first strategy for static assets
+    event.respondWith(
+      caches.match(request).then(cachedResponse => {
+        if (cachedResponse) {
+          return cachedResponse;
+        }
+        
+        // Not in cache, fetch and cache
+        return fetch(request).then(response => {
+          // Don't cache non-successful responses
+          if (response.status !== 200) {
+            return response;
+          }
+          
+          const responseClone = response.clone();
+          caches.open(CACHE_STATIC).then(cache => {
+            cache.put(request, responseClone);
+          });
+          
+          return response;
+        });
+      })
+    );
+  }
+  // For other requests (API calls, etc.), let them go through normally
+});
+
 // ====== CORS Headers ======
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -481,4 +631,7 @@ const corsHeaders = {
 };
 
 // Log service worker initialization complete
-swLogger.info('Service Worker initialization complete');
+swLogger.info('Service Worker initialization complete', { 
+  version: SW_VERSION,
+  cacheVersion: CACHE_VERSION 
+});
