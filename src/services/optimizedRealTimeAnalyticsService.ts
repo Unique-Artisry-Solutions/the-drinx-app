@@ -1,5 +1,6 @@
 
 import { supabase } from '@/lib/supabase';
+import { SecureAnalyticsService } from './secureAnalyticsService';
 
 export interface OptimizedRealTimeMetrics {
   activeUsers: number;
@@ -251,15 +252,14 @@ export async function getOptimizedEventAnalyticsData(eventId?: string): Promise<
 }
 
 export async function refreshAnalyticsMaterializedViews(): Promise<void> {
-  console.info('Refreshing analytics materialized views...');
+  console.info('Delegating materialized views refresh to secure service...');
   
   try {
-    // In a real implementation, this would refresh database materialized views
-    // For now, we'll simulate the operation
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    console.info('Analytics materialized views refreshed successfully');
+    // Use the secure service that routes through protected edge function
+    await SecureAnalyticsService.refreshMaterializedViews();
+    console.info('Analytics materialized views refreshed successfully via secure service');
   } catch (error) {
-    console.error('Error refreshing materialized views:', error);
+    console.error('Error refreshing materialized views via secure service:', error);
     throw error;
   }
 }
