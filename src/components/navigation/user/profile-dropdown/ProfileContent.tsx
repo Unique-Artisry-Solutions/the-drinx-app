@@ -8,6 +8,7 @@ import ProfileHeader from './ProfileHeader';
 import ProfileMenuItem from './ProfileMenuItem';
 import ProfileTabOptions from './ProfileTabOptions';
 import { profileDropdownStyles } from './profileDropdownStyles';
+import { PushNotificationToggle } from '@/components/notifications/PushNotificationToggle';
 
 interface TabOption {
   value: string;
@@ -70,7 +71,10 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
         isActive={location.pathname === getNotificationsPath()}
         customColor={userType === 'promoter' ? "text-purple-600" : undefined}
       >
-        Notifications
+        <div className="flex items-center justify-between w-full">
+          <span>Notifications</span>
+          <PushNotificationToggle isDarkTheme={isDarkTheme} />
+        </div>
       </ProfileMenuItem>
       
       <ProfileMenuItem 

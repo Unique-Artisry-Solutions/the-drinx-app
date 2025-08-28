@@ -20,7 +20,7 @@ export function usePushNotifications() {
   const { toast } = useToast();
   const { hasServiceWorker, setHasServiceWorker, refreshPermissionStatus } = useServiceWorkerStatus();
   const { registerServiceWorker, unregisterAllServiceWorkers } = useServiceWorkerRegistration();
-  const { createPushSubscription, resetSubscription } = usePushSubscription();
+  const { ensureHealthySubscription, unsubscribe } = usePushSubscription();
 
   const checkPushSupport = useCallback(async (): Promise<boolean> => {
     try {
@@ -58,7 +58,7 @@ export function usePushNotifications() {
       setSubscription(null);
       setError(null);
       
-      await resetSubscription();
+      await ensureHealthySubscription();
       
       await unregisterAllServiceWorkers();
       
@@ -68,7 +68,7 @@ export function usePushNotifications() {
       setError(error instanceof Error ? error.message : 'Failed to reset subscription state');
       setIsLoading(false);
     }
-  }, [resetSubscription, unregisterAllServiceWorkers]);
+  }, [ensureHealthySubscription, unregisterAllServiceWorkers]);
 
   const subscribeToNotifications = useCallback(async (): Promise<void> => {
     try {
@@ -99,10 +99,11 @@ export function usePushNotifications() {
       setHasServiceWorker(true);
       debugLogger.debug('notifications', 'Service worker ready:', registration);
       
-      const savedSubscription = await createPushSubscription(registration, user.id);
+      const subscriptionSuccessful = await ensureHealthySubscription();
       
-      if (savedSubscription) {
-        setSubscription(savedSubscription);
+      if (subscriptionSuccessful) {
+        // The subscription will be available from the database query below
+        // ensureHealthySubscription just ensures it's valid, doesn't return data
       }
       
       toast({
@@ -125,7 +126,7 @@ export function usePushNotifications() {
     } finally {
       setIsLoading(false);
     }
-  }, [checkPermissions, checkPushSupport, createPushSubscription, registerServiceWorker, setHasServiceWorker, toast]);
+  }, [checkPermissions, checkPushSupport, ensureHealthySubscription, registerServiceWorker, setHasServiceWorker, toast]);
 
   useEffect(() => {
     let isMounted = true;

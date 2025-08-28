@@ -19,5 +19,8 @@ export { useAuthenticatedUser } from './useAuthenticatedUser';
 // Direct notifications hook
 export { useDirectNotifications } from './useDirectNotifications';
 
+// Push subscription hook
+export { usePushSubscription } from './notifications/usePushSubscription';
+
 // Keep legacy useNotifications for backward compatibility
 export { useNotifications } from './useNotifications';
