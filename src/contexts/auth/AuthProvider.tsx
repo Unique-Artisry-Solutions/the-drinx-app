@@ -15,7 +15,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(true);
   const [isEmailVerified, setIsEmailVerified] = useState(false);
   const [isVerificationEmailSent, setIsVerificationEmailSent] = useState(false);
-  const [authError, setAuthError] = useState<any | null>(null);
+  const [authError, setAuthError] = useState<Error | null>(null);
   const [authStable, setAuthStable] = useState(false);
   const [userType, setUserType] = useState<'individual' | 'establishment' | 'promoter' | 'admin'>('individual');
   const [navigationReady, setNavigationReady] = useState(false);
@@ -87,9 +87,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         sessionPersistenceService.clearSession();
       }
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('🔐 AuthProvider - Initialization failed:', error);
-      setAuthError(new Error(`Initialization failed: ${error.message}`));
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      setAuthError(new Error(`Initialization failed: ${errorMessage}`));
       setSession(null);
       setUser(null);
       setUserType('individual');
@@ -191,13 +192,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (error) throw error;
       
       return { data, error: null };
-    } catch (error: any) {
-      setAuthError(error);
-      return { data: null, error };
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error('Sign in failed');
+      setAuthError(err);
+      return { data: null, error: err };
     }
   }, []);
 
-  const signUp = useCallback(async (formData: any) => {
+  const signUp = useCallback(async (formData: { email: string; password: string; options?: { data?: Record<string, unknown> } }) => {
     try {
       setAuthError(null);
       const { data, error } = await supabase.auth.signUp(formData);
@@ -206,9 +208,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       setIsVerificationEmailSent(true);
       return { data, error: null };
-    } catch (error: any) {
-      setAuthError(error);
-      throw error;
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error('Sign up failed');
+      setAuthError(err);
+      throw err;
     }
   }, []);
 
@@ -217,9 +220,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setAuthError(null);
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
-    } catch (error: any) {
-      setAuthError(error);
-      console.error('Sign out error:', error);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error('Sign out failed');
+      setAuthError(err);
+      console.error('Sign out error:', err);
     }
   }, []);
 
@@ -232,8 +236,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setIsEmailVerified(isVerified);
       
       return { isEmailVerified: isVerified };
-    } catch (error: any) {
-      setAuthError(error);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error('Session refresh failed');
+      setAuthError(err);
       return { isEmailVerified: false };
     }
   }, []);
@@ -257,19 +262,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       setIsVerificationEmailSent(true);
       debouncedToast.success('Verification email sent', 'Please check your inbox');
-    } catch (error: any) {
-      setAuthError(error);
-      throw error;
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error('Send verification email failed');
+      setAuthError(err);
+      throw err;
     }
   }, []);
 
-  const updateUserProfile = useCallback(async (data: any) => {
+  const updateUserProfile = useCallback(async (data: Record<string, unknown>) => {
     try {
       const { error } = await supabase.auth.updateUser(data);
       if (error) throw error;
-    } catch (error: any) {
-      setAuthError(error);
-      throw error;
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error('Update profile failed');
+      setAuthError(err);
+      throw err;
     }
   }, []);
 
@@ -277,9 +284,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) throw error;
-    } catch (error: any) {
-      setAuthError(error);
-      throw error;
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error('Update password failed');
+      setAuthError(err);
+      throw err;
     }
   }, []);
 

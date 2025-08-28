@@ -44,9 +44,9 @@ export const useEstablishmentPromotions = (establishmentId: string) => {
       })) as Promotion[];
       
       setPromotions(processedData);
-    } catch (err) {
-      console.error('Error fetching promotions:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch promotions');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch promotions';
+      setError(errorMessage);
       toast({
         title: 'Error',
         description: 'Failed to load promotions. Please try again.',
@@ -93,14 +93,15 @@ export const useEstablishmentPromotions = (establishmentId: string) => {
       });
       
       return typedData;
-    } catch (err) {
-      console.error('Error adding promotion:', err);
+    } catch (error: unknown) {
+      console.error('Error adding promotion:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to add promotion';
       toast({
         title: 'Error',
-        description: err instanceof Error ? err.message : 'Failed to add promotion',
+        description: errorMessage,
         variant: 'destructive'
       });
-      throw err;
+      throw error;
     }
   };
 
@@ -134,14 +135,15 @@ export const useEstablishmentPromotions = (establishmentId: string) => {
       });
       
       return typedData;
-    } catch (err) {
-      console.error('Error updating promotion:', err);
+    } catch (error: unknown) {
+      console.error('Error updating promotion:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update promotion';
       toast({
         title: 'Error',
-        description: err instanceof Error ? err.message : 'Failed to update promotion',
+        description: errorMessage,
         variant: 'destructive'
       });
-      throw err;
+      throw error;
     }
   };
   
@@ -163,14 +165,15 @@ export const useEstablishmentPromotions = (establishmentId: string) => {
         title: 'Success',
         description: 'The promotion has been removed successfully',
       });
-    } catch (err) {
-      console.error('Error removing promotion:', err);
+    } catch (error: unknown) {
+      console.error('Error removing promotion:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to remove promotion';
       toast({
         title: 'Error',
-        description: err instanceof Error ? err.message : 'Failed to remove promotion',
+        description: errorMessage,
         variant: 'destructive'
       });
-      throw err;
+      throw error;
     }
   };
   
@@ -204,14 +207,15 @@ export const useEstablishmentPromotions = (establishmentId: string) => {
       });
       
       return typedData;
-    } catch (err) {
-      console.error('Error toggling promotion status:', err);
+    } catch (error: unknown) {
+      console.error('Error toggling promotion status:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update promotion status';
       toast({
         title: 'Error',
-        description: err instanceof Error ? err.message : 'Failed to update promotion status',
+        description: errorMessage,
         variant: 'destructive'
       });
-      throw err;
+      throw error;
     }
   };
   
@@ -228,14 +232,14 @@ export const useEstablishmentPromotions = (establishmentId: string) => {
       if (error) throw new Error(error.message);
       
       return data as PromotionAnalytics;
-    } catch (err) {
-      console.error('Error fetching promotion analytics:', err);
+    } catch (error: unknown) {
+      console.error('Error fetching promotion analytics:', error);
       toast({
         title: 'Error',
         description: 'Failed to load promotion analytics',
         variant: 'destructive'
       });
-      throw err;
+      throw error;
     }
   };
 

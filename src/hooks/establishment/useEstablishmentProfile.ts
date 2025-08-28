@@ -143,7 +143,7 @@ export const useEstablishmentProfile = (establishmentId?: string) => {
         if (establishment.hours) {
           try {
             if (Array.isArray(establishment.hours)) {
-              const formattedHours: BusinessHour[] = establishment.hours.map((hour: any) => ({
+              const formattedHours: BusinessHour[] = (establishment.hours as Array<Record<string, unknown>>).map((hour) => ({
                 day: String(hour.day || ''),
                 openTime: String(hour.openTime || '09:00'),
                 closeTime: String(hour.closeTime || '17:00')
@@ -168,8 +168,8 @@ export const useEstablishmentProfile = (establishmentId?: string) => {
             else {
               setBusinessHours(defaultBusinessHours);
             }
-          } catch (e) {
-            console.error('Error parsing hours:', e);
+          } catch (error: unknown) {
+            console.error('Error parsing hours:', error);
             setBusinessHours(defaultBusinessHours);
           }
         } else {
@@ -253,9 +253,9 @@ export const useEstablishmentProfile = (establishmentId?: string) => {
                 if (userData?.display_name) {
                   formattedBarCrawls[i].organizer = userData.display_name;
                 }
-              } catch (err) {
-                console.error('Error fetching organizer:', err);
-              }
+                } catch (error: unknown) {
+                  console.error('Error fetching organizer:', error);
+                }
             }
           }
           
@@ -265,9 +265,10 @@ export const useEstablishmentProfile = (establishmentId?: string) => {
         }
         
         fetchLoyaltyProgramData(establishmentId);
-      } catch (err: any) {
-        console.error('Error fetching establishment data:', err);
-        setError(err.message || 'Failed to load establishment data');
+    } catch (error: unknown) {
+      console.error('Error fetching establishment data:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      setError(errorMessage);
         
         setName("Your Establishment");
         setAddress("123 Main St, Anytown USA");

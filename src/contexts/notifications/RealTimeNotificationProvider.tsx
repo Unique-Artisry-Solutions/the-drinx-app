@@ -12,11 +12,11 @@ export interface NotificationContextType {
   unreadCount: number;
   isLoading: boolean;
   error: string | null;
-  connectionState: any;
+  connectionState: unknown;
   queueSize: number;
   isRealTimeEnabled: boolean;
   lastSync: Date | null;
-  presenceState: any;
+  presenceState: unknown;
   markAsRead: (id: string) => Promise<void>;
   markAllAsRead: () => Promise<void>;
   refetch: () => Promise<void>;
@@ -327,16 +327,16 @@ export const RealTimeNotificationProvider: React.FC<RealTimeNotificationProvider
       realTimeFollowerNotificationService.setToast(toast);
       
       // Subscribe to promoter notifications if user is a follower
-      const handleFollowerNotification = (notification: any) => {
+      const handleFollowerNotification = (notification: Record<string, unknown>) => {
         // Check for duplicates first
         const unifiedNotification: Notification = {
           id: `follower-${Date.now()}`,
-          title: notification.title,
-          content: notification.content,
-          priority: notification.priority,
+          title: notification.title as string,
+          content: notification.content as string,
+          priority: notification.priority as 'low' | 'medium' | 'high' | 'urgent',
           created_at: new Date().toISOString(),
           is_read: false,
-          metadata: notification.metadata
+          metadata: notification.metadata as Record<string, unknown>
         };
 
         if (!shouldProcessNotification(unifiedNotification)) {

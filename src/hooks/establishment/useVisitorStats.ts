@@ -76,8 +76,8 @@ export const useVisitorStats = (establishmentId?: string) => {
             error: null
           });
         }
-      } catch (err) {
-        console.error('Error fetching visitor stats:', err);
+      } catch (error: unknown) {
+        console.error('Error fetching visitor stats:', error);
         setVisitorStats(prev => ({
           ...prev,
           isLoading: false,
