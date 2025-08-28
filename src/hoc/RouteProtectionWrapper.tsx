@@ -19,7 +19,7 @@ export const RouteProtectionWrapper: React.FC<RouteProtectionWrapperProps> = ({
   redirectTo = '/login',
   fallbackComponent = null
 }) => {
-const { user, session, userType, isLoading, authStable, isAuthenticated } = useAuthenticatedUser();
+const { user, session, userType, isLoading, authStable, isAuthenticated, isReady } = useAuthenticatedUser();
   const location = useLocation();
 
   // Debug logging for route protection
@@ -30,28 +30,21 @@ const { user, session, userType, isLoading, authStable, isAuthenticated } = useA
     isAuthenticated,
     userType,
     isLoading,
-    authStable
+    authStable,
+    isReady,
+    hasUser: !!user,
+    hasSession: !!session
   });
 
-// Wait for initialization/loading
-  if (isLoading) {
+// Wait for auth system to be ready
+  if (!isReady) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-spiritless-pink border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Wait for auth to stabilize
-  if (!authStable) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-spiritless-pink border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="mt-4 text-gray-600">Verifying authentication...</p>
+          <p className="mt-4 text-gray-600">
+            {isLoading ? 'Loading...' : !authStable ? 'Verifying authentication...' : 'Preparing dashboard...'}
+          </p>
         </div>
       </div>
     );

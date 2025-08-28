@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,6 +16,7 @@ const AdminLogin: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { signIn, user, userType, isAuthenticated, isLoading, navigationReady } = useAuth();
   const { isDevelopment } = useDevelopmentMode();
+  const navigate = useNavigate();
 
   // Pre-fill credentials in development mode
   useEffect(() => {
@@ -29,10 +31,9 @@ const AdminLogin: React.FC = () => {
     // Check if user is already logged in as admin
     if (isAuthenticated && user && userType === 'admin' && navigationReady) {
       console.log('AdminLogin - User already authenticated as admin, navigating to dashboard');
-      // Force navigation to admin dashboard for already-authenticated admin users
-      window.location.href = '/admin/system-breakdown';
+      navigate('/admin/system-breakdown', { replace: true });
     }
-  }, [isAuthenticated, user, userType, navigationReady]);
+  }, [isAuthenticated, user, userType, navigationReady, navigate]);
 
 
   const handleLogin = async (e: React.FormEvent) => {
