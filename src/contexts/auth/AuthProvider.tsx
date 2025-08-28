@@ -1,8 +1,8 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef, startTransition } from 'react';
 import { Session, User, AuthError } from '@supabase/supabase-js';
-import { supabase } from '@/lib/supabase';
 import { AuthState, AuthActions, AuthContextType } from './types';
 import { sessionPersistenceService } from '@/services/SessionPersistenceService';
+import { serviceRegistryImpl, type IAuthService } from '@/services/ServiceRegistryImpl';
 import { authCache } from './authCache';
 import { debouncedToast } from '@/utils/debouncedToast';
 import { inferUserType } from '@/utils/auth/admin';
@@ -23,17 +23,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [authStateStable, setAuthStateStable] = useState(false);
   
   const initializationRef = useRef(false);
+  const [authService, setAuthService] = useState<IAuthService | null>(null);
 
-  // Initialize auth state
+  // Initialize services and auth state
   const initializeAuth = useCallback(async () => {
     if (initializationRef.current) return;
     initializationRef.current = true;
 
-    console.log('🔐 AuthProvider - Starting initialization');
+    console.log('🔐 AuthProvider - Starting initialization with ServiceRegistry');
     setIsLoading(true);
     setAuthError(null);
 
     try {
+      // Initialize service registry and get auth service
+      await serviceRegistryImpl.initialize();
+      const auth = serviceRegistryImpl.getAuthService();
+      
+      if (!auth) {
+        throw new Error('Auth service not available from registry');
+      }
+      
+      setAuthService(auth);
       // **PHASE 1 FIX**: Check for DevBypass session recovery before normal initialization
       const shouldRecover = await (async () => {
         try {
@@ -63,7 +73,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       }
 
-      const { data: { session: currentSession }, error } = await supabase.auth.getSession();
+      const { data: { session: currentSession }, error } = await auth.getSession();
       
       if (error) {
         console.error('🔐 AuthProvider - Session fetch error:', error);
@@ -107,9 +117,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Handle auth state changes
   useEffect(() => {
+    if (!authService) return;
+    
     console.log('🔐 AuthProvider - Setting up auth state listener');
     
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, newSession) => {
+    const { data: { subscription } } = authService.onAuthStateChange((event, newSession) => {
       console.log('🔐 AuthProvider - Auth state changed:', event, !!newSession);
       
       if (event === 'SIGNED_IN' && newSession?.user) {
@@ -165,7 +177,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => {
       subscription.unsubscribe();
     };
-  }, [initializeAuth]);
+  }, [initializeAuth, authService]);
 
   // State stabilization mechanism
   useEffect(() => {
@@ -183,11 +195,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [isTransitioning, session, user, userType]);
 
-  // Auth actions
+  // Auth actions using service registry
   const signIn = useCallback(async (email: string, password: string) => {
+    if (!authService) {
+      const err = new Error('Auth service not available');
+      setAuthError(err);
+      return { data: null, error: err };
+    }
+    
     try {
       setAuthError(null);
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await authService.signInWithPassword({ email, password });
       
       if (error) throw error;
       
@@ -197,12 +215,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setAuthError(err);
       return { data: null, error: err };
     }
-  }, []);
+  }, [authService]);
 
   const signUp = useCallback(async (formData: { email: string; password: string; options?: { data?: Record<string, unknown> } }) => {
+    if (!authService) {
+      const err = new Error('Auth service not available');
+      setAuthError(err);
+      throw err;
+    }
+    
     try {
       setAuthError(null);
-      const { data, error } = await supabase.auth.signUp(formData);
+      const { data, error } = await authService.signUp(formData);
       
       if (error) throw error;
       
@@ -213,23 +237,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setAuthError(err);
       throw err;
     }
-  }, []);
+  }, [authService]);
 
   const signOut = useCallback(async () => {
+    if (!authService) {
+      const err = new Error('Auth service not available');
+      setAuthError(err);
+      return;
+    }
+    
     try {
       setAuthError(null);
-      const { error } = await supabase.auth.signOut();
+      const { error } = await authService.signOut();
       if (error) throw error;
     } catch (error: unknown) {
       const err = error instanceof Error ? error : new Error('Sign out failed');
       setAuthError(err);
       console.error('Sign out error:', err);
     }
-  }, []);
+  }, [authService]);
 
   const refreshSession = useCallback(async () => {
+    if (!authService) {
+      const err = new Error('Auth service not available');
+      setAuthError(err);
+      return { isEmailVerified: false };
+    }
+    
     try {
-      const { data, error } = await supabase.auth.refreshSession();
+      const { data, error } = await authService.refreshSession();
       if (error) throw error;
       
       const isVerified = data.session?.user?.email_confirmed_at !== null;
@@ -241,7 +277,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setAuthError(err);
       return { isEmailVerified: false };
     }
-  }, []);
+  }, [authService]);
 
   const recoverAuthState = useCallback(async () => {
     console.log('AuthProvider - Manual auth recovery requested');
@@ -251,8 +287,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [initializeAuth]);
 
   const sendVerificationEmail = useCallback(async (email: string) => {
+    if (!authService) {
+      const err = new Error('Auth service not available');
+      setAuthError(err);
+      throw err;
+    }
+    
     try {
-      const { error } = await supabase.auth.resend({ 
+      const { error } = await authService.resend({ 
         type: 'signup', 
         email,
         options: { emailRedirectTo: `${window.location.origin}/?email_confirmed=true` }
@@ -267,39 +309,51 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setAuthError(err);
       throw err;
     }
-  }, []);
+  }, [authService]);
 
   const updateUserProfile = useCallback(async (data: Record<string, unknown>) => {
+    if (!authService) {
+      const err = new Error('Auth service not available');
+      setAuthError(err);
+      throw err;
+    }
+    
     try {
-      const { error } = await supabase.auth.updateUser(data);
+      const { error } = await authService.updateUser(data);
       if (error) throw error;
     } catch (error: unknown) {
       const err = error instanceof Error ? error : new Error('Update profile failed');
       setAuthError(err);
       throw err;
     }
-  }, []);
+  }, [authService]);
 
   const updatePassword = useCallback(async (newPassword: string) => {
+    if (!authService) {
+      const err = new Error('Auth service not available');
+      setAuthError(err);
+      throw err;
+    }
+    
     try {
-      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      const { error } = await authService.updateUser({ password: newPassword });
       if (error) throw error;
     } catch (error: unknown) {
       const err = error instanceof Error ? error : new Error('Update password failed');
       setAuthError(err);
       throw err;
     }
-  }, []);
+  }, [authService]);
 
   const switchRole = useCallback(async (role: 'individual' | 'establishment' | 'promoter') => {
-    if (!user) {
-      throw new Error('No authenticated user');
+    if (!user || !authService) {
+      throw new Error('No authenticated user or auth service not available');
     }
 
     try {
       setIsTransitioning(true);
       
-      const { error } = await supabase.rpc('switch_active_role', { 
+      const { error } = await authService.rpc('switch_active_role', { 
         role_to_activate: role 
       });
       
@@ -318,7 +372,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } finally {
       setIsTransitioning(false);
     }
-  }, [user]);
+  }, [user, authService]);
 
   const value: AuthContextType = {
     session,

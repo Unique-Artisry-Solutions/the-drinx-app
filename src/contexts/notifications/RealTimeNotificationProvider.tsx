@@ -3,7 +3,7 @@ import React, { createContext, useContext, useEffect, useState, useRef, useCallb
 import { useUnifiedNotifications } from '@/hooks/realtime/useUnifiedNotifications';
 import { Notification } from '@/types/notification';
 import { useAuthenticatedUser } from '@/hooks/useAuthenticatedUser';
-import { realTimeFollowerNotificationService } from '@/services/RealTimeFollowerNotificationService';
+import { serviceRegistryImpl, type IRealTimeNotificationService } from '@/services/ServiceRegistryImpl';
 import { useToast } from '@/hooks/use-toast';
 import { toastDeduplication } from '@/utils/toastDeduplication';
 
@@ -51,6 +51,7 @@ export const RealTimeNotificationProvider: React.FC<RealTimeNotificationProvider
 }) => {
   const { user, isAuthenticated } = useAuthenticatedUser();
   const { toast } = useToast();
+  const [realTimeService, setRealTimeService] = useState<IRealTimeNotificationService | null>(null);
   
   // Generate unique tab ID for synchronization
   const [tabId] = useState(() => `tab-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`);
@@ -316,15 +317,28 @@ export const RealTimeNotificationProvider: React.FC<RealTimeNotificationProvider
     return delay + (Math.random() * 1000); // Add jitter
   }, []);
 
-  // Set up follower notification service integration with reconnection
+  // Initialize service and set up follower notification service integration with reconnection
   useEffect(() => {
     if (!isAuthenticated || !user) return;
+
+    const initializeServices = async () => {
+      await serviceRegistryImpl.initialize();
+      const service = serviceRegistryImpl.getRealTimeNotificationService();
+      setRealTimeService(service);
+    };
+
+    initializeServices();
+  }, [isAuthenticated, user]);
+
+  // Set up follower notification service integration with reconnection
+  useEffect(() => {
+    if (!isAuthenticated || !user || !realTimeService) return;
 
     let reconnectAttempts = 0;
     const maxReconnectAttempts = 5;
 
     const setupService = () => {
-      realTimeFollowerNotificationService.setToast(toast);
+      realTimeService.setToast(toast);
       
       // Subscribe to promoter notifications if user is a follower
       const handleFollowerNotification = (notification: Record<string, unknown>) => {
@@ -376,9 +390,9 @@ export const RealTimeNotificationProvider: React.FC<RealTimeNotificationProvider
         clearTimeout(reconnectTimeoutRef.current);
         reconnectTimeoutRef.current = null;
       }
-      realTimeFollowerNotificationService.cleanup();
+      realTimeService.cleanup();
     };
-  }, [isAuthenticated, user, toast, shouldProcessNotification, unifiedNotifications.handleOfflineNotification, broadcastNotification, exponentialBackoff]);
+  }, [isAuthenticated, user, realTimeService, toast, shouldProcessNotification, unifiedNotifications.handleOfflineNotification, broadcastNotification, exponentialBackoff]);
 
   // Notification batching for performance with visibility pause
   useEffect(() => {
