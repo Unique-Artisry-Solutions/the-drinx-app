@@ -9316,6 +9316,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      anonymize_device_data: {
+        Args: { device_data: Json }
+        Returns: Json
+      }
       anonymize_user_data: {
         Args: { p_tables?: string[]; p_user_id: string }
         Returns: string
