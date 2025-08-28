@@ -11,13 +11,23 @@ export const inferUserType = (
   user: User | null
 ): 'individual' | 'establishment' | 'promoter' | 'admin' => {
   if (!user) return 'individual';
+  
+  // First check user metadata for user_type
   const meta = user.user_metadata?.user_type as
     | 'individual'
     | 'establishment'
     | 'promoter'
     | 'admin'
     | undefined;
-  const normalized = meta === 'establishment' || meta === 'promoter' || meta === 'admin' ? meta : 'individual';
+  
+  // Trust metadata if it's a valid type, especially for admin
+  if (meta === 'admin' || meta === 'establishment' || meta === 'promoter') {
+    return meta;
+  }
+  
+  // Secondary check for admin emails (if configured)
   if (isAdminEmail(user.email)) return 'admin';
-  return normalized || 'individual';
+  
+  // Default to individual
+  return 'individual';
 };
