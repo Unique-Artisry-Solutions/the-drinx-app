@@ -9292,6 +9292,10 @@ export type Database = {
         Args: { p_record_id: string; p_seed_run_id: string; p_table: string }
         Returns: undefined
       }
+      _prune_security_logs: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       _table_exists: {
         Args: { p_table: string }
         Returns: boolean
