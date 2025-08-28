@@ -25,6 +25,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const initializationRef = useRef(false);
   const [authService, setAuthService] = useState<IAuthService | null>(null);
 
+  // **PHASE 1 FIX**: Listen for DevBypass completion events  
+  useEffect(() => {
+    if (!authService) return;
+
+    const handleDevBypassComplete = (event: CustomEvent) => {
+      console.log('🔐 AuthProvider - DevBypass completion event received:', event.detail);
+      
+      // Force immediate session refresh
+      authService.getSession().then(({ data: { session }, error }) => {
+        if (!error && session?.user) {
+          console.log('🔐 AuthProvider - DevBypass event triggered session update');
+          
+          setSession(session);
+          setUser(session.user);
+          setUserType(inferUserType(session.user));
+          setIsEmailVerified(session.user.email_confirmed_at !== null);
+          setAuthError(null);
+          setIsLoading(false);
+          setAuthStable(true);
+          setNavigationReady(true);
+          setAuthStateStable(true);
+          setIsTransitioning(false);
+          
+          sessionPersistenceService.updateSession(session, session.user);
+        }
+      });
+    };
+
+    window.addEventListener('devBypassComplete', handleDevBypassComplete);
+    
+    return () => {
+      window.removeEventListener('devBypassComplete', handleDevBypassComplete);
+    };
+  }, [authService]);
+  
   // Initialize services and auth state
   const initializeAuth = useCallback(async (forceReinit = false) => {
     if (initializationRef.current && !forceReinit) return;
@@ -176,35 +211,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Initialize after setting up the listener
     initializeAuth();
 
-    // **FIX**: Also check for session changes every few seconds in case the listener misses something
+    // **PHASE 1 FIX**: Enhanced session sync detection for DevBypass
     const sessionCheckInterval = setInterval(async () => {
       if (authService) {
         try {
           const { data: { session: currentSession }, error } = await authService.getSession();
           
           if (!error && currentSession?.user && !session) {
-            console.log('🔐 AuthProvider - Found session during periodic check, updating state');
-            startTransition(() => {
-              setIsTransitioning(true);
-              setAuthStateStable(false);
-              setSession(currentSession);
-              setUser(currentSession.user);
-              setUserType(inferUserType(currentSession.user));
-              setIsEmailVerified(currentSession.user.email_confirmed_at !== null);
-              setAuthError(null);
-              setIsLoading(false);
-            });
+            console.log('🔐 AuthProvider - Found session during periodic check, immediate state update');
             
-            sessionPersistenceService.updateSession(currentSession, currentSession.user);
+            // **PHASE 1 FIX**: Immediate state update without transition delays
+            setSession(currentSession);
+            setUser(currentSession.user);
+            setUserType(inferUserType(currentSession.user));
+            setIsEmailVerified(currentSession.user.email_confirmed_at !== null);
+            setAuthError(null);
+            setIsLoading(false);
             setAuthStable(true);
             setNavigationReady(true);
+            setAuthStateStable(true);
+            setIsTransitioning(false);
+            
+            sessionPersistenceService.updateSession(currentSession, currentSession.user);
           }
         } catch (error) {
-          // Silently handle errors during periodic checks
           console.warn('🔐 AuthProvider - Periodic session check error:', error);
         }
       }
-    }, 1000); // Check every second
+    }, 500); // **PHASE 1 FIX**: Check twice per second for faster sync
 
     return () => {
       subscription.unsubscribe();
@@ -319,11 +353,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return true;
   }, [initializeAuth]);
 
-  // Add a method to force auth refresh when DevBypass completes
+  // **PHASE 1 FIX**: Enhanced immediate auth refresh for DevBypass completion
   const refreshAuthAfterDevBypass = useCallback(async () => {
     console.log('🔐 AuthProvider - DevBypass auth refresh requested');
     
-    // Check if we have a session now
     if (authService) {
       try {
         const { data: { session: currentSession }, error } = await authService.getSession();
@@ -334,22 +367,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
 
         if (currentSession?.user) {
-          console.log('🔐 AuthProvider - DevBypass refresh found session, updating state');
+          console.log('🔐 AuthProvider - DevBypass refresh found session, immediately updating state');
           
-          startTransition(() => {
-            setIsTransitioning(true);
-            setAuthStateStable(false);
-            setSession(currentSession);
-            setUser(currentSession.user);
-            setUserType(inferUserType(currentSession.user));
-            setIsEmailVerified(currentSession.user.email_confirmed_at !== null);
-            setAuthError(null);
-            setIsLoading(false);
-          });
-          
-          sessionPersistenceService.updateSession(currentSession, currentSession.user);
+          // **PHASE 1 FIX**: Immediate synchronous state update without transition delays
+          setSession(currentSession);
+          setUser(currentSession.user);
+          setUserType(inferUserType(currentSession.user));
+          setIsEmailVerified(currentSession.user.email_confirmed_at !== null);
+          setAuthError(null);
+          setIsLoading(false);
           setAuthStable(true);
           setNavigationReady(true);
+          setAuthStateStable(true);
+          setIsTransitioning(false);
+          
+          sessionPersistenceService.updateSession(currentSession, currentSession.user);
+          console.log('🔐 AuthProvider - DevBypass state update complete');
+        } else {
+          console.warn('🔐 AuthProvider - DevBypass refresh found no session');
         }
       } catch (error) {
         console.error('🔐 AuthProvider - DevBypass refresh error:', error);

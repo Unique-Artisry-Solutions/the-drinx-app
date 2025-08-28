@@ -362,10 +362,15 @@ export const DevelopmentModeProvider: React.FC<{ children: React.ReactNode }> = 
           
           setDevMode(userType);
           
-          // **PHASE 2 FIX**: Wait for auth system to fully synchronize
+          // **PHASE 3 FIX**: Enhanced auth synchronization with context refresh
           const syncStartTime = Date.now();
           let authSynced = false;
-          const maxSyncWait = 3000; // 3 seconds max wait
+          const maxSyncWait = 2000; // 2 seconds max wait
+          
+          // **PHASE 3 FIX**: Trigger immediate session sync with React context
+          window.dispatchEvent(new CustomEvent('devBypassComplete', { 
+            detail: { userType } 
+          }));
           
           while (!authSynced && (Date.now() - syncStartTime) < maxSyncWait) {
             const { data: sessionCheck } = await supabase.auth.getSession();
@@ -374,12 +379,12 @@ export const DevelopmentModeProvider: React.FC<{ children: React.ReactNode }> = 
               console.log(`🔧 DevBypass - Auth sync completed in ${Date.now() - syncStartTime}ms`);
             } else {
               console.log('🔧 DevBypass - Waiting for auth sync...');
-              await new Promise(resolve => setTimeout(resolve, 200));
+              await new Promise(resolve => setTimeout(resolve, 150));
             }
           }
           
           if (!authSynced) {
-            console.warn('🔧 DevBypass - Auth sync timeout, proceeding anyway');
+            console.warn('🔧 DevBypass - Auth sync timeout, but proceeding with navigation');
           }
           
           // **PHASE 2 FIX**: Add retry logic for navigation

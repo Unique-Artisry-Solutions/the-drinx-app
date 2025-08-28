@@ -36,8 +36,21 @@ const { user, session, userType, isLoading, authStable, isAuthenticated, isReady
     hasSession: !!session
   });
 
-// Wait for auth system to be ready
+  // **PHASE 2 FIX**: Improved loading state logic with timeout handling
   if (!isReady) {
+    // Use timeout to prevent infinite loading
+    const [showTimeout, setShowTimeout] = React.useState(false);
+    
+    React.useEffect(() => {
+      const timeout = setTimeout(() => setShowTimeout(true), 5000);
+      return () => clearTimeout(timeout);
+    }, []);
+    
+    if (showTimeout) {
+      console.warn('RouteProtectionWrapper: Auth timeout detected, forcing ready state');
+      return <>{children}</>;
+    }
+    
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">

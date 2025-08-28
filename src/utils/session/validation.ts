@@ -33,59 +33,36 @@ export function isSessionValidationDue(): boolean {
   }
 }
 
-/**
- * Validates the current session state using only Supabase - optimized with frequency control
- */
+// **PHASE 4 FIX**: Simplified session validation to avoid interference
 export async function validateSessionState(): Promise<SessionValidationResult> {
-  const result: SessionValidationResult = {
-    isValid: false,
-    hasMismatch: false,
-    hasLocalStorage: false,
-    hasSupabaseSession: false,
-  };
+  console.log("🔍 Starting simplified session validation");
   
   try {
-    console.log('🔍 Session validation - checking Supabase session');
+    const { data, error } = await supabase.auth.getSession();
+    const hasSupabaseSession = !!(data?.session?.user);
     
-    // Check Supabase session with timeout
-    const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Session validation timeout')), 3000)
-    );
+    // Update validation timestamp
+    localStorage.setItem(SESSION_VALIDATION_KEY, Date.now().toString());
+
+    const result: SessionValidationResult = {
+      isValid: hasSupabaseSession && !error,
+      hasMismatch: false,
+      hasLocalStorage: false,
+      hasSupabaseSession,
+      errorDetails: error?.message
+    };
     
-    const sessionPromise = supabase.auth.getSession();
-    
-    const { data: sessionData, error: sessionError } = await Promise.race([
-      sessionPromise,
-      timeoutPromise
-    ]) as any;
-    
-    if (sessionError) {
-      result.errorDetails = `Session fetch error: ${sessionError.message}`;
-      console.error('🔍 Session validation error:', sessionError);
-      return result;
-    }
-    
-    const hasSupabaseSession = !!sessionData.session;
-    result.hasSupabaseSession = hasSupabaseSession;
-    result.hasLocalStorage = false; // No longer using localStorage
-    
-    // Session is valid if Supabase has a session
-    result.isValid = hasSupabaseSession;
-    result.hasMismatch = false; // No localStorage to mismatch with
-    
-    // Update last validation timestamp on successful validation
-    try {
-      localStorage.setItem(SESSION_VALIDATION_KEY, Date.now().toString());
-    } catch (error) {
-      console.warn('🔍 Failed to update validation timestamp:', error);
-    }
-    
-    console.log('🔍 Session validation result:', result);
+    console.log("🔍 Simplified session validation result:", result);
     return result;
-    
   } catch (error: any) {
-    console.error('🔍 Session validation failed:', error);
-    result.errorDetails = `Validation error: ${error.message}`;
-    return result;
+    console.error("🔍 Session validation failed:", error);
+    
+    return {
+      isValid: false,
+      hasMismatch: false,
+      hasLocalStorage: false,
+      hasSupabaseSession: false,
+      errorDetails: error?.message || 'Validation failed'
+    };
   }
 }
