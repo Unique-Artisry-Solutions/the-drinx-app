@@ -7,6 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useRealtimeConnection } from './useRealtimeConnection';
 import { useNotificationQueue } from './useNotificationQueue';
 import { useUserPresence } from './useUserPresence';
+import { toastDeduplication } from '@/utils/toastDeduplication';
 
 export interface NotificationState {
   notifications: Notification[];
@@ -17,6 +18,7 @@ export interface NotificationState {
   connectionState: any;
   queueSize: number;
   isRealTimeEnabled: boolean;
+  dispose: () => void;
 }
 
 interface UseUnifiedNotificationsProps {
@@ -43,9 +45,12 @@ export const useUnifiedNotifications = ({
   const [error, setError] = useState<string | null>(null);
   const [lastSync, setLastSync] = useState<Date | null>(null);
   const [isRealTimeEnabled, setIsRealTimeEnabled] = useState(enableRealTime);
+  const [isPageVisible, setIsPageVisible] = useState(true);
 
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const processedNotificationsRef = useRef(new Set<string>());
+  const processedNotificationsRef = useRef(new Map<string, { timestamp: number; processed: boolean }>());
+  const subscriptionsRef = useRef<Array<() => void>>([]);
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Real-time connection management
   const {
@@ -90,9 +95,10 @@ export const useUnifiedNotifications = ({
       
       // Add queued notifications to current state
       queuedNotifications.forEach(notification => {
-        if (!processedNotificationsRef.current.has(notification.id)) {
+        const key = createNotificationKey(notification);
+        if (!processedNotificationsRef.current.has(key)) {
           addNotificationToState(notification);
-          processedNotificationsRef.current.add(notification.id);
+          processedNotificationsRef.current.set(key, { timestamp: Date.now(), processed: true });
         }
       });
     }
@@ -103,37 +109,91 @@ export const useUnifiedNotifications = ({
     channelName: `notifications-${user?.id || 'anonymous'}`
   });
 
-  // Handle real-time notification
+  // Idempotent notification deduplication
+  const createNotificationKey = useCallback((notification: Notification) => {
+    return `${notification.id}-${notification.created_at}`;
+  }, []);
+
+  const shouldProcessNotification = useCallback((notification: Notification) => {
+    const key = createNotificationKey(notification);
+    const now = Date.now();
+    const existing = processedNotificationsRef.current.get(key);
+    
+    // If already processed within last 5 minutes, skip it
+    if (existing && existing.processed && (now - existing.timestamp) < 300000) {
+      console.log('Notification deduplicated:', key);
+      return false;
+    }
+    
+    // Mark as processed
+    processedNotificationsRef.current.set(key, { timestamp: now, processed: true });
+    
+    // Clean up old entries (older than 10 minutes)
+    processedNotificationsRef.current.forEach((value, k) => {
+      if ((now - value.timestamp) > 600000) {
+        processedNotificationsRef.current.delete(k);
+      }
+    });
+    
+    return true;
+  }, [createNotificationKey]);
+
+  // Handle real-time notification with deduplication
   const handleRealtimeNotification = useCallback((payload: any) => {
     try {
       const notification = payload.payload as Notification;
       
-      // Avoid duplicate notifications
-      if (processedNotificationsRef.current.has(notification.id)) {
+      // Apply deduplication
+      if (!shouldProcessNotification(notification)) {
         return;
       }
 
       console.log('Received real-time notification:', notification);
       
       addNotificationToState(notification);
-      processedNotificationsRef.current.add(notification.id);
 
-      // Show toast for high-priority notifications
-      if (notification.priority === 'urgent' || notification.priority === 'high') {
-        toast({
+      // Show toast for high-priority notifications only if page is visible and dedupe allows
+      if ((notification.priority === 'urgent' || notification.priority === 'high') && isPageVisible) {
+        if (toastDeduplication.shouldShowToast({
           title: notification.title,
-          description: notification.content,
-          duration: notification.priority === 'urgent' ? 0 : 5000,
-          variant: notification.priority === 'urgent' ? 'destructive' : 'default'
-        });
+          description: notification.content || '',
+          type: notification.priority
+        })) {
+          toast({
+            title: notification.title,
+            description: notification.content,
+            duration: notification.priority === 'urgent' ? 0 : 5000,
+            variant: notification.priority === 'urgent' ? 'destructive' : 'default'
+          });
+        }
       }
 
     } catch (error) {
       console.error('Error handling real-time notification:', error);
     }
-  }, [toast]);
+  }, [toast, shouldProcessNotification, isPageVisible]);
 
-  // Add notification to state
+  // Page visibility tracking for pausing notifications
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      const wasVisible = isPageVisible;
+      const nowVisible = !document.hidden;
+      setIsPageVisible(nowVisible);
+      
+      console.log(`Page visibility changed: ${nowVisible ? 'visible' : 'hidden'}`);
+      
+      // If page becomes visible after being hidden, refresh notifications
+      if (!wasVisible && nowVisible && isAuthenticated) {
+        console.log('Page became visible, refreshing notifications');
+        fetchNotifications(false);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [isPageVisible, isAuthenticated]);
+
+  // Add notification to state with deduplication
   const addNotificationToState = useCallback((notification: Notification) => {
     setNotifications(prev => {
       // Check if notification already exists
@@ -179,9 +239,10 @@ export const useUnifiedNotifications = ({
       setUnreadCount(notifications.filter(n => !n.is_read).length);
       setLastSync(new Date());
 
-      // Update processed set to avoid duplicates
+      // Update processed map to avoid duplicates
       notifications.forEach(n => {
-        processedNotificationsRef.current.add(n.id);
+        const key = createNotificationKey(n);
+        processedNotificationsRef.current.set(key, { timestamp: Date.now(), processed: true });
       });
 
     } catch (error) {
@@ -264,38 +325,80 @@ export const useUnifiedNotifications = ({
     }
   }, [user, toast]);
 
-  // Set up real-time subscription for database changes
+  // Set up real-time subscription for database changes with exponential backoff
   useEffect(() => {
     if (!isAuthenticated || !user || !enableRealTime) return;
 
-    const channel = supabase
-      .channel(`notifications-db-${user.id}`)
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'notifications',
-        filter: `recipient_id=eq.${user.id}`
-      }, (payload) => {
-        const notification = payload.new as Notification;
-        handleRealtimeNotification({ payload: notification });
-      })
-      .on('postgres_changes', {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'notifications',
-        filter: `recipient_id=eq.${user.id}`
-      }, (payload) => {
-        const notification = payload.new as Notification;
+    let reconnectAttempts = 0;
+    const maxReconnectAttempts = 5;
+
+    const exponentialBackoff = (attempt: number) => {
+      const baseDelay = 1000; // 1 second
+      const maxDelay = 30000; // 30 seconds
+      const delay = Math.min(baseDelay * Math.pow(2, attempt), maxDelay);
+      return delay + (Math.random() * 1000); // Add jitter
+    };
+
+    const setupSubscription = () => {
+      try {
+        const channel = supabase
+          .channel(`notifications-db-${user.id}`)
+          .on('postgres_changes', {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'notifications',
+            filter: `recipient_id=eq.${user.id}`
+          }, (payload) => {
+            const notification = payload.new as Notification;
+            handleRealtimeNotification({ payload: notification });
+          })
+          .on('postgres_changes', {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'notifications',
+            filter: `recipient_id=eq.${user.id}`
+          }, (payload) => {
+            const notification = payload.new as Notification;
+            
+            // Update existing notification in state
+            setNotifications(prev => 
+              prev.map(n => n.id === notification.id ? notification : n)
+            );
+          })
+          .subscribe();
+
+        // Add cleanup function to subscriptions
+        const cleanup = () => supabase.removeChannel(channel);
+        subscriptionsRef.current.push(cleanup);
+
+        return cleanup;
+      } catch (error) {
+        console.error('Error setting up subscription:', error);
         
-        // Update existing notification in state
-        setNotifications(prev => 
-          prev.map(n => n.id === notification.id ? notification : n)
-        );
-      })
-      .subscribe();
+        // If subscription failed, attempt reconnection with backoff
+        if (reconnectAttempts < maxReconnectAttempts) {
+          const delay = exponentialBackoff(reconnectAttempts);
+          console.log(`Retrying subscription in ${delay}ms (attempt ${reconnectAttempts + 1})`);
+          
+          reconnectTimeoutRef.current = setTimeout(() => {
+            reconnectAttempts++;
+            setupSubscription();
+          }, delay);
+        } else {
+          console.error('Max subscription attempts reached');
+        }
+        return null;
+      }
+    };
+
+    const cleanup = setupSubscription();
 
     return () => {
-      supabase.removeChannel(channel);
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = null;
+      }
+      if (cleanup) cleanup();
     };
   }, [isAuthenticated, user, enableRealTime, handleRealtimeNotification]);
 
@@ -329,12 +432,12 @@ export const useUnifiedNotifications = ({
     }
   }, [isAuthenticated, fetchNotifications]);
 
-  // Handle offline notifications
+  // Handle offline notifications with deduplication
   const handleOfflineNotification = useCallback((notification: Notification) => {
-    if (enableQueue) {
+    if (enableQueue && shouldProcessNotification(notification)) {
       enqueue(notification);
     }
-  }, [enableQueue, enqueue]);
+  }, [enableQueue, enqueue, shouldProcessNotification]);
 
   // Process queued notifications when coming online
   useEffect(() => {
@@ -342,6 +445,49 @@ export const useUnifiedNotifications = ({
       processQueue();
     }
   }, [isConnected, queueSize, processQueue]);
+
+  // Centralized dispose method for cleanup
+  const dispose = useCallback(() => {
+    console.log('Disposing unified notifications...');
+    
+    // Clear all timeouts
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+      pollingIntervalRef.current = null;
+    }
+    
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
+    }
+
+    // Clean up all subscriptions
+    subscriptionsRef.current.forEach(cleanup => {
+      try {
+        cleanup();
+      } catch (error) {
+        console.warn('Error during subscription cleanup:', error);
+      }
+    });
+    subscriptionsRef.current = [];
+
+    // Clear processed notifications cache
+    processedNotificationsRef.current.clear();
+    
+    // Clear toast deduplication
+    toastDeduplication.clear();
+
+    // Reset state
+    setNotifications([]);
+    setUnreadCount(0);
+    setError(null);
+    setLastSync(null);
+  }, []);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return dispose;
+  }, [dispose]);
 
   const state: NotificationState = {
     notifications,
@@ -351,7 +497,8 @@ export const useUnifiedNotifications = ({
     lastSync,
     connectionState,
     queueSize,
-    isRealTimeEnabled
+    isRealTimeEnabled,
+    dispose
   };
 
   return {
@@ -361,6 +508,8 @@ export const useUnifiedNotifications = ({
     refetch: fetchNotifications,
     reconnect,
     handleOfflineNotification,
-    presenceState
+    presenceState,
+    shouldProcessNotification,
+    createNotificationKey
   };
 };
