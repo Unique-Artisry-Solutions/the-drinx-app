@@ -9432,6 +9432,10 @@ export type Database = {
         Args: { user_id: string }
         Returns: boolean
       }
+      can_view_sensitive_profile_data: {
+        Args: { profile_user_id: string }
+        Returns: boolean
+      }
       check_feature_access: {
         Args: { p_feature_name: string; p_user_id?: string }
         Returns: boolean
