@@ -3,6 +3,13 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.0"
 import { getSecurityConfig, getCorsHeaders, isOriginAllowed } from '../_shared/security.ts'
 import { enforceRateLimit } from '../_shared/rateLimit.ts'
 import { sanitizeObject } from '../_shared/sanitize.ts'
+import { 
+  generateTraceId, 
+  createRequestHash, 
+  executeIdempotentOperation,
+  withRetry,
+  db 
+} from '../_shared/db.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
 const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
@@ -43,27 +50,34 @@ class NotificationBatcher {
     if (!batch || batch.length === 0) return;
 
     try {
-      // Insert batch of notifications
-      const { data, error } = await admin
-        .from('notifications')
-        .insert(batch)
-        .select();
+      // Use retry logic for batch processing
+      await withRetry(async () => {
+        // Insert batch of notifications
+        const { data, error } = await admin
+          .from('notifications')
+          .insert(batch)
+          .select();
 
-      if (error) throw error;
+        if (error) throw error;
 
-      // Send real-time broadcast
-      await admin.channel('notifications')
-        .send({
-          type: 'broadcast',
-          event: 'batch_notifications',
-          payload: {
-            userId,
-            notifications: data,
-            count: data?.length || 0
-          }
-        });
+        // Send real-time broadcast
+        await admin.channel('notifications')
+          .send({
+            type: 'broadcast',
+            event: 'batch_notifications',
+            payload: {
+              userId,
+              notifications: data,
+              count: data?.length || 0
+            }
+          });
 
-      console.log(`Processed batch of ${batch.length} notifications for user ${userId}`);
+        console.log(`Processed batch of ${batch.length} notifications for user ${userId}`);
+      }, {
+        maxAttempts: 3,
+        baseDelayMs: 500,
+        retryableErrors: ['timeout', 'connection', 'deadlock']
+      });
     } catch (error) {
       console.error('Error processing notification batch:', error);
       // Log error for monitoring
@@ -184,9 +198,12 @@ const monitor = new PerformanceMonitor();
 
 serve(async (req) => {
   const startTime = Date.now();
+  const traceId = generateTraceId();
   const origin = req.headers.get('origin');
   const config = getSecurityConfig();
   const cors = getCorsHeaders(origin, config);
+  
+  console.log(`[Notifications-Realtime] Request from origin: ${origin}, trace: ${traceId}`);
   
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -292,44 +309,92 @@ async function handleRealtimeNotification(params: any, cors: Record<string, stri
 }
 
 async function handleBatchNotifications(params: any, cors: Record<string, string>, startTime: number) {
+  const traceId = generateTraceId();
+  console.log(`[Notifications-Realtime] Processing batch, trace: ${traceId}`);
+  
   try {
-    const { notifications } = params;
+    const { notifications, idempotencyKey } = params;
     
     if (!Array.isArray(notifications) || notifications.length === 0) {
       monitor.recordRequest(Date.now() - startTime, true);
       return createErrorResponse('Invalid notifications array', 400, cors);
     }
 
-    // Group notifications by user
-    const userGroups = new Map<string, any[]>();
-    for (const notification of notifications) {
-      if (!notification.recipient_id) continue;
-      
-      if (!userGroups.has(notification.recipient_id)) {
-        userGroups.set(notification.recipient_id, []);
-      }
-      userGroups.get(notification.recipient_id)!.push(notification);
-    }
+    // Generate idempotency key if not provided
+    const batchIdempotencyKey = idempotencyKey || `batch_${traceId}_${notifications.length}`;
+    const requestHash = await createRequestHash({ notifications, traceId });
 
-    // Add each user's notifications to batch
-    for (const [userId, userNotifications] of userGroups) {
-      for (const notification of userNotifications) {
-        if (throttler.canSendNotification(userId)) {
-          batcher.addToBatch(userId, notification);
+    // Execute batch with idempotency
+    const result = await executeIdempotentOperation(
+      {
+        key: batchIdempotencyKey,
+        operationType: 'batch_notifications',
+        requestHash,
+        traceId,
+        expirationDays: 1 // Shorter expiration for batch operations
+      },
+      async () => {
+        console.log(`[Notifications-Realtime] Executing batch operation, trace: ${traceId}`);
+        
+        // Group notifications by user
+        const userGroups = new Map<string, any[]>();
+        for (const notification of notifications) {
+          if (!notification.recipient_id) continue;
+          
+          if (!userGroups.has(notification.recipient_id)) {
+            userGroups.set(notification.recipient_id, []);
+          }
+          userGroups.get(notification.recipient_id)!.push({
+            ...notification,
+            metadata: { 
+              ...notification.metadata, 
+              trace_id: traceId,
+              batch_operation: true 
+            }
+          });
         }
+
+        // Process each user's notifications with throttling
+        const processedCount = { successful: 0, throttled: 0 };
+        for (const [userId, userNotifications] of userGroups) {
+          for (const notification of userNotifications) {
+            if (throttler.canSendNotification(userId)) {
+              batcher.addToBatch(userId, notification);
+              processedCount.successful++;
+            } else {
+              processedCount.throttled++;
+            }
+          }
+        }
+
+        return {
+          success: true,
+          message: `Queued ${processedCount.successful} notifications, throttled ${processedCount.throttled}`,
+          trace_id: traceId,
+          processed: processedCount
+        };
+      },
+      {
+        maxAttempts: 3,
+        baseDelayMs: 500,
+        retryableErrors: ['timeout', 'connection']
       }
-    }
+    );
 
     monitor.recordRequest(Date.now() - startTime);
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        message: `Queued ${notifications.length} notifications for batch processing`
-      }),
-      { headers: { ...cors, 'Content-Type': 'application/json' } }
+      JSON.stringify(result),
+      { 
+        headers: { 
+          ...cors, 
+          'Content-Type': 'application/json',
+          'X-Trace-ID': traceId 
+        } 
+      }
     );
   } catch (error) {
     monitor.recordRequest(Date.now() - startTime, true);
+    console.error(`[Notifications-Realtime] Batch error, trace: ${traceId}:`, error);
     return createErrorResponse(`Error processing batch: ${error.message}`, 500, cors);
   }
 }

@@ -3,6 +3,12 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.0"
 import { getSecurityConfig, getCorsHeaders, isOriginAllowed } from '../_shared/security.ts'
 import { enforceRateLimit } from '../_shared/rateLimit.ts'
 import { sanitizeObject } from '../_shared/sanitize.ts'
+import { 
+  generateTraceId, 
+  createRequestHash, 
+  executeIdempotentOperation,
+  db 
+} from '../_shared/db.ts'
 import { z } from "npm:zod@3.23.8"
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
@@ -41,18 +47,20 @@ const CreateNotificationSchema = z.object({
   content: z.string().min(1),
   priority: z.enum(['low','medium','high']).optional(),
   categoryId: z.string().uuid().optional(),
-  metadata: z.record(z.any()).optional()
+  metadata: z.record(z.any()).optional(),
+  idempotencyKey: z.string().min(1).optional()
 }).strict();
 const SaveVapidKeysSchema = z.object({ publicKey: z.string().min(1), privateKey: z.string().min(1), mailto: z.string().email() }).strict();
 const IdOnlySchema = z.object({ promoterId: z.string().uuid().optional(), establishmentId: z.string().uuid().optional(), userId: z.string().uuid().optional() }).strict();
 const PreferencesSchema = z.object({ promoterId: z.string().uuid().optional(), establishmentId: z.string().uuid().optional(), preferences: z.record(z.any()) }).strict();
 
 serve(async (req) => {
+  const traceId = generateTraceId();
   const origin = req.headers.get('origin');
   const config = getSecurityConfig();
   const cors = getCorsHeaders(origin, config);
   
-  console.log(`[Notifications] Request: ${req.method} from origin: ${origin}`);
+  console.log(`[Notifications] Request: ${req.method} from origin: ${origin}, trace: ${traceId}`);
   
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -118,7 +126,7 @@ serve(async (req) => {
 
       case 'createNotification':
         const pCreate = CreateNotificationSchema.parse(params ?? {});
-        return await handleCreateNotification(pCreate, req.headers.get('Authorization') || '', cors);
+        return await handleCreateNotification(pCreate, req.headers.get('Authorization') || '', cors, traceId);
 
       case 'saveVapidKeys':
         const pVapid = SaveVapidKeysSchema.parse(params ?? {});
@@ -317,79 +325,128 @@ async function handleGetNotifications(params: any, cors: Record<string, string>)
   }
 }
 
-async function handleCreateNotification(params: any, authHeader: string, cors: Record<string, string>) {
+async function handleCreateNotification(params: any, authHeader: string, cors: Record<string, string>, traceId: string) {
+  console.log(`[Notifications] Creating notification, trace: ${traceId}`);
+  
   if (!params.recipientId) {
     throw new Error('Recipient ID is required');
   }
-
-  const supabaseClient = createClient(
-    Deno.env.get('SUPABASE_URL') ?? '',
-    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-  )
 
   if (!authHeader) {
     throw new Error('No authorization header');
   }
 
-  const { data: { user }, error: authError } = await supabaseClient.auth.getUser(
-    authHeader.replace('Bearer ', '')
-  )
+  // Generate idempotency key if not provided
+  const idempotencyKey = params.idempotencyKey || `notif_${params.recipientId}_${traceId}`;
+  console.log(`[Notifications] Using idempotency key: ${idempotencyKey}, trace: ${traceId}`);
 
-  if (authError || !user) {
-    throw new Error('Unauthorized');
-  }
+  // Create request hash for deduplication
+  const requestData = {
+    recipientId: params.recipientId,
+    title: params.title,
+    content: params.content,
+    priority: params.priority || 'medium',
+    categoryId: params.categoryId,
+    metadata: params.metadata || {}
+  };
+  const requestHash = await createRequestHash(requestData);
 
-  if (user.id !== params.recipientId) {
-    throw new Error('Cannot send notifications for other users');
-  }
-
-  const [{ data: preferences }, { data: userProfile }] = await Promise.all([
-    supabaseClient
-      .from('notification_preferences')
-      .select('*')
-      .eq('user_id', params.recipientId)
-      .eq('category_id', params.categoryId)
-      .single(),
-    supabaseClient
-      .from('profiles')
-      .select('email')
-      .eq('id', params.recipientId)
-      .single()
-  ]);
-
-  // Create notification in database
-  const { data: notification, error } = await supabaseClient
-    .from('notifications')
-    .insert({
-      recipient_id: params.recipientId,
-      title: params.title,
-      content: params.content,
-      priority: params.priority || 'medium',
-      category_id: params.categoryId,
-      metadata: params.metadata || {},
-      delivery_status: {},
-      delivery_attempts: 0
-    })
-    .select()
-    .single()
-
-  if (error) throw error
-
-  // For now, just return a success response without attempting web-push
-  // We'll implement a browser-direct notification approach instead
-  return new Response(
-    JSON.stringify({ 
-      data: notification,
-      push_status: { 
-        success: true,
-        message: "Notification created successfully",
-        timestamp: new Date().toISOString()
-      }
-    }),
+  // Execute notification creation with idempotency and retry logic
+  const result = await executeIdempotentOperation(
     {
-      headers: { ...cors, 'Content-Type': 'application/json' },
+      key: idempotencyKey,
+      operationType: 'create_notification',
+      requestHash,
+      traceId,
+      expirationDays: 7
+    },
+    async () => {
+      console.log(`[Notifications] Executing notification creation, trace: ${traceId}`);
+      
+      // Authenticate user
+      const { data: { user }, error: authError } = await db.auth.getUser(
+        authHeader.replace('Bearer ', '')
+      );
+
+      if (authError || !user) {
+        throw new Error('Unauthorized');
+      }
+
+      if (user.id !== params.recipientId) {
+        throw new Error('Cannot send notifications for other users');
+      }
+
+      // Fetch user preferences and profile (with retry logic built-in)
+      const [{ data: preferences }, { data: userProfile }] = await Promise.all([
+        db
+          .from('notification_preferences')
+          .select('*')
+          .eq('user_id', params.recipientId)
+          .eq('category_id', params.categoryId)
+          .single(),
+        db
+          .from('profiles')
+          .select('email')
+          .eq('id', params.recipientId)
+          .single()
+      ]);
+
+      // Create notification in database
+      const { data: notification, error } = await db
+        .from('notifications')
+        .insert({
+          recipient_id: params.recipientId,
+          title: params.title,
+          content: params.content,
+          priority: params.priority || 'medium',
+          category_id: params.categoryId,
+          metadata: {
+            ...params.metadata || {},
+            trace_id: traceId,
+            idempotency_key: idempotencyKey
+          },
+          delivery_status: {},
+          delivery_attempts: 0
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error(`[Notifications] Database error, trace: ${traceId}:`, error);
+        throw error;
+      }
+
+      console.log(`[Notifications] Notification created successfully: ${notification.id}, trace: ${traceId}`);
+
+      return {
+        data: notification,
+        push_status: { 
+          success: true,
+          message: "Notification created successfully",
+          timestamp: new Date().toISOString(),
+          trace_id: traceId
+        }
+      };
+    },
+    {
+      maxAttempts: 3,
+      baseDelayMs: 1000,
+      maxDelayMs: 10000,
+      retryableErrors: ['timeout', 'connection', 'deadlock']
     }
-  )
+  );
+
+  console.log(`[Notifications] Returning result, trace: ${traceId}`);
+  return new Response(
+    JSON.stringify(result),
+    {
+      headers: { 
+        ...cors, 
+        'Content-Type': 'application/json',
+        'X-Trace-ID': traceId
+      },
+    }
+  );
 }
 
 async function handleGetEstablishmentNotifications(params: any, cors: Record<string, string>) {

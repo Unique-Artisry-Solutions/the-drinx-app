@@ -3929,6 +3929,51 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_dedup_log: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          error_details: Json | null
+          expires_at: string
+          id: string
+          idempotency_key: string
+          notification_id: string | null
+          operation_type: string
+          request_hash: string
+          response_data: Json | null
+          status: string
+          trace_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          error_details?: Json | null
+          expires_at?: string
+          id?: string
+          idempotency_key: string
+          notification_id?: string | null
+          operation_type: string
+          request_hash: string
+          response_data?: Json | null
+          status?: string
+          trace_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          error_details?: Json | null
+          expires_at?: string
+          id?: string
+          idempotency_key?: string
+          notification_id?: string | null
+          operation_type?: string
+          request_hash?: string
+          response_data?: Json | null
+          status?: string
+          trace_id?: string
+        }
+        Relationships: []
+      }
       notification_delivery_logs: {
         Row: {
           created_at: string | null
@@ -9118,6 +9163,10 @@ export type Database = {
       check_user_consent: {
         Args: { p_consent_type: string; p_user_id: string }
         Returns: boolean
+      }
+      cleanup_notification_dedup_log: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       clear_dev_seed: {
         Args: { p_seed_run_id?: string }
