@@ -133,6 +133,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "affiliate_partners_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public_v"
+            referencedColumns: ["id"]
+          },
         ]
       }
       affiliate_payouts: {
@@ -228,6 +235,13 @@ export type Database = {
             columns: ["promoter_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "affiliate_programs_promoter_id_fkey"
+            columns: ["promoter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public_v"
             referencedColumns: ["id"]
           },
         ]
@@ -1597,6 +1611,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "engagement_scoring_rules_promoter_id_fkey"
+            columns: ["promoter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public_v"
+            referencedColumns: ["id"]
+          },
         ]
       }
       engagement_tier_thresholds: {
@@ -1642,6 +1663,13 @@ export type Database = {
             columns: ["promoter_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "engagement_tier_thresholds_promoter_id_fkey"
+            columns: ["promoter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public_v"
             referencedColumns: ["id"]
           },
         ]
@@ -3081,6 +3109,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "follower_badges_promoter_id_fkey"
+            columns: ["promoter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public_v"
+            referencedColumns: ["id"]
+          },
         ]
       }
       follower_engagement_history: {
@@ -3389,6 +3424,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "gamification_rewards_promoter_id_fkey"
+            columns: ["promoter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public_v"
+            referencedColumns: ["id"]
+          },
         ]
       }
       gdpr_data_exports: {
@@ -3577,6 +3619,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "loyalty_milestones_promoter_id_fkey"
+            columns: ["promoter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public_v"
+            referencedColumns: ["id"]
+          },
         ]
       }
       loyalty_points: {
@@ -3655,6 +3704,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_message_read_status_user_id"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public_v"
             referencedColumns: ["id"]
           },
           {
@@ -4745,6 +4801,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "price_history_changed_by_fkey"
+            columns: ["changed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_public_v"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "price_history_pricing_tier_id_fkey"
             columns: ["pricing_tier_id"]
             isOneToOne: false
@@ -4892,6 +4955,13 @@ export type Database = {
             columns: ["promoter_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pricing_rules_promoter_id_fkey"
+            columns: ["promoter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public_v"
             referencedColumns: ["id"]
           },
           {
@@ -5426,6 +5496,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "fk_promoter_venue_messages_sender_id"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public_v"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "fk_promoter_venue_messages_thread_id"
             columns: ["thread_id"]
             isOneToOne: false
@@ -5478,6 +5555,13 @@ export type Database = {
             columns: ["promoter_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_promoter_venue_threads_promoter_id"
+            columns: ["promoter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public_v"
             referencedColumns: ["id"]
           },
           {
@@ -5676,6 +5760,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "referral_programs_promoter_id_fkey"
+            columns: ["promoter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public_v"
+            referencedColumns: ["id"]
+          },
         ]
       }
       referral_rewards: {
@@ -5724,6 +5815,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referral_rewards_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public_v"
             referencedColumns: ["id"]
           },
           {
@@ -6449,6 +6547,13 @@ export type Database = {
             columns: ["promoter_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scheduled_welcome_messages_promoter_id_fkey"
+            columns: ["promoter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public_v"
             referencedColumns: ["id"]
           },
         ]
@@ -8050,6 +8155,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "urgency_campaigns_promoter_id_fkey"
+            columns: ["promoter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public_v"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "urgency_campaigns_swig_circuit_id_fkey"
             columns: ["swig_circuit_id"]
             isOneToOne: false
@@ -8351,6 +8463,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "user_referrals_referee_id_fkey"
+            columns: ["referee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public_v"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "user_referrals_referral_program_id_fkey"
             columns: ["referral_program_id"]
             isOneToOne: false
@@ -8362,6 +8481,13 @@ export type Database = {
             columns: ["referrer_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_referrals_referrer_id_fkey"
+            columns: ["referrer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public_v"
             referencedColumns: ["id"]
           },
         ]
@@ -8633,6 +8759,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "welcome_automation_flows_promoter_id_fkey"
+            columns: ["promoter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public_v"
+            referencedColumns: ["id"]
+          },
         ]
       }
     }
@@ -8855,6 +8988,33 @@ export type Database = {
           stripe_payment_intent_id?: string | null
           user_agent?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      profiles_public_v: {
+        Row: {
+          bio: string | null
+          created_at: string | null
+          display_name: string | null
+          id: string | null
+          user_type: string | null
+          username: string | null
+        }
+        Insert: {
+          bio?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          id?: string | null
+          user_type?: string | null
+          username?: string | null
+        }
+        Update: {
+          bio?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          id?: string | null
+          user_type?: string | null
+          username?: string | null
         }
         Relationships: []
       }
@@ -9287,6 +9447,10 @@ export type Database = {
       initialize_admin_roles: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      is_admin: {
+        Args: { p_uid: string }
+        Returns: boolean
       }
       is_allowed_multi_role_user: {
         Args: { user_email: string }
