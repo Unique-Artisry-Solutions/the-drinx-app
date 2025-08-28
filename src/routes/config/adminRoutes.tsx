@@ -1,10 +1,9 @@
 
-import { lazy } from 'react';
+import { lazy, Suspense } from 'react';
 import { RouteObject } from 'react-router-dom';
 import AdminLogin from '@/pages/admin/AdminLogin';
 import AdminNotificationsPage from '@/pages/admin/notifications/AdminNotificationsPage';
 import NotificationTestingPage from '@/pages/admin/notifications/NotificationTestingPage';
-import SystemFunctionalityBreakdown from '@/pages/admin/SystemFunctionalityBreakdown';
 import ComponentCatalogPage from '@/pages/admin/ComponentCatalogPage';
 import AdminDocumentationPage from '@/pages/admin/AdminDocumentationPage';
 import SystemConfigurationPage from '@/pages/admin/SystemConfigurationPage';
@@ -14,20 +13,24 @@ import RouteProtectionWrapper from '@/hoc/RouteProtectionWrapper';
 import AdminEstablishmentsPage from '@/pages/admin/AdminEstablishmentsPage';
 import PhotoModerationPage from '@/pages/admin/PhotoModerationPage';
 import TestingDashboard from '@/pages/admin/TestingDashboard';
-import AdminSystemOverviewPage from '@/pages/admin/AdminSystemOverviewPage';
 import AdminToolsPage from '@/pages/admin/AdminToolsPage';
 import AdminRewardsPage from '@/pages/admin/AdminRewardsPage';
-import SystemAnalyticsPage from '@/pages/admin/SystemAnalyticsPage';
 import AdminLogsPage from '@/pages/admin/AdminLogsPage';
 import ContentModerationPage from '@/pages/admin/ContentModerationPage';
 import AdminAllActionsPage from '@/pages/admin/AdminAllActionsPage';
+import { AdminSuspenseFallback } from '@/components/loading/AdminSuspenseFallback';
 
-// Lazy loaded components
+// Lazy loaded components for performance
 const AdminDashboard = lazy(() => import('@/pages/admin/AdminDashboard'));
 const RewardSystemMonitorPage = lazy(() => import('@/pages/admin/RewardSystemMonitorPage'));
 const RewardsAdminPage = lazy(() => import('@/pages/admin/RewardsAdminPage'));
 const AdminUsersPage = lazy(() => import('@/pages/admin/AdminUsersPage'));
 const AdminUserProfile = lazy(() => import('@/pages/admin/AdminUserProfile'));
+
+// Heavy analytics and system components - lazy loaded for better bundle splitting
+const SystemAnalyticsPage = lazy(() => import('@/pages/admin/SystemAnalyticsPage'));
+const SystemFunctionalityBreakdown = lazy(() => import('@/pages/admin/SystemFunctionalityBreakdown'));
+const AdminSystemOverviewPage = lazy(() => import('@/pages/admin/AdminSystemOverviewPage'));
 
 
 
@@ -53,16 +56,58 @@ export const adminRoutes: RouteObject[] = [
     ),
     children: [
       // Dashboard & System
-      { index: true, element: <AdminSystemOverviewPage /> },
-      { path: 'dashboard', element: <AdminDashboard /> },
+      { 
+        index: true, 
+        element: (
+          <Suspense fallback={<AdminSuspenseFallback title="System Overview" description="Loading system dashboard..." />}>
+            <AdminSystemOverviewPage />
+          </Suspense>
+        ) 
+      },
+      { 
+        path: 'dashboard', 
+        element: (
+          <Suspense fallback={<AdminSuspenseFallback title="Admin Dashboard" description="Loading admin dashboard..." />}>
+            <AdminDashboard />
+          </Suspense>
+        ) 
+      },
       { path: 'all-actions', element: <AdminAllActionsPage /> },
-      { path: 'analytics', element: <SystemAnalyticsPage /> },
-      { path: 'system-breakdown', element: <AdminSystemOverviewPage /> },
+      { 
+        path: 'analytics', 
+        element: (
+          <Suspense fallback={<AdminSuspenseFallback title="System Analytics" description="Loading analytics dashboard..." type="analytics" />}>
+            <SystemAnalyticsPage />
+          </Suspense>
+        ) 
+      },
+      { 
+        path: 'system-breakdown', 
+        element: (
+          <Suspense fallback={<AdminSuspenseFallback title="System Breakdown" description="Loading system functionality breakdown..." type="editor" />}>
+            <SystemFunctionalityBreakdown />
+          </Suspense>
+        ) 
+      },
       { path: 'system-configuration', element: <SystemConfigurationPage /> },
       
       // User Management
-      { path: 'users', element: <AdminUsersPage /> },
-      { path: 'users/:id', element: <AdminUserProfile /> },
+      { 
+        path: 'users', 
+        element: (
+          <Suspense fallback={<AdminSuspenseFallback title="User Management" description="Loading user management interface..." />}>
+            <AdminUsersPage />
+          </Suspense>
+        ) 
+      },
+      { 
+        path: 'users/:id', 
+        element: (
+          <Suspense fallback={<AdminSuspenseFallback title="User Profile" description="Loading user profile..." />}>
+            <AdminUserProfile />
+          </Suspense>
+        ) 
+      },
       
       // Content Management
       { path: 'establishments', element: <AdminEstablishmentsPage /> },
@@ -84,7 +129,14 @@ export const adminRoutes: RouteObject[] = [
       { path: 'notification-testing', element: <NotificationTestingPage /> },
       
       // Rewards & Commerce
-      { path: 'reward-system-monitor', element: <RewardSystemMonitorPage /> },
+      { 
+        path: 'reward-system-monitor', 
+        element: (
+          <Suspense fallback={<AdminSuspenseFallback title="Reward System Monitor" description="Loading reward system monitoring..." type="analytics" />}>
+            <RewardSystemMonitorPage />
+          </Suspense>
+        ) 
+      },
       { path: 'rewards', element: <AdminRewardsPage /> },
       
       // Documentation

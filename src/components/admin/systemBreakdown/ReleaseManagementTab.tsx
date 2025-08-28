@@ -14,9 +14,11 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 import ReleasesList from './releases/ReleasesList';
-import ReleaseEditor from './releases/ReleaseEditor';
 import ReleaseTimeline from './releases/ReleaseTimeline';
 import { useReleaseManagement } from './hooks/useReleaseManagement';
+
+// Lazy load the heavy ReleaseEditor component
+const LazyReleaseEditor = React.lazy(() => import('@/components/admin/lazy/LazyReleaseEditor'));
 
 const ReleaseManagementTab: React.FC = () => {
   const releaseManagement = useReleaseManagement();
@@ -129,7 +131,7 @@ const ReleaseManagementTab: React.FC = () => {
           
           <TabsContent value="editor" className="mt-0 border-none p-0">
             {releaseManagement.selectedRelease ? (
-              <ReleaseEditor
+              <LazyReleaseEditor
                 release={releaseManagement.selectedRelease}
                 releaseProgress={releaseManagement.releaseProgress}
                 onUpdateRelease={(data) => releaseManagement.updateRelease(releaseManagement.selectedRelease!.id, data)}
