@@ -8893,6 +8893,60 @@ export type Database = {
         }
         Relationships: []
       }
+      financial_transactions_my_v: {
+        Row: {
+          amount: number | null
+          created_at: string | null
+          currency: string | null
+          fee_amount: number | null
+          id: string | null
+          metadata_safe: Json | null
+          net_amount: number | null
+          provider: string | null
+          provider_transaction_id_sample: string | null
+          reconciled: boolean | null
+          reconciled_at: string | null
+          status: string | null
+          tax_amount: number | null
+          transaction_type: string | null
+          user_id: string | null
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string | null
+          currency?: string | null
+          fee_amount?: number | null
+          id?: string | null
+          metadata_safe?: never
+          net_amount?: number | null
+          provider?: string | null
+          provider_transaction_id_sample?: never
+          reconciled?: boolean | null
+          reconciled_at?: string | null
+          status?: string | null
+          tax_amount?: number | null
+          transaction_type?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string | null
+          currency?: string | null
+          fee_amount?: number | null
+          id?: string | null
+          metadata_safe?: never
+          net_amount?: number | null
+          provider?: string | null
+          provider_transaction_id_sample?: never
+          reconciled?: boolean | null
+          reconciled_at?: string | null
+          status?: string | null
+          tax_amount?: number | null
+          transaction_type?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       flagged_content_queue: {
         Row: {
           content_id: string | null
