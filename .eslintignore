@@ -1,0 +1,10 @@
+dist
+node_modules
+supabase/functions/**/dist
+src/integrations/supabase/types.ts
+*.generated.*
+build
+coverage
+public
+.next
+out
