@@ -211,7 +211,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Initialize after setting up the listener
     initializeAuth();
 
-    // **PHASE 1 FIX**: Enhanced session sync detection for DevBypass
+    // Optimized session sync detection - reduced frequency for better performance
     const sessionCheckInterval = setInterval(async () => {
       if (authService) {
         try {
@@ -220,7 +220,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (!error && currentSession?.user && !session) {
             console.log('🔐 AuthProvider - Found session during periodic check, immediate state update');
             
-            // **PHASE 1 FIX**: Immediate state update without transition delays
+            // Immediate state update without transition delays
             setSession(currentSession);
             setUser(currentSession.user);
             setUserType(inferUserType(currentSession.user));
@@ -238,7 +238,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           console.warn('🔐 AuthProvider - Periodic session check error:', error);
         }
       }
-    }, 500); // **PHASE 1 FIX**: Check twice per second for faster sync
+    }, 1000); // Reduced to once per second for better performance
 
     return () => {
       subscription.unsubscribe();
@@ -246,7 +246,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, [initializeAuth, authService]);
 
-  // State stabilization mechanism
+  // Optimized state stabilization mechanism - faster transitions
   useEffect(() => {
     if (isTransitioning) {
       console.log('🔄 AuthProvider - Starting state stabilization period');
@@ -254,7 +254,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.log('✅ AuthProvider - State stabilization complete');
         setAuthStateStable(true);
         setIsTransitioning(false);
-      }, 100);
+      }, 50); // Reduced from 100ms to 50ms for faster response
       
       return () => clearTimeout(timeout);
     } else {

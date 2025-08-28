@@ -102,19 +102,19 @@ export const DevelopmentModeProvider: React.FC<{ children: React.ReactNode }> = 
     console.log(`🔧 DevBypass - Using credentials for ${userType}:`, { email: credentials.email });
 
     try {
-      // **PHASE 1 FIX**: Set DevTools state persistence BEFORE authentication
-      setCurrentDevUserType(userType);
-      localStorage.setItem('dev_auto_login_timestamp', Date.now().toString());
-      console.log('🔧 DevBypass - DevTools state set, timestamp:', Date.now());
+        // Set DevTools state persistence BEFORE authentication
+        setCurrentDevUserType(userType);
+        localStorage.setItem('dev_auto_login_timestamp', Date.now().toString());
+        console.log('🔧 DevBypass - DevTools state set, timestamp:', Date.now());
 
-      // First, check if we need to sign out current user
-      const { data: currentSession } = await supabase.auth.getSession();
-      if (currentSession?.session?.user) {
-        console.log('🔧 DevBypass - Current user detected, signing out first:', currentSession.session.user.email);
-        await supabase.auth.signOut();
-        // Wait for auth state to stabilize
-        await new Promise(resolve => setTimeout(resolve, 1000));
-      }
+        // First, check if we need to sign out current user
+        const { data: currentSession } = await supabase.auth.getSession();
+        if (currentSession?.session?.user) {
+          console.log('🔧 DevBypass - Current user detected, signing out first:', currentSession.session.user.email);
+          await supabase.auth.signOut();
+          // Reduced wait time for faster flow
+          await new Promise(resolve => setTimeout(resolve, 300));
+        }
 
       console.log('🔧 DevBypass - Attempting sign in...');
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -140,8 +140,8 @@ export const DevelopmentModeProvider: React.FC<{ children: React.ReactNode }> = 
           timestamp: Date.now()
         });
         
-        // **PHASE 1 FIX**: Wait for auth state to propagate and validate session
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Reduced wait time for auth state to propagate
+        await new Promise(resolve => setTimeout(resolve, 200));
         
         // Validate the session was actually established
         const { data: sessionCheck } = await supabase.auth.getSession();

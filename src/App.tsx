@@ -37,14 +37,14 @@ const App: React.FC = () => {
     timeoutExceeded 
   });
 
-  // Enhanced timeout mechanism with DevTools bypass
+  // Optimized timeout mechanism - reduced from 8s to 3s
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       if (!isReady && !timeoutExceeded) {
         initDebug.warn('App loading timeout exceeded - enabling fallback');
         setTimeoutExceeded(true);
       }
-    }, 8000); // 8 second timeout
+    }, 3000); // Reduced to 3 second timeout
 
     return () => clearTimeout(timeoutId);
   }, [isReady, timeoutExceeded]);
