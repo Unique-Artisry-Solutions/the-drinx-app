@@ -8991,6 +8991,48 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_audit_logs_my_v: {
+        Row: {
+          amount: number | null
+          created_at: string | null
+          currency: string | null
+          error_code: string | null
+          id: string | null
+          ip_masked: string | null
+          payment_method_type: string | null
+          processing_time_ms: number | null
+          status: string | null
+          user_agent_sample: string | null
+          user_id: string | null
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string | null
+          currency?: string | null
+          error_code?: string | null
+          id?: string | null
+          ip_masked?: never
+          payment_method_type?: never
+          processing_time_ms?: number | null
+          status?: string | null
+          user_agent_sample?: never
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string | null
+          currency?: string | null
+          error_code?: string | null
+          id?: string | null
+          ip_masked?: never
+          payment_method_type?: never
+          processing_time_ms?: number | null
+          status?: string | null
+          user_agent_sample?: never
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       profiles_public_v: {
         Row: {
           bio: string | null
