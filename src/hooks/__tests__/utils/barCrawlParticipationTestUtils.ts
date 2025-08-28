@@ -64,6 +64,7 @@ export function setupMocks(authUser = mockUser) {
     refreshSession: vi.fn().mockResolvedValue({ isEmailVerified: true }),
     updatePassword: vi.fn().mockResolvedValue({}),
     recoverAuthState: vi.fn().mockResolvedValue(true),
+    refreshAuthAfterDevBypass: vi.fn().mockResolvedValue({}),
     sendVerificationEmail: vi.fn().mockResolvedValue({}),
     switchRole: vi.fn().mockResolvedValue({})
   };

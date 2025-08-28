@@ -26,11 +26,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [authService, setAuthService] = useState<IAuthService | null>(null);
 
   // Initialize services and auth state
-  const initializeAuth = useCallback(async () => {
-    if (initializationRef.current) return;
+  const initializeAuth = useCallback(async (forceReinit = false) => {
+    if (initializationRef.current && !forceReinit) return;
     initializationRef.current = true;
 
-    console.log('🔐 AuthProvider - Starting initialization with ServiceRegistry');
+    console.log('🔐 AuthProvider - Starting initialization with ServiceRegistry', { forceReinit });
     setIsLoading(true);
     setAuthError(null);
 
@@ -135,6 +135,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUserType(inferUserType(newSession.user));
           setIsEmailVerified(newSession.user.email_confirmed_at !== null);
           setAuthError(null);
+          setIsLoading(false); // Ensure loading is cleared on successful auth
         });
          
         sessionPersistenceService.updateSession(newSession, newSession.user);
@@ -172,10 +173,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     });
 
+    // Initialize after setting up the listener
     initializeAuth();
+
+    // **FIX**: Also check for session changes every few seconds in case the listener misses something
+    const sessionCheckInterval = setInterval(async () => {
+      if (authService) {
+        try {
+          const { data: { session: currentSession }, error } = await authService.getSession();
+          
+          if (!error && currentSession?.user && !session) {
+            console.log('🔐 AuthProvider - Found session during periodic check, updating state');
+            startTransition(() => {
+              setIsTransitioning(true);
+              setAuthStateStable(false);
+              setSession(currentSession);
+              setUser(currentSession.user);
+              setUserType(inferUserType(currentSession.user));
+              setIsEmailVerified(currentSession.user.email_confirmed_at !== null);
+              setAuthError(null);
+              setIsLoading(false);
+            });
+            
+            sessionPersistenceService.updateSession(currentSession, currentSession.user);
+            setAuthStable(true);
+            setNavigationReady(true);
+          }
+        } catch (error) {
+          // Silently handle errors during periodic checks
+          console.warn('🔐 AuthProvider - Periodic session check error:', error);
+        }
+      }
+    }, 1000); // Check every second
 
     return () => {
       subscription.unsubscribe();
+      clearInterval(sessionCheckInterval);
     };
   }, [initializeAuth, authService]);
 
@@ -282,9 +315,47 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const recoverAuthState = useCallback(async () => {
     console.log('AuthProvider - Manual auth recovery requested');
     initializationRef.current = false;
-    await initializeAuth();
+    await initializeAuth(true);
     return true;
   }, [initializeAuth]);
+
+  // Add a method to force auth refresh when DevBypass completes
+  const refreshAuthAfterDevBypass = useCallback(async () => {
+    console.log('🔐 AuthProvider - DevBypass auth refresh requested');
+    
+    // Check if we have a session now
+    if (authService) {
+      try {
+        const { data: { session: currentSession }, error } = await authService.getSession();
+        
+        if (error) {
+          console.error('🔐 AuthProvider - DevBypass refresh session error:', error);
+          return;
+        }
+
+        if (currentSession?.user) {
+          console.log('🔐 AuthProvider - DevBypass refresh found session, updating state');
+          
+          startTransition(() => {
+            setIsTransitioning(true);
+            setAuthStateStable(false);
+            setSession(currentSession);
+            setUser(currentSession.user);
+            setUserType(inferUserType(currentSession.user));
+            setIsEmailVerified(currentSession.user.email_confirmed_at !== null);
+            setAuthError(null);
+            setIsLoading(false);
+          });
+          
+          sessionPersistenceService.updateSession(currentSession, currentSession.user);
+          setAuthStable(true);
+          setNavigationReady(true);
+        }
+      } catch (error) {
+        console.error('🔐 AuthProvider - DevBypass refresh error:', error);
+      }
+    }
+  }, [authService]);
 
   const sendVerificationEmail = useCallback(async (email: string) => {
     if (!authService) {
@@ -392,6 +463,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signOut,
     refreshSession,
     recoverAuthState,
+    refreshAuthAfterDevBypass,
     sendVerificationEmail,
     updateUserProfile,
     updatePassword,

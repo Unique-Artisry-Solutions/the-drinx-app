@@ -35,6 +35,7 @@ export interface AuthActions {
   signOut: () => Promise<void>;
   refreshSession: () => Promise<{ isEmailVerified: boolean }>;
   recoverAuthState: () => Promise<boolean>;
+  refreshAuthAfterDevBypass: () => Promise<void>;
   sendVerificationEmail: (email: string) => Promise<void>;
   updateUserProfile: (data: any) => Promise<void>;
   updatePassword: (newPassword: string) => Promise<void>;
