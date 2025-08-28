@@ -14,15 +14,15 @@ export function useNotificationEvents() {
     }
   }, [user, track]);
 
-  const onClick = useCallback((notification: Notification) => {
-    console.log('[NotificationEvents] Notification was clicked:', notification);
+  const onClick = useCallback((_notification: Notification) => {
+    console.log('[NotificationEvents] Notification was clicked');
     if (user) {
       track('notification_clicked');
     }
   }, [user, track]);
 
-  const onError = useCallback((error: Event) => {
-    console.error('[NotificationEvents] Notification error:', error);
+  const onError = useCallback((_error: Event) => {
+    console.error('[NotificationEvents] Notification error');
     if (user) {
       track('notification_error');
     }

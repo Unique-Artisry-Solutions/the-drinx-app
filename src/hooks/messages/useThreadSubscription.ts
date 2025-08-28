@@ -21,13 +21,13 @@ export const useThreadSubscription = (threadId: string | null, onNewMessage: () 
             table: 'promoter_venue_messages',
             filter: `thread_id=eq.${threadId}`
           },
-          (payload) => {
-            console.log('Received new message:', payload);
+          (_payload) => {
+            console.log('Received new message');
             onNewMessage();
           }
         )
         .subscribe((status) => {
-          console.log(`Subscription status for thread ${threadId}:`, status);
+          console.log(`Subscription status for thread ${threadId}: ${status}`);
           if (status === 'SUBSCRIBED') {
             console.log(`Successfully subscribed to thread ${threadId}`);
           }
