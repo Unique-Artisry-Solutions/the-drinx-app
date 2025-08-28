@@ -9174,24 +9174,6 @@ export type Database = {
           },
         ]
       }
-      reward_analytics_materialized: {
-        Row: {
-          date: string | null
-          establishment_id: string | null
-          points_total: number | null
-          transaction_type: string | null
-          unique_users: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "reward_transactions_establishment_id_fkey"
-            columns: ["establishment_id"]
-            isOneToOne: false
-            referencedRelation: "establishments"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       reward_system_analytics: {
         Row: {
           date: string | null
@@ -9453,6 +9435,18 @@ export type Database = {
       get_or_create_thread: {
         Args: { p_promoter_id: string; p_venue_id: string }
         Returns: string
+      }
+      get_reward_analytics: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          active_users: number
+          avg_transaction_value: number
+          establishment_id: string
+          period_end: string
+          period_start: string
+          total_points_earned: number
+          total_points_redeemed: number
+        }[]
       }
       get_user_retention: {
         Args: { p_end_date: string; p_start_date: string }
