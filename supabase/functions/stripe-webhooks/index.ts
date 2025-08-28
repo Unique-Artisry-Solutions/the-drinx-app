@@ -3,6 +3,13 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { getSecurityConfig, getCorsHeaders } from '../_shared/security.ts'
 import Stripe from 'https://esm.sh/stripe@12.6.0?target=deno'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { 
+  validatePaymentIntentData, 
+  validateSubscriptionData, 
+  validateInvoiceData,
+  validateWebhookEventStructure,
+  createSafeErrorResponse 
+} from '../payments/validation-helpers.ts'
 
 // Structured logging helper
 const logWebhookEvent = (level: 'info' | 'warn' | 'error', event: string, data: Record<string, any> = {}) => {
@@ -222,6 +229,34 @@ const handler = async (req: Request): Promise<Response> => {
     });
 
     // Validate webhook data structure
+    const structureValidation = validateWebhookEventStructure(event);
+    if (!structureValidation.isValid) {
+      logWebhookEvent('error', 'invalid_webhook_event_structure', { 
+        requestId,
+        eventId: event.id,
+        eventType: event.type,
+        errors: structureValidation.errors 
+      });
+      return new Response(
+        JSON.stringify(createSafeErrorResponse(
+          new Error('Invalid webhook event structure: ' + structureValidation.errors.join(', ')),
+          requestId
+        )),
+        { status: 400, headers: { ...cors, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Log structure validation warnings
+    if (structureValidation.warnings.length > 0) {
+      logWebhookEvent('warn', 'webhook_structure_warnings', { 
+        requestId,
+        eventId: event.id,
+        eventType: event.type,
+        warnings: structureValidation.warnings 
+      });
+    }
+
+    // Enhanced webhook data validation (existing validation)
     const validation = validateWebhookData(event);
     if (!validation.valid) {
       logWebhookEvent('error', 'invalid_webhook_data', { 
@@ -231,11 +266,10 @@ const handler = async (req: Request): Promise<Response> => {
         missingFields: validation.missingFields 
       });
       return new Response(
-        JSON.stringify({ 
-          error: 'Invalid webhook data structure',
-          requestId,
-          missingFields: validation.missingFields 
-        }),
+        JSON.stringify(createSafeErrorResponse(
+          new Error('Invalid webhook data structure'),
+          requestId
+        )),
         { status: 400, headers: { ...cors, 'Content-Type': 'application/json' } }
       );
     }
@@ -337,11 +371,10 @@ const handler = async (req: Request): Promise<Response> => {
     });
 
     return new Response(
-      JSON.stringify({ 
-        error: 'Webhook processing failed',
-        requestId,
-        message: 'Internal server error occurred'
-      }),
+      JSON.stringify(createSafeErrorResponse(
+        new Error('Webhook processing failed'),
+        requestId
+      )),
       { status: 500, headers: { ...cors, 'Content-Type': 'application/json' } }
     );
   }
@@ -355,13 +388,24 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent, supabas
     currency: paymentIntent.currency
   });
 
-  // Guard against missing required fields
-  if (!paymentIntent.id) {
-    throw new Error('Payment intent ID is missing');
+  // Validate payment intent data with defensive checks
+  const validation = validatePaymentIntentData(paymentIntent);
+  if (!validation.isValid) {
+    logWebhookEvent('error', 'invalid_payment_intent_data', { 
+      requestId,
+      paymentIntentId: paymentIntent.id,
+      errors: validation.errors 
+    });
+    throw new Error(`Invalid payment intent data: ${validation.errors.join(', ')}`);
   }
-  
-  if (typeof paymentIntent.amount !== 'number') {
-    throw new Error('Payment intent amount is invalid');
+
+  // Log any validation warnings
+  if (validation.warnings.length > 0) {
+    logWebhookEvent('warn', 'payment_intent_validation_warnings', { 
+      requestId,
+      paymentIntentId: paymentIntent.id,
+      warnings: validation.warnings 
+    });
   }
 
   try {
@@ -371,15 +415,15 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent, supabas
         status: 'completed',
         provider_transaction_id: paymentIntent.id,
         metadata: {
-          ...paymentIntent.metadata,
+          ...validation.sanitized.metadata,
           stripe_payment_intent: paymentIntent.id,
           amount_received: paymentIntent.amount_received,
-          charges: paymentIntent.charges.data.map(charge => ({
+          charges: paymentIntent.charges?.data?.map(charge => ({
             id: charge.id,
             amount: charge.amount,
             currency: charge.currency,
             status: charge.status
-          }))
+          })) || []
         },
         updated_at: new Date().toISOString()
       })
@@ -394,8 +438,10 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent, supabas
       throw error;
     }
 
-    // If this is a ticket purchase, update ticket status
+    // If this is a ticket purchase, update ticket status with validation
     if (paymentIntent.metadata?.ticket_purchase_id) {
+      const ticketPurchaseId = String(paymentIntent.metadata.ticket_purchase_id).slice(0, 36); // UUID length limit
+      
       const { error: ticketError } = await supabase
         .from('ticket_purchases')
         .update({
@@ -403,13 +449,13 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent, supabas
           status: 'confirmed',
           updated_at: new Date().toISOString()
         })
-        .eq('id', paymentIntent.metadata.ticket_purchase_id);
+        .eq('id', ticketPurchaseId);
 
       if (ticketError) {
         logWebhookEvent('error', 'ticket_purchase_update_failed', { 
           requestId,
           paymentIntentId: paymentIntent.id,
-          ticketPurchaseId: paymentIntent.metadata.ticket_purchase_id,
+          ticketPurchaseId,
           error: ticketError.message 
         });
         // Don't throw here - payment was successful even if ticket update failed
@@ -515,9 +561,24 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription, supa
     status: subscription.status 
   });
 
-  // Guard against missing required fields
-  if (!subscription.id || !subscription.customer) {
-    throw new Error('Subscription ID or customer ID is missing');
+  // Validate subscription data with defensive checks
+  const validation = validateSubscriptionData(subscription);
+  if (!validation.isValid) {
+    logWebhookEvent('error', 'invalid_subscription_data', { 
+      requestId,
+      subscriptionId: subscription.id,
+      errors: validation.errors 
+    });
+    throw new Error(`Invalid subscription data: ${validation.errors.join(', ')}`);
+  }
+
+  // Log any validation warnings
+  if (validation.warnings.length > 0) {
+    logWebhookEvent('warn', 'subscription_validation_warnings', { 
+      requestId,
+      subscriptionId: subscription.id,
+      warnings: validation.warnings 
+    });
   }
 
   try {
@@ -660,8 +721,24 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice, supabase: 
     currency: invoice.currency 
   });
 
-  if (!invoice.id) {
-    throw new Error('Invoice ID is missing');
+  // Validate invoice data with defensive checks
+  const validation = validateInvoiceData(invoice);
+  if (!validation.isValid) {
+    logWebhookEvent('error', 'invalid_invoice_data', { 
+      requestId,
+      invoiceId: invoice.id,
+      errors: validation.errors 
+    });
+    throw new Error(`Invalid invoice data: ${validation.errors.join(', ')}`);
+  }
+
+  // Log any validation warnings
+  if (validation.warnings.length > 0) {
+    logWebhookEvent('warn', 'invoice_validation_warnings', { 
+      requestId,
+      invoiceId: invoice.id,
+      warnings: validation.warnings 
+    });
   }
 
   try {

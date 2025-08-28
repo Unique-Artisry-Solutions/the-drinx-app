@@ -8555,6 +8555,36 @@ export type Database = {
           },
         ]
       }
+      webhook_events: {
+        Row: {
+          api_version: string | null
+          created_at: string
+          event_id: string
+          event_type: string
+          id: string
+          livemode: boolean
+          processed_at: string
+        }
+        Insert: {
+          api_version?: string | null
+          created_at: string
+          event_id: string
+          event_type: string
+          id?: string
+          livemode?: boolean
+          processed_at?: string
+        }
+        Update: {
+          api_version?: string | null
+          created_at?: string
+          event_id?: string
+          event_type?: string
+          id?: string
+          livemode?: boolean
+          processed_at?: string
+        }
+        Relationships: []
+      }
       welcome_automation_flows: {
         Row: {
           completion_criteria: Json | null
@@ -9165,6 +9195,10 @@ export type Database = {
         Returns: boolean
       }
       cleanup_notification_dedup_log: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      cleanup_old_webhook_events: {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
