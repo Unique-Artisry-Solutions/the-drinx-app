@@ -1,0 +1,35 @@
+# Build & deps
+node_modules/
+dist/
+.next/
+build/
+.turbo/
+.vite/
+.cache/
+coverage/
+
+# Generated / heavy
+supabase/types/**
+public/*.mp4
+public/*.mov
+public/**/*.zip
+*.map
+*.log
+
+# Tests & stories
+__snapshots__/
+*.stories.*
+*.spec.*
+*.test.*
+
+# Local env & secrets
+.env
+.env.*
+*.pem
+*.key
+*.crt
+
+# Old junk
+legacy/
+old/
+tmp/
