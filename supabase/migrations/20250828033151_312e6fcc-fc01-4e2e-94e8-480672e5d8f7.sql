@@ -1,16 +1,19 @@
 -- Fix function search_path security vulnerabilities
 -- Pin search_path and use fully-qualified object names for all functions
 
--- Update is_admin function
 CREATE OR REPLACE FUNCTION public.is_admin(p_uid uuid)
 RETURNS boolean 
 LANGUAGE sql 
 STABLE 
 SECURITY DEFINER
-SET search_path = ''
+SET search_path = public
 AS $$
-  SELECT COALESCE((SELECT user_type = 'admin' FROM public.profiles WHERE id = p_uid), false)
+  SELECT COALESCE(
+    (SELECT user_type = 'admin' FROM public.profiles WHERE id = p_uid),
+    false
+  )
 $$;
+
 
 -- Update has_active_role function  
 CREATE OR REPLACE FUNCTION public.has_active_role(p_user_id uuid, p_role text)
