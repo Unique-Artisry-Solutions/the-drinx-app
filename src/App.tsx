@@ -12,6 +12,16 @@ import { testingRoutes } from '@/routes/testingRoutes';
 import MagicLinkHandler from '@/components/auth/MagicLinkHandler';
 import AppProviders from '@/components/providers/AppProviders';
 import { initDebug } from '@/utils/initDebug';
+import Health from './Health';
+
+function App() {
+  return (
+    <Routes>
+      {/* existing routes */}
+      <Route path="/health" element={<Health />} />
+    </Routes>
+  );
+}
 
 const App: React.FC = () => {
   const { 
