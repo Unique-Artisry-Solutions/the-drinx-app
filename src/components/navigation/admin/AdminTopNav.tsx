@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/auth';
 import AdminProfileDropdown from './AdminProfileDropdown';
 import AdminMobileMenu from './AdminMobileMenu';
 import AnalyticsService from '@/components/admin/analytics/AnalyticsService';
+import { AdminBadge } from '@/components/AdminBadge';
 
 const AdminTopNav: React.FC = () => {
   const location = useLocation();
