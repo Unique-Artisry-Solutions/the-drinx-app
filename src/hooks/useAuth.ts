@@ -14,8 +14,8 @@ export function useAuth(): AuthState {
   const [state, setState] = useState<AuthState>({
     session: null,
     user: null,
-    loading: true,
-    isAdmin: false,
+    loading: true,     // ← comma
+    isAdmin: false,    // ← comma (last prop can have a trailing comma; safe)
   });
 
   useEffect(() => {
@@ -27,7 +27,13 @@ export function useAuth(): AuthState {
 
       if (error) {
         console.error('[auth] getSession failed', error);
-        setState((s) => ({ ...s, session: null, user: null, loading: false, isAdmin: false }));
+        setState((s) => ({
+          ...s,
+          session: null,
+          user: null,
+          loading: false,
+          isAdmin: false, // ← comma
+        }));
         return;
       }
 
@@ -35,7 +41,12 @@ export function useAuth(): AuthState {
       const user = session?.user ?? null;
 
       // default to non-admin; upgrade after DB check
-      setState({ session, user, loading: false, isAdmin: false });
+      setState({
+        session,
+        user,
+        loading: false,
+        isAdmin: false, // ← comma
+      });
 
       if (user?.id) {
         try {
@@ -54,9 +65,14 @@ export function useAuth(): AuthState {
       if (!mounted) return;
       const session = newSession ?? null;
       const user = session?.user ?? null;
-      setState({ session, user, loading: false, isAdmin: false });
 
-      // refresh admin flag on auth change
+      setState({
+        session,
+        user,
+        loading: false,
+        isAdmin: false, // ← comma
+      });
+
       if (user?.id) {
         checkIsAdmin(user.id, user.email ?? null)
           .then((admin) => {
