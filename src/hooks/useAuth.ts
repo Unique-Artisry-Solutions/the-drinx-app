@@ -14,8 +14,8 @@ export function useAuth(): AuthState {
   const [state, setState] = useState<AuthState>({
     session: null,
     user: null,
-    loading: true,  // ← note the comma
-    isAdmin: false, // ← and the comma; commas matter in object literals
+    loading: true,
+    isAdmin: false,
   });
 
   useEffect(() => {
@@ -32,7 +32,7 @@ export function useAuth(): AuthState {
           session: null,
           user: null,
           loading: false,
-          isAdmin: false, // comma
+          isAdmin: false,
         }));
         return;
       }
@@ -40,12 +40,12 @@ export function useAuth(): AuthState {
       const session = data.session ?? null;
       const user = session?.user ?? null;
 
-      // default non-admin; we'll update after DB check
+      // default non-admin; upgrade after DB check
       setState({
         session,
         user,
         loading: false,
-        isAdmin: false, // comma
+        isAdmin: false,
       });
 
       if (user?.id) {
@@ -70,7 +70,7 @@ export function useAuth(): AuthState {
         session,
         user,
         loading: false,
-        isAdmin: false, // comma
+        isAdmin: false,
       });
 
       if (user?.id) {
