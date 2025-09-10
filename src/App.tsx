@@ -12,7 +12,7 @@ import { testingRoutes } from '@/routes/testingRoutes';
 import MagicLinkHandler from '@/components/auth/MagicLinkHandler';
 import AppProviders from '@/components/providers/AppProviders';
 import { initDebug } from '@/utils/initDebug';
-import Health from './Health';
+import Health from '@/components/Health';
 
 function App() {
   return (
@@ -22,7 +22,7 @@ function App() {
     </Routes>
   );
 }
-
+<Route path="/health" element={<Health />} />
 const App: React.FC = () => {
   const { 
     isReady, 
