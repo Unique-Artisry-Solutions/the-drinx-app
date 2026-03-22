@@ -3,15 +3,17 @@
   "private": true,
   "version": "0.0.0",
   "engines": {
-  "node": "20.11.1"
-},
-
+    "node": "20.11.1"
+  },
   "type": "module",
   "scripts": {
-  "type-check": "tsc --noEmit",
-  "lint": "eslint .",
-  "test": "echo \"No tests yet\" && exit 0"
-},
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "echo \"No tests yet\" && exit 0"
+  },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
     "@radix-ui/react-accordion": "^1.2.0",
@@ -102,7 +104,7 @@
     "typedoc": "^0.28.4",
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.0.1",
-    "vite": "^5.4.1",
+    "vite": "^8.0.1",
     "vitest": "^3.2.4"
   }
 }
