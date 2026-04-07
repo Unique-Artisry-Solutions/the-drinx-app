@@ -170,12 +170,12 @@ export const isPhotoModerationFeature = (feature: FeatureItem) =>
   (feature.name.toLowerCase().includes('moderation') || 
    feature.description.toLowerCase().includes('moderation'));
 
-export const isBarCrawlFeature = (feature: FeatureItem) => 
-  feature.name.toLowerCase().includes('bar crawl') || 
-  feature.description.toLowerCase().includes('bar crawl');
+export const isSwigCircuitFeature = (feature: FeatureItem) => 
+  feature.name.toLowerCase().includes('Swig Circuit') || 
+  feature.description.toLowerCase().includes('Swig Circuit');
 
-export const isBarCrawlManagementFeature = (feature: FeatureItem) => 
-  isBarCrawlFeature(feature) && 
+export const isSwigCircuitManagementFeature = (feature: FeatureItem) => 
+  isSwigCircuitFeature(feature) && 
   (feature.name.toLowerCase().includes('manage') || 
    feature.description.toLowerCase().includes('manage') ||
    feature.name.toLowerCase().includes('admin') || 

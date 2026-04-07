@@ -110,7 +110,7 @@ export const isEstablishmentManagementFeature = (feature: any) =>
 export const isVisitTrackingFeature = (feature: any) => 
   feature.name?.toLowerCase().includes('visit') && feature.name?.toLowerCase().includes('tracking');
 
-export const isBarCrawlFeature = (feature: any) => 
+export const isSwigCircuitFeature = (feature: any) => 
   feature.name?.toLowerCase().includes('bar') && feature.name?.toLowerCase().includes('crawl');
 
 export const isSwigCircuitFeature = (feature: any) => 

@@ -13,7 +13,7 @@ const UserProfilePage = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
-  const [barCrawls, setBarCrawls] = useState<any[]>([
+  const [swigCircuits, setSwigCircuits] = useState<any[]>([
     {
       id: '1',
       name: 'Downtown Delights',
@@ -41,7 +41,7 @@ const UserProfilePage = () => {
     }
   ]);
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedBarCrawl, setSelectedBarCrawl] = useState<any>(null);
+  const [selectedSwigCircuit, setSelectedSwigCircuit] = useState<any>(null);
   const [mapboxToken, setMapboxToken] = useState<string | null>(localStorage.getItem('mapbox_token'));
   const { toast } = useToast();
 
@@ -82,20 +82,20 @@ const UserProfilePage = () => {
     }, 1000);
   };
 
-  const handleBarCrawlClick = (barCrawl: any) => {
-    setSelectedBarCrawl(barCrawl);
+  const handleSwigCircuitClick = (swigCircuit: any) => {
+    setSelectedSwigCircuit(swigCircuit);
   };
 
   const handleBackToList = () => {
-    setSelectedBarCrawl(null);
+    setSelectedSwigCircuit(null);
   };
 
   const handleRemoveEstablishment = (establishmentId: string) => {
-    if (!selectedBarCrawl) return;
+    if (!selectedSwigCircuit) return;
     
-    setSelectedBarCrawl({
-      ...selectedBarCrawl,
-      establishments: selectedBarCrawl.establishments.filter(
+    setSelectedSwigCircuit({
+      ...selectedSwigCircuit,
+      establishments: selectedSwigCircuit.establishments.filter(
         (est: any) => est.id !== establishmentId
       )
     });
@@ -106,11 +106,11 @@ const UserProfilePage = () => {
     });
   };
 
-  const handleSaveBarCrawl = () => {
-    if (!selectedBarCrawl) return;
+  const handleSaveSwigCircuit = () => {
+    if (!selectedSwigCircuit) return;
     
-    setBarCrawls(barCrawls.map(bc => 
-      bc.id === selectedBarCrawl.id ? selectedBarCrawl : bc
+    setSwigCircuits(swigCircuits.map(bc => 
+      bc.id === selectedSwigCircuit.id ? selectedSwigCircuit : bc
     ));
     
     toast({
@@ -118,13 +118,13 @@ const UserProfilePage = () => {
       description: 'Your bar crawl has been updated successfully',
     });
     
-    setSelectedBarCrawl(null);
+    setSelectedSwigCircuit(null);
   };
 
-  const renderBarCrawlDetail = () => {
-    if (!selectedBarCrawl) return null;
+  const renderSwigCircuitDetail = () => {
+    if (!selectedSwigCircuit) return null;
     
-    const mockEstablishmentsForMap = selectedBarCrawl.establishments.map((est: any, index: number) => ({
+    const mockEstablishmentsForMap = selectedSwigCircuit.establishments.map((est: any, index: number) => ({
       id: est.id,
       name: est.name,
       latitude: 40.7128 + (index * 0.01),
@@ -138,7 +138,7 @@ const UserProfilePage = () => {
           <Button variant="ghost" onClick={handleBackToList}>
             ← Back to list
           </Button>
-          <Button onClick={handleSaveBarCrawl}>Save Changes</Button>
+          <Button onClick={handleSaveSwigCircuit}>Save Changes</Button>
         </div>
         
         <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
@@ -149,8 +149,8 @@ const UserProfilePage = () => {
             <CardContent className="space-y-4">
               <div className="relative aspect-video rounded-md overflow-hidden bg-muted">
                 <img 
-                  src={selectedBarCrawl.image} 
-                  alt={selectedBarCrawl.name} 
+                  src={selectedSwigCircuit.image} 
+                  alt={selectedSwigCircuit.name} 
                   className="w-full h-full object-cover"
                 />
                 <Button 
@@ -165,17 +165,17 @@ const UserProfilePage = () => {
               <div className="space-y-2">
                 <label className="text-sm font-medium">Bar Crawl Name</label>
                 <Input 
-                  value={selectedBarCrawl.name} 
-                  onChange={(e) => setSelectedBarCrawl({...selectedBarCrawl, name: e.target.value})}
+                  value={selectedSwigCircuit.name} 
+                  onChange={(e) => setSelectedSwigCircuit({...selectedSwigCircuit, name: e.target.value})}
                 />
               </div>
               
               <div className="flex justify-between text-sm">
                 <div className="flex items-center">
                   <Users className="h-4 w-4 mr-1" /> 
-                  <span>{selectedBarCrawl.participants} participants</span>
+                  <span>{selectedSwigCircuit.participants} participants</span>
                 </div>
-                <div>Created on {selectedBarCrawl.createdAt}</div>
+                <div>Created on {selectedSwigCircuit.createdAt}</div>
               </div>
             </CardContent>
           </Card>
@@ -186,7 +186,7 @@ const UserProfilePage = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {selectedBarCrawl.establishments.map((est: any, index: number) => (
+                {selectedSwigCircuit.establishments.map((est: any, index: number) => (
                   <div key={est.id} className="flex items-center border rounded-md p-3">
                     <div className="h-8 w-8 rounded-full bg-material-primary text-white flex items-center justify-center mr-3">
                       {index + 1}
@@ -233,23 +233,23 @@ const UserProfilePage = () => {
     );
   };
 
-  const renderBarCrawlList = () => {
+  const renderSwigCircuitList = () => {
     return (
       <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
-        {barCrawls.map(barCrawl => (
-          <Card key={barCrawl.id} className="overflow-hidden">
+        {swigCircuits.map(swigCircuit => (
+          <Card key={swigCircuit.id} className="overflow-hidden">
             <div className="aspect-video relative">
               <img 
-                src={barCrawl.image} 
-                alt={barCrawl.name} 
+                src={swigCircuit.image} 
+                alt={swigCircuit.name} 
                 className="w-full h-full object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
               <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
-                <h3 className="font-bold text-xl">{barCrawl.name}</h3>
+                <h3 className="font-bold text-xl">{swigCircuit.name}</h3>
                 <div className="flex justify-between text-sm mt-1">
-                  <span>{barCrawl.establishments.length} stops</span>
-                  <span>{barCrawl.participants} participants</span>
+                  <span>{swigCircuit.establishments.length} stops</span>
+                  <span>{swigCircuit.participants} participants</span>
                 </div>
               </div>
             </div>
@@ -258,7 +258,7 @@ const UserProfilePage = () => {
                 <Button 
                   variant="outline" 
                   size="sm"
-                  onClick={() => handleBarCrawlClick(barCrawl)}
+                  onClick={() => handleSwigCircuitClick(swigCircuit)}
                 >
                   <PenSquare className="h-4 w-4 mr-2" /> Edit
                 </Button>
@@ -296,7 +296,7 @@ const UserProfilePage = () => {
         <Tabs defaultValue="profile">
           <TabsList className="w-full mb-4">
             <TabsTrigger value="profile">Profile</TabsTrigger>
-            <TabsTrigger value="barCrawls">Bar Crawls</TabsTrigger>
+            <TabsTrigger value="swigCircuits">Bar Crawls</TabsTrigger>
             <TabsTrigger value="favorites">Favorites</TabsTrigger>
             <TabsTrigger value="visited">Visited</TabsTrigger>
           </TabsList>
@@ -330,8 +330,8 @@ const UserProfilePage = () => {
             </Card>
           </TabsContent>
 
-          <TabsContent value="barCrawls">
-            {selectedBarCrawl ? renderBarCrawlDetail() : renderBarCrawlList()}
+          <TabsContent value="swigCircuits">
+            {selectedSwigCircuit ? renderSwigCircuitDetail() : renderSwigCircuitList()}
           </TabsContent>
 
           <TabsContent value="favorites">

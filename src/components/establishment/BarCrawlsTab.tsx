@@ -1,22 +1,22 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import BarCrawlCard from './BarCrawlCard';
-import { BarCrawlRequest } from '@/hooks/useBarCrawlRequests';
+import SwigCircuitCard from './SwigCircuitCard';
+import { SwigCircuitRequest } from '@/hooks/useSwigCircuitRequests';
 
-interface BarCrawlsTabProps {
-  barCrawls: BarCrawlRequest[];
+interface SwigCircuitsTabProps {
+  swigCircuits: SwigCircuitRequest[];
   handleEndParticipation: (id: string) => void;
   handleAcceptRequest: (id: string) => void;
 }
 
-const BarCrawlsTab: React.FC<BarCrawlsTabProps> = ({
-  barCrawls,
+const SwigCircuitsTab: React.FC<SwigCircuitsTabProps> = ({
+  swigCircuits,
   handleEndParticipation,
   handleAcceptRequest
 }) => {
-  const pendingCrawls = barCrawls.filter(crawl => crawl.status === 'pending');
-  const acceptedCrawls = barCrawls.filter(crawl => crawl.status === 'accepted');
+  const pendingCrawls = swigCircuits.filter(crawl => crawl.status === 'pending');
+  const acceptedCrawls = swigCircuits.filter(crawl => crawl.status === 'accepted');
   
   return (
     <Card>
@@ -24,10 +24,10 @@ const BarCrawlsTab: React.FC<BarCrawlsTabProps> = ({
         <CardTitle>Swig Circuit Participation</CardTitle>
       </CardHeader>
       <CardContent>
-        {barCrawls.length > 0 ? (
+        {swigCircuits.length > 0 ? (
           <div className="space-y-6">
             {pendingCrawls.map(crawl => (
-              <BarCrawlCard 
+              <SwigCircuitCard 
                 key={crawl.id} 
                 crawl={crawl} 
                 handleEndParticipation={handleEndParticipation} 
@@ -36,7 +36,7 @@ const BarCrawlsTab: React.FC<BarCrawlsTabProps> = ({
             ))}
             
             {acceptedCrawls.map(crawl => (
-              <BarCrawlCard 
+              <SwigCircuitCard 
                 key={crawl.id} 
                 crawl={crawl} 
                 handleEndParticipation={handleEndParticipation}
@@ -53,4 +53,4 @@ const BarCrawlsTab: React.FC<BarCrawlsTabProps> = ({
   );
 };
 
-export default BarCrawlsTab;
+export default SwigCircuitsTab;

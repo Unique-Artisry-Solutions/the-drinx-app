@@ -3,9 +3,9 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { CalendarDays, UsersRound, MapPin } from 'lucide-react';
-import JoinBarCrawlButton from '../JoinBarCrawlButton';
+import JoinSwigCircuitButton from '../JoinSwigCircuitButton';
 
-interface BarCrawlProfileHeaderProps {
+interface SwigCircuitProfileHeaderProps {
   name: string;
   participants: number;
   date: string;
@@ -13,7 +13,7 @@ interface BarCrawlProfileHeaderProps {
   id: string;
 }
 
-const BarCrawlProfileHeader: React.FC<BarCrawlProfileHeaderProps> = ({
+const SwigCircuitProfileHeader: React.FC<SwigCircuitProfileHeaderProps> = ({
   name,
   participants,
   date,
@@ -43,7 +43,7 @@ const BarCrawlProfileHeader: React.FC<BarCrawlProfileHeaderProps> = ({
         </div>
         
         <div className="flex flex-wrap items-center gap-2">
-          <JoinBarCrawlButton barCrawlId={id} />
+          <JoinSwigCircuitButton swigCircuitId={id} />
           
           <Button variant="outline" onClick={() => navigate(-1)}>
             Back
@@ -54,4 +54,4 @@ const BarCrawlProfileHeader: React.FC<BarCrawlProfileHeaderProps> = ({
   );
 };
 
-export default BarCrawlProfileHeader;
+export default SwigCircuitProfileHeader;

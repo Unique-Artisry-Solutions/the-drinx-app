@@ -26,7 +26,7 @@ const AllActionsSection: React.FC<AllActionsSectionProps> = ({ handleTabChange }
               Manage Promotions
             </h3>
           </Card>
-          <Card className="p-4 hover:bg-gray-50 cursor-pointer" onClick={() => handleTabChange('barCrawls')}>
+          <Card className="p-4 hover:bg-gray-50 cursor-pointer" onClick={() => handleTabChange('swigCircuits')}>
             <h3 className="font-medium flex items-center gap-2">
               <Route className="h-5 w-5" />
               Review Swig Circuit Requests

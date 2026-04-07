@@ -10,7 +10,7 @@ import { motion } from 'framer-motion';
 
 interface RewardsStatusProps {
   userStats: {
-    barCrawlsCompleted: number;
+    swigCircuitsCompleted: number;
     establishmentsVisited: number;
     mocktailsTried: number;
     reviewsWritten: number;
@@ -24,8 +24,8 @@ const RewardsStatus: React.FC<RewardsStatusProps> = ({ userStats }) => {
   const isDark = theme === 'dark';
   
   const getTier = () => {
-    if (userStats.barCrawlsCompleted >= 15) return 3;
-    if (userStats.barCrawlsCompleted >= 5) return 2;
+    if (userStats.swigCircuitsCompleted >= 15) return 3;
+    if (userStats.swigCircuitsCompleted >= 5) return 2;
     return 1;
   };
   
@@ -34,9 +34,9 @@ const RewardsStatus: React.FC<RewardsStatusProps> = ({ userStats }) => {
   // Calculate progress percentage to next tier
   const progressPercentage = () => {
     if (currentTier === 1) {
-      return (userStats.barCrawlsCompleted / 5) * 100;
+      return (userStats.swigCircuitsCompleted / 5) * 100;
     } else if (currentTier === 2) {
-      return ((userStats.barCrawlsCompleted - 5) / 10) * 100;
+      return ((userStats.swigCircuitsCompleted - 5) / 10) * 100;
     } else {
       return 100;
     }
@@ -45,7 +45,7 @@ const RewardsStatus: React.FC<RewardsStatusProps> = ({ userStats }) => {
   // Calculate points estimate based on user stats
   const calculatePoints = () => {
     let points = 0;
-    points += userStats.barCrawlsCompleted * 100; // 100 points per bar crawl
+    points += userStats.swigCircuitsCompleted * 100; // 100 points per bar crawl
     points += userStats.establishmentsVisited * 10; // 10 points per visit
     points += userStats.mocktailsTried * 5; // 5 points per mocktail tried
     points += userStats.reviewsWritten * 15; // 15 points per review
@@ -105,7 +105,7 @@ const RewardsStatus: React.FC<RewardsStatusProps> = ({ userStats }) => {
               </div>
               <span>Swig Circuits Completed</span>
             </div>
-            <span className="font-medium">{userStats.barCrawlsCompleted}</span>
+            <span className="font-medium">{userStats.swigCircuitsCompleted}</span>
           </div>
           <div className="flex justify-between items-center">
             <div className={`flex items-center gap-2 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>

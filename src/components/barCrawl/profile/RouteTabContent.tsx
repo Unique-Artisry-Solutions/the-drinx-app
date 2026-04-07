@@ -154,7 +154,7 @@ const RouteTabContent: React.FC<RouteTabContentProps> = ({
                   className="w-full mt-1"
                   asChild
                 >
-                  <Link to={`/profile/bar-crawls/participants/${id}`}>
+                  <Link to={`/profile/swig-circuits/participants/${id}`}>
                     View All
                   </Link>
                 </Button>

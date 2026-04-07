@@ -62,7 +62,7 @@ export const useNotificationFormData = () => {
             end: '08:00'
           }
         },
-        'bar-crawl': {
+        'swig-circuit': {
           enabled: true,
           priority: 'medium',
           channels: { email: true, push: true },
@@ -113,7 +113,7 @@ export const useNotificationFormData = () => {
     
     const notificationCategories: Record<string, NotificationCategory> = {};
     
-    ['system-updates', 'bar-crawl', 'establishment', 'promotions'].forEach(categoryId => {
+    ['system-updates', 'swig-circuit', 'establishment', 'promotions'].forEach(categoryId => {
       notificationCategories[categoryId] = form.getValues(`notification_categories.${categoryId}`);
     });
     

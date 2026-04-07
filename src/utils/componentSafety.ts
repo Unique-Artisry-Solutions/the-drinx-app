@@ -8,7 +8,7 @@ import {
   Establishment, 
   Event, 
   Cocktail, 
-  BarCrawl,
+  SwigCircuit,
   EstablishmentCard,
   EventCard,
   UserProfile
@@ -50,15 +50,15 @@ export const isValidCocktail = (cocktail: any): cocktail is Cocktail => {
     (typeof cocktail.price === 'number' || typeof cocktail.price === 'string');
 };
 
-export const isValidBarCrawl = (barCrawl: any): barCrawl is BarCrawl => {
-  return barCrawl && 
-    typeof barCrawl === 'object' && 
-    typeof barCrawl.id === 'string' && 
-    typeof barCrawl.name === 'string' &&
-    typeof barCrawl.organizer === 'string' &&
-    typeof barCrawl.startDate === 'string' &&
-    typeof barCrawl.endDate === 'string' &&
-    Array.isArray(barCrawl.establishments);
+export const isValidSwigCircuit = (swigCircuit: any): swigCircuit is SwigCircuit => {
+  return swigCircuit && 
+    typeof swigCircuit === 'object' && 
+    typeof swigCircuit.id === 'string' && 
+    typeof swigCircuit.name === 'string' &&
+    typeof swigCircuit.organizer === 'string' &&
+    typeof swigCircuit.startDate === 'string' &&
+    typeof swigCircuit.endDate === 'string' &&
+    Array.isArray(swigCircuit.establishments);
 };
 
 // Safe getters with defaults
@@ -192,20 +192,20 @@ export const safeGetCocktail = (cocktail: any): Cocktail => {
   };
 };
 
-export const safeGetBarCrawl = (barCrawl: any): BarCrawl => {
-  if (isValidBarCrawl(barCrawl)) {
+export const safeGetSwigCircuit = (swigCircuit: any): SwigCircuit => {
+  if (isValidSwigCircuit(swigCircuit)) {
     return {
-      id: barCrawl.id,
-      name: barCrawl.name,
-      organizer: barCrawl.organizer,
-      startDate: barCrawl.startDate,
-      endDate: barCrawl.endDate,
-      description: barCrawl.description || '',
-      imageUrl: barCrawl.imageUrl || '',
-      establishments: barCrawl.establishments || [],
-      invitedUsers: barCrawl.invitedUsers || [],
-      status: barCrawl.status || 'planned',
-      created_at: barCrawl.created_at
+      id: swigCircuit.id,
+      name: swigCircuit.name,
+      organizer: swigCircuit.organizer,
+      startDate: swigCircuit.startDate,
+      endDate: swigCircuit.endDate,
+      description: swigCircuit.description || '',
+      imageUrl: swigCircuit.imageUrl || '',
+      establishments: swigCircuit.establishments || [],
+      invitedUsers: swigCircuit.invitedUsers || [],
+      status: swigCircuit.status || 'planned',
+      created_at: swigCircuit.created_at
     };
   }
   
@@ -289,12 +289,12 @@ export const safeCocktailArray = (cocktails: any[]): Cocktail[] => {
     .filter(cocktail => cocktail.id !== 'unknown');
 };
 
-export const safeBarCrawlArray = (barCrawls: any[]): BarCrawl[] => {
-  if (!Array.isArray(barCrawls)) return [];
-  return barCrawls
-    .filter(barCrawl => barCrawl && typeof barCrawl === 'object')
-    .map(barCrawl => safeGetBarCrawl(barCrawl))
-    .filter(barCrawl => barCrawl.id !== 'unknown');
+export const safeSwigCircuitArray = (swigCircuits: any[]): SwigCircuit[] => {
+  if (!Array.isArray(swigCircuits)) return [];
+  return swigCircuits
+    .filter(swigCircuit => swigCircuit && typeof swigCircuit === 'object')
+    .map(swigCircuit => safeGetSwigCircuit(swigCircuit))
+    .filter(swigCircuit => swigCircuit.id !== 'unknown');
 };
 
 // Property access safety

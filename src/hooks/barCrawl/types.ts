@@ -1,8 +1,8 @@
 
 /**
- * Props for the useBarCrawlParticipation hook
+ * Props for the useSwigCircuitParticipation hook
  */
-export interface UseBarCrawlParticipationProps {
+export interface UseSwigCircuitParticipationProps {
   /** The unique identifier for the bar crawl */
-  barCrawlId: string;
+  swigCircuitId: string;
 }

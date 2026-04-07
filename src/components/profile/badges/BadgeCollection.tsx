@@ -8,7 +8,7 @@ import { useAchievements } from '@/hooks/rewards/useAchievements';
 
 interface BadgeCollectionProps {
   userStats: {
-    barCrawlsCompleted: number;
+    swigCircuitsCompleted: number;
     establishmentsVisited: number;
     mocktailsTried: number;
     reviewsWritten: number;

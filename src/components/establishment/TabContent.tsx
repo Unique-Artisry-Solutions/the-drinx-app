@@ -5,7 +5,7 @@ import ProfileTab from '@/components/establishment/ProfileTab';
 import PromotionsTab from '@/components/establishment/PromotionsTab';
 import MocktailMenuTab from '@/components/establishment/MocktailMenuTab';
 import VisitorStatsTab from '@/components/establishment/VisitorStatsTab';
-import BarCrawlsTab from '@/components/establishment/BarCrawlsTab';
+import SwigCircuitsTab from '@/components/establishment/SwigCircuitsTab';
 import LoyaltyProgramTab from '@/components/establishment/LoyaltyProgramTab';
 import EstablishmentInbox from '@/components/establishment/communication/EstablishmentInbox';
 
@@ -24,7 +24,7 @@ interface TabContentProps {
     isLoading: boolean;
     error: string | null;
   };
-  barCrawlsState: any;
+  swigCircuitsState: any;
   loyaltyProgramState?: any;
 }
 
@@ -36,7 +36,7 @@ const TabContent: React.FC<TabContentProps> = ({
   promotionsState,
   drinksState,
   visitorStats,
-  barCrawlsState,
+  swigCircuitsState,
   loyaltyProgramState
 }) => {
   const isMobile = useIsMobile();
@@ -90,11 +90,11 @@ const TabContent: React.FC<TabContentProps> = ({
           <VisitorStatsTab visitorStats={visitorStats} />
         </TabsContent>
 
-        <TabsContent value="barCrawls">
-          <BarCrawlsTab 
-            barCrawls={barCrawlsState.barCrawls} 
-            handleEndParticipation={barCrawlsState.handleEndParticipation} 
-            handleAcceptRequest={barCrawlsState.handleAcceptRequest} 
+        <TabsContent value="swigCircuits">
+          <SwigCircuitsTab 
+            swigCircuits={swigCircuitsState.swigCircuits} 
+            handleEndParticipation={swigCircuitsState.handleEndParticipation} 
+            handleAcceptRequest={swigCircuitsState.handleAcceptRequest} 
           />
         </TabsContent>
 

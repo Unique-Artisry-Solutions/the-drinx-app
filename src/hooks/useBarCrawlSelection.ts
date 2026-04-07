@@ -3,17 +3,17 @@ import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Establishment } from '@/types/ProfileTypes';
 
-interface UseBarCrawlSelectionOptions {
+interface UseSwigCircuitSelectionOptions {
   initialSelections?: Establishment[];
   minEstablishments?: number;
   onSave?: (establishments: Establishment[]) => void;
 }
 
-export const useBarCrawlSelection = ({
+export const useSwigCircuitSelection = ({
   initialSelections = [],
   minEstablishments = 2,
   onSave
-}: UseBarCrawlSelectionOptions = {}) => {
+}: UseSwigCircuitSelectionOptions = {}) => {
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedEstablishments, setSelectedEstablishments] = useState<Establishment[]>(initialSelections);
   const { toast } = useToast();
@@ -77,4 +77,4 @@ export const useBarCrawlSelection = ({
   };
 };
 
-export default useBarCrawlSelection;
+export default useSwigCircuitSelection;

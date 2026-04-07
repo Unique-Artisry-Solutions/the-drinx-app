@@ -1,6 +1,6 @@
 
 // Phase 9A: Import from default export for now
-import BarCrawlManagementPage from './pages/profile/BarCrawlManagementPage';
+import SwigCircuitManagementPage from './pages/profile/SwigCircuitManagementPage';
 
 // Re-export as named export
-export { BarCrawlManagementPage };
+export { SwigCircuitManagementPage };

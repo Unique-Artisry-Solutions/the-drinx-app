@@ -12,7 +12,7 @@ import { motion } from 'framer-motion';
 const BadgesTab: React.FC = () => {
   // Mock user stats that would normally come from API or context
   const userStats = {
-    barCrawlsCompleted: 7,
+    swigCircuitsCompleted: 7,
     establishmentsVisited: 12,
     mocktailsTried: 15,
     reviewsWritten: 3,

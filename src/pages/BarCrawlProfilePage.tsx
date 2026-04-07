@@ -6,34 +6,34 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
-import { sampleBarCrawls, sampleEstablishments } from '@/data/sampleData';
-import BarCrawlProfileHeader from '@/components/barCrawl/profile/BarCrawlProfileHeader';
-import RouteTabContent from '@/components/barCrawl/profile/RouteTabContent';
-import MapTabContent from '@/components/barCrawl/profile/MapTabContent';
-import DetailsTabContent from '@/components/barCrawl/profile/DetailsTabContent';
+import { sampleSwigCircuits, sampleEstablishments } from '@/data/sampleData';
+import SwigCircuitProfileHeader from '@/components/swigCircuit/profile/SwigCircuitProfileHeader';
+import RouteTabContent from '@/components/swigCircuit/profile/RouteTabContent';
+import MapTabContent from '@/components/swigCircuit/profile/MapTabContent';
+import DetailsTabContent from '@/components/swigCircuit/profile/DetailsTabContent';
 import BackButton from '@/components/navigation/BackButton';
 import { useToast } from '@/hooks/use-toast';
 import { Award, QrCode } from 'lucide-react';
 
-interface BarCrawlProfileProps {}
+interface SwigCircuitProfileProps {}
 
-const BarCrawlProfilePage: React.FC<BarCrawlProfileProps> = () => {
+const SwigCircuitProfilePage: React.FC<SwigCircuitProfileProps> = () => {
   const { id } = useParams<{ id: string }>();
   const [loading, setLoading] = useState(true);
-  const [barCrawl, setBarCrawl] = useState<any>(null);
+  const [swigCircuit, setSwigCircuit] = useState<any>(null);
   const [participants, setParticipants] = useState<any[]>([]);
   const [activeStop, setActiveStop] = useState<number>(0);
   const { toast } = useToast();
 
   useEffect(() => {
-    const fetchBarCrawl = () => {
+    const fetchSwigCircuit = () => {
       setTimeout(() => {
-        const crawl = sampleBarCrawls.find(c => c.id === id);
+        const crawl = sampleSwigCircuits.find(c => c.id === id);
         
         if (crawl) {
           const establishments = sampleEstablishments.slice(0, crawl.stops);
           
-          setBarCrawl({
+          setSwigCircuit({
             ...crawl,
             date: crawl.date || new Date().toISOString().split('T')[0],
             establishments
@@ -70,7 +70,7 @@ const BarCrawlProfilePage: React.FC<BarCrawlProfileProps> = () => {
       }, 500);
     };
     
-    fetchBarCrawl();
+    fetchSwigCircuit();
   }, [id]);
 
   const markCompleted = () => {
@@ -79,7 +79,7 @@ const BarCrawlProfilePage: React.FC<BarCrawlProfileProps> = () => {
     const storedStats = localStorage.getItem('user_rewards_stats');
     if (storedStats) {
       const stats = JSON.parse(storedStats);
-      stats.barCrawlsCompleted += 1;
+      stats.swigCircuitsCompleted += 1;
       localStorage.setItem('user_rewards_stats', JSON.stringify(stats));
     }
     
@@ -104,17 +104,17 @@ const BarCrawlProfilePage: React.FC<BarCrawlProfileProps> = () => {
     );
   }
 
-  if (!barCrawl) {
+  if (!swigCircuit) {
     return (
       <Layout>
         <div className="py-4 animate-fade-in max-w-6xl mx-auto">
-          <BackButton fallbackPath="/profile/bar-crawls" />
+          <BackButton fallbackPath="/profile/swig-circuits" />
           <h1 className="text-2xl font-bold mb-2">Swig Circuit Not Found</h1>
           <p className="mb-4 text-gray-600">
             The Swig Circuit you're looking for doesn't exist or may have been removed.
           </p>
           <Button asChild variant="default">
-            <Link to="/profile/bar-crawls">
+            <Link to="/profile/swig-circuits">
               Back to Swig Circuits
             </Link>
           </Button>
@@ -124,7 +124,7 @@ const BarCrawlProfilePage: React.FC<BarCrawlProfileProps> = () => {
   }
 
   // Prepare map data
-  const mapEstablishments = barCrawl.establishments.map((establishment: any) => ({
+  const mapEstablishments = swigCircuit.establishments.map((establishment: any) => ({
     id: establishment.id,
     name: establishment.name,
     latitude: establishment.latitude,
@@ -135,18 +135,18 @@ const BarCrawlProfilePage: React.FC<BarCrawlProfileProps> = () => {
   return (
     <Layout>
       <div className="py-4 animate-fade-in max-w-6xl mx-auto">
-        <BackButton fallbackPath="/profile/bar-crawls" />
+        <BackButton fallbackPath="/profile/swig-circuits" />
         
-        <BarCrawlProfileHeader 
-          name={barCrawl.name}
+        <SwigCircuitProfileHeader 
+          name={swigCircuit.name}
           participants={participants.length}
-          date={barCrawl.date}
-          stops={barCrawl.stops}
+          date={swigCircuit.date}
+          stops={swigCircuit.stops}
           id={id || ''}
         />
 
         <div className="flex justify-between items-center my-4">
-          <Link to={`/profile/bar-crawls/checkin-scanner/${id}`}>
+          <Link to={`/profile/swig-circuits/checkin-scanner/${id}`}>
             <Button variant="outline" className="flex items-center">
               <QrCode className="mr-2 h-4 w-4" />
               Scan Check-in Code
@@ -169,7 +169,7 @@ const BarCrawlProfilePage: React.FC<BarCrawlProfileProps> = () => {
           
           <TabsContent value="route">
             <RouteTabContent 
-              establishments={barCrawl.establishments}
+              establishments={swigCircuit.establishments}
               participants={participants}
               activeStop={activeStop}
               id={id || ''}
@@ -182,10 +182,10 @@ const BarCrawlProfilePage: React.FC<BarCrawlProfileProps> = () => {
           
           <TabsContent value="details">
             <DetailsTabContent 
-              organizer={barCrawl.organizer}
-              date={barCrawl.date}
-              stops={barCrawl.stops}
-              description={barCrawl.description || "Join us for a fun night exploring the best alcohol-free establishments in the area. Enjoy special mocktails, meet new people, and experience the nightlife without the hangover!"}
+              organizer={swigCircuit.organizer}
+              date={swigCircuit.date}
+              stops={swigCircuit.stops}
+              description={swigCircuit.description || "Join us for a fun night exploring the best alcohol-free establishments in the area. Enjoy special mocktails, meet new people, and experience the nightlife without the hangover!"}
               participants={participants}
             />
           </TabsContent>
@@ -232,4 +232,4 @@ const BarCrawlProfilePage: React.FC<BarCrawlProfileProps> = () => {
   );
 };
 
-export default BarCrawlProfilePage;
+export default SwigCircuitProfilePage;

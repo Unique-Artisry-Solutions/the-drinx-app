@@ -6,8 +6,8 @@ import { RouteObject } from 'react-router-dom';
 const UserProfilePage = lazy(() => import('@/pages/profile/UserProfilePage'));
 const VisitedPage = lazy(() => import('@/pages/profile/VisitedPage'));
 const FavoritesPage = lazy(() => import('@/pages/profile/FavoritesPage'));
-const BarCrawlsPage = lazy(() => import('@/pages/profile/BarCrawlsPage'));
-const BarCrawlManagementPage = lazy(() => import('@/pages/profile/BarCrawlManagementPage'));
+const SwigCircuitsPage = lazy(() => import('@/pages/profile/SwigCircuitsPage'));
+const SwigCircuitManagementPage = lazy(() => import('@/pages/profile/SwigCircuitManagementPage'));
 const CrawlersListPage = lazy(() => import('@/pages/profile/CrawlersListPage'));
 const UserRecipesPage = lazy(() => import('@/pages/profile/UserRecipesPage'));
 const CheckInScannerPage = lazy(() => import('@/pages/profile/CheckInScannerPage'));
@@ -20,8 +20,8 @@ export const profileRoutes: RouteObject[] = [
   { path: '/profile', element: <UserProfilePage /> },
   { path: '/profile/visited', element: <VisitedPage /> },
   { path: '/profile/favorites', element: <FavoritesPage /> },
-  { path: '/profile/bar-crawls', element: <BarCrawlsPage /> },
-  { path: '/profile/bar-crawl/:id', element: <BarCrawlManagementPage /> },
+  { path: '/profile/swig-circuits', element: <SwigCircuitsPage /> },
+  { path: '/profile/swig-circuit/:id', element: <SwigCircuitManagementPage /> },
   { path: '/profile/crawlers/:id', element: <CrawlersListPage /> },
   { path: '/profile/recipes', element: <UserRecipesPage /> },
   { path: '/profile/my-creations', element: <UserRecipesPage /> },

@@ -11,7 +11,7 @@ interface Promotion {
   description: string;
 }
 
-interface BarCrawl {
+interface SwigCircuit {
   id: string;
   name: string;
   date: string;
@@ -54,7 +54,7 @@ interface LoyaltyStats {
   memberRetentionRate: number;
 }
 
-interface BarCrawlResponse {
+interface SwigCircuitResponse {
   bar_crawl_id: string;
   status: 'accepted' | 'pending';
   bar_crawls: {
@@ -89,7 +89,7 @@ export const useEstablishmentProfile = (establishmentId?: string) => {
   
   const [drinks, setDrinks] = useState<Drink[]>([]);
   
-  const [barCrawls, setBarCrawls] = useState<BarCrawl[]>([]);
+  const [swigCircuits, setSwigCircuits] = useState<SwigCircuit[]>([]);
   
   const [loyaltyProgram, setLoyaltyProgram] = useState<LoyaltyProgram>({
     name: '',
@@ -209,9 +209,9 @@ export const useEstablishmentProfile = (establishmentId?: string) => {
           setDrinks(formattedDrinks);
         }
         
-        const { data: barCrawlsData, error: barCrawlsError } = await supabase
+        const { data: swigCircuitsData, error: swigCircuitsError } = await supabase
           .from('bar_crawl_establishments')
-          .select<string, BarCrawlResponse>(`
+          .select<string, SwigCircuitResponse>(`
             bar_crawl_id,
             status,
             bar_crawls (
@@ -225,10 +225,10 @@ export const useEstablishmentProfile = (establishmentId?: string) => {
           `)
           .eq('establishment_id', establishmentId);
           
-        if (barCrawlsError) throw barCrawlsError;
+        if (swigCircuitsError) throw swigCircuitsError;
         
-        if (barCrawlsData && barCrawlsData.length > 0) {
-          const formattedBarCrawls: BarCrawl[] = barCrawlsData.map(item => ({
+        if (swigCircuitsData && swigCircuitsData.length > 0) {
+          const formattedSwigCircuits: SwigCircuit[] = swigCircuitsData.map(item => ({
             id: item.bar_crawls.id || '',
             name: item.bar_crawls.name || '',
             date: item.bar_crawls.start_date || '',
@@ -241,17 +241,17 @@ export const useEstablishmentProfile = (establishmentId?: string) => {
             description: item.bar_crawls.description || undefined
           }));
           
-          for (let i = 0; i < formattedBarCrawls.length; i++) {
-            if (barCrawlsData[i]?.bar_crawls?.organizer_id) {
+          for (let i = 0; i < formattedSwigCircuits.length; i++) {
+            if (swigCircuitsData[i]?.bar_crawls?.organizer_id) {
               try {
                 const { data: userData } = await supabase
                   .from('profiles')
                   .select<string, UserProfile>('display_name')
-                  .eq('id', barCrawlsData[i].bar_crawls.organizer_id)
+                  .eq('id', swigCircuitsData[i].bar_crawls.organizer_id)
                   .single();
                   
                 if (userData?.display_name) {
-                  formattedBarCrawls[i].organizer = userData.display_name;
+                  formattedSwigCircuits[i].organizer = userData.display_name;
                 }
                 } catch (error: unknown) {
                   console.error('Error fetching organizer:', error);
@@ -259,9 +259,9 @@ export const useEstablishmentProfile = (establishmentId?: string) => {
             }
           }
           
-          setBarCrawls(formattedBarCrawls);
+          setSwigCircuits(formattedSwigCircuits);
         } else {
-          setBarCrawls([]);
+          setSwigCircuits([]);
         }
         
         fetchLoyaltyProgramData(establishmentId);
@@ -296,7 +296,7 @@ export const useEstablishmentProfile = (establishmentId?: string) => {
             photoUrl: 'https://placehold.co/300x200'
           }
         ]);
-        setBarCrawls([
+        setSwigCircuits([
           {
             id: '1',
             name: 'Downtown Mocktail Tour',
@@ -454,7 +454,7 @@ export const useEstablishmentProfile = (establishmentId?: string) => {
   };
 
   const handleEndParticipation = (crawlId: string) => {
-    setBarCrawls(barCrawls.filter(crawl => crawl.id !== crawlId));
+    setSwigCircuits(swigCircuits.filter(crawl => crawl.id !== crawlId));
     
     toast({
       title: 'Participation ended',
@@ -463,7 +463,7 @@ export const useEstablishmentProfile = (establishmentId?: string) => {
   };
 
   const handleAcceptRequest = (crawlId: string) => {
-    setBarCrawls(barCrawls.map(crawl => 
+    setSwigCircuits(swigCircuits.map(crawl => 
       crawl.id === crawlId 
         ? { ...crawl, status: 'accepted' as const } 
         : crawl
@@ -561,8 +561,8 @@ export const useEstablishmentProfile = (establishmentId?: string) => {
       handleDeleteDrink
     },
     
-    barCrawlsState: {
-      barCrawls,
+    swigCircuitsState: {
+      swigCircuits,
       handleEndParticipation,
       handleAcceptRequest
     },

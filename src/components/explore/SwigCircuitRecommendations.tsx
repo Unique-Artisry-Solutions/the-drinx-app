@@ -111,7 +111,7 @@ const SwigCircuitRecommendations: React.FC<SwigCircuitRecommendationsProps> = ({
             <CardContent className="p-4">
               <div className="flex items-start justify-between mb-2">
                 <Link 
-                  to={`/bar-crawl/${circuit.metadata?.circuit_id}`}
+                  to={`/swig-circuit/${circuit.metadata?.circuit_id}`}
                   className="font-semibold text-lg hover:text-primary transition-colors line-clamp-1"
                 >
                   {circuit.title}
@@ -158,7 +158,7 @@ const SwigCircuitRecommendations: React.FC<SwigCircuitRecommendationsProps> = ({
               
               <div className="flex gap-2">
                 <Button size="sm" className="flex-1" asChild>
-                  <Link to={`/bar-crawl/${circuit.metadata?.circuit_id}`}>
+                  <Link to={`/swig-circuit/${circuit.metadata?.circuit_id}`}>
                     View Circuit
                   </Link>
                 </Button>

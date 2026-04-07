@@ -2,10 +2,10 @@
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
-import { checkInService, BarCrawlCheckIn } from '@/services/checkInService';
+import { checkInService, SwigCircuitCheckIn } from '@/services/checkInService';
 
 interface CheckInOptions {
-  barCrawlId: string;
+  swigCircuitId: string;
   establishmentId: string;
   establishmentName: string;
 }
@@ -15,7 +15,7 @@ export function useCheckIn() {
   const { toast } = useToast();
   const { user } = useAuth();
 
-  const performCheckIn = async ({ barCrawlId, establishmentId, establishmentName }: CheckInOptions) => {
+  const performCheckIn = async ({ swigCircuitId, establishmentId, establishmentName }: CheckInOptions) => {
     if (!user) {
       toast({
         title: "Authentication required",
@@ -28,9 +28,9 @@ export function useCheckIn() {
     try {
       setIsCheckingIn(true);
 
-      const context: BarCrawlCheckIn = {
+      const context: SwigCircuitCheckIn = {
         type: 'bar_crawl',
-        entityId: barCrawlId,
+        entityId: swigCircuitId,
         entityName: `Bar Crawl at ${establishmentName}`,
         additionalData: {
           establishment_id: establishmentId,

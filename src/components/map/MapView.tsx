@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import BarCrawlRequestModal from '@/components/establishment/BarCrawlRequestModal';
+import SwigCircuitRequestModal from '@/components/establishment/SwigCircuitRequestModal';
 import useMapInitialization from './useMapInitialization';
 import MapControls from './MapControls';
 import MapLoading from './MapLoading';
@@ -20,7 +20,7 @@ const MapView: React.FC<MapViewProps> = ({
   mapboxToken
 }) => {
   const [selectedEstablishment, setSelectedEstablishment] = useState<Establishment | null>(null);
-  const [isBarCrawlModalOpen, setIsBarCrawlModalOpen] = useState(false);
+  const [isSwigCircuitModalOpen, setIsSwigCircuitModalOpen] = useState(false);
   const [mapStyle, setMapStyle] = useState('streets-v12');
   const [tokenInput, setTokenInput] = useState('');
   const [customToken, setCustomToken] = useState<string | undefined>(
@@ -62,7 +62,7 @@ const MapView: React.FC<MapViewProps> = ({
     }
   };
   
-  const handleRequestBarCrawl = () => {
+  const handleRequestSwigCircuit = () => {
     if (!selectedEstablishment) return;
     
     if (!localStorage.getItem('user_authenticated')) {
@@ -74,7 +74,7 @@ const MapView: React.FC<MapViewProps> = ({
       return;
     }
     
-    setIsBarCrawlModalOpen(true);
+    setIsSwigCircuitModalOpen(true);
   };
 
   const handleSaveToken = () => {
@@ -149,7 +149,7 @@ const MapView: React.FC<MapViewProps> = ({
           <EstablishmentInfoCard 
             establishment={selectedEstablishment}
             singleEstablishmentView={singleEstablishmentView}
-            onRequestBarCrawl={handleRequestBarCrawl}
+            onRequestSwigCircuit={handleRequestSwigCircuit}
           />
         )}
         
@@ -166,10 +166,10 @@ const MapView: React.FC<MapViewProps> = ({
         )}
       </TooltipProvider>
       
-      {isBarCrawlModalOpen && selectedEstablishment && (
-        <BarCrawlRequestModal
-          isOpen={isBarCrawlModalOpen}
-          onClose={() => setIsBarCrawlModalOpen(false)}
+      {isSwigCircuitModalOpen && selectedEstablishment && (
+        <SwigCircuitRequestModal
+          isOpen={isSwigCircuitModalOpen}
+          onClose={() => setIsSwigCircuitModalOpen(false)}
           establishment={selectedEstablishment}
         />
       )}

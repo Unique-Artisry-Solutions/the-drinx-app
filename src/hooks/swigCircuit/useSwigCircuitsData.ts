@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { sampleBarCrawls, sampleEstablishments } from '@/data/sampleData';
+import { sampleSwigCircuits, sampleEstablishments } from '@/data/sampleData';
 
 export const useSwigCircuitsData = () => {
   const [circuits, setCircuits] = useState<any[]>([]);
@@ -12,7 +12,7 @@ export const useSwigCircuitsData = () => {
     // Simulate data fetching
     setTimeout(() => {
       // Create sample circuits from sample data
-      const formattedCircuits = sampleBarCrawls.map(crawl => {
+      const formattedCircuits = sampleSwigCircuits.map(crawl => {
         return {
           ...crawl,
           establishments: sampleEstablishments.slice(0, crawl.stops),

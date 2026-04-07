@@ -4,19 +4,19 @@ import { Link } from 'react-router-dom';
 import { Map, Route, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-interface BarCrawl {
+interface SwigCircuit {
   id: string;
   name: string;
   stops: number;
 }
 
-interface BarCrawlSectionProps {
-  barCrawls: BarCrawl[];
+interface SwigCircuitSectionProps {
+  swigCircuits: SwigCircuit[];
   isAuthenticated: boolean;
 }
 
-const BarCrawlSection: React.FC<BarCrawlSectionProps> = ({ 
-  barCrawls,
+const SwigCircuitSection: React.FC<SwigCircuitSectionProps> = ({ 
+  swigCircuits,
   isAuthenticated
 }) => {
   const scrollToTop = () => {
@@ -79,7 +79,7 @@ const BarCrawlSection: React.FC<BarCrawlSectionProps> = ({
       
       {/* Sample Swig Circuit Preview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {barCrawls.slice(0, 3).map((crawl) => (
+        {swigCircuits.slice(0, 3).map((crawl) => (
           <div key={crawl.id} className="bg-card p-4 rounded-md shadow-sm border border-border hover:shadow-md transition-shadow">
             <h3 className="font-medium mb-2 text-lg text-foreground">{crawl.name}</h3>
             <div className="flex justify-between items-center mt-2">
@@ -95,4 +95,4 @@ const BarCrawlSection: React.FC<BarCrawlSectionProps> = ({
   );
 };
 
-export default BarCrawlSection;
+export default SwigCircuitSection;

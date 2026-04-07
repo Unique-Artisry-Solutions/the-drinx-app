@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
 import Layout from '@/components/Layout';
 import { useToast } from '@/hooks/use-toast';
-import BarCrawlTab from '@/components/profile/BarCrawlTab';
+import SwigCircuitTab from '@/components/profile/SwigCircuitTab';
 import { Establishment } from '@/types/ProfileTypes';
 import { sampleEstablishments } from '@/data/sampleData';
-const BarCrawlsPage: React.FC = () => {
-  const [barCrawlList, setBarCrawlList] = useState<Establishment[]>(sampleEstablishments.slice(0, 3));
+const SwigCircuitsPage: React.FC = () => {
+  const [swigCircuitList, setSwigCircuitList] = useState<Establishment[]>(sampleEstablishments.slice(0, 3));
   const {
     toast
   } = useToast();
-  const shareBarCrawl = () => {
+  const shareSwigCircuit = () => {
     toast({
       title: 'Swig Circuit Shared',
       description: 'Your Swig Circuit list has been shared with users in your area!'
@@ -28,8 +28,8 @@ const BarCrawlsPage: React.FC = () => {
           </div>
         </div>
         
-        <BarCrawlTab barCrawlList={barCrawlList} shareBarCrawl={shareBarCrawl} />
+        <SwigCircuitTab swigCircuitList={swigCircuitList} shareSwigCircuit={shareSwigCircuit} />
       </div>
     </Layout>;
 };
-export default BarCrawlsPage;
+export default SwigCircuitsPage;

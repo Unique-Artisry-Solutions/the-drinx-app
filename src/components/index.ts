@@ -3,7 +3,7 @@
 // This file provides organized access to all component modules
 
 // Feature Modules (Barrel Exports)
-export * from './barCrawl';
+export * from './swigCircuit';
 export * from './navigation';
 export * from './layout';
 export * from './auth';

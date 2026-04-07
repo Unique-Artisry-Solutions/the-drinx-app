@@ -2,8 +2,8 @@
 import { useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { Establishment } from '@/types/ProfileTypes';
-import { DrinkHighlight } from '@/components/barCrawl/DrinkHighlights';
-import { Pairing } from '@/components/barCrawl/PairingOptions';
+import { DrinkHighlight } from '@/components/swigCircuit/DrinkHighlights';
+import { Pairing } from '@/components/swigCircuit/PairingOptions';
 import { useToast } from '@/hooks/use-toast';
 import { SwigCircuitFormState, TicketTier } from './types';
 

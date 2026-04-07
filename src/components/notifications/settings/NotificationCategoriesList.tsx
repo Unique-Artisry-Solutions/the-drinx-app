@@ -32,10 +32,10 @@ const notificationCategories = [
     type: 'system' as const,
   },
   {
-    id: 'bar-crawl',
+    id: 'swig-circuit',
     title: 'Bar Crawl Updates',
     description: 'Notifications about bar crawls you are participating in',
-    type: 'bar-crawl' as const,
+    type: 'swig-circuit' as const,
   },
   {
     id: 'establishment',

@@ -41,17 +41,17 @@ const AdminEstablishmentProfile = () => {
       if (favoritesError) throw favoritesError;
       
       // Get bar crawls that include this establishment
-      const { data: barCrawlsData, error: barCrawlsError } = await supabase
+      const { data: swigCircuitsData, error: swigCircuitsError } = await supabase
         .from('bar_crawl_establishments')
         .select('bar_crawl_id')
         .eq('establishment_id', id);
       
-      if (barCrawlsError) throw barCrawlsError;
+      if (swigCircuitsError) throw swigCircuitsError;
       
       setEstablishment({
         ...data,
         favoritesCount: favoritesCount || 0,
-        barCrawlsCount: barCrawlsData?.length || 0
+        swigCircuitsCount: swigCircuitsData?.length || 0
       });
     } catch (error: any) {
       console.error('Error fetching establishment data:', error);
@@ -217,7 +217,7 @@ const AdminEstablishmentProfile = () => {
             </div>
             <div>
               <div className="text-sm font-medium text-gray-500">Part of Bar Crawls</div>
-              <div className="text-lg font-semibold">{establishment.barCrawlsCount}</div>
+              <div className="text-lg font-semibold">{establishment.swigCircuitsCount}</div>
             </div>
           </CardContent>
         </Card>

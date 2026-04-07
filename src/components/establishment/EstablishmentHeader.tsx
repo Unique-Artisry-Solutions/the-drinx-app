@@ -8,7 +8,7 @@ interface EstablishmentHeaderProps {
   hasCheckedIn: boolean;
   isPromoter: boolean;
   onCheckIn: () => void;
-  onBarCrawlRequest: () => void;
+  onSwigCircuitRequest: () => void;
 }
 
 const EstablishmentHeader: React.FC<EstablishmentHeaderProps> = ({
@@ -16,7 +16,7 @@ const EstablishmentHeader: React.FC<EstablishmentHeaderProps> = ({
   hasCheckedIn,
   isPromoter,
   onCheckIn,
-  onBarCrawlRequest
+  onSwigCircuitRequest
 }) => {
   return (
     <div className="relative mb-6">
@@ -26,7 +26,7 @@ const EstablishmentHeader: React.FC<EstablishmentHeaderProps> = ({
           hasCheckedIn={hasCheckedIn}
           isPromoter={isPromoter}
           onCheckIn={onCheckIn}
-          onBarCrawlRequest={onBarCrawlRequest}
+          onSwigCircuitRequest={onSwigCircuitRequest}
         />
       </div>
     </div>

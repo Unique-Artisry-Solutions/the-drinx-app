@@ -13,23 +13,23 @@ import { supabase } from '@/integrations/supabase/client';
 interface CheckInScannerProps {}
 
 const CheckInScannerPage: React.FC<CheckInScannerProps> = () => {
-  const { id: barCrawlId } = useParams<{ id: string }>();
+  const { id: swigCircuitId } = useParams<{ id: string }>();
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [scanResult, setScanResult] = useState<{success: boolean; message: string} | null>(null);
   const [scanner, setScanner] = useState<any>(null);
   const [scanning, setScanning] = useState(false);
-  const [barCrawl, setBarCrawl] = useState<any>(null);
+  const [swigCircuit, setSwigCircuit] = useState<any>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
   
   // Load bar crawl data
   useEffect(() => {
-    const fetchBarCrawl = async () => {
+    const fetchSwigCircuit = async () => {
       try {
         // This would fetch the actual bar crawl data in production
-        setBarCrawl({
-          id: barCrawlId,
+        setSwigCircuit({
+          id: swigCircuitId,
           name: 'Downtown Mocktail Tour',
           establishments: ['Establishment A', 'Establishment B', 'Establishment C']
         });
@@ -43,10 +43,10 @@ const CheckInScannerPage: React.FC<CheckInScannerProps> = () => {
       }
     };
     
-    if (barCrawlId) {
-      fetchBarCrawl();
+    if (swigCircuitId) {
+      fetchSwigCircuit();
     }
-  }, [barCrawlId, toast]);
+  }, [swigCircuitId, toast]);
   
   // Initialize scanner when component mounts
   useEffect(() => {
@@ -171,7 +171,7 @@ const CheckInScannerPage: React.FC<CheckInScannerProps> = () => {
   return (
     <Layout>
       <div className="container max-w-lg mx-auto p-4">
-        <BackButton fallbackPath="/profile/bar-crawls" />
+        <BackButton fallbackPath="/profile/swig-circuits" />
         
         <Card className="mt-4">
           <CardHeader>
@@ -180,7 +180,7 @@ const CheckInScannerPage: React.FC<CheckInScannerProps> = () => {
               Check-In Scanner
             </CardTitle>
             <CardDescription>
-              {barCrawl?.name ? `Scanning for ${barCrawl.name}` : 'Scan a participant\'s QR code to check them in'}
+              {swigCircuit?.name ? `Scanning for ${swigCircuit.name}` : 'Scan a participant\'s QR code to check them in'}
             </CardDescription>
           </CardHeader>
           

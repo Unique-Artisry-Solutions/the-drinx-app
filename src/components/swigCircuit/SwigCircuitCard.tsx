@@ -25,7 +25,7 @@ const SwigCircuitCard: React.FC<SwigCircuitCardProps> = ({
   return (
     <Link 
       key={circuit.id} 
-      to={`/bar-crawl/${circuit.id}`} 
+      to={`/swig-circuit/${circuit.id}`} 
       className="block transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
     >
       <Card className={`overflow-hidden border-b-4 ${getThemeBorderColor(circuit.theme)} shadow-md h-full`}>

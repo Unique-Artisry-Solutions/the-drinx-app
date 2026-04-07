@@ -160,16 +160,16 @@ export interface Cocktail extends BaseCocktail {
   establishment: string | { id?: string; name: string };
 }
 
-// Base BarCrawl interface
-export interface BaseBarCrawl {
+// Base SwigCircuit interface
+export interface BaseSwigCircuit {
   id: string;
   name: string;
   organizer: string;
   created_at?: string;
 }
 
-// Extended BarCrawl
-export interface BarCrawl extends BaseBarCrawl {
+// Extended SwigCircuit
+export interface SwigCircuit extends BaseSwigCircuit {
   startDate: string;
   endDate: string;
   description?: string;

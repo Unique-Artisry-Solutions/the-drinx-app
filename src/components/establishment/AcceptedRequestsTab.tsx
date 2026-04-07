@@ -1,11 +1,11 @@
 
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import BarCrawlCard from '@/components/establishment/BarCrawlCard';
-import { BarCrawlRequest } from '@/hooks/useBarCrawlRequests';
+import SwigCircuitCard from '@/components/establishment/SwigCircuitCard';
+import { SwigCircuitRequest } from '@/hooks/useSwigCircuitRequests';
 
 interface AcceptedRequestsTabProps {
-  acceptedRequests: BarCrawlRequest[];
+  acceptedRequests: SwigCircuitRequest[];
   handleEndParticipation: (id: string) => void;
 }
 
@@ -27,7 +27,7 @@ const AcceptedRequestsTab: React.FC<AcceptedRequestsTabProps> = ({
         <div className="space-y-6">
           {acceptedRequests.map((crawl) => (
             <div key={crawl.id} className="transform transition-all duration-300 hover:-translate-y-1">
-              <BarCrawlCard 
+              <SwigCircuitCard 
                 crawl={crawl}
                 handleEndParticipation={handleEndParticipation}
               />

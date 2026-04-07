@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Route, Users, Calendar, Clock, CheckCircle, XCircle } from 'lucide-react';
 
-const EstablishmentBarCrawlRequestsPage: React.FC = () => {
+const EstablishmentSwigCircuitRequestsPage: React.FC = () => {
   // Sample data - in a real implementation, this would come from Supabase
   const requests = [
     {
@@ -205,4 +205,4 @@ const EstablishmentBarCrawlRequestsPage: React.FC = () => {
   );
 };
 
-export default EstablishmentBarCrawlRequestsPage;
+export default EstablishmentSwigCircuitRequestsPage;

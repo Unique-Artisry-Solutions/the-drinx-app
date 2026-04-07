@@ -51,7 +51,7 @@ const EstablishmentAnalyticsPage = () => {
     visitorData, 
     ratingData, 
     mocktailData,
-    barCrawlData,
+    swigCircuitData,
     isLoading: isDashboardLoading 
   } = useDashboardData();
 
@@ -77,8 +77,8 @@ const EstablishmentAnalyticsPage = () => {
       navigate('/establishment/mocktail-menu', { replace: true });
     } else if (tab === 'promotions') {
       navigate('/establishment/promotions', { replace: true });
-    } else if (tab === 'barCrawls') {
-      navigate('/establishment/bar-crawl-requests', { replace: true });
+    } else if (tab === 'swigCircuits') {
+      navigate('/establishment/swig-circuit-requests', { replace: true });
     }
   };
 

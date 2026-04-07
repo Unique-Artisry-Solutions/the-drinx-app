@@ -7,30 +7,30 @@ import { useToast } from '@/hooks/use-toast';
 import { Establishment } from '@/types/ProfileTypes';
 import SelectedEstablishmentsList from './SelectedEstablishmentsList';
 import { sampleEstablishments } from '@/data/sampleData';
-import EstablishmentGrid from '@/components/barCrawl/EstablishmentGrid';
-import useBarCrawlSelection from '@/hooks/useBarCrawlSelection';
+import EstablishmentGrid from '@/components/swigCircuit/EstablishmentGrid';
+import useSwigCircuitSelection from '@/hooks/useSwigCircuitSelection';
 
-interface BarCrawlControlWithSampleDataProps {
-  onSaveBarCrawl: (establishments: Establishment[]) => void;
+interface SwigCircuitControlWithSampleDataProps {
+  onSaveSwigCircuit: (establishments: Establishment[]) => void;
   initialSelections?: Establishment[];
   minEstablishments?: number;
 }
 
-const BarCrawlControlWithSampleData = ({ 
-  onSaveBarCrawl,
+const SwigCircuitControlWithSampleData = ({ 
+  onSaveSwigCircuit,
   initialSelections = [],
   minEstablishments = 2
-}: BarCrawlControlWithSampleDataProps) => {
+}: SwigCircuitControlWithSampleDataProps) => {
   const {
     selectionMode, 
     selectedEstablishments,
     toggleSelectionMode,
     toggleEstablishment,
     saveSelections
-  } = useBarCrawlSelection({
+  } = useSwigCircuitSelection({
     initialSelections,
     minEstablishments,
-    onSave: onSaveBarCrawl
+    onSave: onSaveSwigCircuit
   });
 
   // Convert sample data to Establishment type format
@@ -127,4 +127,4 @@ const BarCrawlControlWithSampleData = ({
   );
 };
 
-export default BarCrawlControlWithSampleData;
+export default SwigCircuitControlWithSampleData;

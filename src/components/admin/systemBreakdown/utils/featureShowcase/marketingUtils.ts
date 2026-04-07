@@ -2,7 +2,7 @@
 import { FeatureItem } from '../../types';
 import {
   isAIFeature,
-  isBarCrawlFeature,
+  isSwigCircuitFeature,
   isMocktailSuggestionFeature,
   isVisitTrackingFeature,
   isRewardProgramFeature,
@@ -19,7 +19,7 @@ export const generateMarketingPoints = (feature: FeatureItem): string[] => {
     points.push('Provides personalized experiences that improve over time');
   }
   
-  if (isBarCrawlFeature(feature)) {
+  if (isSwigCircuitFeature(feature)) {
     points.push('Creates social experiences that keep users engaged');
     points.push('Drives foot traffic to multiple partner establishments');
   }

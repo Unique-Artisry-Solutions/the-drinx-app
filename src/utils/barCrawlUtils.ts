@@ -10,14 +10,14 @@ export const isValidUUID = (str: string): boolean => {
 /**
  * Check if this is a sample bar crawl ID (for demo data)
  */
-export const isSampleBarCrawlId = (id: string): boolean => {
+export const isSampleSwigCircuitId = (id: string): boolean => {
   return /^bc-\d+$/.test(id);
 };
 
 /**
  * Format error message for bar crawl operations
  */
-export const formatBarCrawlErrorMessage = (error: any): string => {
+export const formatSwigCircuitErrorMessage = (error: any): string => {
   // Parse database constraint error
   if (error.message?.includes('unique constraint')) {
     return "You've already joined this circuit";

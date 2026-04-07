@@ -10,10 +10,10 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { BarCrawlRequest } from '@/hooks/useBarCrawlRequests';
+import { SwigCircuitRequest } from '@/hooks/useSwigCircuitRequests';
 
 interface PendingRequestsTabProps {
-  pendingRequests: BarCrawlRequest[];
+  pendingRequests: SwigCircuitRequest[];
   handleAcceptRequest: (id: string) => void;
   handleDeclineRequest: (id: string) => void;
 }

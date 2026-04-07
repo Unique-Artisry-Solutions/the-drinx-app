@@ -2,7 +2,7 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { render } from '@testing-library/react';
 import { waitFor } from '@/test/testing-library-extensions';
-import { useBarCrawlParticipation } from '@/hooks/barCrawl/useBarCrawlParticipation';
+import { useSwigCircuitParticipation } from '@/hooks/swigCircuit/useSwigCircuitParticipation';
 
 // Mock the auth context
 vi.mock('@/contexts/auth', () => ({
@@ -33,9 +33,9 @@ vi.mock('@/integrations/supabase/client', () => ({
   }
 }));
 
-describe('useBarCrawlParticipation - Status', () => {
-  const mockBarCrawlId = 'test-crawl';
-  let hookResult: ReturnType<typeof useBarCrawlParticipation>;
+describe('useSwigCircuitParticipation - Status', () => {
+  const mockSwigCircuitId = 'test-crawl';
+  let hookResult: ReturnType<typeof useSwigCircuitParticipation>;
   
   beforeEach(() => {
     vi.clearAllMocks();
@@ -45,7 +45,7 @@ describe('useBarCrawlParticipation - Status', () => {
     let result: any;
     
     function TestComponent() {
-      result = useBarCrawlParticipation({ barCrawlId: mockBarCrawlId });
+      result = useSwigCircuitParticipation({ swigCircuitId: mockSwigCircuitId });
       return null;
     }
     

@@ -5,7 +5,7 @@ import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Calendar, MapPin, Users, Navigation, Beer, AlertTriangle, Route, Share2 } from 'lucide-react';
-import { sampleBarCrawls, sampleEstablishments } from '@/data/sampleData';
+import { sampleSwigCircuits, sampleEstablishments } from '@/data/sampleData';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -14,27 +14,27 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth';
-import JoinBarCrawlButton from '@/components/barCrawl/JoinBarCrawlButton';
+import JoinSwigCircuitButton from '@/components/swigCircuit/JoinSwigCircuitButton';
 
-interface BarCrawlDetailsProps {}
+interface SwigCircuitDetailsProps {}
 
-const BarCrawlDetailsPage: React.FC<BarCrawlDetailsProps> = () => {
+const SwigCircuitDetailsPage: React.FC<SwigCircuitDetailsProps> = () => {
   const { id } = useParams<{ id: string }>();
   const [loading, setLoading] = useState(true);
-  const [barCrawl, setBarCrawl] = useState<any>(null);
+  const [swigCircuit, setSwigCircuit] = useState<any>(null);
   const [participants, setParticipants] = useState<any[]>([]);
   const { user } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
-    const fetchBarCrawl = () => {
+    const fetchSwigCircuit = () => {
       setTimeout(() => {
-        const crawl = sampleBarCrawls.find(c => c.id === id);
+        const crawl = sampleSwigCircuits.find(c => c.id === id);
         
         if (crawl) {
           const establishments = sampleEstablishments.slice(0, crawl.stops);
           
-          setBarCrawl({
+          setSwigCircuit({
             ...crawl,
             date: crawl.date || new Date().toISOString().split('T')[0],
             establishments
@@ -89,11 +89,11 @@ const BarCrawlDetailsPage: React.FC<BarCrawlDetailsProps> = () => {
       }, 500);
     };
     
-    fetchBarCrawl();
+    fetchSwigCircuit();
   }, [id]);
 
   const shareCircuit = () => {
-    navigator.clipboard.writeText(`${window.location.origin}/bar-crawl/${id}`);
+    navigator.clipboard.writeText(`${window.location.origin}/swig-circuit/${id}`);
     toast({
       title: "Link copied",
       description: "Share link has been copied to clipboard",
@@ -115,7 +115,7 @@ const BarCrawlDetailsPage: React.FC<BarCrawlDetailsProps> = () => {
     );
   }
 
-  if (!barCrawl) {
+  if (!swigCircuit) {
     return (
       <Layout>
         <div className="py-4 animate-fade-in max-w-6xl mx-auto">
@@ -140,15 +140,15 @@ const BarCrawlDetailsPage: React.FC<BarCrawlDetailsProps> = () => {
         <div className="mb-6 bg-gradient-to-r from-spiritless-pink/20 to-spiritless-green/20 p-6 rounded-lg border border-spiritless-pink/30">
           <div className="flex flex-col md:flex-row justify-between gap-6">
             <div>
-              <h1 className="text-2xl font-bold mb-1">{barCrawl.name}</h1>
+              <h1 className="text-2xl font-bold mb-1">{swigCircuit.name}</h1>
               <div className="flex flex-wrap gap-3 text-sm text-material-on-surface-variant">
                 <div className="flex items-center">
                   <Calendar className="mr-1 h-4 w-4" />
-                  <span>{new Date(barCrawl.date).toLocaleDateString()}</span>
+                  <span>{new Date(swigCircuit.date).toLocaleDateString()}</span>
                 </div>
                 <div className="flex items-center">
                   <Beer className="mr-1 h-4 w-4" />
-                  <span>{barCrawl.stops} stops</span>
+                  <span>{swigCircuit.stops} stops</span>
                 </div>
                 <div className="flex items-center">
                   <Users className="mr-1 h-4 w-4" />
@@ -156,13 +156,13 @@ const BarCrawlDetailsPage: React.FC<BarCrawlDetailsProps> = () => {
                 </div>
               </div>
               <p className="mt-3 text-material-on-surface">
-                {barCrawl.description || "Join us for a fun night exploring the best alcohol-free establishments in the area. Enjoy special mocktails, meet new people, and experience the nightlife without the hangover!"}
+                {swigCircuit.description || "Join us for a fun night exploring the best alcohol-free establishments in the area. Enjoy special mocktails, meet new people, and experience the nightlife without the hangover!"}
               </p>
             </div>
             
             <div className="flex flex-col gap-3">
-              <JoinBarCrawlButton 
-                barCrawlId={id || ''} 
+              <JoinSwigCircuitButton 
+                swigCircuitId={id || ''} 
                 className="bg-spiritless-pink hover:bg-spiritless-pink/90"
               />
               <Button 
@@ -184,7 +184,7 @@ const BarCrawlDetailsPage: React.FC<BarCrawlDetailsProps> = () => {
               <CardContent className="p-4">
                 <h2 className="text-xl font-semibold mb-3">Crawl Route</h2>
                 <div className="space-y-3">
-                  {barCrawl.establishments.map((establishment: any, index: number) => (
+                  {swigCircuit.establishments.map((establishment: any, index: number) => (
                     <Link 
                       key={establishment.id}
                       to={`/establishment/${establishment.id}`}
@@ -296,4 +296,4 @@ const BarCrawlDetailsPage: React.FC<BarCrawlDetailsProps> = () => {
   );
 };
 
-export default BarCrawlDetailsPage;
+export default SwigCircuitDetailsPage;

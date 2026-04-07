@@ -43,7 +43,7 @@ const EstablishmentDashboard: React.FC<EstablishmentDashboardProps> = ({
     visitorData, 
     ratingData, 
     mocktailData,
-    barCrawlData,
+    swigCircuitData,
     isLoading 
   } = useDashboardData();
   
@@ -175,7 +175,7 @@ const EstablishmentDashboard: React.FC<EstablishmentDashboardProps> = ({
         {/* Pending Actions - Full width horizontal */}
         <div className="mb-6">
           <PendingActionsCard 
-            pendingBarCrawls={stats.pendingBarCrawls} 
+            pendingSwigCircuits={stats.pendingSwigCircuits} 
             pendingReviews={stats.reviewsThisWeek} 
           />
         </div>
@@ -202,7 +202,7 @@ const EstablishmentDashboard: React.FC<EstablishmentDashboardProps> = ({
                   visitorData={visitorData}
                   ratingData={ratingData}
                   mocktailData={mocktailData}
-                  barCrawlData={barCrawlData}
+                  swigCircuitData={swigCircuitData}
                 />
               ) : (
                 <div className="bg-white p-8 rounded-lg shadow text-center">

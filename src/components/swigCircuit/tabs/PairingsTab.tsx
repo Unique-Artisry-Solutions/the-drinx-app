@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import PairingOptions, { Pairing } from '@/components/barCrawl/PairingOptions';
+import PairingOptions, { Pairing } from '@/components/swigCircuit/PairingOptions';
 import { Loader2 } from 'lucide-react';
 
 interface PairingsTabProps {

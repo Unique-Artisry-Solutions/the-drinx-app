@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
 export const useEstablishmentInterior = (establishment: any) => {
-  const [isBarCrawlModalOpen, setIsBarCrawlModalOpen] = useState(false);
+  const [isSwigCircuitModalOpen, setIsSwigCircuitModalOpen] = useState(false);
   const [activeUsers, setActiveUsers] = useState(establishment.activeUsers || Math.floor(Math.random() * 11));
   const [hasCheckedIn, setHasCheckedIn] = useState(false);
   const [isPromoter, setIsPromoter] = useState(false);
@@ -39,8 +39,8 @@ export const useEstablishmentInterior = (establishment: any) => {
     });
   };
   
-  const handleBarCrawlRequest = () => {
-    setIsBarCrawlModalOpen(true);
+  const handleSwigCircuitRequest = () => {
+    setIsSwigCircuitModalOpen(true);
   };
 
   // Handle business hours display
@@ -82,14 +82,14 @@ export const useEstablishmentInterior = (establishment: any) => {
   };
 
   return {
-    isBarCrawlModalOpen,
-    setIsBarCrawlModalOpen,
+    isSwigCircuitModalOpen,
+    setIsSwigCircuitModalOpen,
     activeUsers,
     hasCheckedIn,
     isPromoter,
     getSortedTopCocktails,
     handleCheckIn,
-    handleBarCrawlRequest,
+    handleSwigCircuitRequest,
     formatBusinessHours
   };
 };

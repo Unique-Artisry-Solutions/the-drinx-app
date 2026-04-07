@@ -7,10 +7,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { ImagePlus } from 'lucide-react';
-import { BarCrawl } from '@/types/ProfileTypes';
+import { SwigCircuit } from '@/types/ProfileTypes';
 
 interface DetailsTabProps {
-  barCrawl: BarCrawl;
+  swigCircuit: SwigCircuit;
   name: string;
   setName: (name: string) => void;
   startDate: string;
@@ -19,11 +19,11 @@ interface DetailsTabProps {
   setEndDate: (date: string) => void;
   description: string;
   setDescription: (description: string) => void;
-  saveBarCrawlChanges: () => void;
+  saveSwigCircuitChanges: () => void;
 }
 
 const DetailsTab: React.FC<DetailsTabProps> = ({
-  barCrawl,
+  swigCircuit,
   name,
   setName,
   startDate,
@@ -32,7 +32,7 @@ const DetailsTab: React.FC<DetailsTabProps> = ({
   setEndDate,
   description,
   setDescription,
-  saveBarCrawlChanges
+  saveSwigCircuitChanges
 }) => {
   return (
     <Card>
@@ -102,8 +102,8 @@ const DetailsTab: React.FC<DetailsTabProps> = ({
               <div className="border rounded-md overflow-hidden">
                 <div className="aspect-video relative">
                   <img 
-                    src={barCrawl.imageUrl || 'https://placehold.co/600x300'} 
-                    alt={barCrawl.name} 
+                    src={swigCircuit.imageUrl || 'https://placehold.co/600x300'} 
+                    alt={swigCircuit.name} 
                     className="w-full h-full object-cover"
                   />
                   <Button 
@@ -123,19 +123,19 @@ const DetailsTab: React.FC<DetailsTabProps> = ({
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span>Status:</span>
-                    <span className="font-medium">{barCrawl.status.charAt(0).toUpperCase() + barCrawl.status.slice(1)}</span>
+                    <span className="font-medium">{swigCircuit.status.charAt(0).toUpperCase() + swigCircuit.status.slice(1)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Establishments:</span>
-                    <span className="font-medium">{barCrawl.establishments.length}</span>
+                    <span className="font-medium">{swigCircuit.establishments.length}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Organizer:</span>
-                    <span className="font-medium">{barCrawl.organizer}</span>
+                    <span className="font-medium">{swigCircuit.organizer}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Created:</span>
-                    <span className="font-medium">{barCrawl.created_at ? format(new Date(barCrawl.created_at), 'MMM d, yyyy') : 'N/A'}</span>
+                    <span className="font-medium">{swigCircuit.created_at ? format(new Date(swigCircuit.created_at), 'MMM d, yyyy') : 'N/A'}</span>
                   </div>
                 </div>
               </div>
@@ -143,7 +143,7 @@ const DetailsTab: React.FC<DetailsTabProps> = ({
           </div>
           
           <div className="flex justify-end">
-            <Button onClick={saveBarCrawlChanges}>
+            <Button onClick={saveSwigCircuitChanges}>
               Save Changes
             </Button>
           </div>

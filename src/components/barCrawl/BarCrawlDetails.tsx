@@ -2,13 +2,13 @@
 import React from 'react';
 import { Users, Calendar, Clock } from 'lucide-react';
 
-interface BarCrawlDetailsProps {
+interface SwigCircuitDetailsProps {
   organizer: string;
   date: string;
   stops: number;
 }
 
-const BarCrawlDetails: React.FC<BarCrawlDetailsProps> = ({
+const SwigCircuitDetails: React.FC<SwigCircuitDetailsProps> = ({
   organizer,
   date,
   stops
@@ -31,4 +31,4 @@ const BarCrawlDetails: React.FC<BarCrawlDetailsProps> = ({
   );
 };
 
-export default BarCrawlDetails;
+export default SwigCircuitDetails;

@@ -2,7 +2,7 @@
 import { FeatureItem } from '../../types';
 import {
   isAIFeature,
-  isBarCrawlFeature,
+  isSwigCircuitFeature,
   isMocktailSuggestionFeature,
   isVisitTrackingFeature,
   isRewardProgramFeature,
@@ -24,7 +24,7 @@ import {
 
 export const determineFeatureIcon = (feature: FeatureItem): string => {
   if (isAIFeature(feature)) return 'brain';
-  if (isBarCrawlFeature(feature)) return 'route';
+  if (isSwigCircuitFeature(feature)) return 'route';
   if (isMocktailSuggestionFeature(feature)) return 'glass-water';
   if (isVisitTrackingFeature(feature)) return 'map-pin';
   if (isRewardProgramFeature(feature)) return 'award';

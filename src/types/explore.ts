@@ -33,7 +33,7 @@ export interface SwigCircuit {
 // Unified Activity interface - base interface for all activity types
 export interface Activity {
   id: string;
-  type: 'check-in' | 'review' | 'recipe' | 'achievement' | 'bar-crawl' | 'photo-share';
+  type: 'check-in' | 'review' | 'recipe' | 'achievement' | 'swig-circuit' | 'photo-share';
   title: string;
   description: string;
   timestamp: string;

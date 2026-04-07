@@ -131,10 +131,10 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
       ) : (
         <>
           <ProfileMenuItem 
-            to="/profile/bar-crawls" 
+            to="/profile/swig-circuits" 
             icon={Route} 
             isDarkTheme={isDarkTheme}
-            isActive={location.pathname === '/profile/bar-crawls'}
+            isActive={location.pathname === '/profile/swig-circuits'}
           >
             My Swig Circuits
           </ProfileMenuItem>

@@ -198,7 +198,7 @@ export const sampleReleases: Release[] = [
     updatedAt: twoMonthsAgo + 'T16:30:00Z',
     createdBy: 'Chris Wong',
     team: ['Emily Johnson', 'Michael Chen'],
-    tags: ['bar-crawl', 'routes', 'planning'],
+    tags: ['swig-circuit', 'routes', 'planning'],
     releaseBranch: 'release/1.1.0',
     previousVersion: '1.0.0',
     nextVersion: '1.2.0'

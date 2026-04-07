@@ -1,16 +1,16 @@
 
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { BarCrawlRequest } from '@/hooks/useBarCrawlRequests';
+import { SwigCircuitRequest } from '@/hooks/useSwigCircuitRequests';
 
-export const useEstablishmentBarCrawls = () => {
-  const [barCrawls, setBarCrawls] = useState<BarCrawlRequest[]>([]);
+export const useEstablishmentSwigCircuits = () => {
+  const [swigCircuits, setSwigCircuits] = useState<SwigCircuitRequest[]>([]);
   const { toast } = useToast();
   
   useEffect(() => {
     // Simulating API call to fetch bar crawls
     setTimeout(() => {
-      setBarCrawls([
+      setSwigCircuits([
         {
           id: '1',
           name: 'Downtown Mocktail Tour',
@@ -58,7 +58,7 @@ export const useEstablishmentBarCrawls = () => {
   }, []);
 
   const handleEndParticipation = (crawlId: string) => {
-    setBarCrawls(barCrawls.filter(crawl => crawl.id !== crawlId));
+    setSwigCircuits(swigCircuits.filter(crawl => crawl.id !== crawlId));
     
     toast({
       title: 'Participation ended',
@@ -67,7 +67,7 @@ export const useEstablishmentBarCrawls = () => {
   };
 
   const handleAcceptRequest = (crawlId: string) => {
-    setBarCrawls(barCrawls.map(crawl => 
+    setSwigCircuits(swigCircuits.map(crawl => 
       crawl.id === crawlId 
         ? { ...crawl, status: 'accepted' as const } 
         : crawl
@@ -80,7 +80,7 @@ export const useEstablishmentBarCrawls = () => {
   };
 
   return {
-    barCrawls,
+    swigCircuits,
     handleEndParticipation,
     handleAcceptRequest
   };

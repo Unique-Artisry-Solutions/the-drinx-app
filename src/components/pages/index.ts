@@ -6,4 +6,4 @@ export { default as NotificationsList } from '../../pages/notifications/componen
 export { default as NotificationsHeader } from '../../pages/notifications/components/NotificationsHeader';
 
 // Profile imports
-export { BarCrawlManagementPage } from '../../imports';
+export { SwigCircuitManagementPage } from '../../imports';

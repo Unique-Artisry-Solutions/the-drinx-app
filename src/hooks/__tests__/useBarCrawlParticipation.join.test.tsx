@@ -2,7 +2,7 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { render } from '@testing-library/react';
 import { waitFor } from '@/test/testing-library-extensions';
-import { useBarCrawlParticipation } from '@/hooks/barCrawl/useBarCrawlParticipation';
+import { useSwigCircuitParticipation } from '@/hooks/swigCircuit/useSwigCircuitParticipation';
 
 // Mock the auth context
 vi.mock('@/contexts/auth', () => ({
@@ -35,9 +35,9 @@ vi.mock('@/integrations/supabase/client', () => ({
   }
 }));
 
-describe('useBarCrawlParticipation - Join Functionality', () => {
-  const mockBarCrawlId = 'test-crawl-id';
-  let hookResult: ReturnType<typeof useBarCrawlParticipation>;
+describe('useSwigCircuitParticipation - Join Functionality', () => {
+  const mockSwigCircuitId = 'test-crawl-id';
+  let hookResult: ReturnType<typeof useSwigCircuitParticipation>;
   
   beforeEach(() => {
     vi.clearAllMocks();
@@ -52,7 +52,7 @@ describe('useBarCrawlParticipation - Join Functionality', () => {
     let result: any;
     
     function TestComponent() {
-      result = useBarCrawlParticipation({ barCrawlId: mockBarCrawlId });
+      result = useSwigCircuitParticipation({ swigCircuitId: mockSwigCircuitId });
       return null;
     }
     
@@ -79,7 +79,7 @@ describe('useBarCrawlParticipation - Join Functionality', () => {
     // Verify insert was called correctly
     expect(mockInsert).toHaveBeenCalledWith({
       user_id: 'test-user-id',
-      bar_crawl_id: mockBarCrawlId,
+      bar_crawl_id: mockSwigCircuitId,
       joined_at: expect.any(String)
     });
   });

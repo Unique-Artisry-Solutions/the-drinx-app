@@ -249,12 +249,12 @@ export const componentCatalogData: PageComponentsMap = {
             selectors: ['.visited-tab', '.visited-list']
           },
           {
-            id: 'barcrawl-tab',
+            id: 'swigcircuit-tab',
             name: 'Bar Crawl Tab',
             description: 'Tab showing user bar crawls',
             type: 'section',
-            filePath: 'src/components/profile/BarCrawlTab.tsx',
-            selectors: ['.barcrawl-tab', '.barcrawl-list']
+            filePath: 'src/components/profile/SwigCircuitTab.tsx',
+            selectors: ['.swigcircuit-tab', '.swigcircuit-list']
           }
         ]
       }

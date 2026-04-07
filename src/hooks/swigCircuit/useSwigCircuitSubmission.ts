@@ -20,11 +20,11 @@ export const useSwigCircuitSubmission = (formState: SwigCircuitFormState) => {
   const { user } = useAuth();
 
   const saveToLocalStorage = () => {
-    const newBarCrawlId = `bc-${Date.now()}`;
+    const newSwigCircuitId = `bc-${Date.now()}`;
     
-    const barCrawls = JSON.parse(localStorage.getItem('user_bar_crawls') || '[]');
-    barCrawls.push({
-      id: newBarCrawlId,
+    const swigCircuits = JSON.parse(localStorage.getItem('user_bar_crawls') || '[]');
+    swigCircuits.push({
+      id: newSwigCircuitId,
       name: formState.name,
       startDate: formState.startDate,
       endDate: formState.endDate,
@@ -42,15 +42,15 @@ export const useSwigCircuitSubmission = (formState: SwigCircuitFormState) => {
       projectedAttendance: formState.projectedAttendance,
       projectedRevenue: formState.projectedRevenue
     });
-    localStorage.setItem('user_bar_crawls', JSON.stringify(barCrawls));
+    localStorage.setItem('user_bar_crawls', JSON.stringify(swigCircuits));
     
     toast({
       title: 'Swig Circuit Created',
       description: 'Your new Swig Circuit has been created successfully! (Saved to localStorage for testing)',
     });
     
-    navigate(`/profile/my-creations/${newBarCrawlId}`);
-    return newBarCrawlId;
+    navigate(`/profile/my-creations/${newSwigCircuitId}`);
+    return newSwigCircuitId;
   };
 
   const saveToDatabase = async () => {

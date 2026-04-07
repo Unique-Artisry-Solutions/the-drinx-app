@@ -3,15 +3,15 @@ import React from 'react';
 import { useParams } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { useAuth } from '@/hooks/core';
-import BarCrawlDetails from '@/components/barCrawl/BarCrawlDetails';
+import SwigCircuitDetails from '@/components/swigCircuit/SwigCircuitDetails';
 
-const BarCrawlDetail: React.FC = () => {
+const SwigCircuitDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { state } = useAuth();
   const { userType } = state;
 
   // Mock bar crawl data - replace with actual data fetching
-  const barCrawl = {
+  const swigCircuit = {
     id: id || '1',
     name: 'Downtown Mocktail Tour',
     organizer: 'Sarah Johnson',
@@ -26,16 +26,16 @@ const BarCrawlDetail: React.FC = () => {
     <Layout>
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-3xl font-bold mb-6">{barCrawl.name}</h1>
+          <h1 className="text-3xl font-bold mb-6">{swigCircuit.name}</h1>
           
-          <BarCrawlDetails
-            organizer={barCrawl.organizer}
-            date={barCrawl.date}
-            stops={barCrawl.stops}
+          <SwigCircuitDetails
+            organizer={swigCircuit.organizer}
+            date={swigCircuit.date}
+            stops={swigCircuit.stops}
           />
           
           <div className="mt-6">
-            <p className="text-gray-700">{barCrawl.description}</p>
+            <p className="text-gray-700">{swigCircuit.description}</p>
           </div>
 
           {isAdminOrPromoter && (
@@ -52,4 +52,4 @@ const BarCrawlDetail: React.FC = () => {
   );
 };
 
-export default BarCrawlDetail;
+export default SwigCircuitDetail;

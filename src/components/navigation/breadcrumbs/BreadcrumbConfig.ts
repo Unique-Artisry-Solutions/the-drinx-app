@@ -86,8 +86,8 @@ export const dynamicRoutes = [
     label: 'Establishment'
   },
   {
-    pattern: /^\/bar-crawl-details\/[a-zA-Z0-9-]+$/,
+    pattern: /^\/swig-circuit-details\/[a-zA-Z0-9-]+$/,
     base: '/swig-circuits',
-    label: 'Bar Crawl'
+    label: 'Swig Circuits'
   }
 ];

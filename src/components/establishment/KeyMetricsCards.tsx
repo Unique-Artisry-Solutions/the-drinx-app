@@ -6,7 +6,7 @@ import { BarChart2, Users, CreditCard, Award, Star, CircleSlash } from 'lucide-r
 interface StatsData {
   revenue: string;
   reviewsThisWeek: number;
-  pendingBarCrawls: number;
+  pendingSwigCircuits: number;
   totalRating: number;
   visitorCount: number;
   returningRate: number;

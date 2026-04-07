@@ -69,7 +69,7 @@ export const EnhancedExploreSection = () => {
     // In a real implementation, this would call an API to check in
   };
   
-  const handleAddToBarCrawl = (establishmentId: string, establishmentName: string) => {
+  const handleAddToSwigCircuit = (establishmentId: string, establishmentName: string) => {
     toast.success(`Added to Bar Crawl`, {
       description: `${establishmentName} has been added to your bar crawl`
     });
@@ -140,7 +140,7 @@ export const EnhancedExploreSection = () => {
               openingTime={establishment.openingTime}
               highestRatedDrink={establishment.highestRatedDrink}
               onCheckIn={() => handleCheckIn(establishment.id, establishment.name)}
-              onAddToBarCrawl={() => handleAddToBarCrawl(establishment.id, establishment.name)}
+              onAddToSwigCircuit={() => handleAddToSwigCircuit(establishment.id, establishment.name)}
             />
           ))}
         </div>
