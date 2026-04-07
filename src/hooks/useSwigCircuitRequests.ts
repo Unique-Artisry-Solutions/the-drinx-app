@@ -1,11 +1,29 @@
-
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { SwigCircuitRequest } from '@/hooks/useSwigCircuitRequests';
+
+export interface SwigCircuitRequest {
+  id: string;
+  name: string;
+  organizer: string;
+  participants: number;
+  date: string;
+  time: string;
+  status: 'pending' | 'accepted' | 'declined';
+  description: string;
+  otherEstablishments: string[];
+  expectedDuration: string;
+  specialRequests?: string;
+  startDate: string; // Changed from optional to required
+  endDate: string;   // Changed from optional to required
+}
 
 export const useSwigCircuitRequests = () => {
+  const [pendingRequests, setPendingRequests] = useState<SwigCircuitRequest[]>([]);
+  const [acceptedRequests, setAcceptedRequests] = useState<SwigCircuitRequest[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState<string>("pending");
 
   const swigCircuitRequests: SwigCircuitRequest[] = [
     {
@@ -55,7 +73,7 @@ export const useSwigCircuitRequests = () => {
     }
   ];
 
-  const acceptedRequests: SwigCircuitRequest[] = [
+  const defaultAcceptedRequests: SwigCircuitRequest[] = [
     {
       id: '4',
       name: 'Downtown Mocktail Tour',
@@ -88,38 +106,6 @@ export const useSwigCircuitRequests = () => {
     }
   ];
 
-  const formattedPendingRequests = swigCircuitRequests.map(req => ({
-    id: req.id,
-    name: req.name,
-    date: req.date,
-    participants: req.participants,
-    organizer: req.organizer,
-    startDate: req.startDate,
-    endDate: req.endDate,
-    status: 'pending' as const,
-    otherEstablishments: req.otherEstablishments,
-    description: req.description,
-    time: req.time,
-    expectedDuration: req.expectedDuration,
-    specialRequests: req.specialRequests
-  }));
-
-  const formattedAcceptedRequests = acceptedRequests.map(req => ({
-    id: req.id,
-    name: req.name,
-    date: req.date,
-    participants: req.participants,
-    organizer: req.organizer,
-    startDate: req.startDate,
-    endDate: req.endDate,
-    status: 'accepted' as const,
-    otherEstablishments: req.otherEstablishments,
-    description: req.description,
-    time: req.time,
-    expectedDuration: req.expectedDuration,
-    specialRequests: req.specialRequests
-  }));
-
   const handleAcceptRequest = (id: string) => {
     toast({
       title: 'Request Accepted',
@@ -127,27 +113,32 @@ export const useSwigCircuitRequests = () => {
     });
   };
 
-  const handleDeclineRequest = (id: string) => {
-    toast({
-      title: 'Request Declined',
-      description: 'You have declined this Swig Circuit request.'
-    });
+  const acceptRequest = async (id: string) => {
+    // This would update the status in the database
+    // For now, just a placeholder
+    console.log(`Accepting request ${id}`);
+    handleAcceptRequest(id);
   };
 
-  const handleEndParticipation = (id: string) => {
-    toast({
-      title: 'Participation Ended',
-      description: 'You have ended your participation in this Swig Circuit.'
-    });
+  const declineRequest = async (id: string) => {
+    // This would update the status in the database
+    // For now, just a placeholder
+    console.log(`Declining request ${id}`);
+  };
+
+  const endParticipation = async (id: string) => {
+    // This would update the status in the database
+    // For now, just a placeholder
+    console.log(`Ending participation in swig circuit ${id}`);
   };
 
   return {
-    activeTab,
-    setActiveTab,
-    formattedPendingRequests,
-    formattedAcceptedRequests,
-    handleAcceptRequest,
-    handleDeclineRequest,
-    handleEndParticipation
+    pendingRequests: swigCircuitRequests,
+    acceptedRequests: defaultAcceptedRequests,
+    loading,
+    error,
+    acceptRequest,
+    declineRequest,
+    endParticipation
   };
 };
