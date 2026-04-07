@@ -12,7 +12,7 @@ import AdminNotFound from '@/components/admin/AdminNotFound';
 import RouteProtectionWrapper from '@/hoc/RouteProtectionWrapper';
 import AdminEstablishmentsPage from '@/pages/admin/AdminEstablishmentsPage';
 import PhotoModerationPage from '@/pages/admin/PhotoModerationPage';
-import TestingDashboard from '@/pages/admin/TestingDashboard';
+
 import AdminToolsPage from '@/pages/admin/AdminToolsPage';
 import AdminRewardsPage from '@/pages/admin/AdminRewardsPage';
 import AdminLogsPage from '@/pages/admin/AdminLogsPage';
@@ -122,7 +122,6 @@ export const adminRoutes: RouteObject[] = [
       
       // System Tools
       { path: 'component-catalog', element: <AdminToolsPage /> },
-      { path: 'testing-dashboard', element: <TestingDashboard /> },
       
       // Communication
       { path: 'notifications', element: <AdminNotificationsPage /> },
