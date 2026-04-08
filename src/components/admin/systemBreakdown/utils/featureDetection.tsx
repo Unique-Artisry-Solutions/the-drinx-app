@@ -171,8 +171,8 @@ export const isPhotoModerationFeature = (feature: FeatureItem) =>
    feature.description.toLowerCase().includes('moderation'));
 
 export const isSwigCircuitFeature = (feature: FeatureItem) => 
-  feature.name.toLowerCase().includes('Swig Circuit') || 
-  feature.description.toLowerCase().includes('Swig Circuit');
+  feature.name.toLowerCase().includes('swig circuit') || 
+  feature.description.toLowerCase().includes('swig circuit');
 
 export const isSwigCircuitManagementFeature = (feature: FeatureItem) => 
   isSwigCircuitFeature(feature) && 
@@ -180,10 +180,6 @@ export const isSwigCircuitManagementFeature = (feature: FeatureItem) =>
    feature.description.toLowerCase().includes('manage') ||
    feature.name.toLowerCase().includes('admin') || 
    feature.description.toLowerCase().includes('admin'));
-
-export const isSwigCircuitFeature = (feature: FeatureItem) => 
-  feature.name.toLowerCase().includes('swig circuit') || 
-  feature.description.toLowerCase().includes('swig circuit');
 
 export const isThemeFeature = (feature: FeatureItem) => 
   feature.name.toLowerCase().includes('theme') || 
