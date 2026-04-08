@@ -6,21 +6,21 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Share2 } from 'lucide-react';
 import BackButton from '@/components/navigation/BackButton';
-import { useBarCrawlManagement } from '@/hooks/useBarCrawlManagement';
+import { useSwigCircuitManagement } from '@/hooks/useSwigCircuitManagement';
 
 // Import our components
-import LoadingState from '@/components/barCrawl/management/LoadingState';
-import NotFoundState from '@/components/barCrawl/management/NotFoundState';
-import DetailsTab from '@/components/barCrawl/management/DetailsTab';
-import EstablishmentsTab from '@/components/barCrawl/management/EstablishmentsTab';
-import InvitationsTab from '@/components/barCrawl/management/InvitationsTab';
-import SocialSharingTab from '@/components/barCrawl/management/SocialSharingTab';
+import LoadingState from '@/components/swigCircuit/management/LoadingState';
+import NotFoundState from '@/components/swigCircuit/management/NotFoundState';
+import DetailsTab from '@/components/swigCircuit/management/DetailsTab';
+import EstablishmentsTab from '@/components/swigCircuit/management/EstablishmentsTab';
+import InvitationsTab from '@/components/swigCircuit/management/InvitationsTab';
+import SocialSharingTab from '@/components/swigCircuit/management/SocialSharingTab';
 
-const BarCrawlManagementPage: React.FC = () => {
+const SwigCircuitManagementPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   
   const {
-    barCrawl,
+    swigCircuit,
     isLoading,
     name,
     setName,
@@ -35,19 +35,19 @@ const BarCrawlManagementPage: React.FC = () => {
     showInviteForm,
     setShowInviteForm,
     availableEstablishments,
-    saveBarCrawlChanges,
+    saveSwigCircuitChanges,
     addEstablishment,
     removeEstablishment,
     inviteUser,
     copyShareLink,
     shareToSocialMedia
-  } = useBarCrawlManagement(id || '');
+  } = useSwigCircuitManagement(id || '');
 
   if (isLoading) {
     return <LoadingState />;
   }
 
-  if (!barCrawl) {
+  if (!swigCircuit) {
     return <NotFoundState />;
   }
 
@@ -58,7 +58,7 @@ const BarCrawlManagementPage: React.FC = () => {
         
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-medium">{barCrawl.name}</h1>
+            <h1 className="text-2xl font-medium">{swigCircuit.name}</h1>
             <p className="text-material-on-surface-variant">
               Manage your Swig Circuit details and participants
             </p>
@@ -83,7 +83,7 @@ const BarCrawlManagementPage: React.FC = () => {
           
           <TabsContent value="details">
             <DetailsTab 
-              barCrawl={barCrawl}
+              swigCircuit={swigCircuit}
               name={name}
               setName={setName}
               startDate={startDate}
@@ -92,13 +92,13 @@ const BarCrawlManagementPage: React.FC = () => {
               setEndDate={setEndDate}
               description={description}
               setDescription={setDescription}
-              saveBarCrawlChanges={saveBarCrawlChanges}
+              saveSwigCircuitChanges={saveSwigCircuitChanges}
             />
           </TabsContent>
           
           <TabsContent value="establishments">
             <EstablishmentsTab 
-              currentEstablishments={barCrawl.establishments}
+              currentEstablishments={swigCircuit.establishments}
               availableEstablishments={availableEstablishments}
               addEstablishment={addEstablishment}
               removeEstablishment={removeEstablishment}
@@ -113,13 +113,13 @@ const BarCrawlManagementPage: React.FC = () => {
               setInviteeEmail={setInviteeEmail}
               inviteUser={inviteUser}
               copyShareLink={copyShareLink}
-              barCrawlId={id || ''}
+              swigCircuitId={id || ''}
             />
           </TabsContent>
           
           <TabsContent value="sharing">
             <SocialSharingTab 
-              barCrawl={barCrawl}
+              swigCircuit={swigCircuit}
               copyShareLink={copyShareLink}
               shareToSocialMedia={shareToSocialMedia}
             />
@@ -130,4 +130,4 @@ const BarCrawlManagementPage: React.FC = () => {
   );
 };
 
-export default BarCrawlManagementPage;
+export default SwigCircuitManagementPage;

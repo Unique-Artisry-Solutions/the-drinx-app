@@ -21,7 +21,7 @@ interface MetricsVisualizationProps {
     orders: number;
     color: string;
   }[];
-  barCrawlData?: {
+  swigCircuitData?: {
     name: string;
     value: number;
     color: string;
@@ -33,7 +33,7 @@ const MetricsVisualization: React.FC<MetricsVisualizationProps> = ({
   visitorData, 
   ratingData,
   mocktailData = [],
-  barCrawlData = [] 
+  swigCircuitData = [] 
 }) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
@@ -235,7 +235,7 @@ const MetricsVisualization: React.FC<MetricsVisualizationProps> = ({
         <CardContent className="pt-0 pb-6">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <p className="text-3xl font-bold">{barCrawlData.reduce((sum, item) => sum + item.value, 0)}</p>
+              <p className="text-3xl font-bold">{swigCircuitData.reduce((sum, item) => sum + item.value, 0)}</p>
               <p className="text-xs text-material-on-surface-variant">
                 total bar crawl participants
               </p>
@@ -249,7 +249,7 @@ const MetricsVisualization: React.FC<MetricsVisualizationProps> = ({
           <div className="h-[200px] w-full">
             <ChartContainer
               config={
-                barCrawlData.reduce((config, item) => ({
+                swigCircuitData.reduce((config, item) => ({
                   ...config,
                   [item.name]: {
                     label: item.name,
@@ -259,7 +259,7 @@ const MetricsVisualization: React.FC<MetricsVisualizationProps> = ({
               }
             >
               <BarChart
-                data={barCrawlData}
+                data={swigCircuitData}
                 margin={{ top: 10, right: 10, left: 5, bottom: 20 }}
               >
                 <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
@@ -268,7 +268,7 @@ const MetricsVisualization: React.FC<MetricsVisualizationProps> = ({
                 <Tooltip content={<ChartTooltipContent />} />
                 <Legend wrapperStyle={{fontSize: '10px', marginTop: '10px'}} />
                 <Bar dataKey="value" barSize={20}>
-                  {barCrawlData.map((entry, index) => (
+                  {swigCircuitData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Bar>

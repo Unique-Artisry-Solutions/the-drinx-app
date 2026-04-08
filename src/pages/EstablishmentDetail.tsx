@@ -27,7 +27,7 @@ const EstablishmentDetail = () => {
       }
 
       // Check if this is a special route or an invalid UUID format
-      if (id === 'profile' || id === 'analytics' || id === 'bar-crawl-requests' || 
+      if (id === 'profile' || id === 'analytics' || id === 'swig-circuit-requests' || 
           id === 'reviews' || id === 'mocktail-suggestions' || 
           id === 'mocktail-menu' || id === 'promotions' || id === 'dashboard') {
         // These are valid routes within the establishment section, not actual IDs

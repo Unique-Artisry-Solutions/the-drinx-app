@@ -1,7 +1,7 @@
 
 // Bar Crawl Feature Module - Consolidated exports
-export { default as BarCrawlHeader } from './BarCrawlHeader';
-export { default as BarCrawlDetails } from './BarCrawlDetails';
+export { default as SwigCircuitHeader } from './SwigCircuitHeader';
+export { default as SwigCircuitDetails } from './SwigCircuitDetails';
 export { default as CrawlRouteCard } from './CrawlRouteCard';
 export { default as EstablishmentGrid } from './EstablishmentGrid';
 export { default as DrinkHighlights } from './DrinkHighlights';
@@ -9,10 +9,10 @@ export { default as InteractiveElements } from './InteractiveElements';
 export { default as ThemeSelection } from './ThemeSelection';
 export { default as VenueDiversity } from './VenueDiversity';
 export { default as FeedbackMechanism } from './FeedbackMechanism';
-export { default as JoinBarCrawlButton } from './JoinBarCrawlButton';
+export { default as JoinSwigCircuitButton } from './JoinSwigCircuitButton';
 
 // Profile sub-module
-export { default as BarCrawlProfileHeader } from './profile/BarCrawlProfileHeader';
+export { default as SwigCircuitProfileHeader } from './profile/SwigCircuitProfileHeader';
 export { default as MapTabContent } from './profile/MapTabContent';
 
 // Selection sub-module

@@ -17,12 +17,12 @@ import {
   User,
   Establishment,
   Cocktail,
-  BarCrawl,
+  SwigCircuit,
   EstablishmentCard
 } from './CoreTypes';
 
 // Re-export core types for backward compatibility
-export type { User, Establishment, Cocktail, BarCrawl };
+export type { User, Establishment, Cocktail, SwigCircuit };
 
 // Profile-specific component props using core types
 export interface ProfileHeaderProps {
@@ -30,9 +30,9 @@ export interface ProfileHeaderProps {
   handleLogout: () => void;
 }
 
-export interface BarCrawlTabProps {
-  barCrawlList: Establishment[];
-  shareBarCrawl: () => void;
+export interface SwigCircuitTabProps {
+  swigCircuitList: Establishment[];
+  shareSwigCircuit: () => void;
 }
 
 export interface VisitedTabProps {

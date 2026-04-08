@@ -6,16 +6,16 @@ import { Calendar, MessageSquare } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface PendingActionsCardProps {
-  pendingBarCrawls: number;
+  pendingSwigCircuits: number;
   pendingReviews: number;
 }
 
-const PendingActionsCard: React.FC<PendingActionsCardProps> = ({ pendingBarCrawls, pendingReviews }) => {
+const PendingActionsCard: React.FC<PendingActionsCardProps> = ({ pendingSwigCircuits, pendingReviews }) => {
   const navigate = useNavigate();
   
   // Function to navigate to the bar crawl requests page
-  const navigateToBarCrawlRequests = () => {
-    navigate('/establishment/bar-crawl-requests');
+  const navigateToSwigCircuitRequests = () => {
+    navigate('/establishment/swig-circuit-requests');
   };
   
   // Function to navigate to the reviews page
@@ -41,10 +41,10 @@ const PendingActionsCard: React.FC<PendingActionsCardProps> = ({ pendingBarCrawl
               <Calendar className="h-5 w-5 text-spiritless-pink mr-2" />
               <div>
                 <p className="text-sm font-medium">Swig Circuit Requests</p>
-                <p className="text-xs text-material-on-surface-variant">{pendingBarCrawls} pending requests</p>
+                <p className="text-xs text-material-on-surface-variant">{pendingSwigCircuits} pending requests</p>
               </div>
             </div>
-            <Button variant="ghost" size="sm" onClick={navigateToBarCrawlRequests}>
+            <Button variant="ghost" size="sm" onClick={navigateToSwigCircuitRequests}>
               Review
             </Button>
           </div>

@@ -1,7 +1,7 @@
 
 import { Establishment } from '@/types/ProfileTypes';
-import { DrinkHighlight } from '@/components/barCrawl/DrinkHighlights';
-import { Pairing } from '@/components/barCrawl/PairingOptions';
+import { DrinkHighlight } from '@/components/swigCircuit/DrinkHighlights';
+import { Pairing } from '@/components/swigCircuit/PairingOptions';
 
 export interface TicketTier {
   id: string;

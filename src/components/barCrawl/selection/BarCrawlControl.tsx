@@ -7,25 +7,25 @@ import { useToast } from '@/hooks/use-toast';
 import { Establishment } from '@/types/ProfileTypes';
 import SelectedEstablishmentsList from './SelectedEstablishmentsList';
 
-interface BarCrawlControlProps {
+interface SwigCircuitControlProps {
   establishments: Establishment[];
-  onSaveBarCrawl: (establishments: Establishment[]) => void;
+  onSaveSwigCircuit: (establishments: Establishment[]) => void;
   initialSelections?: Establishment[];
   minEstablishments?: number;
 }
 
-const BarCrawlControl = ({ 
+const SwigCircuitControl = ({ 
   establishments, 
-  onSaveBarCrawl,
+  onSaveSwigCircuit,
   initialSelections = [],
   minEstablishments = 2
-}: BarCrawlControlProps) => {
-  const [barCrawlMode, setBarCrawlMode] = useState(false);
+}: SwigCircuitControlProps) => {
+  const [swigCircuitMode, setSwigCircuitMode] = useState(false);
   const [selectedEstablishments, setSelectedEstablishments] = useState<Establishment[]>(initialSelections);
   const { toast } = useToast();
 
-  const toggleBarCrawlMode = useCallback(() => {
-    setBarCrawlMode(prevMode => {
+  const toggleSwigCircuitMode = useCallback(() => {
+    setSwigCircuitMode(prevMode => {
       // If we're exiting selection mode and have selections, ask for confirmation
       if (prevMode && selectedEstablishments.length > 0) {
         const confirmed = window.confirm("Are you sure you want to cancel? Your current selections will be lost.");
@@ -38,7 +38,7 @@ const BarCrawlControl = ({
     });
   }, [selectedEstablishments]);
 
-  const addToBarCrawl = useCallback((establishment: Establishment) => {
+  const addToSwigCircuit = useCallback((establishment: Establishment) => {
     setSelectedEstablishments(current => {
       const isAlreadySelected = current.some(e => e.id === establishment.id);
       
@@ -60,7 +60,7 @@ const BarCrawlControl = ({
     });
   }, [toast]);
 
-  const saveBarCrawl = useCallback(() => {
+  const saveSwigCircuit = useCallback(() => {
     if (selectedEstablishments.length < minEstablishments) {
       toast({
         title: "Not enough establishments",
@@ -70,23 +70,23 @@ const BarCrawlControl = ({
       return;
     }
 
-    onSaveBarCrawl(selectedEstablishments);
-    setBarCrawlMode(false);
+    onSaveSwigCircuit(selectedEstablishments);
+    setSwigCircuitMode(false);
     
     toast({
       title: "Swig Circuit saved!",
       description: `Your Swig Circuit with ${selectedEstablishments.length} establishments has been saved.`,
     });
-  }, [selectedEstablishments, minEstablishments, onSaveBarCrawl, toast]);
+  }, [selectedEstablishments, minEstablishments, onSaveSwigCircuit, toast]);
 
   return (
     <div className="mb-4">
       <Button 
-        variant={barCrawlMode ? "destructive" : "default"}
-        onClick={toggleBarCrawlMode}
+        variant={swigCircuitMode ? "destructive" : "default"}
+        onClick={toggleSwigCircuitMode}
         className="mb-4"
       >
-        {barCrawlMode ? (
+        {swigCircuitMode ? (
           <>
             <X className="mr-2 h-4 w-4" />
             Cancel Selection
@@ -99,7 +99,7 @@ const BarCrawlControl = ({
         )}
       </Button>
 
-      {barCrawlMode && (
+      {swigCircuitMode && (
         <Card className="mb-4 border-2 border-material-primary/20">
           <CardHeader className="pb-2">
             <CardTitle className="text-lg">Create Your Swig Circuit</CardTitle>
@@ -111,8 +111,8 @@ const BarCrawlControl = ({
 
             <SelectedEstablishmentsList
               establishments={selectedEstablishments}
-              onRemove={addToBarCrawl}
-              onSave={saveBarCrawl}
+              onRemove={addToSwigCircuit}
+              onSave={saveSwigCircuit}
             />
           </CardContent>
         </Card>
@@ -121,4 +121,4 @@ const BarCrawlControl = ({
   );
 };
 
-export default BarCrawlControl;
+export default SwigCircuitControl;

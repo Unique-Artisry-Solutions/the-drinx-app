@@ -17,7 +17,7 @@ import ModuleLoadingErrorBoundary from '@/components/error/ModuleLoadingErrorBou
 import CheckoutPage from '@/pages/CheckoutPage';
 import PurchaseSuccessPage from '@/pages/PurchaseSuccessPage';
 import EventDetailPage from '@/pages/EventDetailPage';
-import BarCrawlDetail from '@/pages/BarCrawlDetail';
+import SwigCircuitDetail from '@/pages/SwigCircuitDetail';
 import UserSettingsPage from '@/pages/UserSettingsPage';
 
 // Keep lazy loading only for scanner page (requires camera permissions)
@@ -47,7 +47,7 @@ const AppRoutes = () => {
 
           {/* Simplified Event Routes - Direct rendering */}
           <Route path="/event/:id" element={<EventDetailPage />} />
-          <Route path="/bar-crawl/:id" element={<BarCrawlDetail />} />
+          <Route path="/swig-circuit/:id" element={<SwigCircuitDetail />} />
 
           {/* Direct Settings Route */}
           <Route path="/settings" element={<UserSettingsPage />} />

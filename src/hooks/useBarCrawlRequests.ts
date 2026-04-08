@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 
-export interface BarCrawlRequest {
+export interface SwigCircuitRequest {
   id: string;
   name: string;
   organizer: string;
@@ -17,9 +17,9 @@ export interface BarCrawlRequest {
   endDate: string;   // Changed from optional to required
 }
 
-export const useBarCrawlRequests = () => {
-  const [pendingRequests, setPendingRequests] = useState<BarCrawlRequest[]>([]);
-  const [acceptedRequests, setAcceptedRequests] = useState<BarCrawlRequest[]>([]);
+export const useSwigCircuitRequests = () => {
+  const [pendingRequests, setPendingRequests] = useState<SwigCircuitRequest[]>([]);
+  const [acceptedRequests, setAcceptedRequests] = useState<SwigCircuitRequest[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 

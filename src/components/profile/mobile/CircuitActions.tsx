@@ -94,7 +94,7 @@ const CircuitActions: React.FC<CircuitActionsProps> = ({
         </Button>
         
         <Button asChild variant="outline" size="sm" className="text-xs py-1 px-2 h-auto">
-          <Link to={`/bar-crawl-details/${circuitId}`}>
+          <Link to={`/swig-circuit-details/${circuitId}`}>
             Details
           </Link>
         </Button>

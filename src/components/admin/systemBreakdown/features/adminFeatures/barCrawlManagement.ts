@@ -1,7 +1,7 @@
 
 import { FeatureItem } from '../../types';
 
-export const barCrawlManagement: FeatureItem = {
+export const swigCircuitManagement: FeatureItem = {
   id: "admin-3",
   name: "Bar Crawl Management",
   description: "Create, edit, and manage bar crawls, including setting dates, locations, and themes.",

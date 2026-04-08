@@ -1,7 +1,7 @@
 
 import { userManagement } from './userManagement';
 import { establishmentManagement } from './establishmentManagement';
-import { barCrawlManagement } from './barCrawlManagement';
+import { swigCircuitManagement } from './swigCircuitManagement';
 import { contentManagement } from './contentManagement';
 import { systemConfiguration } from './systemConfiguration';
 import { analyticsDashboard } from './analyticsDashboard';
@@ -16,7 +16,7 @@ import { FeatureItem } from '../../types';
 export const adminFeatures: FeatureItem[] = [
   userManagement,
   establishmentManagement,
-  barCrawlManagement,
+  swigCircuitManagement,
   contentManagement,
   systemConfiguration,
   analyticsDashboard,

@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import ThemeSelection from '@/components/barCrawl/ThemeSelection';
+import ThemeSelection from '@/components/swigCircuit/ThemeSelection';
 import SimpleThemeCustomizer from '../theme/SimpleThemeCustomizer';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Palette, CheckCircle2 } from 'lucide-react';

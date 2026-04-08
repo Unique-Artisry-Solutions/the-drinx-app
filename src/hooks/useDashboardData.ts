@@ -5,7 +5,7 @@ export interface DashboardStats {
   totalVisits: number;
   newVisitorsToday: number;
   returningRate: number;
-  pendingBarCrawls: number;
+  pendingSwigCircuits: number;
   reviewsThisWeek: number;
   avgRating: number;
   topMocktail: string;
@@ -39,7 +39,7 @@ export interface MocktailData {
   color: string;
 }
 
-export interface BarCrawlData {
+export interface SwigCircuitData {
   name: string;
   value: number;
   color: string;
@@ -50,7 +50,7 @@ interface DashboardData {
   visitorData: VisitorData[];
   ratingData: RatingData[];
   mocktailData: MocktailData[];
-  barCrawlData: BarCrawlData[];
+  swigCircuitData: SwigCircuitData[];
   isLoading: boolean;
 }
 
@@ -63,7 +63,7 @@ export const useDashboardData = (): DashboardData => {
     totalVisits: 278,
     newVisitorsToday: 12,
     returningRate: 62,
-    pendingBarCrawls: 3,
+    pendingSwigCircuits: 3,
     reviewsThisWeek: 8,
     avgRating: 4.7,
     topMocktail: "Blue Lagoon",
@@ -110,7 +110,7 @@ export const useDashboardData = (): DashboardData => {
   ];
   
   // Sample bar crawl data
-  const barCrawlData: BarCrawlData[] = [
+  const swigCircuitData: SwigCircuitData[] = [
     { name: 'Downtown Crawl', value: 24, color: '#8b5cf6' },
     { name: 'Friday Night Tour', value: 18, color: '#f97316' },
     { name: 'Weekend Warriors', value: 15, color: '#0ea5e9' },
@@ -131,7 +131,7 @@ export const useDashboardData = (): DashboardData => {
     visitorData,
     ratingData,
     mocktailData,
-    barCrawlData,
+    swigCircuitData,
     isLoading
   };
 };

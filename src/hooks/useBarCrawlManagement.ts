@@ -1,11 +1,11 @@
 
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { BarCrawl, Establishment } from '@/types/ProfileTypes';
+import { SwigCircuit, Establishment } from '@/types/ProfileTypes';
 import { sampleEstablishments } from '@/data/sampleData';
 
-export const useBarCrawlManagement = (barCrawlId: string) => {
-  const [barCrawl, setBarCrawl] = useState<BarCrawl | null>(null);
+export const useSwigCircuitManagement = (swigCircuitId: string) => {
+  const [swigCircuit, setSwigCircuit] = useState<SwigCircuit | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -19,22 +19,22 @@ export const useBarCrawlManagement = (barCrawlId: string) => {
   
   // Load the bar crawl data
   useEffect(() => {
-    const loadBarCrawl = () => {
+    const loadSwigCircuit = () => {
       try {
-        const barCrawls = JSON.parse(localStorage.getItem('user_bar_crawls') || '[]');
-        const foundBarCrawl = barCrawls.find((bc: any) => bc.id === barCrawlId);
+        const swigCircuits = JSON.parse(localStorage.getItem('user_bar_crawls') || '[]');
+        const foundSwigCircuit = swigCircuits.find((bc: any) => bc.id === swigCircuitId);
         
-        if (foundBarCrawl) {
-          setBarCrawl(foundBarCrawl);
-          setName(foundBarCrawl.name);
-          setDescription(foundBarCrawl.description || '');
-          setStartDate(foundBarCrawl.startDate);
-          setEndDate(foundBarCrawl.endDate);
+        if (foundSwigCircuit) {
+          setSwigCircuit(foundSwigCircuit);
+          setName(foundSwigCircuit.name);
+          setDescription(foundSwigCircuit.description || '');
+          setStartDate(foundSwigCircuit.startDate);
+          setEndDate(foundSwigCircuit.endDate);
         }
         
         // Load sample establishments that are not already in the bar crawl
-        const barCrawlEstIds = foundBarCrawl?.establishments?.map((est: Establishment) => est.id) || [];
-        const availableEsts = sampleEstablishments.filter(est => !barCrawlEstIds.includes(est.id));
+        const swigCircuitEstIds = foundSwigCircuit?.establishments?.map((est: Establishment) => est.id) || [];
+        const availableEsts = sampleEstablishments.filter(est => !swigCircuitEstIds.includes(est.id));
         setAvailableEstablishments(availableEsts);
       } catch (error) {
         console.error('Error loading bar crawl:', error);
@@ -48,16 +48,16 @@ export const useBarCrawlManagement = (barCrawlId: string) => {
       }
     };
     
-    loadBarCrawl();
-  }, [barCrawlId, toast]);
+    loadSwigCircuit();
+  }, [swigCircuitId, toast]);
 
-  const saveBarCrawlChanges = () => {
-    if (!barCrawl) return;
+  const saveSwigCircuitChanges = () => {
+    if (!swigCircuit) return;
     
     try {
-      const barCrawls = JSON.parse(localStorage.getItem('user_bar_crawls') || '[]');
-      const updatedBarCrawls = barCrawls.map((bc: any) => {
-        if (bc.id === barCrawlId) {
+      const swigCircuits = JSON.parse(localStorage.getItem('user_bar_crawls') || '[]');
+      const updatedSwigCircuits = swigCircuits.map((bc: any) => {
+        if (bc.id === swigCircuitId) {
           return {
             ...bc,
             name,
@@ -69,11 +69,11 @@ export const useBarCrawlManagement = (barCrawlId: string) => {
         return bc;
       });
       
-      localStorage.setItem('user_bar_crawls', JSON.stringify(updatedBarCrawls));
+      localStorage.setItem('user_bar_crawls', JSON.stringify(updatedSwigCircuits));
       
       // Update local state
-      setBarCrawl({
-        ...barCrawl,
+      setSwigCircuit({
+        ...swigCircuit,
         name,
         description,
         startDate,
@@ -95,12 +95,12 @@ export const useBarCrawlManagement = (barCrawlId: string) => {
   };
 
   const addEstablishment = (establishment: Establishment) => {
-    if (!barCrawl) return;
+    if (!swigCircuit) return;
     
     try {
-      const barCrawls = JSON.parse(localStorage.getItem('user_bar_crawls') || '[]');
-      const updatedBarCrawls = barCrawls.map((bc: any) => {
-        if (bc.id === barCrawlId) {
+      const swigCircuits = JSON.parse(localStorage.getItem('user_bar_crawls') || '[]');
+      const updatedSwigCircuits = swigCircuits.map((bc: any) => {
+        if (bc.id === swigCircuitId) {
           return {
             ...bc,
             establishments: [...bc.establishments, establishment]
@@ -109,12 +109,12 @@ export const useBarCrawlManagement = (barCrawlId: string) => {
         return bc;
       });
       
-      localStorage.setItem('user_bar_crawls', JSON.stringify(updatedBarCrawls));
+      localStorage.setItem('user_bar_crawls', JSON.stringify(updatedSwigCircuits));
       
       // Update local state
-      setBarCrawl({
-        ...barCrawl,
-        establishments: [...barCrawl.establishments, establishment]
+      setSwigCircuit({
+        ...swigCircuit,
+        establishments: [...swigCircuit.establishments, establishment]
       });
       
       // Remove from available establishments
@@ -135,14 +135,14 @@ export const useBarCrawlManagement = (barCrawlId: string) => {
   };
 
   const removeEstablishment = (establishmentId: string) => {
-    if (!barCrawl) return;
+    if (!swigCircuit) return;
     
     try {
-      const establishmentToRemove = barCrawl.establishments.find(est => est.id === establishmentId);
+      const establishmentToRemove = swigCircuit.establishments.find(est => est.id === establishmentId);
       
-      const barCrawls = JSON.parse(localStorage.getItem('user_bar_crawls') || '[]');
-      const updatedBarCrawls = barCrawls.map((bc: any) => {
-        if (bc.id === barCrawlId) {
+      const swigCircuits = JSON.parse(localStorage.getItem('user_bar_crawls') || '[]');
+      const updatedSwigCircuits = swigCircuits.map((bc: any) => {
+        if (bc.id === swigCircuitId) {
           return {
             ...bc,
             establishments: bc.establishments.filter((est: any) => est.id !== establishmentId)
@@ -151,12 +151,12 @@ export const useBarCrawlManagement = (barCrawlId: string) => {
         return bc;
       });
       
-      localStorage.setItem('user_bar_crawls', JSON.stringify(updatedBarCrawls));
+      localStorage.setItem('user_bar_crawls', JSON.stringify(updatedSwigCircuits));
       
       // Update local state
-      setBarCrawl({
-        ...barCrawl,
-        establishments: barCrawl.establishments.filter(est => est.id !== establishmentId)
+      setSwigCircuit({
+        ...swigCircuit,
+        establishments: swigCircuit.establishments.filter(est => est.id !== establishmentId)
       });
       
       // Add back to available establishments if it exists
@@ -179,7 +179,7 @@ export const useBarCrawlManagement = (barCrawlId: string) => {
   };
 
   const inviteUser = () => {
-    if (!inviteeEmail || !barCrawl) return;
+    if (!inviteeEmail || !swigCircuit) return;
     
     // In a real app, this would send an email invitation
     toast({
@@ -192,7 +192,7 @@ export const useBarCrawlManagement = (barCrawlId: string) => {
   };
 
   const copyShareLink = () => {
-    const shareLink = `${window.location.origin}/bar-crawl/${barCrawlId}`;
+    const shareLink = `${window.location.origin}/swig-circuit/${swigCircuitId}`;
     navigator.clipboard.writeText(shareLink);
     
     toast({
@@ -202,7 +202,7 @@ export const useBarCrawlManagement = (barCrawlId: string) => {
   };
 
   const shareToSocialMedia = (platform: string) => {
-    const shareLink = `${window.location.origin}/bar-crawl/${barCrawlId}`;
+    const shareLink = `${window.location.origin}/swig-circuit/${swigCircuitId}`;
     let shareUrl = '';
     
     switch (platform) {
@@ -228,7 +228,7 @@ export const useBarCrawlManagement = (barCrawlId: string) => {
   };
 
   return {
-    barCrawl,
+    swigCircuit,
     isLoading,
     name,
     setName,
@@ -243,7 +243,7 @@ export const useBarCrawlManagement = (barCrawlId: string) => {
     showInviteForm,
     setShowInviteForm,
     availableEstablishments,
-    saveBarCrawlChanges,
+    saveSwigCircuitChanges,
     addEstablishment,
     removeEstablishment,
     inviteUser,

@@ -7,17 +7,17 @@ import { User, Share2, MapPin, Users, Beer, Tag, QrCode } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import QRCodeLightbox from '@/components/qrcode/QRCodeLightbox';
 
-interface BarCrawlTabProps {
-  barCrawlList: any[];
-  shareBarCrawl: () => void;
+interface SwigCircuitTabProps {
+  swigCircuitList: any[];
+  shareSwigCircuit: () => void;
 }
 
-const BarCrawlTab: React.FC<BarCrawlTabProps> = ({ barCrawlList, shareBarCrawl }) => {
-  const [currentEstablishment, setCurrentEstablishment] = useState<any>(barCrawlList[0] || null);
+const SwigCircuitTab: React.FC<SwigCircuitTabProps> = ({ swigCircuitList, shareSwigCircuit }) => {
+  const [currentEstablishment, setCurrentEstablishment] = useState<any>(swigCircuitList[0] || null);
   const [activeUsers, setActiveUsers] = useState<number>(Math.floor(Math.random() * 20) + 5);
   const [isParticipating, setIsParticipating] = useState<boolean>(true);
   const [promoCode, setPromoCode] = useState<string>("SPIRITLESS25");
-  const [barCrawlId, setBarCrawlId] = useState<string>("bc-123");
+  const [swigCircuitId, setSwigCircuitId] = useState<string>("bc-123");
   const [qrCodeOpen, setQrCodeOpen] = useState<boolean>(false);
 
   const toggleParticipation = () => {
@@ -28,7 +28,7 @@ const BarCrawlTab: React.FC<BarCrawlTabProps> = ({ barCrawlList, shareBarCrawl }
   const generateQRValue = () => {
     return JSON.stringify({
       type: 'check-in',
-      barCrawlId,
+      swigCircuitId,
       establishmentId: currentEstablishment?.id,
       userId: localStorage.getItem('user_id') || 'anonymous',
       timestamp: new Date().toISOString()
@@ -100,7 +100,7 @@ const BarCrawlTab: React.FC<BarCrawlTabProps> = ({ barCrawlList, shareBarCrawl }
                         View Location
                       </Button>
                     </Link>
-                    <Link to={`/profile/bar-crawls/participants/${barCrawlId}`} className="flex-1">
+                    <Link to={`/profile/swig-circuits/participants/${swigCircuitId}`} className="flex-1">
                       <Button variant="outline" className="w-full justify-start text-xs" size="compact">
                         <User size={16} className="mr-1" />
                         Locate Participants 
@@ -108,7 +108,7 @@ const BarCrawlTab: React.FC<BarCrawlTabProps> = ({ barCrawlList, shareBarCrawl }
                     </Link>
                   </div>
                   
-                  <Link to={`/bar-crawl-details/${barCrawlId}`} className="w-full">
+                  <Link to={`/swig-circuit-details/${swigCircuitId}`} className="w-full">
                     <Button className="w-full bg-spiritless-pink hover:bg-spiritless-pink/90" size="sm">
                       View Swig Circuit Details
                     </Button>
@@ -123,15 +123,15 @@ const BarCrawlTab: React.FC<BarCrawlTabProps> = ({ barCrawlList, shareBarCrawl }
       <div>
         <div className="flex justify-between items-center mb-3">
           <h3 className="text-lg font-medium">Your Swig Circuit List</h3>
-          {barCrawlList.length > 0 && (
-            <Button size="sm" variant="outline" onClick={shareBarCrawl}>
+          {swigCircuitList.length > 0 && (
+            <Button size="sm" variant="outline" onClick={shareSwigCircuit}>
               <Share2 className="h-4 w-4 mr-1" />
               Share
             </Button>
           )}
         </div>
         
-        {barCrawlList.length === 0 ? (
+        {swigCircuitList.length === 0 ? (
           <div className="text-center py-6 border border-dashed rounded-lg bg-gray-50">
             <p className="text-material-on-surface-variant">No establishments in your Swig Circuit list yet.</p>
             <Link to="/map">
@@ -142,7 +142,7 @@ const BarCrawlTab: React.FC<BarCrawlTabProps> = ({ barCrawlList, shareBarCrawl }
           </div>
         ) : (
           <div className="space-y-2">
-            {barCrawlList.map((establishment) => (
+            {swigCircuitList.map((establishment) => (
               <div 
                 key={establishment.id} 
                 className={`border rounded-lg p-3 ${currentEstablishment?.id === establishment.id ? 'border-material-primary bg-material-primary/5' : ''}`}
@@ -173,4 +173,4 @@ const BarCrawlTab: React.FC<BarCrawlTabProps> = ({ barCrawlList, shareBarCrawl }
   );
 };
 
-export default BarCrawlTab;
+export default SwigCircuitTab;

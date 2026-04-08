@@ -11,7 +11,7 @@ const EstablishmentCommunicationPage = lazy(() => import('@/pages/establishment/
 const EstablishmentAllActionsPage = lazy(() => import('@/pages/establishment/EstablishmentAllActionsPage'));
 const EstablishmentReviewsPage = lazy(() => import('@/pages/establishment/EstablishmentReviewsPage'));
 const EstablishmentMocktailSuggestionsPage = lazy(() => import('@/pages/establishment/EstablishmentMocktailSuggestionsPage'));
-const EstablishmentBarCrawlRequestsPage = lazy(() => import('@/pages/establishment/EstablishmentBarCrawlRequestsPage'));
+const EstablishmentSwigCircuitRequestsPage = lazy(() => import('@/pages/establishment/EstablishmentSwigCircuitRequestsPage'));
 const MessageThreadPage = lazy(() => import('@/pages/establishment/MessageThreadPage'));
 
 export const establishmentRoutes: RouteObject[] = [
@@ -112,14 +112,14 @@ export const establishmentRoutes: RouteObject[] = [
     )
   },
   {
-    path: '/establishment/bar-crawl-requests',
+    path: '/establishment/swig-circuit-requests',
     element: (
       <RouteProtectionWrapper 
         requireAuth={true} 
         allowedUserTypes={['establishment']}
         redirectTo="/login"
       >
-        <EstablishmentBarCrawlRequestsPage />
+        <EstablishmentSwigCircuitRequestsPage />
       </RouteProtectionWrapper>
     )
   },

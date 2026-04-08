@@ -2,7 +2,7 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { render } from '@testing-library/react';
 import { waitFor } from '@/test/testing-library-extensions';
-import { useBarCrawlParticipation } from '@/hooks/barCrawl/useBarCrawlParticipation';
+import { useSwigCircuitParticipation } from '@/hooks/swigCircuit/useSwigCircuitParticipation';
 
 // Mock the auth context
 vi.mock('@/contexts/auth', () => ({
@@ -40,9 +40,9 @@ vi.mock('@/integrations/supabase/client', () => ({
   }
 }));
 
-describe('useBarCrawlParticipation - Leave Functionality', () => {
-  const mockBarCrawlId = 'test-crawl-id';
-  let hookResult: ReturnType<typeof useBarCrawlParticipation>;
+describe('useSwigCircuitParticipation - Leave Functionality', () => {
+  const mockSwigCircuitId = 'test-crawl-id';
+  let hookResult: ReturnType<typeof useSwigCircuitParticipation>;
   
   beforeEach(() => {
     vi.clearAllMocks();
@@ -57,7 +57,7 @@ describe('useBarCrawlParticipation - Leave Functionality', () => {
     let result: any;
     
     function TestComponent() {
-      result = useBarCrawlParticipation({ barCrawlId: mockBarCrawlId });
+      result = useSwigCircuitParticipation({ swigCircuitId: mockSwigCircuitId });
       return null;
     }
     
@@ -72,8 +72,8 @@ describe('useBarCrawlParticipation - Leave Functionality', () => {
     // Wait for status check to complete
     await waitFor(() => expect(hookResult.isCheckingStatus).toBe(false));
     
-    // Call leave with the required barCrawlId parameter
-    hookResult.handleLeave(mockBarCrawlId);
+    // Call leave with the required swigCircuitId parameter
+    hookResult.handleLeave(mockSwigCircuitId);
     
     // Verify loading state is set
     expect(hookResult.isLoading).toBe(true);

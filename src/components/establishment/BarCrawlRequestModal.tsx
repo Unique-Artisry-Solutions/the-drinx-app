@@ -11,20 +11,20 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-interface BarCrawl {
+interface SwigCircuit {
   id: string;
   name: string;
   start_date: string | null;
   end_date: string | null;
 }
 
-interface BarCrawlRequestModalProps {
+interface SwigCircuitRequestModalProps {
   isOpen: boolean;
   onClose: () => void;
   establishment: any;
 }
 
-const BarCrawlRequestModal: React.FC<BarCrawlRequestModalProps> = ({
+const SwigCircuitRequestModal: React.FC<SwigCircuitRequestModalProps> = ({
   isOpen,
   onClose,
   establishment
@@ -34,15 +34,15 @@ const BarCrawlRequestModal: React.FC<BarCrawlRequestModalProps> = ({
   const [message, setMessage] = useState('');
   const [partySize, setPartySize] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [userBarCrawls, setUserBarCrawls] = useState<BarCrawl[]>([]);
-  const [selectedBarCrawl, setSelectedBarCrawl] = useState('');
+  const [userSwigCircuits, setUserSwigCircuits] = useState<SwigCircuit[]>([]);
+  const [selectedSwigCircuit, setSelectedSwigCircuit] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
 
   useEffect(() => {
-    const fetchUserBarCrawls = async () => {
+    const fetchUserSwigCircuits = async () => {
       setLoading(true);
       setError(null);
       
@@ -51,12 +51,12 @@ const BarCrawlRequestModal: React.FC<BarCrawlRequestModalProps> = ({
         if (!user) {
           console.log('No authenticated user, using sample data');
           // Use sample data instead
-          const sampleBarCrawls = [
+          const sampleSwigCircuits = [
             { id: 'bc-1', name: 'Downtown Explorer', start_date: null, end_date: null },
             { id: 'bc-2', name: 'Weekend Adventure', start_date: null, end_date: null }
           ];
-          setUserBarCrawls(sampleBarCrawls);
-          setSelectedBarCrawl(sampleBarCrawls[0].id);
+          setUserSwigCircuits(sampleSwigCircuits);
+          setSelectedSwigCircuit(sampleSwigCircuits[0].id);
           setLoading(false);
           return;
         }
@@ -65,9 +65,9 @@ const BarCrawlRequestModal: React.FC<BarCrawlRequestModalProps> = ({
         const today = new Date().toISOString().split('T')[0];
         
         // Try fetching from local storage first as fallback
-        const localBarCrawls = localStorage.getItem('user_bar_crawls');
-        if (localBarCrawls) {
-          const parsedCrawls = JSON.parse(localBarCrawls);
+        const localSwigCircuits = localStorage.getItem('user_bar_crawls');
+        if (localSwigCircuits) {
+          const parsedCrawls = JSON.parse(localSwigCircuits);
           console.log('Found local bar crawls:', parsedCrawls);
           
           // Convert to expected format
@@ -78,9 +78,9 @@ const BarCrawlRequestModal: React.FC<BarCrawlRequestModalProps> = ({
             end_date: crawl.endDate || null
           }));
           
-          setUserBarCrawls(formattedCrawls);
+          setUserSwigCircuits(formattedCrawls);
           if (formattedCrawls.length > 0) {
-            setSelectedBarCrawl(formattedCrawls[0].id);
+            setSelectedSwigCircuit(formattedCrawls[0].id);
           }
           setLoading(false);
           return;
@@ -100,42 +100,42 @@ const BarCrawlRequestModal: React.FC<BarCrawlRequestModalProps> = ({
         
         console.log('Received bar crawls from Supabase:', data);
         if (data && data.length > 0) {
-          setUserBarCrawls(data);
-          setSelectedBarCrawl(data[0].id);
+          setUserSwigCircuits(data);
+          setSelectedSwigCircuit(data[0].id);
         } else {
           // If no data from Supabase, use sample data
-          const sampleBarCrawls = [
+          const sampleSwigCircuits = [
             { id: 'bc-1', name: 'Downtown Explorer', start_date: null, end_date: null },
             { id: 'bc-2', name: 'Weekend Adventure', start_date: null, end_date: null }
           ];
-          setUserBarCrawls(sampleBarCrawls);
-          setSelectedBarCrawl(sampleBarCrawls[0].id);
+          setUserSwigCircuits(sampleSwigCircuits);
+          setSelectedSwigCircuit(sampleSwigCircuits[0].id);
         }
       } catch (err: any) {
         console.error('Error fetching user bar crawls:', err);
         setError('Failed to load your bar crawls. Using sample data instead.');
         
         // Fallback to sample data on error
-        const sampleBarCrawls = [
+        const sampleSwigCircuits = [
           { id: 'bc-1', name: 'Downtown Explorer', start_date: null, end_date: null },
           { id: 'bc-2', name: 'Weekend Adventure', start_date: null, end_date: null }
         ];
-        setUserBarCrawls(sampleBarCrawls);
-        setSelectedBarCrawl(sampleBarCrawls[0].id);
+        setUserSwigCircuits(sampleSwigCircuits);
+        setSelectedSwigCircuit(sampleSwigCircuits[0].id);
       } finally {
         setLoading(false);
       }
     };
 
     if (isOpen) {
-      fetchUserBarCrawls();
+      fetchUserSwigCircuits();
     }
   }, [user, isOpen]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!date || !time || !partySize || !selectedBarCrawl) {
+    if (!date || !time || !partySize || !selectedSwigCircuit) {
       toast({
         title: 'Missing information',
         description: 'Please fill in all required fields',
@@ -150,7 +150,7 @@ const BarCrawlRequestModal: React.FC<BarCrawlRequestModalProps> = ({
     setTimeout(() => {
       setIsSubmitting(false);
       
-      const selectedCrawl = userBarCrawls.find(crawl => crawl.id === selectedBarCrawl);
+      const selectedCrawl = userSwigCircuits.find(crawl => crawl.id === selectedSwigCircuit);
       const crawlName = selectedCrawl ? selectedCrawl.name : 'Selected bar crawl';
       
       toast({
@@ -163,12 +163,12 @@ const BarCrawlRequestModal: React.FC<BarCrawlRequestModalProps> = ({
       setTime('');
       setMessage('');
       setPartySize('');
-      setSelectedBarCrawl('');
+      setSelectedSwigCircuit('');
       onClose();
     }, 1000);
   };
 
-  const hasEligibleBarCrawls = userBarCrawls.length > 0;
+  const hasEligibleSwigCircuits = userSwigCircuits.length > 0;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -188,11 +188,11 @@ const BarCrawlRequestModal: React.FC<BarCrawlRequestModalProps> = ({
             <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
             <p className="mt-2 text-sm text-gray-500">Loading your bar crawls...</p>
           </div>
-        ) : !hasEligibleBarCrawls ? (
+        ) : !hasEligibleSwigCircuits ? (
           <div className="py-4 text-center">
             <p className="mb-4">You don't have any active bar crawls that haven't started yet.</p>
             <Button asChild>
-              <a href="/profile/create-bar-crawl">Create a Bar Crawl</a>
+              <a href="/profile/create-swig-circuit">Create a Bar Crawl</a>
             </Button>
           </div>
         ) : (
@@ -208,16 +208,16 @@ const BarCrawlRequestModal: React.FC<BarCrawlRequestModalProps> = ({
             </div>
             
             <div>
-              <Label htmlFor="bar-crawl" className="required">Bar Crawl</Label>
+              <Label htmlFor="swig-circuit" className="required">Bar Crawl</Label>
               <Select 
-                value={selectedBarCrawl} 
-                onValueChange={setSelectedBarCrawl}
+                value={selectedSwigCircuit} 
+                onValueChange={setSelectedSwigCircuit}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select a bar crawl" />
                 </SelectTrigger>
                 <SelectContent>
-                  {userBarCrawls.map((crawl) => (
+                  {userSwigCircuits.map((crawl) => (
                     <SelectItem key={crawl.id} value={crawl.id}>
                       {crawl.name}
                     </SelectItem>
@@ -301,4 +301,4 @@ const BarCrawlRequestModal: React.FC<BarCrawlRequestModalProps> = ({
   );
 };
 
-export default BarCrawlRequestModal;
+export default SwigCircuitRequestModal;

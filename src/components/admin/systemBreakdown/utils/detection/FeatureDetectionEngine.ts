@@ -81,7 +81,7 @@ const DETECTION_RULES: DetectionRule[] = [
   {
     category: 'venue_operations',
     keywords: ['venue', 'establishment', 'location', 'map', 'circuit', 'crawl', 'visit', 'check-in'],
-    weightedKeywords: { 'venue management': 2, 'bar crawl': 2, 'swig circuit': 2 },
+    weightedKeywords: { 'venue management': 2, 'Swig Circuit': 2, 'swig circuit': 2 },
     tags: ['venues', 'location'],
     exclusions: []
   }

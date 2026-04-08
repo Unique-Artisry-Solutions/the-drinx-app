@@ -4,7 +4,7 @@ import { Database } from "@/integrations/supabase/types";
 // Specific table types
 export type CocktailReview = Database['public']['Tables']['cocktail_reviews']['Row'];
 export type CocktailReviewWithUser = Database['public']['Views']['cocktail_reviews_with_users']['Row'];
-export type BarCrawlCheckIn = {
+export type SwigCircuitCheckIn = {
   id: string;
   bar_crawl_id: string;
   establishment_id: string;
@@ -13,8 +13,8 @@ export type BarCrawlCheckIn = {
   verified_by?: string;
 };
 
-// Add BarCrawl and Cocktail types
-export type BarCrawl = {
+// Add SwigCircuit and Cocktail types
+export type SwigCircuit = {
   id: string;
   name: string;
   description?: string;
@@ -26,7 +26,7 @@ export type BarCrawl = {
   created_at?: string;
 };
 
-export type BarCrawlTheme = {
+export type SwigCircuitTheme = {
   id: string;
   name: string;
   description?: string;

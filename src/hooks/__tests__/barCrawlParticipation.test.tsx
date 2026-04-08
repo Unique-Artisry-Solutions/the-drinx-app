@@ -3,8 +3,8 @@
 // with existing test runners that might expect this file
 
 // Import statement to make Vitest include the tests
-import './useBarCrawlParticipation.status.test';
-import './useBarCrawlParticipation.join.test';
-import './useBarCrawlParticipation.leave.test';
+import './useSwigCircuitParticipation.status.test';
+import './useSwigCircuitParticipation.join.test';
+import './useSwigCircuitParticipation.leave.test';
 
 // This file is left intentionally mostly empty as it just imports the other test files

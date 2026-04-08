@@ -291,7 +291,7 @@ export const legacyIdMap = {
   "10": "c0d1e2f3-a4b5-6c7d-8e9f-0a1b2c3d4e5f"
 };
 
-export const sampleBarCrawls = [
+export const sampleSwigCircuits = [
   {
     id: "d1e2f3a4-b5c6-7d8e-9f0a-1b2c3d4e5f6a",
     name: "Downtown Mocktail Tour",

@@ -5,18 +5,18 @@ import QRCodeLightbox from './QRCodeLightbox';
 import { Button } from '@/components/ui/button';
 
 interface CheckInQRCodeProps {
-  barCrawlId: string;
+  swigCircuitId: string;
   establishmentId: string;
   userId: string;
 }
 
-const CheckInQRCode: React.FC<CheckInQRCodeProps> = ({ barCrawlId, establishmentId, userId }) => {
+const CheckInQRCode: React.FC<CheckInQRCodeProps> = ({ swigCircuitId, establishmentId, userId }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   // Create the QR code value as JSON
   const qrCodeValue = JSON.stringify({
     type: 'check-in',
-    barCrawlId,
+    swigCircuitId,
     establishmentId,
     userId,
     timestamp: new Date().toISOString()

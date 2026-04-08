@@ -4,8 +4,8 @@ import { User } from '@supabase/supabase-js';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
-interface UseBarCrawlJoinProps {
-  barCrawlId: string;
+interface UseSwigCircuitJoinProps {
+  swigCircuitId: string;
   user: User | null;
   onSuccess: () => void;
 }
@@ -14,11 +14,11 @@ interface UseBarCrawlJoinProps {
  * Hook for handling joining a bar crawl.
  * Uses direct Supabase calls for data access.
  */
-export const useBarCrawlJoin = ({ 
-  barCrawlId, 
+export const useSwigCircuitJoin = ({ 
+  swigCircuitId, 
   user, 
   onSuccess 
-}: UseBarCrawlJoinProps) => {
+}: UseSwigCircuitJoinProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
@@ -38,13 +38,13 @@ export const useBarCrawlJoin = ({
     setError(null);
 
     try {
-      console.log('Attempting to join bar crawl:', barCrawlId);
+      console.log('Attempting to join bar crawl:', swigCircuitId);
       
       const { error } = await supabase
         .from('user_bar_crawl_participation')
         .insert({
           user_id: user.id,
-          bar_crawl_id: barCrawlId,
+          bar_crawl_id: swigCircuitId,
           joined_at: new Date().toISOString()
         });
 

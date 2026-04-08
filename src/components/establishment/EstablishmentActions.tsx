@@ -7,14 +7,14 @@ interface EstablishmentActionsProps {
   hasCheckedIn: boolean;
   isPromoter: boolean;
   onCheckIn: () => void;
-  onBarCrawlRequest: () => void;
+  onSwigCircuitRequest: () => void;
 }
 
 const EstablishmentActions: React.FC<EstablishmentActionsProps> = ({
   hasCheckedIn,
   isPromoter,
   onCheckIn,
-  onBarCrawlRequest
+  onSwigCircuitRequest
 }) => {
   return (
     <div className="flex gap-2">
@@ -27,7 +27,7 @@ const EstablishmentActions: React.FC<EstablishmentActionsProps> = ({
         <Button 
           size="sm" 
           variant="outline" 
-          onClick={onBarCrawlRequest} 
+          onClick={onSwigCircuitRequest} 
           className="border-white text-white bg-black/50 backdrop-blur-sm hover:bg-black/60"
         >
           <PlusCircle className="h-4 w-4 mr-1" />

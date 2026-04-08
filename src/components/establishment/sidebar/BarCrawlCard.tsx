@@ -6,15 +6,15 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
-interface BarCrawlCardProps {
+interface SwigCircuitCardProps {
   establishment: any;
-  onBarCrawlRequest: () => void;
+  onSwigCircuitRequest: () => void;
   isLightTheme: boolean;
 }
 
-const BarCrawlCard: React.FC<BarCrawlCardProps> = ({
+const SwigCircuitCard: React.FC<SwigCircuitCardProps> = ({
   establishment,
-  onBarCrawlRequest,
+  onSwigCircuitRequest,
   isLightTheme
 }) => {
   return (
@@ -36,12 +36,12 @@ const BarCrawlCard: React.FC<BarCrawlCardProps> = ({
             )}>
               Currently participating:
             </span>
-            <Badge variant="outline" className={establishment.inBarCrawl ? "bg-green-50 text-green-700 border-green-200" : "bg-gray-100"}>
-              {establishment.inBarCrawl ? "Yes" : "No"}
+            <Badge variant="outline" className={establishment.inSwigCircuit ? "bg-green-50 text-green-700 border-green-200" : "bg-gray-100"}>
+              {establishment.inSwigCircuit ? "Yes" : "No"}
             </Badge>
           </div>
           
-          <Button className="w-full" variant="gradient" onClick={onBarCrawlRequest}>
+          <Button className="w-full" variant="gradient" onClick={onSwigCircuitRequest}>
             <Calendar className="h-4 w-4 mr-2" />
             Request to Join Bar Crawl
           </Button>
@@ -58,4 +58,4 @@ const BarCrawlCard: React.FC<BarCrawlCardProps> = ({
   );
 };
 
-export default BarCrawlCard;
+export default SwigCircuitCard;

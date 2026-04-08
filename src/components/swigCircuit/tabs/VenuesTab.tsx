@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Establishment } from '@/types/ProfileTypes';
-import DistanceFilter from '@/components/barCrawl/VenueDiversity';
+import DistanceFilter from '@/components/swigCircuit/VenueDiversity';
 import LocationNotice from './venues/LocationNotice';
 import VenuesListSection from './venues/VenuesListSection';
 import NavigationButtons from './venues/NavigationButtons';

@@ -4,8 +4,8 @@ import { User } from '@supabase/supabase-js';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
-interface UseBarCrawlLeaveProps {
-  barCrawlId: string;
+interface UseSwigCircuitLeaveProps {
+  swigCircuitId: string;
   user: User | null;
   onSuccess: () => void;
 }
@@ -14,18 +14,18 @@ interface UseBarCrawlLeaveProps {
  * Hook for handling leaving a bar crawl.
  * Uses direct Supabase calls for data access.
  */
-export const useBarCrawlLeave = ({ 
-  barCrawlId, 
+export const useSwigCircuitLeave = ({ 
+  swigCircuitId, 
   user,
   onSuccess 
-}: UseBarCrawlLeaveProps) => {
+}: UseSwigCircuitLeaveProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const handleLeave = async (barCrawlIdParam?: string) => {
+  const handleLeave = async (swigCircuitIdParam?: string) => {
     // Use provided parameter or fall back to prop
-    const crawlId = barCrawlIdParam || barCrawlId;
+    const crawlId = swigCircuitIdParam || swigCircuitId;
     
     if (!user) return;
     

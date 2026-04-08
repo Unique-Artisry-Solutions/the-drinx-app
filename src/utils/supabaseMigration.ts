@@ -2,7 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 
 // Replace all supabaseClient references with supabase
-import { sampleEstablishments, sampleCocktails, sampleBarCrawls } from '@/data/sampleData';
+import { sampleEstablishments, sampleCocktails, sampleSwigCircuits } from '@/data/sampleData';
 
 export const migrateEstablishments = async () => {
   // Check if establishments already exist
@@ -138,16 +138,16 @@ export const migrateThemes = async () => {
   return insertedThemes;
 };
 
-export const migrateBarCrawls = async () => {
+export const migrateSwigCircuits = async () => {
   // Check if bar crawls already exist
-  const { data: existingBarCrawls } = await supabase
+  const { data: existingSwigCircuits } = await supabase
     .from('bar_crawls')
     .select('id')
     .limit(1);
   
-  if (existingBarCrawls && existingBarCrawls.length > 0) {
+  if (existingSwigCircuits && existingSwigCircuits.length > 0) {
     console.log('Bar crawls already exist in the database');
-    return existingBarCrawls;
+    return existingSwigCircuits;
   }
   
   // Get themes and establishments for reference
@@ -175,7 +175,7 @@ export const migrateBarCrawls = async () => {
   );
   
   // Insert bar crawls
-  const barCrawlsToInsert = sampleBarCrawls.map(crawl => {
+  const swigCircuitsToInsert = sampleSwigCircuits.map(crawl => {
     // Pick a random theme
     const randomTheme = themes[Math.floor(Math.random() * themes.length)];
     
@@ -190,9 +190,9 @@ export const migrateBarCrawls = async () => {
     };
   });
   
-  const { data: barCrawls, error } = await supabase
+  const { data: swigCircuits, error } = await supabase
     .from('bar_crawls')
-    .insert(barCrawlsToInsert)
+    .insert(swigCircuitsToInsert)
     .select();
   
   if (error) {
@@ -201,11 +201,11 @@ export const migrateBarCrawls = async () => {
   }
   
   // Add establishments to bar crawls
-  if (barCrawls && barCrawls.length > 0) {
+  if (swigCircuits && swigCircuits.length > 0) {
     // For each bar crawl, select random establishments
-    const barCrawlEstablishments = [];
+    const swigCircuitEstablishments = [];
     
-    for (const crawl of barCrawls) {
+    for (const crawl of swigCircuits) {
       // Randomly select 3-5 establishments
       const numEstablishments = Math.floor(Math.random() * 3) + 3; // 3-5 establishments
       const selectedEstablishments = establishments
@@ -214,7 +214,7 @@ export const migrateBarCrawls = async () => {
       
       // Create records for bar_crawl_establishments
       selectedEstablishments.forEach((est, index) => {
-        barCrawlEstablishments.push({
+        swigCircuitEstablishments.push({
           bar_crawl_id: crawl.id,
           establishment_id: est.id,
           order_position: index + 1,
@@ -226,7 +226,7 @@ export const migrateBarCrawls = async () => {
     // Insert bar crawl establishments
     const { error: estError } = await supabase
       .from('bar_crawl_establishments')
-      .insert(barCrawlEstablishments);
+      .insert(swigCircuitEstablishments);
     
     if (estError) {
       console.error('Error adding establishments to bar crawls:', estError);
@@ -235,8 +235,8 @@ export const migrateBarCrawls = async () => {
     }
   }
   
-  console.log('Successfully migrated bar crawls:', barCrawls?.length);
-  return barCrawls;
+  console.log('Successfully migrated bar crawls:', swigCircuits?.length);
+  return swigCircuits;
 };
 
 export const migrateAllData = async () => {
@@ -245,7 +245,7 @@ export const migrateAllData = async () => {
     await migrateEstablishments();
     await migrateCocktails();
     await migrateThemes();
-    await migrateBarCrawls();
+    await migrateSwigCircuits();
     console.log('Data migration complete!');
     return true;
   } catch (error) {

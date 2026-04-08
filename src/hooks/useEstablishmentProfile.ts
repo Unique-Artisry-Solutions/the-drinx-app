@@ -10,7 +10,7 @@ interface Promotion {
   description: string;
 }
 
-interface BarCrawl {
+interface SwigCircuit {
   id: string;
   name: string;
   date: string;
@@ -56,7 +56,7 @@ export const useEstablishmentProfile = () => {
   });
   
   // Bar crawls state
-  const [barCrawls, setBarCrawls] = useState<BarCrawl[]>([]);
+  const [swigCircuits, setSwigCircuits] = useState<SwigCircuit[]>([]);
   
   const { toast } = useToast();
 
@@ -115,7 +115,7 @@ export const useEstablishmentProfile = () => {
       });
       
       // Load bar crawls
-      setBarCrawls([
+      setSwigCircuits([
         {
           id: '1',
           name: 'Downtown Mocktail Tour',
@@ -228,7 +228,7 @@ export const useEstablishmentProfile = () => {
 
   // Bar crawl handlers
   const handleEndParticipation = (crawlId: string) => {
-    setBarCrawls(barCrawls.filter(crawl => crawl.id !== crawlId));
+    setSwigCircuits(swigCircuits.filter(crawl => crawl.id !== crawlId));
     
     toast({
       title: 'Participation ended',
@@ -237,7 +237,7 @@ export const useEstablishmentProfile = () => {
   };
 
   const handleAcceptRequest = (crawlId: string) => {
-    setBarCrawls(barCrawls.map(crawl => 
+    setSwigCircuits(swigCircuits.map(crawl => 
       crawl.id === crawlId 
         ? { ...crawl, status: 'accepted' as const } 
         : crawl
@@ -293,8 +293,8 @@ export const useEstablishmentProfile = () => {
     visitorStats,
     
     // Bar crawls state and handlers
-    barCrawlsState: {
-      barCrawls,
+    swigCircuitsState: {
+      swigCircuits,
       handleEndParticipation,
       handleAcceptRequest
     }

@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
 export interface UserStats {
-  barCrawlsCompleted: number;
+  swigCircuitsCompleted: number;
   establishmentsVisited: number;
   mocktailsTried: number;
   reviewsWritten: number;
@@ -18,7 +18,7 @@ export interface Badge {
   icon: string;
   unlockedAt: string | null;
   requirement: {
-    type: 'barCrawls' | 'establishments' | 'mocktails' | 'reviews' | 'mocktailsCreated' | 'mocktailsTryCount' | 'custom';
+    type: 'swigCircuits' | 'establishments' | 'mocktails' | 'reviews' | 'mocktailsCreated' | 'mocktailsTryCount' | 'custom';
     count: number;
   };
 }
@@ -29,7 +29,7 @@ export interface Reward {
   description: string;
   tier: number;
   requirement: {
-    type: 'barCrawls' | 'establishments' | 'mocktails' | 'tier' | 'mocktailsCreated' | 'mocktailsTryCount';
+    type: 'swigCircuits' | 'establishments' | 'mocktails' | 'tier' | 'mocktailsCreated' | 'mocktailsTryCount';
     count: number;
   };
   unlockedAt: string | null;
@@ -38,7 +38,7 @@ export interface Reward {
 
 export const useRewardsSystem = () => {
   const [userStats, setUserStats] = useState<UserStats>({
-    barCrawlsCompleted: 0,
+    swigCircuitsCompleted: 0,
     establishmentsVisited: 0,
     mocktailsTried: 0,
     reviewsWritten: 0,
@@ -60,7 +60,7 @@ export const useRewardsSystem = () => {
       } else {
         // Set some default stats for demo purposes
         const defaultStats: UserStats = {
-          barCrawlsCompleted: 7,
+          swigCircuitsCompleted: 7,
           establishmentsVisited: 12,
           mocktailsTried: 15,
           reviewsWritten: 3,
@@ -85,7 +85,7 @@ export const useRewardsSystem = () => {
             description: 'Complete your first bar crawl',
             icon: 'Route',
             unlockedAt: null,
-            requirement: { type: 'barCrawls', count: 1 }
+            requirement: { type: 'swigCircuits', count: 1 }
           },
           {
             id: 'badge-2',
@@ -117,7 +117,7 @@ export const useRewardsSystem = () => {
             description: 'Complete 5 bar crawls',
             icon: 'Sparkles',
             unlockedAt: null,
-            requirement: { type: 'barCrawls', count: 5 }
+            requirement: { type: 'swigCircuits', count: 5 }
           },
           {
             id: 'badge-6',
@@ -125,7 +125,7 @@ export const useRewardsSystem = () => {
             description: 'Complete 15 bar crawls',
             icon: 'Trophy',
             unlockedAt: null,
-            requirement: { type: 'barCrawls', count: 15 }
+            requirement: { type: 'swigCircuits', count: 15 }
           },
           {
             id: 'badge-7',
@@ -177,7 +177,7 @@ export const useRewardsSystem = () => {
             name: '10% Off Signature Mocktails',
             description: 'Get 10% off signature mocktails at participating establishments',
             tier: 2,
-            requirement: { type: 'barCrawls', count: 5 },
+            requirement: { type: 'swigCircuits', count: 5 },
             unlockedAt: null,
             code: 'MOCKTAIL10'
           },
@@ -194,7 +194,7 @@ export const useRewardsSystem = () => {
             name: 'Priority Reservations',
             description: 'Get priority reservations at participating establishments',
             tier: 2,
-            requirement: { type: 'barCrawls', count: 8 },
+            requirement: { type: 'swigCircuits', count: 8 },
             unlockedAt: null
           },
           {
@@ -202,7 +202,7 @@ export const useRewardsSystem = () => {
             name: 'Exclusive Tasting Events',
             description: 'Access to exclusive tasting events',
             tier: 3,
-            requirement: { type: 'barCrawls', count: 15 },
+            requirement: { type: 'swigCircuits', count: 15 },
             unlockedAt: null
           },
           {
@@ -218,7 +218,7 @@ export const useRewardsSystem = () => {
             name: 'Mixology Workshops',
             description: 'Free access to mocktail mixing workshops',
             tier: 3,
-            requirement: { type: 'barCrawls', count: 20 },
+            requirement: { type: 'swigCircuits', count: 20 },
             unlockedAt: null
           },
           {
@@ -250,14 +250,14 @@ export const useRewardsSystem = () => {
   
   // Calculate current tier based on bar crawls completed
   useEffect(() => {
-    if (userStats.barCrawlsCompleted >= 15) {
+    if (userStats.swigCircuitsCompleted >= 15) {
       setCurrentTier(3);
-    } else if (userStats.barCrawlsCompleted >= 5) {
+    } else if (userStats.swigCircuitsCompleted >= 5) {
       setCurrentTier(2);
     } else {
       setCurrentTier(1);
     }
-  }, [userStats.barCrawlsCompleted]);
+  }, [userStats.swigCircuitsCompleted]);
   
   // Check for newly unlocked badges and rewards
   useEffect(() => {
@@ -267,8 +267,8 @@ export const useRewardsSystem = () => {
         let isUnlocked = false;
         
         switch (badge.requirement.type) {
-          case 'barCrawls':
-            isUnlocked = userStats.barCrawlsCompleted >= badge.requirement.count;
+          case 'swigCircuits':
+            isUnlocked = userStats.swigCircuitsCompleted >= badge.requirement.count;
             break;
           case 'establishments':
             isUnlocked = userStats.establishmentsVisited >= badge.requirement.count;
@@ -317,8 +317,8 @@ export const useRewardsSystem = () => {
         let isUnlocked = false;
         
         switch (reward.requirement.type) {
-          case 'barCrawls':
-            isUnlocked = userStats.barCrawlsCompleted >= reward.requirement.count;
+          case 'swigCircuits':
+            isUnlocked = userStats.swigCircuitsCompleted >= reward.requirement.count;
             break;
           case 'establishments':
             isUnlocked = userStats.establishmentsVisited >= reward.requirement.count;
@@ -363,10 +363,10 @@ export const useRewardsSystem = () => {
   }, [userStats, badges, rewards, currentTier, toast]);
   
   // Update user stats when a bar crawl is completed
-  const completeBarCrawl = () => {
+  const completeSwigCircuit = () => {
     const newStats = {
       ...userStats,
-      barCrawlsCompleted: userStats.barCrawlsCompleted + 1
+      swigCircuitsCompleted: userStats.swigCircuitsCompleted + 1
     };
     
     setUserStats(newStats);
@@ -433,7 +433,7 @@ export const useRewardsSystem = () => {
     badges,
     rewards,
     currentTier,
-    completeBarCrawl,
+    completeSwigCircuit,
     visitEstablishment,
     tryMocktail,
     writeReview,

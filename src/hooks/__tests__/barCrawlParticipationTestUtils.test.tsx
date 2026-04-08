@@ -1,8 +1,8 @@
 
 import { describe, it, expect, vi } from 'vitest';
-import { setupMocks, mockUser } from './utils/barCrawlParticipationTestUtils';
+import { setupMocks, mockUser } from './utils/swigCircuitParticipationTestUtils';
 
-describe('barCrawlParticipationTestUtils', () => {
+describe('swigCircuitParticipationTestUtils', () => {
   it('should have the right test utilities', () => {
     // Call setupMocks to verify it works
     setupMocks();

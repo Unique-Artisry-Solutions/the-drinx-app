@@ -9,8 +9,8 @@ import MenuTabContent from './tabs/MenuTabContent';
 import InfoTabContent from './tabs/InfoTabContent';
 import TopRatedTabContent from './tabs/TopRatedTabContent';
 import LocationCard from './sidebar/LocationCard';
-import BarCrawlCard from './sidebar/BarCrawlCard';
-import BarCrawlRequestModal from './BarCrawlRequestModal';
+import SwigCircuitCard from './sidebar/SwigCircuitCard';
+import SwigCircuitRequestModal from './SwigCircuitRequestModal';
 import { useEstablishmentInterior } from './useEstablishmentInterior';
 
 interface EstablishmentInteriorProps {
@@ -28,14 +28,14 @@ const EstablishmentInterior: React.FC<EstablishmentInteriorProps> = ({
   userLocation
 }) => {
   const { 
-    isBarCrawlModalOpen, 
-    setIsBarCrawlModalOpen, 
+    isSwigCircuitModalOpen, 
+    setIsSwigCircuitModalOpen, 
     activeUsers, 
     hasCheckedIn, 
     isPromoter,
     getSortedTopCocktails, 
     handleCheckIn, 
-    handleBarCrawlRequest,
+    handleSwigCircuitRequest,
     formatBusinessHours
   } = useEstablishmentInterior(establishment);
 
@@ -58,7 +58,7 @@ const EstablishmentInterior: React.FC<EstablishmentInteriorProps> = ({
         hasCheckedIn={hasCheckedIn}
         isPromoter={isPromoter}
         onCheckIn={handleCheckIn}
-        onBarCrawlRequest={handleBarCrawlRequest}
+        onSwigCircuitRequest={handleSwigCircuitRequest}
       />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -106,18 +106,18 @@ const EstablishmentInterior: React.FC<EstablishmentInteriorProps> = ({
           
           {/* Only show the Bar Crawl Information card for promoters */}
           {isPromoter && (
-            <BarCrawlCard 
+            <SwigCircuitCard 
               establishment={establishment}
-              onBarCrawlRequest={handleBarCrawlRequest}
+              onSwigCircuitRequest={handleSwigCircuitRequest}
               isLightTheme={isLightTheme}
             />
           )}
         </div>
       </div>
       
-      <BarCrawlRequestModal 
-        isOpen={isBarCrawlModalOpen} 
-        onClose={() => setIsBarCrawlModalOpen(false)} 
+      <SwigCircuitRequestModal 
+        isOpen={isSwigCircuitModalOpen} 
+        onClose={() => setIsSwigCircuitModalOpen(false)} 
         establishment={establishment} 
       />
     </div>

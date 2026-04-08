@@ -29,7 +29,7 @@ const QuickNavigation: React.FC<QuickNavigationProps> = ({
     { label: 'Analytics', section: 'analytics', icon: BarChart4 },
     { label: 'Mocktail Menu', section: 'menu', icon: Utensils, tab: 'menu' },
     { label: 'Promotions', section: 'promotions', icon: Tag, tab: 'promotions' },
-    { label: 'Swig Circuits', section: 'barCrawls', icon: Route, tab: 'barCrawls' },
+    { label: 'Swig Circuits', section: 'swigCircuits', icon: Route, tab: 'swigCircuits' },
     { label: 'Settings', section: 'settings', icon: Settings }
   ];
 

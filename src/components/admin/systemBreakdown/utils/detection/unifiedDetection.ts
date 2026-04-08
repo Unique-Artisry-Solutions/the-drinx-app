@@ -74,7 +74,7 @@ export const isEstablishmentManagementFeature = (feature: FeatureItem) =>
   unifiedDetection.isCategory(feature, 'venue_operations');
 export const isVisitTrackingFeature = (feature: FeatureItem) => 
   feature.name.toLowerCase().includes('visit') && feature.name.toLowerCase().includes('track');
-export const isBarCrawlFeature = (feature: FeatureItem) => 
+export const isSwigCircuitFeature = (feature: FeatureItem) => 
   feature.name.toLowerCase().includes('bar') && feature.name.toLowerCase().includes('crawl');
 export const isSwigCircuitFeature = (feature: FeatureItem) => 
   feature.name.toLowerCase().includes('swig') && feature.name.toLowerCase().includes('circuit');

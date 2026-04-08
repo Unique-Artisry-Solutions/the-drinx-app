@@ -1,12 +1,12 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { useBarCrawlParticipation } from '@/hooks/barCrawl/useBarCrawlParticipation';
+import { useSwigCircuitParticipation } from '@/hooks/swigCircuit/useSwigCircuitParticipation';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
-interface JoinBarCrawlButtonProps {
+interface JoinSwigCircuitButtonProps {
   /** The unique identifier for the bar crawl */
-  barCrawlId: string;
+  swigCircuitId: string;
   /** Optional CSS class name for styling the button */
   className?: string;
 }
@@ -15,7 +15,7 @@ interface JoinBarCrawlButtonProps {
  * Button component for joining or leaving a bar crawl (Swig Circuit).
  * Shows different states based on current participation status and displays error messages.
  */
-const JoinBarCrawlButton: React.FC<JoinBarCrawlButtonProps> = ({ barCrawlId, className }) => {
+const JoinSwigCircuitButton: React.FC<JoinSwigCircuitButtonProps> = ({ swigCircuitId, className }) => {
   const { 
     isLoading, 
     isCheckingStatus,
@@ -23,8 +23,8 @@ const JoinBarCrawlButton: React.FC<JoinBarCrawlButtonProps> = ({ barCrawlId, cla
     error,
     handleJoin, 
     handleLeave 
-  } = useBarCrawlParticipation({
-    barCrawlId
+  } = useSwigCircuitParticipation({
+    swigCircuitId
   });
 
   // If there was an error checking the status, show error state but still allow interaction
@@ -37,7 +37,7 @@ const JoinBarCrawlButton: React.FC<JoinBarCrawlButtonProps> = ({ barCrawlId, cla
 
   const onButtonClick = () => {
     if (isJoined) {
-      handleLeave(barCrawlId);
+      handleLeave(swigCircuitId);
     } else {
       handleJoin();
     }
@@ -80,4 +80,4 @@ const JoinBarCrawlButton: React.FC<JoinBarCrawlButtonProps> = ({ barCrawlId, cla
   );
 };
 
-export default JoinBarCrawlButton;
+export default JoinSwigCircuitButton;

@@ -34,7 +34,7 @@ export interface EstablishmentCheckIn {
   };
 }
 
-export interface BarCrawlCheckIn {
+export interface SwigCircuitCheckIn {
   type: 'bar_crawl';
   entityId: string;
   entityName: string;
@@ -44,7 +44,7 @@ export interface BarCrawlCheckIn {
   };
 }
 
-export type CheckInContext = SwigCircuitCheckIn | EstablishmentCheckIn | BarCrawlCheckIn;
+export type CheckInContext = SwigCircuitCheckIn | EstablishmentCheckIn | SwigCircuitCheckIn;
 
 export interface UserVisitStats {
   total_visits: number;
@@ -61,7 +61,7 @@ export interface UserVisitStats {
 class CheckInService {
   async performCheckIn(
     userId: string, 
-    context: EstablishmentCheckIn | BarCrawlCheckIn | SwigCircuitCheckIn,
+    context: EstablishmentCheckIn | SwigCircuitCheckIn | SwigCircuitCheckIn,
     options: CheckInOptions = {}
   ): Promise<CheckInResult> {
     try {

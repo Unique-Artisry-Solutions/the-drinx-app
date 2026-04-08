@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 export interface RealtimeActivity {
   id: string;
-  type: 'check-in' | 'review' | 'recipe' | 'achievement' | 'bar-crawl' | 'photo-share';
+  type: 'check-in' | 'review' | 'recipe' | 'achievement' | 'swig-circuit' | 'photo-share';
   title: string;
   description: string;
   timestamp: string;
@@ -55,7 +55,7 @@ export const useRealtimeActivity = () => {
         },
         {
           id: '3',
-          type: 'bar-crawl',
+          type: 'swig-circuit',
           title: 'Emma completed a bar crawl',
           description: 'Downtown Mocktail Adventure - 5 stops completed!',
           timestamp: new Date(Date.now() - 900000).toISOString(),

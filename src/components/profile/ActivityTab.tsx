@@ -30,7 +30,7 @@ const ActivityTab: React.FC<ActivityTabProps> = ({
         return <MapPin className={`h-4 w-4 ${accentColor}`} />;
       case 'favorite':
         return <Star className={`h-4 w-4 ${accentColor}`} />;
-      case 'barCrawl':
+      case 'swigCircuit':
         return <Route className={`h-4 w-4 ${accentColor}`} />;
       case 'badge':
         return <Award className={`h-4 w-4 ${accentColor}`} />;
@@ -54,7 +54,7 @@ const ActivityTab: React.FC<ActivityTabProps> = ({
               <p className="font-medium">
                 {activity.type === 'visit' && `Visited ${activity.establishment?.name}`}
                 {activity.type === 'favorite' && `Added ${activity.cocktail?.name} to favorites`}
-                {activity.type === 'barCrawl' && `Created bar crawl: ${activity.name}`}
+                {activity.type === 'swigCircuit' && `Created bar crawl: ${activity.name}`}
                 {activity.type === 'badge' && `Earned badge: ${activity.name}`}
               </p>
               {activity.date && (

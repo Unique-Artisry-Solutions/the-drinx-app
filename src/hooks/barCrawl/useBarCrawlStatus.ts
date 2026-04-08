@@ -3,8 +3,8 @@ import { useState, useEffect } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
-interface UseBarCrawlStatusProps {
-  barCrawlId: string;
+interface UseSwigCircuitStatusProps {
+  swigCircuitId: string;
   user: User | null;
 }
 
@@ -12,7 +12,7 @@ interface UseBarCrawlStatusProps {
  * Hook to check if a user is participating in a bar crawl.
  * Uses direct Supabase calls for data access.
  */
-export const useBarCrawlStatus = ({ barCrawlId, user }: UseBarCrawlStatusProps) => {
+export const useSwigCircuitStatus = ({ swigCircuitId, user }: UseSwigCircuitStatusProps) => {
   const [isCheckingStatus, setIsCheckingStatus] = useState(true);
   const [isJoined, setIsJoined] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -32,7 +32,7 @@ export const useBarCrawlStatus = ({ barCrawlId, user }: UseBarCrawlStatusProps) 
           .from('user_bar_crawl_participation')
           .select('id')
           .eq('user_id', user.id)
-          .eq('bar_crawl_id', barCrawlId)
+          .eq('bar_crawl_id', swigCircuitId)
           .single();
 
         if (error && error.code !== 'PGRST116') { // PGRST116 is "not found" error
@@ -49,7 +49,7 @@ export const useBarCrawlStatus = ({ barCrawlId, user }: UseBarCrawlStatusProps) 
     };
     
     checkParticipation();
-  }, [barCrawlId, user]);
+  }, [swigCircuitId, user]);
 
   return {
     isCheckingStatus,

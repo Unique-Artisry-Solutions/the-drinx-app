@@ -12,7 +12,7 @@ interface InvitationsTabProps {
   setInviteeEmail: (email: string) => void;
   inviteUser: () => void;
   copyShareLink: () => void;
-  barCrawlId: string;
+  swigCircuitId: string;
 }
 
 const InvitationsTab: React.FC<InvitationsTabProps> = ({
@@ -22,7 +22,7 @@ const InvitationsTab: React.FC<InvitationsTabProps> = ({
   setInviteeEmail,
   inviteUser,
   copyShareLink,
-  barCrawlId
+  swigCircuitId
 }) => {
   return (
     <Card>
@@ -66,7 +66,7 @@ const InvitationsTab: React.FC<InvitationsTabProps> = ({
             <h3 className="font-medium mb-2">Invite by Link</h3>
             <div className="flex gap-2">
               <Input
-                value={`${window.location.origin}/bar-crawl/${barCrawlId}`}
+                value={`${window.location.origin}/swig-circuit/${swigCircuitId}`}
                 readOnly
                 className="flex-1 bg-gray-50"
               />

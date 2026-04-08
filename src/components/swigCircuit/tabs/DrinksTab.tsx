@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { SkipForward } from 'lucide-react';
-import DrinkHighlights, { DrinkHighlight } from '@/components/barCrawl/DrinkHighlights';
+import DrinkHighlights, { DrinkHighlight } from '@/components/swigCircuit/DrinkHighlights';
 
 interface DrinksTabProps {
   drinkHighlights: DrinkHighlight[];

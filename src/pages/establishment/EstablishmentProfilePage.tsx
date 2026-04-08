@@ -27,7 +27,7 @@ const EstablishmentProfilePage = () => {
     profileState,
     promotionsState,
     drinksState,
-    barCrawlsState,
+    swigCircuitsState,
     loyaltyProgramState
   } = useEstablishmentProfile(establishmentId);
   
@@ -35,7 +35,7 @@ const EstablishmentProfilePage = () => {
   const visitorStats = useVisitorStats(establishmentId || undefined);
   
   useEffect(() => {
-    if (tabParam && ['profile', 'promotions', 'menu', 'visitors', 'barCrawls', 'loyalty'].includes(tabParam)) {
+    if (tabParam && ['profile', 'promotions', 'menu', 'visitors', 'swigCircuits', 'loyalty'].includes(tabParam)) {
       setActiveTab(tabParam);
     } else {
       setSearchParams({ tab: 'profile' });
@@ -53,7 +53,7 @@ const EstablishmentProfilePage = () => {
     { value: 'promotions', label: isMobile ? 'Promos' : 'Promotions' },
     { value: 'menu', label: isMobile ? 'Menu' : 'Mocktail Menu' },
     { value: 'visitors', label: isMobile ? 'Stats' : 'Visitor Stats' },
-    { value: 'barCrawls', label: isMobile ? 'Crawls' : 'Bar Crawl Requests' },
+    { value: 'swigCircuits', label: isMobile ? 'Crawls' : 'Bar Crawl Requests' },
     { value: 'loyalty', label: isMobile ? 'Loyalty' : 'Loyalty Program' }
   ];
 
@@ -129,7 +129,7 @@ const EstablishmentProfilePage = () => {
             promotionsState={promotionsState}
             drinksState={drinksState}
             visitorStats={visitorStats}
-            barCrawlsState={barCrawlsState}
+            swigCircuitsState={swigCircuitsState}
             loyaltyProgramState={loyaltyProgramState}
           />
         )}

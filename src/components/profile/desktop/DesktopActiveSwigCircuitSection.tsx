@@ -63,7 +63,7 @@ const DesktopActiveSwigCircuitSection: React.FC = () => {
             </div>
             
             <Button asChild variant="outline" size="sm">
-              <Link to={`/bar-crawl-details/${circuit.id}`}>
+              <Link to={`/swig-circuit-details/${circuit.id}`}>
                 View Details
                 <ChevronRight className="ml-1 h-4 w-4" />
               </Link>

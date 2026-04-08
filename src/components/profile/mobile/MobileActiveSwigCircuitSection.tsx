@@ -51,9 +51,9 @@ const MobileActiveSwigCircuitSection: React.FC = () => {
   useEffect(() => {
     // Load active bar crawl from localStorage for now
     // In a production app, this would come from Supabase
-    const loadActiveBarCrawl = async () => {
-      const barCrawls = JSON.parse(localStorage.getItem('user_bar_crawls') || '[]');
-      const active = barCrawls.find((bc: any) => bc.status === 'active');
+    const loadActiveSwigCircuit = async () => {
+      const swigCircuits = JSON.parse(localStorage.getItem('user_bar_crawls') || '[]');
+      const active = swigCircuits.find((bc: any) => bc.status === 'active');
       
       if (active) {
         setActiveCircuit(active);
@@ -86,8 +86,8 @@ const MobileActiveSwigCircuitSection: React.FC = () => {
         };
         
         setActiveCircuit(mockCircuit);
-        const updatedBarCrawls = [...barCrawls, mockCircuit];
-        localStorage.setItem('user_bar_crawls', JSON.stringify(updatedBarCrawls));
+        const updatedSwigCircuits = [...swigCircuits, mockCircuit];
+        localStorage.setItem('user_bar_crawls', JSON.stringify(updatedSwigCircuits));
       }
     };
     
@@ -109,7 +109,7 @@ const MobileActiveSwigCircuitSection: React.FC = () => {
       }
     };
     
-    loadActiveBarCrawl();
+    loadActiveSwigCircuit();
     loadCheckInData();
   }, []);
 

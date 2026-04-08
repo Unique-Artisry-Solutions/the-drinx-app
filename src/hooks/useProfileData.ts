@@ -45,8 +45,8 @@ export function useProfileData() {
   const checkForActiveSwigCircuit = () => {
     // In a real app, this would check the database
     // For now, we'll check localStorage
-    const barCrawls = JSON.parse(localStorage.getItem('user_bar_crawls') || '[]');
-    const hasActive = barCrawls.some((bc: any) => bc.status === 'active');
+    const swigCircuits = JSON.parse(localStorage.getItem('user_bar_crawls') || '[]');
+    const hasActive = swigCircuits.some((bc: any) => bc.status === 'active');
     setHasActiveSwigCircuit(hasActive);
     
     // If there's no active one, we'll create a mock for demo purposes
@@ -68,7 +68,7 @@ export function useProfileData() {
         date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000) // 5 days ago
       },
       {
-        type: 'barCrawl',
+        type: 'swigCircuit',
         name: 'Weekend Wanders',
         date: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000) // 8 days ago
       },

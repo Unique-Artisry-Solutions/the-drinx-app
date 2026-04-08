@@ -3,18 +3,18 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from './use-toast';
 
-export function useBarCrawlCheckIns() {
+export function useSwigCircuitCheckIns() {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
   // Record a new check-in
   const recordCheckIn = async ({
-    barCrawlId,
+    swigCircuitId,
     establishmentId,
     userId,
     verifiedBy
   }: {
-    barCrawlId: string;
+    swigCircuitId: string;
     establishmentId: string;
     userId: string;
     verifiedBy?: string;
@@ -25,7 +25,7 @@ export function useBarCrawlCheckIns() {
       const { data, error } = await supabase
         .from('bar_crawl_check_ins')
         .insert({
-          bar_crawl_id: barCrawlId,
+          bar_crawl_id: swigCircuitId,
           establishment_id: establishmentId,
           user_id: userId,
           verified_by: verifiedBy
@@ -58,7 +58,7 @@ export function useBarCrawlCheckIns() {
   };
 
   // Get check-ins for a user in a specific bar crawl
-  const getUserCheckIns = async (userId: string, barCrawlId: string) => {
+  const getUserCheckIns = async (userId: string, swigCircuitId: string) => {
     try {
       setIsLoading(true);
       
@@ -77,7 +77,7 @@ export function useBarCrawlCheckIns() {
           )
         `)
         .eq('user_id', userId)
-        .eq('bar_crawl_id', barCrawlId)
+        .eq('bar_crawl_id', swigCircuitId)
         .order('checked_in_at', { ascending: false });
 
       if (error) {
@@ -94,7 +94,7 @@ export function useBarCrawlCheckIns() {
   };
 
   // Get check-ins for an establishment in a specific bar crawl
-  const getEstablishmentCheckIns = async (establishmentId: string, barCrawlId?: string) => {
+  const getEstablishmentCheckIns = async (establishmentId: string, swigCircuitId?: string) => {
     try {
       setIsLoading(true);
       
@@ -115,8 +115,8 @@ export function useBarCrawlCheckIns() {
         .order('checked_in_at', { ascending: false });
       
       // Filter by bar crawl if provided
-      if (barCrawlId) {
-        query = query.eq('bar_crawl_id', barCrawlId);
+      if (swigCircuitId) {
+        query = query.eq('bar_crawl_id', swigCircuitId);
       }
       
       const { data, error } = await query;

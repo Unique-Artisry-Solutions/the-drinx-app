@@ -188,7 +188,7 @@ const UserMobileMenu: React.FC<UserMobileMenuProps> = ({
               {userType === 'individual' && (
                 <li>
                   <NavLink 
-                    to="/profile/bar-crawls" 
+                    to="/profile/swig-circuits" 
                     className={({ isActive }) => cn(
                       "block p-3 rounded-md",
                       isActive ? activeClass : "text-gray-700 dark:text-gray-300"

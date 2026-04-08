@@ -1,10 +1,10 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import BarCrawlDetails from './BarCrawlDetails';
-import JoinBarCrawlButton from './JoinBarCrawlButton';
+import SwigCircuitDetails from './SwigCircuitDetails';
+import JoinSwigCircuitButton from './JoinSwigCircuitButton';
 
-interface BarCrawlHeaderProps {
+interface SwigCircuitHeaderProps {
   name: string;
   organizer: string;
   date: string;
@@ -14,7 +14,7 @@ interface BarCrawlHeaderProps {
   showJoinButton?: boolean; // New prop to control join button visibility
 }
 
-const BarCrawlHeader: React.FC<BarCrawlHeaderProps> = ({
+const SwigCircuitHeader: React.FC<SwigCircuitHeaderProps> = ({
   name,
   organizer,
   date,
@@ -28,14 +28,14 @@ const BarCrawlHeader: React.FC<BarCrawlHeaderProps> = ({
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-3">
         <div>
           <h1 className="text-2xl font-bold mb-1">{name}</h1>
-          <BarCrawlDetails
+          <SwigCircuitDetails
             organizer={organizer}
             date={date}
             stops={stops}
           />
         </div>
         {id && showJoinButton && (
-          <JoinBarCrawlButton barCrawlId={id} />
+          <JoinSwigCircuitButton swigCircuitId={id} />
         )}
       </div>
       
@@ -46,4 +46,4 @@ const BarCrawlHeader: React.FC<BarCrawlHeaderProps> = ({
   );
 };
 
-export default BarCrawlHeader;
+export default SwigCircuitHeader;

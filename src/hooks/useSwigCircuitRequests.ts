@@ -1,13 +1,13 @@
 
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { BarCrawlRequest } from '@/hooks/useBarCrawlRequests';
+import { SwigCircuitRequest } from '@/hooks/useSwigCircuitRequests';
 
 export const useSwigCircuitRequests = () => {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<string>("pending");
 
-  const barCrawlRequests: BarCrawlRequest[] = [
+  const swigCircuitRequests: SwigCircuitRequest[] = [
     {
       id: '1',
       name: 'Holiday Mocktail Crawl',
@@ -55,7 +55,7 @@ export const useSwigCircuitRequests = () => {
     }
   ];
 
-  const acceptedRequests: BarCrawlRequest[] = [
+  const acceptedRequests: SwigCircuitRequest[] = [
     {
       id: '4',
       name: 'Downtown Mocktail Tour',
@@ -88,7 +88,7 @@ export const useSwigCircuitRequests = () => {
     }
   ];
 
-  const formattedPendingRequests = barCrawlRequests.map(req => ({
+  const formattedPendingRequests = swigCircuitRequests.map(req => ({
     id: req.id,
     name: req.name,
     date: req.date,

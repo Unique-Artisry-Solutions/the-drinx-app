@@ -15,13 +15,13 @@ interface Establishment {
 interface EstablishmentInfoCardProps {
   establishment: Establishment;
   singleEstablishmentView: boolean;
-  onRequestBarCrawl: () => void;
+  onRequestSwigCircuit: () => void;
 }
 
 const EstablishmentInfoCard: React.FC<EstablishmentInfoCardProps> = ({
   establishment,
   singleEstablishmentView,
-  onRequestBarCrawl
+  onRequestSwigCircuit
 }) => {
   // Handle both cocktailCount (frontend property) and cocktail_count (database property)
   const mocktailCount = establishment.cocktail_count || 0;
@@ -38,7 +38,7 @@ const EstablishmentInfoCard: React.FC<EstablishmentInfoCardProps> = ({
           </div>
           
           {!singleEstablishmentView && (
-            <Button size="sm" onClick={onRequestBarCrawl}>
+            <Button size="sm" onClick={onRequestSwigCircuit}>
               Request Bar Crawl
             </Button>
           )}

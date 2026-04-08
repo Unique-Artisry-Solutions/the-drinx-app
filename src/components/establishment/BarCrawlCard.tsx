@@ -4,15 +4,15 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { CalendarIcon, MapPinIcon, UsersIcon, ChevronDown, ChevronUp } from 'lucide-react';
-import { BarCrawlRequest } from '@/hooks/useBarCrawlRequests';
+import { SwigCircuitRequest } from '@/hooks/useSwigCircuitRequests';
 
-interface BarCrawlCardProps {
-  crawl: BarCrawlRequest;
+interface SwigCircuitCardProps {
+  crawl: SwigCircuitRequest;
   handleEndParticipation?: (id: string) => void;
   handleAcceptRequest?: (id: string) => void;
 }
 
-const BarCrawlCard: React.FC<BarCrawlCardProps> = ({
+const SwigCircuitCard: React.FC<SwigCircuitCardProps> = ({
   crawl,
   handleEndParticipation,
   handleAcceptRequest
@@ -79,4 +79,4 @@ const BarCrawlCard: React.FC<BarCrawlCardProps> = ({
     </Card>;
 };
 
-export default BarCrawlCard;
+export default SwigCircuitCard;

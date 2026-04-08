@@ -52,9 +52,9 @@ export const useEnhancedQuickActions = () => {
     navigate('/create-recipe');
   };
 
-  const startBarCrawl = async () => {
+  const startSwigCircuit = async () => {
     await new Promise(resolve => setTimeout(resolve, 800));
-    navigate('/bar-crawls');
+    navigate('/swig-circuits');
   };
 
   const shareAchievement = async () => {
@@ -74,7 +74,7 @@ export const useEnhancedQuickActions = () => {
       checkInNearby,
       findEvents,
       createRecipe,
-      startBarCrawl,
+      startSwigCircuit,
       shareAchievement,
       findFriends
     }

@@ -3,7 +3,7 @@ import React from 'react';
 import { MapPin } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Establishment } from '@/types/ProfileTypes';
-import BarCrawlControlWithSampleData from '@/components/barCrawl/selection/BarCrawlControlWithSampleData';
+import SwigCircuitControlWithSampleData from '@/components/swigCircuit/selection/SwigCircuitControlWithSampleData';
 import SelectedVenuesList from './SelectedVenuesList';
 import SampleVenuesSection from './SampleVenuesSection';
 import { sampleNearbyEstablishments } from './SampleVenuesSection';
@@ -64,8 +64,8 @@ const VenuesListSection: React.FC<VenuesListSectionProps> = ({
       )}
       
       {/* Using the sample data component for testing */}
-      <BarCrawlControlWithSampleData 
-        onSaveBarCrawl={onSaveEstablishments}
+      <SwigCircuitControlWithSampleData 
+        onSaveSwigCircuit={onSaveEstablishments}
         initialSelections={selectedEstablishments}
         minEstablishments={2}
       />

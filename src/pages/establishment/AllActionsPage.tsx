@@ -50,7 +50,7 @@ const AllActionsPage = () => {
                   title="Swig Circuit Requests"
                   description="Review and manage Swig Circuit participation requests"
                   icon={<CalendarClock className="h-5 w-5" />}
-                  to="/establishment/bar-crawl-requests"
+                  to="/establishment/swig-circuit-requests"
                   count={1}
                   isHighlighted
                 />
@@ -78,7 +78,7 @@ const AllActionsPage = () => {
                   title="New Swig Circuit Request"
                   description="Your establishment has been included in 'Holiday Mocktail Crawl'"
                   time="2 hours ago"
-                  to="/establishment/bar-crawl-requests"
+                  to="/establishment/swig-circuit-requests"
                   isNew
                 />
                 

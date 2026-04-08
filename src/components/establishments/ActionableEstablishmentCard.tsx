@@ -20,7 +20,7 @@ interface EstablishmentCardProps {
     rating: number;
   };
   onCheckIn?: () => void;
-  onAddToBarCrawl?: () => void;
+  onAddToSwigCircuit?: () => void;
 }
 
 /**
@@ -39,7 +39,7 @@ export const ActionableEstablishmentCard: React.FC<EstablishmentCardProps> = ({
   openingTime,
   highestRatedDrink,
   onCheckIn,
-  onAddToBarCrawl
+  onAddToSwigCircuit
 }) => {
   return (
     <Card className="overflow-hidden hover:shadow-md transition-shadow duration-200 h-full flex flex-col">
@@ -133,7 +133,7 @@ export const ActionableEstablishmentCard: React.FC<EstablishmentCardProps> = ({
           <Button 
             variant="outline" 
             size="sm" 
-            onClick={onAddToBarCrawl} 
+            onClick={onAddToSwigCircuit} 
             className="border-purple-200"
           >
             <Route className="h-3.5 w-3.5 mr-1" />
