@@ -12,6 +12,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
 import ModuleLoadingErrorBoundary from '@/components/error/ModuleLoadingErrorBoundary';
+import PromoterRouteProtection from './PromoterRouteProtection';
 
 // Direct imports for commerce and event pages - simplified routing
 import CheckoutPage from '@/pages/CheckoutPage';
@@ -87,9 +88,11 @@ const AppRoutes = () => {
 
           {promoterRoutes.map((route) => (
             <Route key={route.path} path={route.path} element={
-              <ModuleLoadingErrorBoundary>
-                {route.element}
-              </ModuleLoadingErrorBoundary>
+              <PromoterRouteProtection>
+                <ModuleLoadingErrorBoundary>
+                  {route.element}
+                </ModuleLoadingErrorBoundary>
+              </PromoterRouteProtection>
             } />
           ))}
 
