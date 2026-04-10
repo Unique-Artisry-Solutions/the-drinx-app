@@ -24,6 +24,31 @@ Deno.serve(async (req) => {
     // Get the request body
     const { target_user_id }: RequestBody = await req.json()
     
+    // Authorization check: Only admins can impersonate users
+    const userId = req.headers.get('x-user-id')
+    if (!userId) {
+      return new Response(
+        JSON.stringify({ error: 'User ID is required' }),
+        { status: 401, headers: { ...secureHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+    
+    const { data: userProfile, error: profileError } = await supabaseClient
+      .from('profiles')
+      .select('user_type')
+      .eq('id', userId)
+      .single()
+    
+    if (profileError || !userProfile || userProfile.user_type !== 'admin') {
+      // User is not an admin - forbidden
+      return new Response(
+        JSON.stringify({ error: 'Only admins can impersonate users' }),
+        { status: 403, headers: { ...secureHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+    
+    console.log(`Admin user ${userId} authorized to impersonate user ${target_user_id}`)
+    
     if (!target_user_id) {
       return new Response(
         JSON.stringify({ error: 'target_user_id is required' }),

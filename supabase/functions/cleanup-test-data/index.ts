@@ -25,6 +25,32 @@ serve(async (req) => {
       });
     }
 
+    // Authorization check: Only admins can cleanup test data
+    const userId = req.headers.get('x-user-id')
+    if (!userId) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...secureHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    const supabaseTemp = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    )
+    const { data: userProfile } = await supabaseTemp
+      .from('profiles')
+      .select('user_type')
+      .eq('id', userId)
+      .single()
+
+    if (!userProfile || userProfile.user_type !== 'admin') {
+      return new Response(
+        JSON.stringify({ error: 'Forbidden: admin only' }),
+        { status: 403, headers: { ...secureHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
     // Create Supabase client with service role key for full access
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
